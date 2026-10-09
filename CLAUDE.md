@@ -420,6 +420,15 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Pontos: até 4 meses passados (último `accBal()` visto no mês, `despesas.balHist`, só no aparelho, `balHistSave()` no
   `renderHome`), "hoje" (`accBal()`) e os próximos 12 meses (`endBal`, tracejado). Sem Saldo na conta: só `endBal`.
   Negativo em vermelho com linha do R$ 0; tocar num mês abre o Mês. Ordem salva sem `evol` → entra depois de `bens`.
+- **Visual simples** (out/2026, pedido dele: "simplificar o visual completo", visual + menos coisa; manteve topo na cor do
+  tema, barra de vidro, temas e animações): bloco CSS "visual simples" no fim do `<style>` — sem caixas dentro de caixas
+  (`.split` do topo e `.rate .cmp` viram linhas com divisória), bordas mais leves, `.dchip` sem quadradinho, `.tbtn` sem
+  borda, rodapés ("Como funciona", "Posso comprar?") como link. Textos de explicação: `p.hint` direto nas seções de
+  Início/Mês/Ano/Moedas escondidos (menos os com `neg` no estilo) e classe `.expl` (escondida) nos textos fixos da tela do
+  cartão; `.tlproj small` escondido. **Fôlego saiu do Início** (o gráfico Evolução já mostra). Saldo na conta: Extrato e
+  Atualizar viraram links no título (`h2 .h2act`), sem o botão "Fim de <próximo>". Ano: sem a coluna Saldo quando há
+  Saldo na conta. **Você** recolhe as seções como o Ano (`FOLD`/`anoFold(pid)`: só Aparência aberta, `despesas.meOpen`);
+  `renderAno`/`renderMe` chamam o `anoFold` no fim.
 - **Instalar app** (out/2026, `installBanner()` no topo do Início, só fora do app instalado): Android/Chrome guarda o
   `beforeinstallprompt` (`instEvt`) → botão "Instalar" (vira WebAPK; não precisa de APK/Play Store); iPhone (`IS_IOS`) →
   passo a passo Compartilhar → Adicionar à Tela de Início e, se já tem lançamentos, pede backup antes (no iPhone o app

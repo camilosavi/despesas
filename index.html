@@ -889,6 +889,27 @@ nav.tabs.onme::before{opacity:0}
   .wrap{max-width:1480px}
   #pHome:not([hidden]),#pAno:not([hidden]),#pCards:not([hidden]){column-count:3}
 }
+/* ---------- visual simples (out/2026, pedido dele: "simplificar o visual completo", ideia da tela do Meu Pluggy) ----------
+   Sem caixas dentro de caixas: números com rótulo pequeno e linha fina entre eles; bordas mais leves; datas sem quadradinho;
+   textos de explicação fora dos cartões escondidos (ficam em "Como funciona esta tela"); botões de rodapé viram link. */
+.card,.hcard,.empty{border-color:color-mix(in srgb,var(--line) 75%,transparent)}
+.split{gap:0;margin-top:14px;border-top:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent);padding-top:10px}
+.split div{background:none;border-radius:0;padding:0 12px 0 0}
+.split div+div{padding:0 0 0 12px;border-left:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent)}
+.rate .cmp{gap:0;grid-template-columns:1fr;border-top:1px solid var(--line)}
+.rate .cmp div{background:none;border-radius:0;padding:9px 0;display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px solid var(--line)}
+.rate .cmp div:last-child{border-bottom:0;padding-bottom:0}
+.rate .cmp span{text-transform:none;letter-spacing:0;font-weight:500;font-size:.88rem}
+.hgrid small,.paybar span{text-transform:none;letter-spacing:0;font-weight:500;font-size:.8rem}
+.dchip{background:none!important;width:34px;height:auto;border-radius:0}
+.dchip b{font-size:1.05rem}
+#pHome>section>p.hint:not([style*="neg"]),#pMes section>p.hint:not([style*="neg"]),#pAno>section>p.hint:not([style*="neg"]),#pFx>section>p.hint:not([style*="neg"]){display:none}
+.helpbar .tbtn,.homefoot .tbtn{background:none;border:0;color:var(--muted);font-weight:500;padding:8px 6px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--muted) 45%,transparent)}
+.tbtn{border-color:transparent;background:var(--chip)}
+.tbtn.go{border-color:var(--btn)}
+.expl,.tlproj small{display:none!important}
+h2 .h2act{display:inline-flex;gap:14px;align-items:baseline}
+h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
 </style>
 
 <div class="wrap">
@@ -1478,11 +1499,11 @@ function limitBox(c){
   let rec="";
   if(F.bank){const gap=F.calc-free;
     rec=`<div class="hint">${Math.abs(gap)<100?`Pelos lançamentos também dá ${R(F.calc)} ✓`:`Pelos lançamentos daria ${R(F.calc)} (${gap<0?`${R(-gap)} a menos`:`${R(gap)} a mais`}). ${gap<0?"Normalmente são juros das parcelas e do parcelamento de fatura: o banco só segura no limite o valor da compra.":"Pode faltar lançar alguma compra."}`} Atualize o livre do banco de vez em quando em Editar.</div>`;
-  } else rec=`<div class="hint">Para ficar igual ao banco, toque em Editar e informe o “livre” que aparece no app do banco.</div>`;
+  } else rec=`<div class="hint expl">Para ficar igual ao banco, toque em Editar e informe o “livre” que aparece no app do banco.</div>`;
   return `<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Limite livre</span><div class="val ${free<0?"neg":""}"><small>R$</small>${free<0?"−":""}${brl(Math.abs(free))}</div><div class="src">de ${R(k.limit)} · usado ${R(usedE)}${F.bank?` · pelo banco em ${fmtDM(k.bankAt||today())}`:""}</div></div><button class="tbtn" id="limEdit">Editar</button></div>
     <div class="bar" style="height:10px"><i style="width:${pct}%;background:${pct>90?"var(--neg)":pct>70?"var(--warn)":"var(--accent)"}"></i></div>
     ${limBreak(c)}
-    ${pct>=80?`<div class="limwarn ${free<=0?"over":""}" style="font-size:.88rem">${free<=0?`Passou do limite em ${R(-free)}. Novas compras podem ser recusadas.`:`Já usou ${Math.round(pct)}% do limite. Cuidado com compras grandes.`}</div>`:""}<div class="hint">Pelos lançamentos, “usado” soma o que está lançado e não foi pago no ${esc(c)}: faturas abertas e parcelas futuras. Assinaturas e contas que se repetem só contam até a fatura em aberto, como no banco.</div>${rec}</div>`;
+    ${pct>=80?`<div class="limwarn ${free<=0?"over":""}" style="font-size:.88rem">${free<=0?`Passou do limite em ${R(-free)}. Novas compras podem ser recusadas.`:`Já usou ${Math.round(pct)}% do limite. Cuidado com compras grandes.`}</div>`:""}<div class="hint expl">Pelos lançamentos, “usado” soma o que está lançado e não foi pago no ${esc(c)}: faturas abertas e parcelas futuras. Assinaturas e contas que se repetem só contam até a fatura em aberto, como no banco.</div>${rec}</div>`;
 }
 async function saveLimit(){
   const lim=digits($("limTot").value), fr=$("limFree").value.trim()?digits($("limFree").value):null;
@@ -1709,7 +1730,6 @@ const HOME_BLOCKS={
   venc:{n:"Vence nos próximos 10 dias",d:"contas e faturas a pagar, atrasados"},
   cards:{n:"Cartões",d:"fatura do mês e limite livre"},
   euro:{n:"Euro",d:"cotação, dólar e euro comprado"},
-  folego:{n:"Fôlego",d:"saldo acumulado em 3 e 6 meses"},
   evol:{n:"Evolução do saldo",d:"quanto fica na conta no fim de cada mês, em gráfico"},
   guard:{n:"Dinheiro guardado",d:"caixinhas e total guardado"}
 };
@@ -1793,12 +1813,11 @@ function contaBlock(){
   if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></section>`;
   const tot=accBal(), mv=accMoves(), fl=accFlow(ym), open=fl.out, after=endBal(ym);
   const at=A.map(a=>a.at).filter(Boolean).sort()[0], old=at&&at<addDays(today(),-3);
-  return `<section><h2>Saldo na conta <small>${at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""}</small></h2><div class="card rate">
-    <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div>${A.length===1&&A[0].name?`<div class="src">${esc(A[0].name)}</div>`:""}${mv.out||mv.inn?`<div class="src">informado ${R(A.reduce((s,a)=>s+a.cents,0))}${mv.out?` · −${R(mv.out)} pago depois`:""}${mv.inn?` · +${R(mv.inn)} recebido`:""}</div>`:""}</div><div style="display:grid;gap:6px;justify-items:end"><button class="tbtn" id="acEdit">Atualizar</button><label class="tbtn" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></div></div>
+  return `<section><h2>Saldo na conta <span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button id="acEdit">Atualizar</button></span></h2><div class="card rate">
+    <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div>${mv.out||mv.inn?`<div class="src">informado ${R(A.reduce((s,a)=>s+a.cents,0))}${mv.out?` · −${R(mv.out)} pago depois`:""}${mv.inn?` · +${R(mv.inn)} recebido`:""}</div>`:""}</div></div>
     ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${R(a.cents)}</b></div>`).join("")}</div>`:""}
     <div class="cmp">${fl.inn?`<div><span>Ainda entra em ${mn}</span><b class="pos">+ ${R(fl.inn)}</b></div>`:""}<div><span>Falta pagar em ${mn}${fl.late?` <small>(${R(fl.late)} atrasado)</small>`:""}</span><b>${R(open)}</b></div><div><span>${after>=0?`Sobra no fim de ${mn}`:"Vai faltar"}</span><b class="${after>=0?"pos":"neg"}">${R(Math.abs(after))}</b></div></div>
     ${after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:""}
-    ${(()=>{const n=shiftYM(ym,1), e=endBal(n);return `<button class="tbtn acnext" data-gotab="pAno">Fim de ${monthLabel(n).split(" ")[0].toLowerCase()}: <b class="${e<0?"neg":""}">${e<0?"−":""}${R(Math.abs(e))}</b> ›</button>`})()}
     ${old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:""}</div></section>`;
 }
 const BEN_PICK=["Alelo","Pluxee","VR","Ticket","Flash","Caju"];
@@ -1873,7 +1892,7 @@ function evolBlock(){
   return `<section><h2>Evolução do saldo <small>${hA?"fim de cada mês":"acumulado"}</small></h2><div class="card chart evol">
     <div class="evtop"><div><small>${hA?"Na conta hoje":`Fim de ${MES[+cur.slice(5)-1].toLowerCase()}`}</small><b class="${first.v<0?"neg":""}">${signR(first.v)}</b></div><div class="r"><small>Fim de ${shortMonth(last.ym)}</small><b class="${last.v<0?"neg":"pos"}">${signR(last.v)}</b></div></div>
     ${svg}
-    <p class="hint">${min.v<0?`Fica negativo em ${shortMonth(min.ym)} (${signR(min.v)}). `:""}Tracejado = previsão, já tirando o que falta pagar no cartão.</p></div></section>`;
+    ${min.v<0?`<p class="hint neg">Fica negativo em ${shortMonth(min.ym)} (${signR(min.v)}).</p>`:""}</div></section>`;
 }
 function homeBlock(k){
   const now=today(), ym=curYM();
@@ -1949,7 +1968,7 @@ function renderHome(){
     return;
   }
   balHistSave();
-  $("pHome").innerHTML=oneBanner()+o.map(homeBlock).join("")+`<div class="toolbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`;
+  $("pHome").innerHTML=oneBanner()+o.map(homeBlock).join("")+`<div class="toolbar homefoot" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`;
 }
 
 /* ---------- aba Mês ---------- */
@@ -2033,19 +2052,22 @@ function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)
   $("divHint").textContent=n>=2&&form.cents?`${R(Math.round(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
 /* Ano (out/2026): as 3 primeiras seções (próximos meses, dinheiro guardado, gráfico) ficam abertas; as outras ficam
    recolhidas mostrando só o título com o total; tocar abre. Lembra o que ficou aberto (despesas.anoOpen, só no aparelho). */
-const anoOpenSet=()=>{try{return new Set(JSON.parse(lsGet("despesas.anoOpen")||"[]"))}catch(e){return new Set()}};
-function anoFold(){
-  const P=$("pAno");if(!P) return;const O=anoOpenSet();
-  [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<3||!h)return;
+const FOLD={pAno:{keep:3,key:"despesas.anoOpen"},pMe:{keep:1,key:"despesas.meOpen"}};
+const foldOpenSet=k=>{try{return new Set(JSON.parse(lsGet(k)||"[]"))}catch(e){return new Set()}};
+const anoOpenSet=()=>foldOpenSet("despesas.anoOpen");
+/* Você (out/2026, visual simples): igual ao Ano, só Aparência fica aberta */
+function anoFold(pid="pAno"){
+  const P=$(pid), F=FOLD[pid];if(!P||!F) return;const O=foldOpenSet(F.key);
+  [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<F.keep||!h)return;
     const k=(h.firstChild&&h.firstChild.textContent||h.textContent).trim().slice(0,30);
     const force=(sec.id==="salSec"&&salXOpen)||(sec.id==="subSec"&&subEdit);
     sec.classList.add("fold");sec.dataset.fold=k;sec.classList.toggle("open",force||O.has(k));
     if(!h.querySelector(".foldcar"))h.insertAdjacentHTML("afterbegin",'<i class="foldcar" aria-hidden="true">›</i>');
     h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",sec.classList.contains("open"))});
 }
-function anoToggle(sec){const k=sec.dataset.fold, O=anoOpenSet(), on=!sec.classList.contains("open");
+function anoToggle(sec){const k=sec.dataset.fold, pid=sec.parentElement?.id, F=FOLD[pid]||FOLD.pAno, O=foldOpenSet(F.key), on=!sec.classList.contains("open");
   sec.classList.toggle("open",on);sec.querySelector(":scope > h2")?.setAttribute("aria-expanded",on);
-  on?O.add(k):O.delete(k);lsSet("despesas.anoOpen",JSON.stringify([...O]))}
+  on?O.add(k):O.delete(k);lsSet(F.key,JSON.stringify([...O]))}
 /* Início mostra no máximo UMA faixa por vez (out/2026, ele achou que tinha coisa demais): a mais importante primeiro;
    quando ela some (resolvida ou "Agora não"), aparece a seguinte. */
 function oneBanner(){for(const f of [negBanner,ofBanner,onbCard,recapCard,backupBanner,shareBanner,installBanner]){let h="";try{h=f()}catch(e){}if(h)return h}return ""}
@@ -2620,7 +2642,7 @@ function renderCards(){
     <div class="row" style="margin:0"><button class="btn soft" id="fatCancel">Cancelar</button><button class="btn primary" id="fatSave">Salvar</button></div>
     ${g?`<button class="svdel" id="fatDel">Tirar o valor do banco</button>`:""}</div>`;
   else{
-    const status=!g?`<div class="hint">O total é a soma do que você lançou. Se quiser, informe o valor do banco para conferir.</div>`:
+    const status=!g?`<div class="hint expl">O total é a soma do que você lançou. Se quiser, informe o valor do banco para conferir.</div>`:
       !L.length?`<div class="hint">Nenhum item lançado ainda: vale o valor do banco. Quando você lançar itens, o total passa a ser a soma deles.</div>`:
       g>d?`<div class="warn" style="font-size:.88rem;font-weight:600">Falta lançar ${R(g-d)} para bater com o banco</div>`:
       d>g?`<div class="warn" style="font-size:.88rem;font-weight:600">Lançado passa ${R(d-g)} do banco. Confira algum item ou atualize o valor.</div>`:
@@ -2657,7 +2679,7 @@ function renderCards(){
    }}
   {const P=dupPairs(L);if(P.length) h+=`<section><h2>Parecidos <small>${P.length}</small></h2>${P.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(P.map(([a,b])=>a.id+"|"+b.id).join(","))}">Mesclar todos os ${P.length} pares</button></div>`:""}<div class="card">`+P.map(([a,b])=>`<div class="duprow"><div><b>${esc(cleanDesc(a))}</b> e <b>${esc(cleanDesc(b))}</b><span>${R(a.cents)}${a.parc?` · ${a.parc}`:""} · parecem o mesmo lançamento</span></div><div class="svbtns"><button class="btn soft" data-notdup="${esc(dupKey(a,b))}">Não são</button><button class="btn primary" data-merge="${esc(a.id)}|${esc(b.id)}">Mesclar</button></div></div>`).join("")+`</div></section>`}
   const side=h;h="";
-  h+=`<section><h2>Fatura em PDF</h2><div class="card rate"><div class="hint">Baixe a fatura em PDF no app do banco e importe aqui. O app lê no próprio iPhone, mostra as compras para você conferir e só adiciona as que você marcar.</div>
+  h+=`<section><h2>Fatura em PDF</h2><div class="card rate"><div class="hint expl">Baixe a fatura em PDF no app do banco e importe aqui. O app lê no próprio iPhone, mostra as compras para você conferir e só adiciona as que você marcar.</div>
     <label class="btn soft" style="text-align:center;cursor:pointer;display:block">Importar fatura do ${esc(c)} (PDF)<input type="file" id="impFile" accept="application/pdf,.pdf" hidden></label></div></section>`;
   const months=Array.from({length:12},(_,i)=>shiftYM(view,i)).filter((m,i)=>i===0||cardTotal(c,m));
   const max=Math.max(...months.map(m=>cardTotal(c,m)),1);
@@ -2950,9 +2972,9 @@ function projSection(){
     const arr=inMonth(ym), sv=salVirt(ym).reduce((s,x)=>s+x.cents,0), r=sumT(arr,"rec")+sv, d=sumT(arr,"desp"), v=r-d;
     if(hA){const f=accFlow(ym);acc+=f.inn-f.out}else acc+=v;
     const[y,m]=ym.split("-");
-    return `<tr class="${ym===cur?"now":""} ${!r&&!d&&ym!==cur?"zero":""}" data-gomonth="${ym}"><td>${MES[+m-1].toLowerCase()}/${y.slice(2)}</td><td class="r pos">${r?brl(r):"–"}${sv?`<sup title="inclui salário previsto">*</sup>`:""}</td><td class="r neg">${d?brl(d):"–"}</td><td class="r ${v<0?"neg":""}">${v<0?"−":""}${brl(Math.abs(v))}</td><td class="r ${acc<0?"neg":""}"><b>${acc<0?"−":""}${brl(Math.abs(acc))}</b></td></tr>`;
+    return `<tr class="${ym===cur?"now":""} ${!r&&!d&&ym!==cur?"zero":""}" data-gomonth="${ym}"><td>${MES[+m-1].toLowerCase()}/${y.slice(2)}</td><td class="r pos">${r?brl(r):"–"}${sv?`<sup title="inclui salário previsto">*</sup>`:""}</td><td class="r neg">${d?brl(d):"–"}</td>${hA?"":`<td class="r ${v<0?"neg":""}">${v<0?"−":""}${brl(Math.abs(v))}</td>`}<td class="r ${acc<0?"neg":""}"><b>${acc<0?"−":""}${brl(Math.abs(acc))}</b></td></tr>`;
   }).join("");
-  return `<section><h2>Próximos meses <small>toque para abrir</small></h2><div class="card tablewrap"><table class="proj"><thead><tr><th>Mês</th><th class="r">Entra</th><th class="r">Sai</th><th class="r">Saldo</th><th class="r">${hA?"Na conta":"Acum."}</th></tr></thead><tbody>${hA?`<tr class="start"><td>hoje</td><td></td><td></td><td></td><td class="r"><b>${R(accBal()).replace("R$ ","")}</b></td></tr>`:""}${rows}</tbody></table></div>
+  return `<section><h2>Próximos meses <small>toque para abrir</small></h2><div class="card tablewrap"><table class="proj"><thead><tr><th>Mês</th><th class="r">Entra</th><th class="r">Sai</th>${hA?"":`<th class="r">Saldo</th>`}<th class="r">${hA?"Na conta":"Acum."}</th></tr></thead><tbody>${hA?`<tr class="start"><td>hoje</td><td></td><td></td><td class="r"><b>${R(accBal()).replace("R$ ","")}</b></td></tr>`:""}${rows}</tbody></table></div>
     <p class="hint" style="margin-top:8px">${hA?`“Na conta” = quanto sobra no fim de cada mês, partindo do saldo na conta de hoje: soma o que ainda vai entrar e tira o que falta pagar (atrasados entram em ${shortMonth(cur)}).`:`Acumulado soma o saldo a partir de ${shortMonth(cur)}. Informe o saldo na conta no Início para ver quanto fica na conta em cada mês.`} ${salPrevOn()?`* inclui o salário previsto pelos holerites. `:""}Receitas só entram quando você lança.</p></section>`;
 }
 function renderAno(){
@@ -3001,7 +3023,7 @@ function renderAno(){
   <div class="inl"><input id="exDesc" class="full" placeholder="Ex.: 13º salário, venda do notebook" maxlength="60"><select id="exType"><option value="rec">Receita</option><option value="desp">Despesa</option></select><input id="exVal" inputmode="numeric" placeholder="R$ 0,00"></div>
   <div class="toolbar"><button class="tbtn" id="exAdd">Adicionar previsto</button></div></section>`;
   h+=subSection()+divSection()+feeYear(year)+recurSection();
-  $("pAno").innerHTML=h;
+  $("pAno").innerHTML=h;anoFold();
 }
 /* ---------- Você (perfil e ajustes): abre pela foto na barra de baixo ---------- */
 function secSection(){
@@ -3025,7 +3047,7 @@ function renderMe(){
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn danger" id="wipeLanc">Zerar lançamentos e saldo</button>${u?`<button class="btn soft" id="undoLanc">Desfazer (${u.items.length})</button>`:""}</div></div></section>`}
   h+=`<section><h2>Zerar tudo</h2><div class="card rate"><div class="hint">Apaga lançamentos, cartões, compras de euro, caixinhas e configurações deste aparelho e volta à tela de boas-vindas. A senha e ${BIO.f?"a":"o"} ${esc(bioN())} continuam. Fica uma cópia de segurança aqui no aparelho: na tela de boas-vindas dá para desfazer.</div>
     <div class="row" style="margin:0"><button class="btn danger" id="wipeAll">Zerar tudo</button></div></div></section>`;
-  $("pMe").innerHTML=h;
+  $("pMe").innerHTML=h;anoFold("pMe");
 }
 /* zerar um mês do cartão: apaga os lançamentos do cartão nesse mês e as parcelas seguintes das mesmas compras; dá para desfazer */
 const ZM_KEY="despesas.antesZerarMes";
@@ -3503,7 +3525,7 @@ function appBadge(){if(!("setAppBadge" in navigator)||!cfgLoaded)return;
 function render(){
   applyCats();header();clearTimeout(appBadge.t);appBadge.t=setTimeout(appBadge,400);clearTimeout(pushSync.t);pushSync.t=setTimeout(pushSync,2000);renderImport();updateFab();$("note").hidden=tab!=="pMe";
   ({pHome:renderHome,pMes:renderMes,pCards:renderCards,pPlan:renderPlan,pFx:renderFx,pAno:renderAno,pOrc:renderOrc,pMe:renderMe})[tab]();
-  if(tab==="pAno") anoFold();
+  if(tab==="pAno"||tab==="pMe") anoFold(tab);
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();
 }
