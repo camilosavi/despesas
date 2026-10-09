@@ -153,6 +153,8 @@ card?, parc?:"i/n", group?, createdAt}`
   Pan, senão o cartão do próprio banco do extrato), fatura com vencimento de 5 dias antes a 10 dias depois do pagamento;
   se o valor bate (`closeC`) com o que está em aberto nela → `act:"payBill"` marca todos os itens pagos (`paidAt` = dia do
   pagamento). Não bate (ex.: entrada de parcelamento) → fica de fora com "tem R$ X em aberto (confira no cartão)".
+- **Inter, nomes da fatura** (out/2026): "PIX CRED PARCELADO" → "Pix no crédito" (com parcela), "IOF CREDITO PARCELADO" →
+  "IOF do Pix no crédito" (taxa), prefixo de intermediador ("EBN *", "PAYPAL *") sai do nome; Xsolla/Steam/PSN/Xbox… → Lazer.
 - **Categoria Esporte** (`esporte`, out/2026, pedido dele): academia/Wellhub/Gympass, Decathlon, Centauro, Netshoes, Nike,
   Adidas, Under Armour… (em `invoiceEntry` e no categorizador da planilha). "Magazine"/"Hobby" → Compras.
 - **Extrato da conta em PDF** (out/2026): o mesmo "Importar PDF" (e "Extrato (PDF)" no bloco Saldo na conta) tenta

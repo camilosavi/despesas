@@ -4174,12 +4174,17 @@ function invoiceEntry(r){
   if(/^IOF Transacoes Exterior/i.test(r.desc)) name=`IOF exterior · ${titleCase(r.shop||"")}`.trim();
   else if(/Exterior/i.test(r.desc)&&r.shop) name=`${titleCase(r.shop)} (exterior)`;
   else if(/Retirada|Saque/i.test(r.desc)&&r.shop) name=`${titleCase(r.shop)} (saque)`;
+  /* Inter: Pix no crédito parcelado e o IOF dele; intermediadores de pagamento (EBN *XSOLLA, PAYPAL *LOJA) */
+  if(/^PIX CRED/i.test(r.desc)) name="Pix no crédito";
+  else if(/^IOF\s+CREDITO\s+PARC/i.test(r.desc)) name="IOF do Pix no crédito";
+  else if(!fee&&/^(EBN|PAYPAL|PP|DL)\s*\*\s*\S/i.test(name)) name=name.replace(/^(EBN|PAYPAL|PP|DL)\s*\*\s*/i,"");
+  if(/xsolla/i.test(name)) name="Xsolla (jogos)";
   const t=(r.shop+" "+r.desc).toLowerCase();
   const cat=fee?"outros":/supermerc|(?<!mercado\*)mercado(?!\*| ?livre)|atacad|hortifr|assai|carrefour|pao de acucar/.test(t)?"merc":
     /restaur|burg|bar\b|pub|sorvet|lanch|pizza|cafe|padaria|ifood|food|steak|outback|nutri/.test(t)?"alim":
     /wellhub|gympass|academ|smart ?fit|decathlon|centauro|netshoes|nike|adidas|under armour|track ?& ?field|esporte|sport|futebol/.test(t)?"esporte":
     /farm|drog|clinic|saude|otica/.test(t)?"saude":
-    /cine|parque|show|ingresso|teatro/.test(t)?"lazer":
+    /cine|parque|show|ingresso|teatro|xsolla|steam|playstation|\bpsn\b|xbox|nintendo|epic ?games|riot|blizzard|roblox|garena/.test(t)?"lazer":
     /anthropic|claude|netflix|spotify|youtube|apple\.com|google|prime|disney|hbo|assinat|patreon|udemy|subscription/.test(t)?"assin":
     /uber|99|posto|combust|estacion|onibus|metro/.test(t)?"transp":
     /magazine|hobby|caedu|renner|riachuelo|americanas|magalu|amazon|shein|gradi|loja|shop/.test(t)?"compras":"outros";
