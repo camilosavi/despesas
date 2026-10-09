@@ -418,8 +418,10 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Evolução do saldo** (gráfico no Início): feito e **tirado** em out/2026 a pedido dele ("não gostei"). Não recolocar.
 - **Início no computador** (out/2026, pedido dele: "redesenhar por completo"): `renderHome` com `IS_WIDE` (matchMedia
   ≥ 980 px, redesenha ao cruzar) monta painel fixo tipo Meu Pluggy (`.hdash`): em cima 3 quadros do mesmo tamanho
-  (`.htop`: Saldo na conta, Cartões, Dinheiro guardado); embaixo (`.hlow`, mesma grade de 3) "Vence" em 2 colunas e
-  Benefícios/Euro na 3ª. No PC a ordem do "Organizar início" não vale; no celular continua. Só no PC (`.pconly`):
+  (`.htop`: Saldo na conta, Cartões, Dinheiro guardado); embaixo outra linha igual (`.htop.hlow`: Vence, Benefícios, Euro,
+  lado a lado). Feito para caber sem rolar num 1440×900 (pedido dele, "parte pra descer"): topo do Início mais baixo,
+  rodapé numa linha só (Posso comprar? · Organizar início · Como funciona), `.wrap` sem `min-height` no PC e botão +
+  redondo no canto (não cobre os quadros). No PC a ordem do "Organizar início" não vale; no celular continua. Só no PC (`.pconly`):
   resumo dos cartões no topo do bloco (% do limite usado, limite, usado, livre via `cardFree`) e caixinhas com barra.
   Topo de todas as abas no PC: número grande à esquerda e os 2 valores à direita na mesma linha. `renderHome` põe o
   `helpLink` ele mesmo.

@@ -916,6 +916,7 @@ h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
   header.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:36px;align-items:end}
   header.top>*{grid-column:1/-1}
   header.top>.bigrow{grid-column:1}
+  header.top>.monthpill{justify-self:start}
   header.top>.split{grid-column:2;margin-top:0;border-top:0;padding-top:0;align-self:end;padding-bottom:6px}
   header.top>.split div{padding:0 18px}
   header.top>.split div:first-child{border-left:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent)}
@@ -929,10 +930,13 @@ h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
   .htop>section>.card,.htop>section>.hcard{flex:1}
   #pHome>.hdash:not(:first-child){margin-top:26px}
   .htop .hcard{display:flex;flex-direction:column;justify-content:flex-start}
-  .hlow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
-  .hlow>div:first-child:not(:last-child){grid-column:span 2}
-  .hlow.one>div{grid-column:1/-1}
-  .hlow>div{display:grid;gap:22px}
+  /* sem rolagem num 1440×900: topo mais baixo, linha de baixo com Vence/Benefícios/Euro lado a lado, rodapé numa linha */
+  body:has(#pHome:not([hidden])) header.top{padding:16px 28px 18px!important}
+  body:has(#pHome:not([hidden])) header.top .label{margin-top:8px}
+  .hdash{gap:20px}.htop{gap:20px}
+  #pHome .homefoot{margin-top:14px!important}
+  .wrap{min-height:0!important}
+  .fab{right:24px!important;bottom:24px!important;padding:0!important;width:58px!important}.fab span{display:none}.fab b{margin-top:-2px}
   .cdsum{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
   .cdsumtop{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
   .cdsum .mini{margin:8px 0}
@@ -1967,9 +1971,9 @@ function renderHome(){
   if(IS_WIDE.matches){const H={};o.forEach(k=>{const h=homeBlock(k);if(h)H[k]=h});
     const top=["conta","cards","guard"].filter(k=>H[k]), side=["bens","euro"].filter(k=>H[k]);
     body=`<div class="hdash">${top.length?`<div class="htop" style="--n:${top.length}">${top.map(k=>H[k]).join("")}</div>`:""}
-      <div class="hlow ${H.venc&&side.length?"":"one"}">${H.venc?`<div>${H.venc}</div>`:""}${side.length?`<div>${side.map(k=>H[k]).join("")}</div>`:""}</div></div>`}
+      ${(()=>{const L=["venc","bens","euro"].filter(k=>H[k]);return L.length?`<div class="htop hlow" style="--n:${L.length}">${L.map(k=>H[k]).join("")}</div>`:""})()}</div>`}
   else body=o.map(homeBlock).join("");
-  $("pHome").innerHTML=oneBanner()+body+`<div class="toolbar homefoot" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`+helpLink("pHome");
+  $("pHome").innerHTML=oneBanner()+body+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
 }
 
 /* ---------- aba Mês ---------- */
