@@ -3396,8 +3396,19 @@ function ofFatura(acc){
   const due=last?shiftYM(last.slice(0,7),1)+last.slice(7):"";
   const rows=(acc._tx||[]).filter(t=>!(t.creditCardMetadata||{}).billId&&!/^(PAGAMENTO|PAGTO|DEB AUT)/i.test(t.description||"")).map(t=>{
     const m=t.creditCardMetadata||{}, name=ofShop(t.description);
-    return {date:ofDay(t.date),desc:m.totalInstallments>1?parcTag(name,m.installmentNumber,m.totalInstallments):name,shop:"",cents:Math.round((+t.amount||0)*100)}});
+    return {date:ofDay(t.date),desc:m.totalInstallments>1?parcTag(name,m.installmentNumber,m.totalInstallments):name,shop:"",cents:Math.round((+t.amount||0)*100),n:m.totalInstallments||1}});
+  ofPixWho(rows);
   return {bank:ofBank(acc),due,rows,total:null,close:cd.balanceCloseDate?+String(cd.balanceCloseDate).slice(8,10):0};
+}
+/* Pix no crédito: a fatura só diz "PIX CRED PARCELADO". O Pix que saiu da conta (mesmo dia, valor do "Crédito liberado")
+   diz para quem foi. Casa pelo dia (±1) e pelo total das parcelas = valor do Pix + juros (1× a 1,6×). */
+function ofPixWho(rows){
+  const px=[];(ofView&&ofView.acc||[]).filter(a=>a.type==="BANK").forEach(a=>{try{ofExtrato(a).rows.forEach(r=>{
+    if(r.pixCred&&r.cents<0&&(r.rcv||r.who)) px.push({day:r.date,c:-r.cents,who:r.rcv||r.who})})}catch(e){}});
+  if(!px.length) return;
+  const cand=[];rows.forEach((r,i)=>{if(!/^PIX CRED/i.test(r.desc))return;const tot=r.cents*(r.n||1);
+    px.forEach((p,j)=>{const dd=Math.abs((new Date(r.date)-new Date(p.day))/864e5), q=tot/p.c;if(dd<=1&&q>=0.99&&q<=1.6)cand.push({i,j,s:dd+Math.abs(q-1.15)})})});
+  const ui=new Set(),uj=new Set();cand.sort((a,b)=>a.s-b.s).forEach(c=>{if(ui.has(c.i)||uj.has(c.j))return;ui.add(c.i);uj.add(c.j);rows[c.i].who=px[c.j].who});
 }
 async function ofImport(k){
   const acc=ofView&&ofView.acc[k];if(!acc) return;
@@ -4186,17 +4197,18 @@ function invoiceEntry(r){
   else if(/Exterior/i.test(r.desc)&&r.shop) name=`${titleCase(r.shop)} (exterior)`;
   else if(/Retirada|Saque/i.test(r.desc)&&r.shop) name=`${titleCase(r.shop)} (saque)`;
   /* Inter: Pix no crédito parcelado e o IOF dele; intermediadores de pagamento (EBN *XSOLLA, PAYPAL *LOJA) */
-  if(/^PIX CRED/i.test(r.desc)) name="Pix no crédito";
+  if(/^PIX CRED/i.test(r.desc)) name=r.who?`${titleCase(String(r.who).replace(/\b(S\.?\s?\/?A|LTDA|ME|EIRELI|EPP)\b\.?/gi,"").replace(/\s{2,}/g," ").trim())} (Pix no crédito)`:"Pix no crédito";
   else if(/^IOF\s+CREDITO\s+PARC/i.test(r.desc)) name="IOF do Pix no crédito";
   else if(!fee&&/^(EBN|PAYPAL|PP|DL)\s*\*\s*\S/i.test(name)) name=name.replace(/^(EBN|PAYPAL|PP|DL)\s*\*\s*/i,"");
   if(/xsolla/i.test(name)) name="Xsolla (jogos)";
-  const t=(r.shop+" "+r.desc).toLowerCase();
+  const t=(r.shop+" "+r.desc+" "+(r.who||"")).toLowerCase();
   const cat=fee?"outros":/supermerc|(?<!mercado\*)mercado(?!\*| ?livre)|atacad|hortifr|assai|carrefour|pao de acucar/.test(t)?"merc":
     /restaur|burg|bar\b|pub|sorvet|lanch|pizza|cafe|padaria|ifood|food|steak|outback|nutri/.test(t)?"alim":
     /wellhub|gympass|academ|smart ?fit|decathlon|centauro|netshoes|nike|adidas|under armour|track ?& ?field|esporte|sport|futebol/.test(t)?"esporte":
     /farm|drog|clinic|saude|otica/.test(t)?"saude":
     /cine|parque|show|ingresso|teatro|xsolla|steam|playstation|\bpsn\b|xbox|nintendo|epic ?games|riot|blizzard|roblox|garena/.test(t)?"lazer":
     /anthropic|claude|netflix|spotify|youtube|apple\.com|google|prime|disney|hbo|assinat|patreon|udemy|subscription/.test(t)?"assin":
+    /\bclaro\b|\bvivo\b|\btim\b|\boi\b|energia|enel|cpfl|sabesp|internet|telefon/.test(t)?"casa":
     /uber|99|posto|combust|estacion|onibus|metro/.test(t)?"transp":
     /magazine|hobby|caedu|renner|riachuelo|americanas|magalu|amazon|shein|gradi|loja|shop/.test(t)?"compras":"outros";
   return {name,cat:fee?cat:catLearnGet("desp",name)||cat,parc:pm?`${+pm[1]}/${+pm[2]}`:"",fee};
