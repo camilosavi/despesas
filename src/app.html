@@ -2099,7 +2099,7 @@ function feeYear(y){
 }
 /* ---------- assinaturas (out/2026): o que se paga todo mês para usar um serviço; divisão com outras pessoas em
    cfg.subShare[nome] = {n: quantas pessoas te pagam, c: quanto cada uma} ---------- */
-const SUBN=[[/youtube/,"YouTube Premium"],[/google ?one|g1ai|googleone/,"Google One"],[/apple\.?com|icloud/,"Apple (iCloud/App Store)"],[/amazon ?prime|amazonprime/,"Amazon Prime"],
+const SUBN=[[/ubisoft|xsolla/,"Ubisoft+ / jogo (Xsolla)"],[/game ?pass|xbox/,"Xbox Game Pass"],[/ps ?plus|playstation/,"PlayStation Plus"],[/youtube/,"YouTube Premium"],[/google ?one|g1ai|googleone/,"Google One"],[/apple\.?com|icloud/,"Apple (iCloud/App Store)"],[/amazon ?prime|amazonprime/,"Amazon Prime"],
   [/udemy/,"Udemy"],[/patreon/,"Patreon"],[/netflix/,"Netflix"],[/spotify/,"Spotify"],[/disney/,"Disney+"],[/hbo|\bmax\b/,"Max"],[/globoplay/,"Globoplay"],
   [/deezer/,"Deezer"],[/crunchyroll/,"Crunchyroll"],[/claude|anthropic/,"Claude"],[/chatgpt|openai/,"ChatGPT"],[/xbox|game ?pass/,"Xbox Game Pass"],[/playstation|psn/,"PlayStation Plus"],[/wellhub|gympass/,"Wellhub"]];
 function subOf(x){
@@ -4189,14 +4189,14 @@ function invoiceEntry(r){
   if(/^PIX CRED/i.test(r.desc)) name=r.who?`${titleCase(String(r.who).replace(/\b(S\.?\s?\/?A|LTDA|ME|EIRELI|EPP)\b\.?/gi,"").replace(/\s{2,}/g," ").trim())} (Pix no crédito)`:"Pix no crédito";
   else if(/^IOF\s+CREDITO\s+PARC/i.test(r.desc)) name="IOF do Pix no crédito";
   else if(!fee&&/^(EBN|PAYPAL|PP|DL)\s*\*\s*\S/i.test(name)) name=name.replace(/^(EBN|PAYPAL|PP|DL)\s*\*\s*/i,"");
-  if(/xsolla/i.test(name)) name="Xsolla (jogos)";
+  if(/xsolla/i.test(name)) name="Xsolla (jogo/assinatura)";
   const t=(r.shop+" "+r.desc+" "+(r.who||"")).toLowerCase();
   const cat=fee?"outros":/supermerc|(?<!mercado\*)mercado(?!\*| ?livre)|atacad|hortifr|assai|carrefour|pao de acucar/.test(t)?"merc":
     /restaur|burg|bar\b|pub|sorvet|lanch|pizza|cafe|padaria|ifood|food|steak|outback|nutri/.test(t)?"alim":
     /wellhub|gympass|academ|smart ?fit|decathlon|centauro|netshoes|nike|adidas|under armour|track ?& ?field|esporte|sport|futebol/.test(t)?"esporte":
     /farm|drog|clinic|saude|otica/.test(t)?"saude":
-    /cine|parque|show|ingresso|teatro|xsolla|steam|playstation|\bpsn\b|xbox|nintendo|epic ?games|riot|blizzard|roblox|garena/.test(t)?"lazer":
-    /anthropic|claude|netflix|spotify|youtube|apple\.com|google|prime|disney|hbo|assinat|patreon|udemy|subscription/.test(t)?"assin":
+    /cine|parque|show|ingresso|teatro|steam|playstation|\bpsn\b|xbox|nintendo|epic ?games|riot|blizzard|roblox|garena/.test(t)?"lazer":
+    /xsolla|ubisoft|game ?pass|ps ?plus|anthropic|claude|netflix|spotify|youtube|apple\.com|google|prime|disney|hbo|assinat|patreon|udemy|subscription/.test(t)?"assin":
     /\bclaro\b|\bvivo\b|\btim\b|\boi\b|energia|enel|cpfl|sabesp|internet|telefon/.test(t)?"casa":
     /uber|99|posto|combust|estacion|onibus|metro/.test(t)?"transp":
     /magazine|hobby|caedu|renner|riachuelo|americanas|magalu|amazon|shein|gradi|loja|shop/.test(t)?"compras":"outros";
