@@ -415,11 +415,14 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   se `lastUpdatedAt` ≠ visto, busca, roda `ofSync` e conta o que falta (`ofCount`: extPlan marcados + itens da fatura sem
   parecido) → faixa no topo do Início (`ofBanner`, "Importar conta"/"Importar fatura"/"Agora não"). Visto (`ofSeen`) ao
   importar pela faixa, dispensar ou "Buscar de novo".
-- **Evolução do saldo** (bloco `evol` do Início, out/2026, ideia da tela do Meu Pluggy com outra fonte): `evolBlock()` —
-  linha "na conta no fim de cada mês". Não soma fatura como dinheiro (a da Pluggy somava conta + fatura + investimento).
-  Pontos: até 4 meses passados (último `accBal()` visto no mês, `despesas.balHist`, só no aparelho, `balHistSave()` no
-  `renderHome`), "hoje" (`accBal()`) e os próximos 12 meses (`endBal`, tracejado). Sem Saldo na conta: só `endBal`.
-  Negativo em vermelho com linha do R$ 0; tocar num mês abre o Mês. Ordem salva sem `evol` → entra depois de `bens`.
+- **Evolução do saldo** (gráfico no Início): feito e **tirado** em out/2026 a pedido dele ("não gostei"). Não recolocar.
+- **Início no computador** (out/2026, pedido dele: "redesenhar por completo"): `renderHome` com `IS_WIDE` (matchMedia
+  ≥ 980 px, redesenha ao cruzar) monta painel fixo tipo Meu Pluggy (`.hdash`): em cima 3 quadros do mesmo tamanho
+  (`.htop`: Saldo na conta, Cartões, Dinheiro guardado); embaixo (`.hlow`, mesma grade de 3) "Vence" em 2 colunas e
+  Benefícios/Euro na 3ª. No PC a ordem do "Organizar início" não vale; no celular continua. Só no PC (`.pconly`):
+  resumo dos cartões no topo do bloco (% do limite usado, limite, usado, livre via `cardFree`) e caixinhas com barra.
+  Topo de todas as abas no PC: número grande à esquerda e os 2 valores à direita na mesma linha. `renderHome` põe o
+  `helpLink` ele mesmo.
 - **Visual simples** (out/2026, pedido dele: "simplificar o visual completo", visual + menos coisa; manteve topo na cor do
   tema, barra de vidro, temas e animações): bloco CSS "visual simples" no fim do `<style>` — sem caixas dentro de caixas
   (`.split` do topo e `.rate .cmp` viram linhas com divisória), bordas mais leves, `.dchip` sem quadradinho, `.tbtn` sem

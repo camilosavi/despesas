@@ -194,11 +194,6 @@ tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--line)}
 .tbtn.go{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
 .chart{padding:14px 10px 8px}
 .chart svg{width:100%;height:auto;display:block}
-.evol .evtop{display:flex;justify-content:space-between;gap:12px;padding:0 6px 8px}
-.evol .evtop small{display:block;color:var(--muted);font-size:.8rem}
-.evol .evtop b{font-size:1.35rem;font-variant-numeric:tabular-nums}
-.evol .evtop .r{text-align:right}.evol .evtop .r b{font-size:1.05rem}
-.evol .hint{padding:6px 6px 2px;margin:0}
 .legend{display:flex;gap:14px;font-size:.8rem;color:var(--muted);padding:0 6px 6px}
 .legend span{display:flex;align-items:center;gap:6px}
 /* previstos */
@@ -899,6 +894,38 @@ nav.tabs.onme::before{opacity:0}
 .expl,.tlproj small{display:none!important}
 h2 .h2act{display:inline-flex;gap:14px;align-items:baseline}
 h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
+/* Início no computador (out/2026, pedido dele: "redesenhar por completo"): painel em grade de 3 colunas no lugar das
+   colunas de jornal; blocos da mesma linha com a mesma altura; "Vence" ocupa 2 colunas; faixas e rodapé a largura toda.
+   Topo (todas as abas): número grande à esquerda e os dois valores à direita, na mesma linha. */
+.pconly{display:none}
+@media (min-width:980px){
+  .pconly{display:block}.pcno{display:none}
+  .svmini{display:grid;gap:14px;margin-top:6px}.svm{display:grid;gap:6px}.svm>span:first-child{display:flex;justify-content:space-between;gap:10px;font-size:.92rem}
+  .svm>span:first-child>span{color:var(--muted);font-variant-numeric:tabular-nums}.svm .mini{margin:0;display:block}
+  header.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:36px;align-items:end}
+  header.top>*{grid-column:1/-1}
+  header.top>.bigrow{grid-column:1}
+  header.top>.split{grid-column:2;margin-top:0;border-top:0;padding-top:0;align-self:end;padding-bottom:6px}
+  header.top>.split div{padding:0 18px}
+  header.top>.split div:first-child{border-left:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent)}
+  header.top>.split b{font-size:1.35rem}
+  #pHome:not([hidden]){column-count:auto!important}
+  #pHome .banner{margin-top:0}
+  .hdash{display:grid;gap:26px}
+  .hdash section{margin:0}
+  .htop{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:22px;align-items:stretch}
+  .htop>section{display:flex;flex-direction:column}
+  .htop>section>.card,.htop>section>.hcard{flex:1}
+  #pHome>.hdash:not(:first-child){margin-top:26px}
+  .htop .hcard{display:flex;flex-direction:column;justify-content:flex-start}
+  .hlow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;align-items:start}
+  .hlow>div:first-child:not(:last-child){grid-column:span 2}
+  .hlow.one>div{grid-column:1/-1}
+  .hlow>div{display:grid;gap:22px}
+  .cdsum{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
+  .cdsumtop{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
+  .cdsum .mini{margin:8px 0}
+}
 </style>
 
 <div class="wrap">
@@ -1719,7 +1746,6 @@ const HOME_BLOCKS={
   venc:{n:"Vence nos próximos 10 dias",d:"contas e faturas a pagar, atrasados"},
   cards:{n:"Cartões",d:"fatura do mês e limite livre"},
   euro:{n:"Euro",d:"cotação, dólar e euro comprado"},
-  evol:{n:"Evolução do saldo",d:"quanto fica na conta no fim de cada mês, em gráfico"},
   guard:{n:"Dinheiro guardado",d:"caixinhas e total guardado"}
 };
 let homeEdit=false;
@@ -1727,7 +1753,6 @@ function homeOrder(){
   const keys=Object.keys(HOME_BLOCKS), saved=(cfg.homeOrder||[]).filter(k=>keys.includes(k));
   const o=[...new Set([...(saved.length&&!saved.includes("conta")?["conta"]:[]),...saved,...keys])];
   if(saved.length&&!saved.includes("bens")){o.splice(o.indexOf("bens"),1);o.splice(o.indexOf("conta")+1,0,"bens")}
-  if(saved.length&&!saved.includes("evol")){o.splice(o.indexOf("evol"),1);o.splice(o.indexOf("bens")+1,0,"evol")}
   return o;
 }
 async function moveHome(k,dir){
@@ -1847,47 +1872,10 @@ async function saveAccts(){
   if(!L.length){toast("Digite o saldo.");return}
   try{document.activeElement?.blur();await saveCfg({accts:L});acDraft=null;toast("Saldo salvo",true);renderHome()}catch(e){toast("Não deu para salvar.")}
 }
-/* ---------- evolução do saldo (out/2026, ideia da tela do Meu Pluggy, mas com os números do app) ----------
-   Não soma a fatura do cartão como dinheiro: cada ponto é "na conta no fim do mês" (endBal), que já tira o que falta pagar.
-   Meses passados: o último saldo visto naquele mês (accBal), guardado no aparelho em despesas.balHist (até 12 meses). */
-function balHist(){let h={};try{h=JSON.parse(localStorage.getItem("despesas.balHist")||"{}")||{}}catch(e){}return h}
-function balHistSave(){
-  if(!hasAcc())return;const h=balHist(), ym=curYM(), v=accBal();
-  if(h[ym]===v)return;h[ym]=v;
-  Object.keys(h).sort().slice(0,-13).forEach(k=>delete h[k]);
-  try{localStorage.setItem("despesas.balHist",JSON.stringify(h))}catch(e){}
-}
-function evolBlock(){
-  const cur=curYM(), hA=hasAcc(), H=balHist();
-  const past=hA?Object.keys(H).filter(k=>k<cur&&k>=MIN_YM).sort().slice(-4).map(ym=>({ym,v:H[ym],lb:MES[+ym.slice(5)-1].toLowerCase()})):[];
-  const nowP=hA?[{ym:cur,v:accBal(),lb:"hoje",now:1}]:[];
-  const fut=nextMonths(12).map(ym=>({ym,v:endBal(ym),lb:MES[+ym.slice(5)-1].toLowerCase()}));
-  const P=[...past,...nowP,...fut]; if(!P.length) return "";
-  const W=340,Ht=150,top=14,bot=24,lx=12,rx=12, vs=P.map(p=>p.v), lo=Math.min(0,...vs), hi=Math.max(1,...vs), span=hi-lo||1;
-  const X=i=>P.length>1?lx+i*(W-lx-rx)/(P.length-1):W/2, Y=v=>top+(Ht-top-bot)*(hi-v)/span;
-  const ci=past.length+nowP.length-1, pts=P.map((p,i)=>`${X(i).toFixed(1)},${Y(p.v).toFixed(1)}`), step=(W-lx-rx)/Math.max(1,P.length-1);
-  let svg=`<svg viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Saldo na conta no fim de cada mês">`;
-  svg+=`<line x1="0" x2="${W}" y1="${Y(hi).toFixed(1)}" y2="${Y(hi).toFixed(1)}" stroke="var(--line)"/><line x1="0" x2="${W}" y1="${Y(lo).toFixed(1)}" y2="${Y(lo).toFixed(1)}" stroke="var(--line)"/>`;
-  if(lo<0) svg+=`<line x1="0" x2="${W}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}" stroke="var(--neg)" stroke-dasharray="3 3" opacity=".6"/><text x="${W-2}" y="${(Y(0)-4).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--neg)" font-family="Figtree,system-ui">R$ 0</text>`;
-  if(ci>0) svg+=`<polyline points="${pts.slice(0,ci+1).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
-  svg+=`<polyline points="${pts.slice(Math.max(0,ci)).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" ${ci>=0?`stroke-dasharray="5 4"`:""}/>`;
-  const every=step<20?2:1;
-  P.forEach((p,i)=>{const x=X(i), y=Y(p.v), neg=p.v<0;
-    svg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${p.now?4.2:2.8}" fill="${neg?"var(--neg)":p.now?"var(--accent)":"var(--surface)"}" stroke="${neg?"var(--neg)":"var(--accent)"}" stroke-width="1.6"/>`;
-    if(p.now||i===P.length-1||(i-Math.max(0,ci))%every===0) svg+=`<text x="${x.toFixed(1)}" y="${Ht-7}" text-anchor="middle" font-size="8.5" fill="${p.now?"var(--ink)":"var(--muted)"}" font-weight="${p.now?700:400}" font-family="Figtree,system-ui">${p.lb}</text>`;
-    svg+=`<rect x="${(x-step/2).toFixed(1)}" y="0" width="${step.toFixed(1)}" height="${Ht}" fill="transparent" data-gomonth="${p.ym}" style="cursor:pointer"><title>${p.now?"Hoje":shortMonth(p.ym)}: ${signR(p.v)}</title></rect>`});
-  svg+=`<text x="2" y="${top-4}" font-size="9" fill="var(--muted)" font-family="Figtree,system-ui">${signR(hi).replace(/,\d\d$/,"")}</text></svg>`;
-  const first=hA?nowP[0]:fut[0], last=fut[fut.length-1], min=fut.reduce((a,p)=>p.v<a.v?p:a,fut[0]);
-  return `<section><h2>Evolução do saldo <small>${hA?"fim de cada mês":"acumulado"}</small></h2><div class="card chart evol">
-    <div class="evtop"><div><small>${hA?"Na conta hoje":`Fim de ${MES[+cur.slice(5)-1].toLowerCase()}`}</small><b class="${first.v<0?"neg":""}">${signR(first.v)}</b></div><div class="r"><small>Fim de ${shortMonth(last.ym)}</small><b class="${last.v<0?"neg":"pos"}">${signR(last.v)}</b></div></div>
-    ${svg}
-    ${min.v<0?`<p class="hint neg">Fica negativo em ${shortMonth(min.ym)} (${signR(min.v)}).</p>`:""}</div></section>`;
-}
 function homeBlock(k){
   const now=today(), ym=curYM();
   if(k==="conta") return contaBlock();
   if(k==="bens") return benBlock();
-  if(k==="evol") return evolBlock();
   if(k==="venc"){
     const U=upcoming(10), late=U.filter(u=>u.date<now);
     return `<section><h2>Vence nos próximos 10 dias <small>${U.length?R(U.reduce((s,u)=>s+u.cents,0)):""}</small></h2><div class="card list">`+
@@ -1901,7 +1889,9 @@ function homeBlock(k){
   if(k==="cards"){
     const cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
     if(!cs.length) return "";
-    return `<section><h2>Cartões <small>fatura em aberto</small></h2><div class="card">`+cs.map(c=>{
+    const lim=cs.reduce((a,c)=>{const L=cardCfg(c).limit;if(!L)return a;a.l+=L;a.u+=L-cardFree(c).free;return a},{l:0,u:0}), pu=lim.l?Math.max(0,Math.min(100,lim.u/lim.l*100)):0;
+    const sum=lim.l?`<div class="cdsum pconly"><div class="cdsumtop"><span>${Math.round(pu)}% do limite usado</span><span>Limite ${R(lim.l)}</span></div><div class="mini"><i style="width:${pu}%;background:${pu>=100?"var(--neg)":pu>=80?"var(--warn)":"var(--accent)"}"></i></div><div class="cdsumtop"><span>Usado ${R(lim.u)}</span><span>Livre ${R(Math.max(0,lim.l-lim.u))}</span></div></div>`:"";
+    return `<section><h2>Cartões <small>fatura em aberto</small></h2><div class="card">`+sum+cs.map(c=>{
       const bs=billShown(c,ym), m=bs.ym, tot=cardTotal(c,m)+(bs.from?rollAmt(c,m):0), k=cardCfg(c), due=dueOf(c), paid=!bs.from&&cardItems(c,m).length&&cardItems(c,m).every(isPaid);
       const meta=[bs.from?`${MES[+bs.from.slice(5)-1].toLowerCase()} paga ✓ · próxima`:"",due?`vence ${fmtDM(cardDue(c,m))}`:bs.from?shortMonth(m):"",k.limit?`livre ${R(cardFree(c).free)}`:"",paid?"paga":""].filter(Boolean).join(" · ").replace("próxima · vence","próxima vence");
       return `<button class="cardrow" data-opencard="${esc(c)}" data-ym="${m}">${cardBadge(c)}<span><b>${esc(c)}</b></span><b class="${paid?"pos":""}">${R(tot)}</b><span class="m">${esc(meta)||"sem lançamentos"}${limTag(c)}</span><span class="m" style="text-align:right">›</span></button>`}).join("")+`</div></section>`;
@@ -1925,7 +1915,8 @@ function homeBlock(k){
     const B=saves(), tot=svTotal();
     return `<section><h2>Dinheiro guardado</h2><button class="hcard" data-gotab="pAno" data-scroll="saveSec">
       <div class="hhead"><b>${B.length?R(tot):"Nenhuma caixinha"}</b><span>${B.length?`${B.length} ${B.length===1?"caixinha":"caixinhas"}`:""}</span></div>
-      <span class="hint">${B.length?B.slice(0,3).map(b=>`${esc(b.name)} ${R(svBal(b))}${b.goal?` (${Math.round(Math.max(0,Math.min(1,svHave(b)/b.goal))*100)}%)`:""}`).join(" · "):"Toque para criar uma caixinha e registrar o que você guarda."}</span>
+      <span class="hint pcno">${B.length?B.slice(0,3).map(b=>`${esc(b.name)} ${R(svBal(b))}${b.goal?` (${Math.round(Math.max(0,Math.min(1,svHave(b)/b.goal))*100)}%)`:""}`).join(" · "):"Toque para criar uma caixinha e registrar o que você guarda."}</span>
+      ${B.length?`<span class="pconly svmini">${B.slice(0,5).map(b=>{const p=b.goal?Math.round(Math.max(0,Math.min(1,svHave(b)/b.goal))*100):0;return `<span class="svm"><span><b>${esc(b.name)}</b><span>${R(svBal(b))}${b.goal?` · ${p}%`:""}</span></span>${b.goal?`<span class="mini"><i style="width:${p}%;background:var(--accent)"></i></span>`:""}</span>`}).join("")}</span>`:""}
     </button></section>`;
   }
   return "";
@@ -1945,6 +1936,8 @@ function recapCard(){
     <div class="rg"><div><span>Entrou</span><b>${R(rec)}</b></div><div><span>Gastou</span><b>${R(desp)}</b></div><div><span>${sob>=0?"Sobrou":"Faltou"}</span><b class="${sob>=0?"pos":"neg"}">${R(Math.abs(sob))}</b></div></div>
     ${lines.length?`<p>${lines.join(" ")}</p>`:""}<div class="row" style="margin:0"><button class="btn soft" id="recapOk">Ok</button><button class="btn primary" data-gomonth="${pm}">Ver ${nm.toLowerCase()}</button></div></div></section>`;
 }
+const IS_WIDE=matchMedia("(min-width:980px)");
+try{IS_WIDE.addEventListener("change",()=>{if(typeof tab!=="undefined"&&tab==="pHome")renderHome()})}catch(e){}
 function renderHome(){
   if(document.activeElement&&(document.activeElement.id==="userIn"||/^ac[nv]_\d/.test(document.activeElement.id))) return;
   const o=homeOrder();
@@ -1956,8 +1949,16 @@ function renderHome(){
       `</div><p class="hint" style="margin-top:8px">O saldo do mês fica sempre no topo.</p><div class="row" style="margin-top:14px"><button class="btn primary" id="homeDone">Concluir</button></div></section>`;
     return;
   }
-  balHistSave();
-  $("pHome").innerHTML=oneBanner()+o.map(homeBlock).join("")+`<div class="toolbar homefoot" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`;
+  /* computador (out/2026, "redesenhar por completo"): painel fixo tipo Meu Pluggy — em cima 3 quadros do mesmo tamanho
+     (Saldo na conta, Cartões, Dinheiro guardado); embaixo "Vence" largo à esquerda e Benefícios/Euro à direita.
+     No celular continua a lista na ordem do "Organizar início". */
+  let body;
+  if(IS_WIDE.matches){const H={};o.forEach(k=>{const h=homeBlock(k);if(h)H[k]=h});
+    const top=["conta","cards","guard"].filter(k=>H[k]), side=["bens","euro"].filter(k=>H[k]);
+    body=`<div class="hdash">${top.length?`<div class="htop" style="--n:${top.length}">${top.map(k=>H[k]).join("")}</div>`:""}
+      <div class="hlow ${H.venc&&side.length?"":"one"}">${H.venc?`<div>${H.venc}</div>`:""}${side.length?`<div>${side.map(k=>H[k]).join("")}</div>`:""}</div></div>`}
+  else body=o.map(homeBlock).join("");
+  $("pHome").innerHTML=oneBanner()+body+`<div class="toolbar homefoot" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`+helpLink("pHome");
 }
 
 /* ---------- aba Mês ---------- */
@@ -2105,7 +2106,7 @@ async function mesShare(ym){
 }
 /* ---------- ajuda em cada tela (out/2026): "Como funciona esta tela" no fim de cada aba ---------- */
 const HELP={
-  pHome:["Início",["O número grande é quanto deve ficar na conta no fim do mês (com o Saldo na conta informado) ou receitas − despesas.","“Vence nos próximos 10 dias” junta contas e faturas a pagar; o que venceu e não foi pago aparece em vermelho.","“Evolução do saldo” mostra quanto fica na conta no fim de cada mês (não soma a fatura do cartão como dinheiro); toque num mês para abrir.","“Posso comprar?” simula uma compra (à vista ou parcelada) antes de você fazer.","“Organizar início” muda a ordem dos blocos."]],
+  pHome:["Início",["O número grande é quanto deve ficar na conta no fim do mês (com o Saldo na conta informado) ou receitas − despesas.","“Vence nos próximos 10 dias” junta contas e faturas a pagar; o que venceu e não foi pago aparece em vermelho.","“Posso comprar?” simula uma compra (à vista ou parcelada) antes de você fazer.","“Organizar início” muda a ordem dos blocos."]],
   pMes:["Mês",["A linha do tempo mostra o que sai e entra na ordem dos dias; cada fatura de cartão aparece no dia do vencimento.","Arraste um lançamento para a esquerda para marcar pago / a pagar; toque para editar.","Fatura conta no mês em que vence, não no mês da compra.","“Por categoria” abre os lançamentos de cada categoria; “Orçamento” define um teto por categoria (e avisa ao passar de 80%).","A busca no topo procura em todos os meses."]],
   pCards:["Cartões",["Cada cartão mostra a fatura do mês, o limite livre e as próximas faturas.","Importe a fatura em PDF (ou OFX) do app do banco: o app confere com o que você já lançou, mescla os repetidos e cria as próximas parcelas.","“Fora da fatura do banco” e “Parecidos” ajudam a tirar lançamentos duplicados.","Fatura não paga no vencimento passa para a próxima, como o banco faz."]],
   pFx:["Moedas",["Registre compras de euro ou dólar: o app calcula o preço médio e quanto valem hoje.","A cotação atualiza sozinha; uma caixinha com meta pode somar essas compras."]],
