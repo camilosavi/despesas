@@ -1990,46 +1990,48 @@ function subList(){
   return Object.entries(G).map(([name,L])=>{
     L.sort((a,b)=>b.date.localeCompare(a.date));const ym=L[0].date.slice(0,7), cents=L.filter(x=>x.date.startsWith(ym)).reduce((s,x)=>s+amt(x),0);
     const card=cardOf(L[0]), sh=subShare()[name], back=sh?sh.n*sh.c:0;
-    let got=0;if(sh&&sh.c) inMonth(cur).filter(x=>typeOf(x)==="rec").forEach(x=>{const k=x.cents/sh.c;if(Number.isInteger(k)&&k>=1&&k<=3&&(x.cat==="divid"||/^Pix de /i.test(x.desc||"")))got+=k});
+    let got=0;if(sh&&sh.c) inMonth(cur).filter(x=>typeOf(x)==="rec").forEach(x=>{const k=shareK(x.cents,sh.c);if(k&&(x.cat==="divid"||/^Pix de /i.test(x.desc||"")))got+=k});
     return {name,cents,card,last:L[0],ym,sh,back,mine:Math.max(0,cents-back),got:Math.min(got,sh?sh.n:0),cat:L[0].cat};
   }).sort((a,b)=>b.cents-a.cents);
 }
 /* quem pagou a parte da assinatura no mês (pelos Pix/receitas de 1–3 × valor) e quem costuma pagar e ainda não pagou */
 function subPayers(name,sh){
   const cur=curYM(), who=x=>{const d=x.desc||"";const m=/·\s*(.+)$/.exec(d)||/^Pix de\s+(.+)$/i.exec(d);return m?m[1].trim():""};
-  const ok=x=>{if(typeOf(x)!=="rec")return false;const k=x.cents/sh.c;return Number.isInteger(k)&&k>=1&&k<=3&&(x.cat==="divid"&&(x.desc||"").startsWith(name)||/^Pix de /i.test(x.desc||""))};
+  const ok=x=>{if(typeOf(x)!=="rec")return false;const k=shareK(x.cents,sh.c);return k&&(x.cat==="divid"&&(x.desc||"").startsWith(name)||/^Pix de /i.test(x.desc||""))};
   const L=items.filter(x=>ok(x)&&(x.date||"").slice(0,7)>=shiftYM(cur,-3));
   const paid=[...new Set(L.filter(x=>x.date.startsWith(cur)).map(who).filter(Boolean))];
   const all=[...new Set(L.map(who).filter(Boolean))];
   return {paid,miss:all.filter(n=>!paid.some(p=>fold(p)===fold(n)))};
 }
 const waLink=t=>"https://wa.me/?text="+encodeURIComponent(t);
+/* quantas partes um valor recebido representa (1 a 3 meses), aceitando arredondamento de até 3 centavos por parte */
+const shareK=(cents,c)=>{for(let k=1;k<=3;k++)if(Math.abs(cents-k*c)<=3*k)return k;return 0};
 let subEdit=null;
 function subSection(){
   const L=subList();if(!L.length) return "";
   const tot=L.reduce((s,r)=>s+r.cents,0), mine=L.reduce((s,r)=>s+r.mine,0), cur=curYM();
   const row=r=>{const nxt=r.card?`fatura ${r.card} de ${shortMonth(r.ym>cur?r.ym:shiftYM(r.ym,1))}`:`~${fmtDM(shiftYM(r.last.date.slice(0,7),1)+r.last.date.slice(7))}`;
-    const sub=[nxt,r.sh?`${r.sh.n} × ${R(r.sh.c)} de volta · ${r.got} de ${r.sh.n} pagaram em ${shortMonth(cur)} · sai ${R(r.mine)} para você`:""].filter(Boolean).join(" · ");
+    const sub=[nxt,r.sh?`÷ ${r.sh.n+1} pessoas, ${R(r.sh.c)} cada · ${r.got} de ${r.sh.n} pagaram em ${shortMonth(cur)} · sai ${R(r.mine)} para você`:""].filter(Boolean).join(" · ");
     const ed=subEdit===r.name;
     return `<div class="subg"><button class="item rec-it" data-subdiv="${esc(r.name)}" aria-expanded="${ed}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit">${catIco("assin","desp")}<span class="t"><div class="d">${esc(r.name)}</div><div class="m">${esc(sub)}</div></span><span class="v">${R(r.cents)}<small style="display:block;font-weight:500;color:var(--muted)">${R(r.cents*12)}/ano</small></span></button>
       ${ed&&r.sh?(()=>{const P=subPayers(r.name,r.sh), mn=monthLabel(cur).split(" ")[0].toLowerCase(), first=n=>titleCase(n.split(" ")[0]);
         return `<div class="svedit" style="padding-bottom:0"><p class="hint" style="margin:0 0 6px">${P.paid.length?`Pagaram em ${mn}: ${esc(P.paid.map(first).join(", "))}.`:`Ninguém pagou em ${mn} ainda.`}${P.miss.length?` Faltam: ${esc(P.miss.map(first).join(", "))}.`:""}</p>
         ${P.miss.length?`<div class="btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${P.miss.map(n=>`<a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi, ${first(n)}! Falta o ${r.name} de ${mn}: ${R(r.sh.c)}. Valeu!`)}">Cobrar ${esc(first(n))} no WhatsApp</a>`).join("")}</div>`:""}
         <p class="hint" style="margin:0">Quem pagou nos últimos 3 meses entra na lista. O WhatsApp abre com a mensagem pronta; você escolhe o contato.</p></div>`})():""}
-      ${ed?`<div class="svedit"><p class="hint" style="margin:0 0 8px">Divide com outras pessoas? Diga quantas te pagam e quanto cada uma. Os Pix desse valor viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
-        <div class="svrow2"><input id="subN" inputmode="numeric" placeholder="Pessoas" value="${r.sh?r.sh.n:""}" aria-label="Quantas pessoas te pagam"><input id="subC" class="limin" inputmode="numeric" placeholder="R$ cada" value="${r.sh?brl(r.sh.c):""}" aria-label="Quanto cada uma paga"></div>
+      ${ed?`<div class="svedit"><p class="hint" style="margin:0 0 8px">Divide com outras pessoas? Diga entre quantas, <b>contando você</b>: cada um paga ${esc(R(r.cents))} ÷ pessoas. Os Pix desse valor viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
+        <div class="svrow2" style="grid-template-columns:1fr auto;align-items:center"><input id="subN" inputmode="numeric" placeholder="Pessoas (com você)" value="${r.sh?r.sh.n+1:""}" aria-label="Dividido entre quantas pessoas, contando você" data-subtot="${r.cents}"><span id="subEach" class="hint" style="margin:0;white-space:nowrap">${r.sh?R(r.sh.c)+" cada":"—"}</span></div>
         <div class="svbtns">${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary" id="subSave">Salvar</button></div></div>`:""}</div>`};
   return `<section id="subSec"><h2>Assinaturas <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">${L.map(row).join("")}</div>
     <p class="hint" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
 }
 async function subSave(off){
-  const n=off?0:parseInt(($("subN")?.value||"").replace(/\D/g,""),10)||0, c=off?0:digits($("subC")?.value||"");
-  if(!off&&(!n||!c)){toast("Diga quantas pessoas e quanto cada uma paga.");return}
+  const p=off?0:parseInt(($("subN")?.value||"").replace(/\D/g,""),10)||0, tot=+($("subN")?.dataset.subtot||0), n=p-1, c=p?Math.round(tot/p):0;
+  if(!off&&(p<2||!c)){toast("Diga entre quantas pessoas divide, contando você (2 ou mais).");return}
   const S={...subShare()};if(off)delete S[subEdit];else S[subEdit]={n,c};
   try{await saveCfg({subShare:S});subEdit=null;toast(off?"Divisão tirada":"Divisão salva",true);render()}catch(e){toast("Não deu para salvar.")}
 }
 /* Pix recebido que é a parte de alguém numa assinatura dividida (1 a 3 meses de uma vez) */
-function subShareOf(cents){for(const[name,sh] of Object.entries(subShare())){if(!sh||!sh.c)continue;const k=cents/sh.c;if(Number.isInteger(k)&&k>=1&&k<=3)return {name,k}}return null}
+function subShareOf(cents){for(const[name,sh] of Object.entries(subShare())){if(!sh||!sh.c)continue;const k=shareK(cents,sh.c);if(k)return {name,k}}return null}
 /* ---------- saída do parcelamento (por cartão): até quando vão as parcelas já lançadas ---------- */
 function parcPlan(c){
   const cur=curYM(), L=items.filter(x=>cardOf(x)===c&&!isPaid(x)&&(x.date||"").slice(0,7)>=cur&&(parcInfo(x)||/^Parcelamento da fatura/i.test(cleanDesc(x))));
@@ -3560,6 +3562,7 @@ document.addEventListener("change",e=>{
 });
 const maskIds=new Set(["cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
 document.addEventListener("input",e=>{
+  if(e.target.id==="subN"){const p=parseInt(e.target.value.replace(/\D/g,""),10)||0, t=+e.target.dataset.subtot||0;if($("subEach"))$("subEach").textContent=p>=2?R(Math.round(t/p))+" cada":"—";return}
   const id=e.target.id;
   if(id==="mSearch"){mq=e.target.value;$("mClear").hidden=!mq;clearTimeout(renderMes.t);renderMes.t=setTimeout(renderMes,180)}
   if(id==="fQ"){F.q=e.target.value;clearTimeout(renderPlan.t);renderPlan.t=setTimeout(()=>{renderPlan();const q=$("fQ");q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)}

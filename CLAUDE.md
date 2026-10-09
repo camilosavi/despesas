@@ -409,7 +409,8 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Assinaturas** (Ano, `subSection`): `subOf(x)` = nome conhecido em `SUBN` (YouTube, Google One, Apple, Prime, Udemy,
   Patreon, Netflix…) ou cat `assin`, sem parcela; últimos 3 meses + próximo. Valor = soma do mês mais recente; mostra /mês,
   /ano e "fatura X de <mês>". **Divisão** (assinatura dividida com pessoas que pagam a parte por Pix): tocar abre
-  pessoas × valor → `cfg.subShare[nome]={n,c}`; mostra "sai R$ X para você" e quantos pagaram no mês (receitas = 1–3 × c).
+  "dividido entre quantas pessoas, contando você" (pedido dele: valor ÷ pessoas) → `cfg.subShare[nome]={n: pessoas − 1, c: valor ÷ pessoas}`;
+  Pix com arredondamento (8,99 para 8,98) conta: `shareK` aceita até 3 centavos por parte; mostra "sai R$ X para você" e quantos pagaram no mês (receitas = 1–3 × c).
   Na importação do extrato, Pix recebido de 1–3 × c vira "<assinatura> (divisão) · Fulano", cat de receita `divid`
   ("Divisões", `subShareOf`). `recurSection` não repete o que é assinatura.
 - **Meta no ritmo** (caixinha com meta e mês-alvo, `svPace`): linha reta do 1º movimento (ou compra de moeda com `fxAll`)
