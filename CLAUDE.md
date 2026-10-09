@@ -153,6 +153,9 @@ card?, parc?:"i/n", group?, createdAt}`
   Pan, senão o cartão do próprio banco do extrato), fatura com vencimento de 5 dias antes a 10 dias depois do pagamento;
   se o valor bate (`closeC`) com o que está em aberto nela → `act:"payBill"` marca todos os itens pagos (`paidAt` = dia do
   pagamento). Não bate (ex.: entrada de parcelamento) → fica de fora com "tem R$ X em aberto (confira no cartão)".
+- **Vencimento do cartão vem do banco** (`dueFix`, out/2026): importar fatura (PDF/OFX/Open Finance) e o `ofSync`
+  (`balanceDueDate`) trocam o dia digitado à mão e marcam `dueBank`; depois disso só não troca quando o banco só
+  empurrou do sáb/dom para a segunda. `close` também vem do `balanceCloseDate` se faltar.
 - **Inter, nomes da fatura** (out/2026): "PIX CRED PARCELADO" → "Pix no crédito" (com parcela), "IOF CREDITO PARCELADO" →
   "IOF do Pix no crédito" (taxa); no Open Finance `ofPixWho` casa com o Pix da conta (mesmo dia ±1, total das parcelas
   = 1× a 1,6× o Pix) e vira "<quem recebeu> (Pix no crédito)" (Claro/Vivo/TIM/energia → Casa e contas); prefixo de intermediador ("EBN *", "PAYPAL *") sai do nome; Xsolla (Ubisoft+) → Assinaturas (e em `SUBN`); Steam/PSN/Xbox… → Lazer.

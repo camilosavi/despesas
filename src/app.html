@@ -3291,6 +3291,8 @@ async function ofSync(v){
   if(cr&&cd.availableCreditLimit!=null){const cs=credCards(), b=fold(ofBank(cr)), c=cs.find(x=>fold(x)===b)||cs.find(x=>fold(x).includes(b));
     const k=c&&{...((cfg.cards||{})[c]||{})};
     if(c&&(k.bankAtTs||0)<ts){Object.assign(k,{bankFree:ofCents(cd.availableCreditLimit),bankAt:day,bankAtTs:ts});if(!k.limit&&cd.creditLimit)k.limit=ofCents(cd.creditLimit);
+      if(cd.balanceDueDate){const dd=ofDay(cd.balanceDueDate);if(dueFix(k.due,dd,k.dueBank)){k.due=+dd.slice(8);k.dueBank=1}}
+      if(cd.balanceCloseDate&&!k.close)k.close=+ofDay(cd.balanceCloseDate).slice(8);
       patch.cards={...(cfg.cards||{}),[c]:k}}}
   if(Object.keys(patch).length){try{await saveCfg(patch)}catch(e){}}
 }
@@ -3388,6 +3390,14 @@ function ofFatura(acc){
     return {date:ofDay(t.date),desc:m.totalInstallments>1?parcTag(name,m.installmentNumber,m.totalInstallments):name,shop:"",cents:Math.round((+t.amount||0)*100),n:m.totalInstallments||1}});
   ofPixWho(rows);
   return {bank:ofBank(acc),due,rows,total:null,close:cd.balanceCloseDate?+String(cd.balanceCloseDate).slice(8,10):0};
+}
+/* Dia de vencimento do cartão vem do banco (PDF ou Open Finance): troca o que foi digitado, menos quando a diferença
+   é só o banco ter empurrado o vencimento do fim de semana para segunda (dia salvo cai em sáb/dom do mesmo mês). O dia
+   digitado à mão (sem `dueBank`) sempre dá lugar ao do banco. */
+function dueFix(cur,iso,bank){
+  if(!iso) return false;const d=+iso.slice(8);if(!cur) return true;if(+cur===d) return false;if(!bank) return true;
+  const [y,m]=iso.slice(0,7).split("-").map(Number), wd=new Date(y,m-1,+cur).getDay(), gap=d-cur;
+  return !(new Date(y,m-1,d).getDay()===1&&(wd===0||wd===6)&&gap>0&&gap<=2);
 }
 /* Pix no crédito: a fatura só diz "PIX CRED PARCELADO". O Pix que saiu da conta (mesmo dia, valor do "Crédito liberado")
    diz para quem foi. Casa pelo dia (±1) e pelo total das parcelas = valor do Pix + juros (1× a 1,6×). */
@@ -5200,8 +5210,8 @@ $("impSheet").addEventListener("submit",async e=>{
       else await store.items.add({type:"desp",desc:"Parcelado da fatura (volta nas parcelas)",cat:"cartao",cents:-imp.fin,pay:"Crédito",card,paid:true,date:impDate(fym),imp:tag,finOf:tag,createdAt:now+(n++)});
       finTxt=` · ${R(imp.fin)} tirado de ${monthLabel(fym).split(" ")[0].toLowerCase()}`}
     const dueDay=imp.due?+imp.due.slice(8):0;
-    {const o=((cfg.cards||{})[card]||{}), nd=dueDay&&!o.due, nc=imp.close&&o.close!==imp.close;
-      if(nd||nc){const cur={...(cfg.cards||{})};cur[card]={...o,...(nd?{due:dueDay}:{}),...(nc?{close:imp.close}:{})};await saveCfg({cards:cur})}}
+    {const o=((cfg.cards||{})[card]||{}), nd=dueDay&&dueFix(o.due,imp.due,o.dueBank), nc=imp.close&&o.close!==imp.close;
+      if(nd||nc){const cur={...(cfg.cards||{})};cur[card]={...o,...(nd?{due:dueDay,dueBank:1}:{}),...(nc?{close:imp.close}:{})};await saveCfg({cards:cur})}}
     const bill=imp.pre?(add.map(x=>x.date.slice(0,7)).sort()[0]||curYM()):imp.bill,imp0=imp;imp=null;closeSheets();view=bill;render();window.scrollTo(0,0);
     if(imp0&&imp0.onDone) await imp0.onDone();
     toast(`${add.length} ${add.length===1?"lançamento adicionado":"lançamentos adicionados"}${upd.length?` · ${upd.length} mesclados`:""}${finTxt}`);
