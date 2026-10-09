@@ -169,6 +169,11 @@ card?, parc?:"i/n", group?, createdAt}`
   windows-1252. Banco por BANKID/FID (`OFX_BANKS`) ou ORG. Conta → objeto do `parseExtrato` (MEMO "Tipo - detalhe" como no
   Nubank; "PIX TRANSF FULANO" vira who) → `openExtrato`, saldo de LEDGERBAL/DTASOF. Cartão (`<CCSTMTRS>`) → fatura
   (valor invertido, "- Parcela 2/5" → `parcTag`, pagamentos fora) → `bankCard` + `openImport`.
+- **Menos poluição** (out/2026, ele perguntou se tinha coisa demais): Início mostra **uma faixa por vez** (`oneBanner`:
+  conta no vermelho > Open Finance > primeiros passos > resumo do mês anterior > backup > compartilhar > instalar). No Ano,
+  as 3 primeiras seções ficam abertas e as outras **recolhidas** (`anoFold`/`anoToggle`, título com total, toque abre,
+  lembra em `despesas.anoOpen`; abre sozinha se estiver editando salário ou assinatura). "Dividir em duas formas" virou
+  **"Pagar com duas formas"** (não confundir com "Dividir com outras pessoas").
 - **Primeiro uso guiado** (`onbCard` no topo do Início, depois do "Começar do zero"): 3 passos — saldo na conta, cartões
   (ou "Não uso" → `cfg.onbNoCard`), receita — com ✓ quando feitos; some com tudo feito ou "Pular" (`cfg.onb`).
 - **Resumo do mês em imagem** (Mês → "Compartilhar resumo de <mês>", `mesShare`): canvas 1080×1350 nas cores do tema
@@ -322,7 +327,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   e apagar; o + lança compra já com esse pagamento. `credCards()` = cartões sem benefício (use nos lugares de fatura/crédito).
   Compras com benefício ficam pagas, entram nas categorias mas **não** em `sumT` nem na linha do tempo; o Mês mostra
   "Pago com <cartão>" e o Início tem o bloco `bens` (só aparece se houver).
-- **Dividir pagamento** ("+ Dividir em duas formas" no lançamento novo, só "Só uma vez"): cria 2 lançamentos com o mesmo
+- **Pagar com duas formas** ("+ Pagar com duas formas" no lançamento novo, só "Só uma vez"): cria 2 lançamentos com o mesmo
   `group` ("s…"), a 2ª parte com outra forma (e cartão, se Crédito); o resto fica na forma principal.
 - **Barra de baixo** (out/2026, pedido dele com print do Instagram): cápsula flutuante de vidro (`backdrop-filter`, cor do
   `--head` do tema), só ícones, pílula clara que desliza até a aba ativa (`--ti` no `nav.tabs`, setado em `go()`), e a

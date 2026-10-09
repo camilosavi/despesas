@@ -383,6 +383,12 @@ button.svmv .ed{color:var(--accent);font-weight:600;margin-left:8px}
 .hlconv .hlrow{grid-column:1/-1}
 .hlconv .hlrow:first-of-type{border-top:1px solid var(--line);margin-top:6px;padding-top:7px}
 .hlconv .hlrow small{grid-column:auto;font-size:.78rem}
+section.fold:not(.open) > :not(h2){display:none}
+section.fold > h2{cursor:pointer;user-select:none;justify-content:flex-start}
+section.fold > h2 > small,section.fold > h2 > button{margin-left:auto}
+section.fold > h2 .foldcar{display:inline-block;font-style:normal;margin-right:6px;transition:transform .2s;color:var(--muted)}
+section.fold.open > h2 .foldcar{transform:rotate(90deg)}
+section.fold:not(.open){margin-bottom:6px}
 .onbrow{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
 .onbn{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--chip);font-size:.9rem}
 .onbrow.ok .onbn{background:var(--accent);color:#fff}.onbrow.ok b{opacity:.6}
@@ -1898,7 +1904,7 @@ function renderHome(){
       `</div><p class="hint" style="margin-top:8px">O saldo do mês fica sempre no topo.</p><div class="row" style="margin-top:14px"><button class="btn primary" id="homeDone">Concluir</button></div></section>`;
     return;
   }
-  $("pHome").innerHTML=installBanner()+onbCard()+ofBanner()+negBanner()+shareBanner()+backupBanner()+recapCard()+o.map(homeBlock).join("")+`<div class="toolbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`;
+  $("pHome").innerHTML=oneBanner()+o.map(homeBlock).join("")+`<div class="toolbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`;
 }
 
 /* ---------- aba Mês ---------- */
@@ -1980,6 +1986,24 @@ function divSection(){
 }
 function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
   $("divHint").textContent=n>=2&&form.cents?`${R(Math.round(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
+/* Ano (out/2026): as 3 primeiras seções (próximos meses, dinheiro guardado, gráfico) ficam abertas; as outras ficam
+   recolhidas mostrando só o título com o total; tocar abre. Lembra o que ficou aberto (despesas.anoOpen, só no aparelho). */
+const anoOpenSet=()=>{try{return new Set(JSON.parse(lsGet("despesas.anoOpen")||"[]"))}catch(e){return new Set()}};
+function anoFold(){
+  const P=$("pAno");if(!P) return;const O=anoOpenSet();
+  [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<3||!h)return;
+    const k=(h.firstChild&&h.firstChild.textContent||h.textContent).trim().slice(0,30);
+    const force=(sec.id==="salSec"&&salXOpen)||(sec.id==="subSec"&&subEdit);
+    sec.classList.add("fold");sec.dataset.fold=k;sec.classList.toggle("open",force||O.has(k));
+    if(!h.querySelector(".foldcar"))h.insertAdjacentHTML("afterbegin",'<i class="foldcar" aria-hidden="true">›</i>');
+    h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",sec.classList.contains("open"))});
+}
+function anoToggle(sec){const k=sec.dataset.fold, O=anoOpenSet(), on=!sec.classList.contains("open");
+  sec.classList.toggle("open",on);sec.querySelector(":scope > h2")?.setAttribute("aria-expanded",on);
+  on?O.add(k):O.delete(k);lsSet("despesas.anoOpen",JSON.stringify([...O]))}
+/* Início mostra no máximo UMA faixa por vez (out/2026, ele achou que tinha coisa demais): a mais importante primeiro;
+   quando ela some (resolvida ou "Agora não"), aparece a seguinte. */
+function oneBanner(){for(const f of [negBanner,ofBanner,onbCard,recapCard,backupBanner,shareBanner,installBanner]){let h="";try{h=f()}catch(e){}if(h)return h}return ""}
 /* ---------- primeiro uso guiado (out/2026): 3 passos no Início para quem começa do zero; cfg.onb = 1 quando termina/pula ---------- */
 function onbCard(){
   if(!cfgLoaded||!cfg.seeded||cfg.onb||items.length>=8) return "";
@@ -3410,6 +3434,7 @@ function appBadge(){if(!("setAppBadge" in navigator)||!cfgLoaded)return;
 function render(){
   applyCats();header();clearTimeout(appBadge.t);appBadge.t=setTimeout(appBadge,400);clearTimeout(pushSync.t);pushSync.t=setTimeout(pushSync,2000);renderImport();updateFab();$("note").hidden=tab!=="pMe";
   ({pHome:renderHome,pMes:renderMes,pCards:renderCards,pPlan:renderPlan,pFx:renderFx,pAno:renderAno,pOrc:renderOrc,pMe:renderMe})[tab]();
+  if(tab==="pAno") anoFold();
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();
 }
@@ -3580,6 +3605,7 @@ document.addEventListener("click",async e=>{
   {const sb=t.closest("[data-subdiv]");if(sb){subEdit=subEdit===sb.dataset.subdiv?null:sb.dataset.subdiv;render();if(subEdit)setTimeout(()=>$("subN")?.focus(),30);return}}
   if(t.id==="subSave"){subSave(false);return}
   if(t.id==="canBuy"){canBuySheet();return}
+  {const fh=t.closest("section.fold > h2");if(fh&&!t.closest("button:not(h2),a,input,label,select")){anoToggle(fh.parentElement);return}}
   if(t.id==="lancHelpBtn"){const b=$("lancHelp");b.hidden=!b.hidden;if(!b.hidden){b.innerHTML=HELP.lanc[1].map(x=>`<p class="helpp">${esc(x)}</p>`).join("");b.scrollIntoView({block:"nearest",behavior:"smooth"})}return}
   {const hb=t.closest("[data-help]");if(hb){helpSheet(hb.dataset.help);return}}
   {const ob=t.closest("[data-onb]");if(ob){onbGo(ob.dataset.onb);return}}
@@ -3761,7 +3787,7 @@ function chips(){
   // dividir pagamento em duas formas
   const sp=$("splitField");sp.hidden=form.type!=="desp"||!!editing;
   if(!sp.hidden){
-    if(!form.split) sp.innerHTML=`<button type="button" class="chip add" id="splitOn">+ Dividir em duas formas</button>`;
+    if(!form.split) sp.innerHTML=`<button type="button" class="chip add" id="splitOn">+ Pagar com duas formas</button>`;
     else{const p2=form.pay2||PY.find(p=>p!==form.pay)||"Débito";form.pay2=p2;const keep=$("splitVal")?.value||"";
       sp.innerHTML=`<span class="lbl">Parte paga com outra forma <button type="button" class="lk" id="splitOff">tirar</button></span>
         <div class="two"><input type="text" id="splitVal" class="splitin" inputmode="numeric" placeholder="R$ 0,00" value="${esc(keep)}" aria-label="Valor da segunda parte"><span class="hint" id="splitHint" style="align-self:center"></span></div>
@@ -3860,7 +3886,7 @@ $("sheet").addEventListener("submit",async e=>{
   let split=null;
   if(isD&&!editing&&form.split){const v=digits($("splitVal")?.value);
     if(!v||v>=form.cents){err("err",!v?"Digite quanto foi pago com a outra forma.":"A parte dividida tem que ser menor que o total.");return}
-    if($("rep").value!=="1"){err("err","Dividir funciona só com “Só uma vez”.");return}
+    if($("rep").value!=="1"){err("err","Pagar com duas formas funciona só com “Só uma vez”.");return}
     const p2=form.pay2;split={...base,cents:v,pay:p2,card:p2==="Crédito"&&form.card2&&form.card2!=="Outro"?form.card2:"",paid:benOf({pay:p2})?true:base.paid};delete split.paidAt;if(split.paid&&!benOf(split)&&p2!=="Crédito")split.paidAt=Date.now();base.cents=form.cents-v}
   if(!editing&&split){$("saveBtn").disabled=true;
     try{const now=Date.now(),group="s"+now;await store.items.add({...base,group,createdAt:now});await store.items.add({...split,group,createdAt:now+1});
