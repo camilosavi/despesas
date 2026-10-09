@@ -372,6 +372,12 @@ button.svmv .ed{color:var(--accent);font-weight:600;margin-left:8px}
 .hlconv .hlrow{grid-column:1/-1}
 .hlconv .hlrow:first-of-type{border-top:1px solid var(--line);margin-top:6px;padding-top:7px}
 .hlconv .hlrow small{grid-column:auto;font-size:.78rem}
+.onbrow{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.onbn{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--chip);font-size:.9rem}
+.onbrow.ok .onbn{background:var(--accent);color:#fff}.onbrow.ok b{opacity:.6}
+.onbt{display:grid;gap:3px;min-width:0}.onbt small{color:var(--muted);font-size:.84rem;line-height:1.35}
+.onbb{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.helpp{margin:12px 0;line-height:1.45;font-size:.95rem}
 .spgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
 .spgrid div{background:var(--soft,rgba(127,127,127,.08));border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;justify-content:space-between;gap:2px;border:1.5px solid transparent}
 .spgrid div.on{border-color:var(--accent)}
@@ -917,7 +923,7 @@ nav.tabs.onme::before{opacity:0}
 <form class="sheet" id="sheet" hidden autocomplete="off">
   <div class="grip"></div>
   <h3><span id="sheetTitle">Novo lançamento</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar fatura ou conta (PDF)</span><input type="file" class="pdfany" accept="application/pdf,.pdf" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
+  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar fatura ou conta (PDF)</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
   <div class="seg" id="typeSeg"><button type="button" data-type="desp">Despesa</button><button type="button" data-type="rec">Receita</button></div>
   <div class="amount"><span>R$</span><input id="amt" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
   <div class="field"><label for="desc">Descrição</label><input type="text" id="desc" placeholder="Ex.: mercado, fatura Inter, salário" maxlength="80"></div>
@@ -942,8 +948,10 @@ nav.tabs.onme::before{opacity:0}
     <span class="hint" id="repHint"></span>
   </div>
   <p class="err" id="err"></p>
+  <div class="card" id="lancHelp" hidden style="padding:4px 14px;margin-bottom:10px"></div>
   <div class="row">
     <button type="button" class="btn danger" id="delBtn" hidden>Excluir</button>
+    <button type="button" class="btn soft" id="lancHelpBtn" aria-label="Como funciona o lançamento" style="flex:0 0 auto;min-width:48px">?</button>
     <button type="submit" class="btn primary" id="saveBtn">Salvar</button>
   </div>
 </form>
@@ -1758,11 +1766,11 @@ function contaBlock(){
         :`<input type="text" id="acn_${i}" class="limin" maxlength="24" placeholder="Banco" value="${esc(a.name)}" aria-label="Nome da conta">`;
       return `<div class="acrow">${cs.length&&!a.free?cardBadge(a.name||cs[0]):""}${nm}<input type="text" id="acv_${i}" class="limin" inputmode="numeric" placeholder="R$ 0,00" value="${a.cents?brl(a.cents):""}" aria-label="Saldo"><button class="acdel" data-acdel="${i}" aria-label="Tirar conta" ${acDraft.length<2?"hidden":""}>×</button></div>`}).join("")+
     `<div class="toolbar" style="margin:0"><button class="tbtn" id="acAdd">+ Outra conta</button></div><div class="row" style="margin:0">${A.length?`<button class="btn soft" id="acCancel">Cancelar</button>`:""}<button class="btn primary" id="acSave">Salvar saldo</button></div></div></section>`;
-  if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf" hidden></label></section>`;
+  if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></section>`;
   const tot=accBal(), mv=accMoves(), fl=accFlow(ym), open=fl.out, after=endBal(ym);
   const at=A.map(a=>a.at).filter(Boolean).sort()[0], old=at&&at<addDays(today(),-3);
   return `<section><h2>Saldo na conta <small>${at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""}</small></h2><div class="card rate">
-    <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div>${A.length===1&&A[0].name?`<div class="src">${esc(A[0].name)}</div>`:""}${mv.out||mv.inn?`<div class="src">informado ${R(A.reduce((s,a)=>s+a.cents,0))}${mv.out?` · −${R(mv.out)} pago depois`:""}${mv.inn?` · +${R(mv.inn)} recebido`:""}</div>`:""}</div><div style="display:grid;gap:6px;justify-items:end"><button class="tbtn" id="acEdit">Atualizar</button><label class="tbtn" style="cursor:pointer">Extrato (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf" hidden></label></div></div>
+    <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div>${A.length===1&&A[0].name?`<div class="src">${esc(A[0].name)}</div>`:""}${mv.out||mv.inn?`<div class="src">informado ${R(A.reduce((s,a)=>s+a.cents,0))}${mv.out?` · −${R(mv.out)} pago depois`:""}${mv.inn?` · +${R(mv.inn)} recebido`:""}</div>`:""}</div><div style="display:grid;gap:6px;justify-items:end"><button class="tbtn" id="acEdit">Atualizar</button><label class="tbtn" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></div></div>
     ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${R(a.cents)}</b></div>`).join("")}</div>`:""}
     <div class="cmp">${fl.inn?`<div><span>Ainda entra em ${mn}</span><b class="pos">+ ${R(fl.inn)}</b></div>`:""}<div><span>Falta pagar em ${mn}${fl.late?` <small>(${R(fl.late)} atrasado)</small>`:""}</span><b>${R(open)}</b></div><div><span>${after>=0?`Sobra no fim de ${mn}`:"Vai faltar"}</span><b class="${after>=0?"pos":"neg"}">${R(Math.abs(after))}</b></div></div>
     ${after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:""}
@@ -1879,7 +1887,7 @@ function renderHome(){
       `</div><p class="hint" style="margin-top:8px">O saldo do mês fica sempre no topo.</p><div class="row" style="margin-top:14px"><button class="btn primary" id="homeDone">Concluir</button></div></section>`;
     return;
   }
-  $("pHome").innerHTML=installBanner()+ofBanner()+negBanner()+shareBanner()+backupBanner()+recapCard()+o.map(homeBlock).join("")+`<div class="toolbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`;
+  $("pHome").innerHTML=installBanner()+onbCard()+ofBanner()+negBanner()+shareBanner()+backupBanner()+recapCard()+o.map(homeBlock).join("")+`<div class="toolbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button></div>`;
 }
 
 /* ---------- aba Mês ---------- */
@@ -1929,6 +1937,7 @@ function renderMes(){
         (open?`<div class="tlitems">${L.map(itemHTML).join("")}</div>`:"")+`</div>`}).join("")}</div></div></section>`;
   }
   h+=feeSection(view);
+  h+=`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`;
   $("mBody").innerHTML=h;
 }
 /* ---------- despesa dividida com outras pessoas (out/2026, pedido dele: "serve pra despesas também", ex.: Airbnb em 5) ----------
@@ -1960,6 +1969,67 @@ function divSection(){
 }
 function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
   $("divHint").textContent=n>=2&&form.cents?`${R(Math.round(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
+/* ---------- primeiro uso guiado (out/2026): 3 passos no Início para quem começa do zero; cfg.onb = 1 quando termina/pula ---------- */
+function onbCard(){
+  if(!cfgLoaded||!cfg.seeded||cfg.onb||items.length>=8) return "";
+  const S=[["conta","Quanto tem na conta","O saldo do banco hoje. Com ele o app mostra quanto sobra no fim do mês.",accts().length>0,"Informar saldo"],
+    ["cartao","Seus cartões de crédito","Limite e dia de vencimento. Compras no crédito caem na fatura certa.",credCards().length>0||cfg.onbNoCard,"Adicionar cartão","Não uso"],
+    ["renda","O que você recebe","Lance o salário quando cair (ou importe o holerite em PDF). Dá a ideia do mês.",items.some(x=>typeOf(x)==="rec")||!!cfg.hol,"Lançar receita"]];
+  const done=S.filter(x=>x[3]).length;
+  if(done===S.length){saveCfg({onb:1}).catch(()=>{});return ""}
+  return `<section><div class="card banner onb"><strong>Vamos começar · ${done} de ${S.length}</strong><p>Três passos rápidos e o app já mostra o seu mês. Tudo fica só neste aparelho.</p>
+    ${S.map(([k,t,d,ok,b1,b2],i)=>`<div class="onbrow ${ok?"ok":""}"><span class="onbn">${ok?"✓":i+1}</span><span class="onbt"><b>${t}</b><small>${d}</small>${ok?"":`<span class="onbb"><button class="tbtn go" data-onb="${k}">${b1}</button>${b2?`<button class="tbtn" data-onbno="${k}">${b2}</button>`:""}</span>`}</span></div>`).join("")}
+    <div class="row" style="margin-top:6px"><button class="btn soft" id="onbSkip">Pular</button><button class="btn soft" data-help="pHome">Como o app funciona</button></div></div></section>`;
+}
+function onbGo(k){
+  if(k==="conta"){$("acEdit")?.click();setTimeout(()=>document.querySelector(".acrow")?.scrollIntoView({block:"center",behavior:"smooth"}),120);return}
+  if(k==="cartao"){backTo="pHome";selCard=null;go("pCards");setTimeout(openCardSheet,60);return}
+  if(k==="renda"){form={...form,type:"rec"};openSheet()}
+}
+/* ---------- resumo do mês em imagem (out/2026): cartão 1080×1350 para guardar ou mandar ---------- */
+async function mesShare(ym){
+  const a=inMonth(ym), inn=sumT(a,"rec"), out=sumT(a,"desp"), bal=inn-out, by=byCat(a,"desp"), fee=a.filter(isFee).reduce((s,x)=>s+amt(x),0);
+  const ks=Object.keys(by).filter(k=>by[k]>0).sort((p,q)=>by[q]-by[p]).slice(0,6), mx=Math.max(1,...ks.map(k=>by[k]));
+  const cs=getComputedStyle(document.documentElement), cv=v=>{const m=/var\((--[\w-]+)\)/.exec(v);return m?cs.getPropertyValue(m[1]).trim()||"#888":v};
+  const col=n=>cs.getPropertyValue(n).trim(), font=getComputedStyle(document.body).fontFamily||"system-ui";
+  const W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d");
+  const txt=(t,x,y,sz,w,clr,al)=>{g.font=`${w||500} ${sz}px ${font}`;g.fillStyle=clr||col("--ink");g.textAlign=al||"left";g.fillText(t,x,y)};
+  const rr=(x,y,w,h,r,f)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h);g.fillStyle=f;g.fill()};
+  g.fillStyle=col("--bg")||"#fff";g.fillRect(0,0,W,H);
+  rr(0,0,W,380,0,col("--head")||"#0f5132");
+  txt("Resumo de "+monthLabel(ym).toLowerCase(),72,120,44,600,"#ffffffcc");
+  txt((bal<0?"−":"")+R(Math.abs(bal)),72,230,96,700,"#fff");
+  txt(bal<0?"gastou mais do que entrou":"sobrou no mês",72,290,36,500,"#ffffffb0");
+  const box=(x,lbl,v,clr)=>{rr(x,330,450,150,28,col("--surface")||"#fff");txt(lbl,x+32,385,30,600,col("--muted"));txt(R(v),x+32,450,48,700,clr)};
+  box(72,"ENTROU",inn,col("--pos")||"#12a57e");box(558,"SAIU",out,col("--neg")||"#d9534f");
+  txt("Para onde foi",72,570,36,700);
+  ks.forEach((k,i)=>{const y=620+i*100, cc=catOf(k,"desp");txt(cc.n,72,y+30,32,500);txt(R(by[k]),W-72,y+30,32,700,col("--ink"),"right");
+    rr(72,y+48,W-144,16,8,col("--chip")||"#eee");rr(72,y+48,Math.max(16,(W-144)*by[k]/mx),16,8,cv(cc.c))});
+  let y=620+ks.length*100+20;
+  if(fee){txt(`Juros, IOF e tarifas: ${R(fee)}`,72,y+20,32,600,col("--neg")||"#d9534f");y+=60}
+  txt("Minhas Despesas",W/2,H-60,28,600,col("--muted"),"center");
+  const blob=await new Promise(r=>c.toBlob(r,"image/png")), f=new File([blob],`resumo-${ym}.png`,{type:"image/png"});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"Resumo de "+monthLabel(ym)});return}}catch(e){if(e&&e.name==="AbortError")return}
+  const u=URL.createObjectURL(blob), l=document.createElement("a");l.href=u;l.download=f.name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast("Imagem salva",true);
+}
+/* ---------- ajuda em cada tela (out/2026): "Como funciona esta tela" no fim de cada aba ---------- */
+const HELP={
+  pHome:["Início",["O número grande é quanto deve ficar na conta no fim do mês (com o Saldo na conta informado) ou receitas − despesas.","“Vence nos próximos 10 dias” junta contas e faturas a pagar; o que venceu e não foi pago aparece em vermelho.","“Posso comprar?” simula uma compra (à vista ou parcelada) antes de você fazer.","“Organizar início” muda a ordem dos blocos."]],
+  pMes:["Mês",["A linha do tempo mostra o que sai e entra na ordem dos dias; cada fatura de cartão aparece no dia do vencimento.","Arraste um lançamento para a esquerda para marcar pago / a pagar; toque para editar.","Fatura conta no mês em que vence, não no mês da compra.","“Por categoria” abre os lançamentos de cada categoria; “Orçamento” define um teto por categoria (e avisa ao passar de 80%).","A busca no topo procura em todos os meses."]],
+  pCards:["Cartões",["Cada cartão mostra a fatura do mês, o limite livre e as próximas faturas.","Importe a fatura em PDF (ou OFX) do app do banco: o app confere com o que você já lançou, mescla os repetidos e cria as próximas parcelas.","“Fora da fatura do banco” e “Parecidos” ajudam a tirar lançamentos duplicados.","Fatura não paga no vencimento passa para a próxima, como o banco faz."]],
+  pFx:["Moedas",["Registre compras de euro ou dólar: o app calcula o preço médio e quanto valem hoje.","A cotação atualiza sozinha; uma caixinha com meta pode somar essas compras."]],
+  pAno:["Ano",["Os próximos meses mostram quanto entra, sai e fica na conta.","Caixinhas guardam dinheiro com meta e mês-alvo (e dizem se está no ritmo).","Salário previsto aprende com seus holerites; ali também dá para prever aumento, 13º e férias.","Assinaturas e Contas divididas mostram quem já te pagou a parte e têm botão para cobrar no WhatsApp."]],
+  pMe:["Você",["Aparência, senha e Face ID, avisos de vencimento, categorias e backup.","Seus dados ficam só neste aparelho. Faça backup de vez em quando (o app lembra) ou sincronize com o Google Drive se estiver disponível.","Importar planilha traz o que você controlava no Excel."]],
+  lanc:["Lançamento",["Despesa ou receita, valor, categoria e forma de pagamento.","No Crédito o app põe na fatura certa sozinho. “Parcelar ou repetir” cria os meses seguintes.","“Dividir com outras pessoas” marca quanto é a sua parte; os Pix de volta entram em Contas divididas.","“Importar fatura ou conta” lê PDF ou OFX do banco."]]
+};
+function helpLink(k){return HELP[k]?`<div class="toolbar helpbar" style="justify-content:center;margin:22px 0 4px"><button class="tbtn" data-help="${k}">Como funciona esta tela</button></div>`:""}
+function helpSheet(k){
+  const H=HELP[k]||HELP.pHome;closeSheets(true);
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Como funciona: ${esc(H[0])}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+    <div class="card" style="padding:4px 16px">${H[1].map(t=>`<p class="helpp">${esc(t)}</p>`).join("")}</div>
+    <p class="hint" style="margin:10px 2px 0">Cada tela tem esta ajuda no fim. Seus dados ficam só neste aparelho.</p>`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
 /* ---------- "Posso comprar?" (out/2026): simula a compra antes de fazer ---------- */
 let cbuy={v:0,n:1,w:""};
 function canBuySheet(){
@@ -2456,7 +2526,7 @@ function renderCards(){
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
       return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
-      `</div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar fatura ou conta (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
+      `</div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar fatura ou conta (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
@@ -3329,6 +3399,7 @@ function appBadge(){if(!("setAppBadge" in navigator)||!cfgLoaded)return;
 function render(){
   applyCats();header();clearTimeout(appBadge.t);appBadge.t=setTimeout(appBadge,400);clearTimeout(pushSync.t);pushSync.t=setTimeout(pushSync,2000);renderImport();updateFab();$("note").hidden=tab!=="pMe";
   ({pHome:renderHome,pMes:renderMes,pCards:renderCards,pPlan:renderPlan,pFx:renderFx,pAno:renderAno,pOrc:renderOrc,pMe:renderMe})[tab]();
+  {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();
 }
 /* confete quando uma caixinha bate a meta. cfg.svCel guarda "id:meta" já comemorados (idempotente);
@@ -3498,6 +3569,12 @@ document.addEventListener("click",async e=>{
   {const sb=t.closest("[data-subdiv]");if(sb){subEdit=subEdit===sb.dataset.subdiv?null:sb.dataset.subdiv;render();if(subEdit)setTimeout(()=>$("subN")?.focus(),30);return}}
   if(t.id==="subSave"){subSave(false);return}
   if(t.id==="canBuy"){canBuySheet();return}
+  if(t.id==="lancHelpBtn"){const b=$("lancHelp");b.hidden=!b.hidden;if(!b.hidden){b.innerHTML=HELP.lanc[1].map(x=>`<p class="helpp">${esc(x)}</p>`).join("");b.scrollIntoView({block:"nearest",behavior:"smooth"})}return}
+  {const hb=t.closest("[data-help]");if(hb){helpSheet(hb.dataset.help);return}}
+  {const ob=t.closest("[data-onb]");if(ob){onbGo(ob.dataset.onb);return}}
+  {const on=t.closest("[data-onbno]");if(on){saveCfg({onbNoCard:1}).then(render).catch(()=>{});return}}
+  if(t.id==="onbSkip"){saveCfg({onb:1}).then(render).catch(()=>{});return}
+  if(t.id==="mesShare"){mesShare(view);return}
   if(t.id==="cbGo"){canBuyGo();return}
   if(t.id==="salXSave"){salXSave(false);return}
   if(t.id==="salXClear"){salXSave(true);return}
@@ -3586,7 +3663,7 @@ document.addEventListener("change",e=>{
   if(e.target.classList&&e.target.classList.contains("xlsany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();openXls(f);return}
   if(e.target.closest&&e.target.closest("#xlsSheet")){xlSync(e.target);return}
   if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";closeSheets();readMany(F);return}
-  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();readInvoice(f,true);return}
+  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else readInvoice(f,true);return}
   if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
 });
@@ -3720,7 +3797,7 @@ function openSheet(x){
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
@@ -4008,7 +4085,7 @@ function parsePan(pages,all){
 /* o que o app já sabe ler (mostrado na lista de cartões e na tela Você) — manter em dia quando calibrar um layout novo */
 const READS=[["Faturas de cartão","Inter, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
-  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
+  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
 const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
 /* PicPay (out/2026, fatura de uma amiga do Camilo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
    colunas, "DD/MM  ESTABELECIMENTO  valor" (sem R$; negativo = pagamento/crédito), um bloco por cartão (titular e "final XXXX");
@@ -4106,6 +4183,8 @@ async function readMany(files){
   else{go("pAno");setTimeout(()=>{$("salSec")?.scrollIntoView({block:"start"});toast(msg,true)},250)}
 }
 async function readInvoice(file,auto){
+  try{const head=new TextDecoder("latin1").decode(new Uint8Array(await file.slice(0,600).arrayBuffer()));
+    if(/OFXHEADER|<OFX>/i.test(head)){readOfx(file);return}}catch(e){}
   let card=auto?null:selCard;
   toast("Lendo o PDF…");
   let pages=null,info=null;lastPdf=null;
@@ -4135,6 +4214,41 @@ async function readInvoice(file,auto){
     if(info&&info.cancelou&&!(pages&&pages.length)){toast("Leitura cancelada.");return}
     lastPdf={pages:pages||[],info,err:`${e&&e.name||"Erro"}: ${e&&e.message||e}`};
     openDiag(pages&&pages.length?"O leitor travou nesse PDF.":"Não deu para abrir esse PDF.")}
+}
+/* ---------- extrato OFX (out/2026, para amigos de qualquer banco) ----------
+   Formato padrão que quase todo banco exporta (Nubank, Itaú, Bradesco, Caixa, BB, Santander…). Conta corrente vira o mesmo
+   objeto do parseExtrato → openExtrato (mesmas regras); cartão de crédito (CCSTMTRS) vira fatura → openImport. */
+const OFX_BANKS={"0260":"Nubank","260":"Nubank","341":"Itaú","0341":"Itaú","237":"Bradesco","0237":"Bradesco","104":"Caixa","0104":"Caixa","001":"Banco do Brasil","1":"Banco do Brasil","033":"Santander","0033":"Santander","33":"Santander","077":"Inter","0077":"Inter","77":"Inter","336":"C6","0336":"C6","290":"PagBank","380":"PicPay","323":"Mercado Pago","623":"Pan","0623":"Pan","212":"Original","756":"Sicoob","748":"Sicredi","655":"Neon","208":"BTG"};
+async function readOfx(file){
+  try{
+    const buf=new Uint8Array(await file.arrayBuffer()), head=new TextDecoder("latin1").decode(buf.slice(0,600));
+    let txt;try{txt=new TextDecoder("utf-8",{fatal:true}).decode(buf)}catch(e){txt=new TextDecoder("windows-1252").decode(buf)}
+    const tv=(b,t)=>{const m=new RegExp("<"+t+">\\s*([^<\\r\\n]*)","i").exec(b);return m?m[1].trim():""};
+    const dt=v=>v&&v.length>=8?`${v.slice(0,4)}-${v.slice(4,6)}-${v.slice(6,8)}`:"";
+    const cents=v=>Math.round(parseFloat(String(v).replace(",","."))*100)||0;
+    const isCard=/<CCSTMTRS>/i.test(txt), bid=tv(txt,"BANKID")||tv(txt,"FID"), org=tv(txt,"ORG");
+    const ORGS=[[/nu ?pagamentos|nubank/i,"Nubank"],[/ita[uú]/i,"Itaú"],[/bradesco/i,"Bradesco"],[/caixa/i,"Caixa"],[/banco do brasil|\bbb\b/i,"Banco do Brasil"],[/santander/i,"Santander"],[/inter\b/i,"Inter"],[/c6/i,"C6"],[/pagseguro|pagbank/i,"PagBank"],[/picpay/i,"PicPay"],[/mercado ?pago/i,"Mercado Pago"],[/\bpan\b/i,"Pan"]];
+    const bank=OFX_BANKS[bid]||OFX_BANKS[bid.replace(/^0+/,"")]||(ORGS.find(([re])=>re.test(org))||[])[1]||(org?titleCase(org.replace(/^banco\s+/i,"")):"")||"Conta";
+    const T=txt.split(/<STMTTRN>/i).slice(1).map(b=>{b=b.split(/<\/STMTTRN>/i)[0];return {type:tv(b,"TRNTYPE"),date:dt(tv(b,"DTPOSTED")),cents:cents(tv(b,"TRNAMT")),memo:(tv(b,"MEMO")||tv(b,"NAME")).replace(/\s+/g," ").trim(),name:tv(b,"NAME")}}).filter(t=>t.date&&t.cents);
+    if(!T.length){toast("Esse OFX não tem movimentos.");return}
+    if(isCard){
+      const rows=T.map(t=>{let d=t.memo;const pm=/\s*[-–]?\s*parcela\s*(\d+)\s*\/\s*(\d+)\s*$/i.exec(d);if(pm)d=d.slice(0,pm.index).trim();
+        return {date:t.date,desc:pm?parcTag(d,+pm[1],+pm[2]):d,shop:"",cents:-t.cents}}).filter(r=>!(r.cents<0&&/pagamento|pgto/i.test(r.desc)));
+      const r={bank,due:"",rows,total:null,close:0};
+      if(bank==="Conta"){pickCard(r);return}
+      const card=await bankCard(bank);openImport(card,r);imp.onDone=()=>{selCard=card;backTo=tab;go("pCards")};return}
+    const bal=tv(txt,"BALAMT"), asof=tv(txt,"DTASOF"), at=dt(asof)||today();
+    const atTs=asof.length>=12?new Date(+asof.slice(0,4),+asof.slice(4,6)-1,+asof.slice(6,8),+asof.slice(8,10),+asof.slice(10,12)).getTime():new Date(at+"T23:59:00").getTime();
+    const rows=T.map(t=>{
+      const parts=t.memo.split(/\s+-\s+/), out=t.cents<0;
+      let kind=parts.length>1?parts[0]:t.memo, det=parts.length>1?parts[1]:"";
+      if(parts.length<2&&/^(pix|ted|doc|transf)/i.test(t.memo)){kind=t.memo.split(" ").slice(0,2).join(" ");det=t.memo.replace(/^(pix|ted|doc|transf\w*)\s*(transf\w*|enviad\w*|recebid\w*|qrs?|qr code|env|rec)?\s*/i,"").replace(/\s\d{2}\/\d{2}$/,"").trim()}
+      const deb=/compra|d[eé]bito|cart[aã]o|^pos$/i.test(kind)||t.type==="POS";
+      return {date:t.date,cents:t.cents,kind,det,who:deb?"":det,shop:deb?(det||t.memo).replace(/\s{2,}.*$/,""):""};
+    });
+    const ds=T.map(t=>t.date).sort();
+    openExtrato({bank,at,atTs,bal:bal?cents(bal):null,holder:"",rows,from:dt(tv(txt,"DTSTART"))||ds[0],to:dt(tv(txt,"DTEND"))||ds[ds.length-1]});
+  }catch(e){toast("Não consegui ler esse OFX.")}
 }
 /* colar um PDF copiado (onde o sistema deixa: no iPhone o Safari só entrega texto e imagem) */
 async function pastePdf(){

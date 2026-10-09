@@ -164,6 +164,17 @@ card?, parc?:"i/n", group?, createdAt}`
   cartão → "já lançado" ou "marca como pago"; o resto vira lançamento pago (compra no débito → `invoiceEntry` para nome e
   categoria; Pix → "Pix de/para X", Outras receitas/Outros). `imp:"extrato-…"` evita importar de novo; `paidAt`/`createdAt`
   = dia do movimento (antes do `atTs`), então não descontam/somam de novo no `accBal()`.
+- **Extrato OFX** (out/2026, para os amigos de qualquer banco): `readOfx` (pelo nome .ofx/.qfx ou pelo conteúdo
+  "OFXHEADER"/"<OFX>" dentro do `readInvoice`; os inputs "Importar fatura ou conta" e "Extrato" aceitam OFX). UTF-8, senão
+  windows-1252. Banco por BANKID/FID (`OFX_BANKS`) ou ORG. Conta → objeto do `parseExtrato` (MEMO "Tipo - detalhe" como no
+  Nubank; "PIX TRANSF FULANO" vira who) → `openExtrato`, saldo de LEDGERBAL/DTASOF. Cartão (`<CCSTMTRS>`) → fatura
+  (valor invertido, "- Parcela 2/5" → `parcTag`, pagamentos fora) → `bankCard` + `openImport`.
+- **Primeiro uso guiado** (`onbCard` no topo do Início, depois do "Começar do zero"): 3 passos — saldo na conta, cartões
+  (ou "Não uso" → `cfg.onbNoCard`), receita — com ✓ quando feitos; some com tudo feito ou "Pular" (`cfg.onb`).
+- **Resumo do mês em imagem** (Mês → "Compartilhar resumo de <mês>", `mesShare`): canvas 1080×1350 nas cores do tema
+  (entrou, saiu, sobrou, 6 maiores categorias, juros) → compartilhar do celular (`navigator.share` com arquivo) ou baixar.
+- **Ajuda** (`HELP`, `helpLink`/`helpSheet`): "Como funciona esta tela" no fim de cada aba (posto pelo `render()`); no
+  lançamento, botão "?" ao lado de Salvar abre a ajuda dentro do formulário (`#lancHelp`, não fecha o que foi digitado).
 - **Holerite em PDF** (out/2026): o mesmo "Importar PDF" (no lançamento, vira "Importar holerite (PDF)" quando o tipo é
   Receita) tenta `parseHolerite` antes da fatura. Reconhece "Demonstrativo/Recibo de Pagamento", "Holerite", "Contracheque"
   com "Valor Líquido"; lê por posição (`pdfLines`): líquido abaixo do rótulo, Data Crédito, Mês de Referência, empresa e os
