@@ -415,6 +415,11 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   se `lastUpdatedAt` ≠ visto, busca, roda `ofSync` e conta o que falta (`ofCount`: extPlan marcados + itens da fatura sem
   parecido) → faixa no topo do Início (`ofBanner`, "Importar conta"/"Importar fatura"/"Agora não"). Visto (`ofSeen`) ao
   importar pela faixa, dispensar ou "Buscar de novo".
+- **Evolução do saldo** (bloco `evol` do Início, out/2026, ideia da tela do Meu Pluggy com outra fonte): `evolBlock()` —
+  linha "na conta no fim de cada mês". Não soma fatura como dinheiro (a da Pluggy somava conta + fatura + investimento).
+  Pontos: até 4 meses passados (último `accBal()` visto no mês, `despesas.balHist`, só no aparelho, `balHistSave()` no
+  `renderHome`), "hoje" (`accBal()`) e os próximos 12 meses (`endBal`, tracejado). Sem Saldo na conta: só `endBal`.
+  Negativo em vermelho com linha do R$ 0; tocar num mês abre o Mês. Ordem salva sem `evol` → entra depois de `bens`.
 - **Instalar app** (out/2026, `installBanner()` no topo do Início, só fora do app instalado): Android/Chrome guarda o
   `beforeinstallprompt` (`instEvt`) → botão "Instalar" (vira WebAPK; não precisa de APK/Play Store); iPhone (`IS_IOS`) →
   passo a passo Compartilhar → Adicionar à Tela de Início e, se já tem lançamentos, pede backup antes (no iPhone o app
