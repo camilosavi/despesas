@@ -418,6 +418,13 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Saindo do parcelamento** (tela do cartão, `parcSection`/`parcPlan`): parcelas em aberto do mês atual em diante,
   separando parcelamento da fatura (cat `cartao`/"Juros parcelado") de compras parceladas; quando cada um termina, mês em
   que a fatura volta ao normal e juros/IOF/tarifas do cartão nos últimos 3 meses.
+- **Despesa dividida** (out/2026, pedido dele: "serve pra despesas também", ex.: Airbnb parcelado em 5 pessoas): campo
+  "Dividir com outras pessoas" no lançamento (`#divN`, quantas contando ele) → `x.div`; numa compra parcelada vale para
+  todas as parcelas (`buySeries`: mesmo `group`, ou mesmo cartão + nome + nº de parcelas + valor). Lista mostra "÷N, sua
+  parte R$ X". Ano → "Contas divididas" (`divSection`/`divList`): cada um R$ (total ÷ N, e por parcela), recebido
+  (receitas `divid` "<nome> (divisão)…") e quanto falta, com "Cobrar no WhatsApp". Extrato: Pix de 1–3 × a parte da
+  parcela ou da parte inteira (`divShareOf`, depois de `subShareOf`) vira "<nome> (divisão) · Fulano". Totais do mês
+  continuam cheios (sai inteiro; a devolução entra como receita).
 - **Cobrar a divisão** (assinatura aberta no painel): `subPayers` olha os Pix/receitas de 1–3 × valor dos últimos 3 meses
   (nome depois de "·" ou de "Pix de") → "Pagaram / Faltam" no mês e botão "Cobrar X no WhatsApp" (`wa.me/?text=`, mensagem pronta).
 - **Categoria aprendida** (`catLearnSet`/`catLearnGet`, `cfg.catLearn["desp|nome"]`): editar um lançamento trocando a

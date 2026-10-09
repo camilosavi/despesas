@@ -936,6 +936,7 @@ nav.tabs.onme::before{opacity:0}
   <div class="field" id="payField"><span class="lbl">Pagamento</span><div class="chips" id="payChips"></div></div>
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
+  <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div style="display:flex;gap:10px;align-items:center"><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"><span class="hint" id="divHint" style="margin:0">quantas pessoas, contando você</span></div></div>
   <div class="field" id="statusField"><span class="lbl">Situação</span><div class="seg" id="paidSeg" style="margin:0"><button type="button" data-paid="1">Pago</button><button type="button" data-paid="0">A pagar</button></div></div>
   <div class="field"><label for="date">Data</label><input type="date" id="date" min="2026-09-01"><p class="hint" id="dateHint" hidden style="margin:6px 0 0"></p></div>
   <div class="field" id="repField"><label for="rep">Parcelar ou repetir</label>
@@ -1941,6 +1942,35 @@ function renderMes(){
   h+=feeSection(view);
   $("mBody").innerHTML=h;
 }
+/* ---------- despesa dividida com outras pessoas (out/2026, pedido dele: "serve pra despesas também", ex.: Airbnb em 5) ----------
+   x.div = em quantas pessoas, contando ele. As outras devolvem por Pix: na importação do extrato, o Pix com o valor da parte
+   (de uma parcela, ou da compra inteira) vira "<nome> (divisão) · Fulano" (cat divid). O total do mês continua cheio
+   (sai inteiro da conta/cartão; a devolução entra como receita). */
+const divKey=x=>learnK("desp",cleanDesc(x));
+function buySeries(x){
+  const p=parcInfo(x), c=cardOf(x);
+  return items.filter(y=>y.id!==x.id&&typeOf(y)==="desp"&&(x.group?y.group===x.group:p&&parcInfo(y)&&parcInfo(y).n===p.n&&cardOf(y)===c&&divKey(y)===divKey(x)&&closeC(y.cents,x.cents)));
+}
+function divList(){
+  const lo=shiftYM(curYM(),-3), G={};
+  items.filter(x=>typeOf(x)==="desp"&&x.div>=2).forEach(x=>{const k=x.group||(parcInfo(x)?`${cardOf(x)}|${divKey(x)}|${parcInfo(x).n}`:x.id);(G[k]=G[k]||[]).push(x)});
+  return Object.values(G).filter(L=>L.some(x=>x.date.slice(0,7)>=lo)).map(L=>{
+    L.sort((a,b)=>a.date.localeCompare(b.date));const x=L[L.length-1], n=x.div, p=parcInfo(x), name=cleanDesc(x);
+    const total=p?x.cents*p.n:L.reduce((s,y)=>s+y.cents,0), per=Math.round(total/n), unit=Math.round(x.cents/n);
+    const got=items.filter(y=>typeOf(y)==="rec"&&y.cat==="divid"&&(y.desc||"").startsWith(name+" (divisão)")).reduce((s,y)=>s+y.cents,0);
+    return {name,n,total,per,unit,parcN:p?p.n:1,back:Math.max(0,total-per),got,miss:Math.max(0,total-per-got),cat:x.cat};
+  }).sort((a,b)=>b.miss-a.miss);
+}
+function divShareOf(cents){for(const d of divList()){const k=shareK(cents,d.unit);if(k&&d.parcN>1||Math.abs(cents-d.per)<=3)return {name:d.name,k:k||1}}return null}
+function divSection(){
+  const L=divList();if(!L.length) return "";
+  const miss=L.reduce((s,d)=>s+d.miss,0);
+  return `<section id="divSec"><h2>Contas divididas <small>${miss?`falta receber ${R(miss)}`:"tudo recebido ✓"}</small></h2><div class="card list">${L.map(d=>`<div class="divg"><div class="item rec-it">${catIco(d.cat,"desp")}<span class="t"><div class="d">${esc(d.name)}</div><div class="m">÷${d.n} · cada um ${R(d.per)}${d.parcN>1?` (${d.parcN}× ${R(d.unit)})`:""} · recebido ${R(d.got)} de ${R(d.back)}</div></span><span class="v ${d.miss?"":"pos"}">${d.miss?R(d.miss):"✓"}<small style="display:block;font-weight:500;color:var(--muted)">${d.miss?"falta":"recebido"}</small></span></div>
+    ${d.miss?`<div style="padding:0 0 12px 50px"><a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi! Sua parte de ${d.name}: ${R(d.per)}${d.parcN>1?` (ou ${d.parcN}× ${R(d.unit)})`:""}. Pode mandar no Pix. Valeu!`)}">Cobrar no WhatsApp</a></div>`:""}</div>`).join("")}</div>
+    <p class="hint" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
+}
+function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
+  $("divHint").textContent=n>=2&&form.cents?`${R(Math.round(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
 /* ---------- "Posso comprar?" (out/2026): simula a compra antes de fazer ---------- */
 let cbuy={v:0,n:1,w:""};
 function canBuySheet(){
@@ -2416,7 +2446,7 @@ function timeline(ym,arr){
 }
 function itemHTML(x){
   const t=typeOf(x),c=catOf(x.cat,t),[,m,d]=x.date.split("-"),p=parcInfo(x);
-  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):""].filter(Boolean).join(" · ");
+  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):""].filter(Boolean).join(" · ");
   return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d">${esc(cleanDesc(x))}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}">${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
 }
 
@@ -2831,7 +2861,7 @@ function renderAno(){
   </div>
   <div class="inl"><input id="exDesc" class="full" placeholder="Ex.: 13º salário, venda do notebook" maxlength="60"><select id="exType"><option value="rec">Receita</option><option value="desp">Despesa</option></select><input id="exVal" inputmode="numeric" placeholder="R$ 0,00"></div>
   <div class="toolbar"><button class="tbtn" id="exAdd">Adicionar previsto</button></div></section>`;
-  h+=subSection()+feeYear(year)+recurSection();
+  h+=subSection()+divSection()+feeYear(year)+recurSection();
   $("pAno").innerHTML=h;
 }
 /* ---------- Você (perfil e ajustes): abre pela foto na barra de baixo ---------- */
@@ -3573,6 +3603,7 @@ document.addEventListener("change",e=>{
 });
 const maskIds=new Set(["cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
 document.addEventListener("input",e=>{
+  if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
   if(e.target.id==="subN"){const p=parseInt(e.target.value.replace(/\D/g,""),10)||0, t=+e.target.dataset.subtot||0;if($("subEach"))$("subEach").textContent=p>=2?R(Math.round(t/p))+" cada":"—";return}
   const id=e.target.id;
   if(id==="mSearch"){mq=e.target.value;$("mClear").hidden=!mq;clearTimeout(renderMes.t);renderMes.t=setTimeout(renderMes,180)}
@@ -3662,7 +3693,7 @@ function chips(){
       splitHint()}
   }
   $("cardChips").innerHTML=credCards().concat("Outro").map(c=>`<button type="button" class="chip" data-card="${c}" aria-pressed="${(form.card||"Outro")===c}">${c}</button>`).join("");
-  $("payField").hidden=form.type!=="desp";
+  $("payField").hidden=form.type!=="desp";$("divField").hidden=form.type!=="desp";
   /* no Crédito quem paga é a fatura: sem "Pago / A pagar" no lançamento (fica a pagar até a fatura ser paga) */
   $("statusField").hidden=form.type!=="desp"||form.pay==="Crédito";
   $("cardField").hidden=form.type!=="desp"||form.pay!=="Crédito";
@@ -3700,7 +3731,7 @@ function openSheet(x){
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("rep").value="1";$("until").value="";$("untilField").hidden=true;
+  $("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
@@ -3741,6 +3772,7 @@ $("sheet").addEventListener("submit",async e=>{
   const isD=form.type==="desp";
   const base={type:form.type,cents:form.cents,desc:$("desc").value.trim(),cat:form.cat,pay:isD?form.pay:"",date:$("date").value,card:isD&&form.pay==="Crédito"&&form.card&&form.card!=="Outro"?form.card:""};
   if(isD) base.paid=benOf(base)?true:form.paid;
+  {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}
   if(!editing&&isD&&base.card){const b=billDate(base.card,base.date);if(b!==base.date){base.buy=base.date;base.date=b}}
   /* compra no Crédito só fica paga quando a fatura vence/é paga (antes vinha "Pago" do dia da compra e os meses seguintes já apareciam pagos) */
   if(!editing&&isD&&base.pay==="Crédito") base.paid=false;
@@ -3773,6 +3805,7 @@ $("sheet").addEventListener("submit",async e=>{
     if(rep==="u"){const n=until?monthsSpan(base.date.slice(0,7),until):0;
       if(n<1||n>120){err("err",!until?"Escolha até que mês repetir.":n<1?"O mês final tem que ser igual ou depois da data.":"No máximo 10 anos.");$("saveBtn").disabled=false;return}
       rep="m"+n}
+    if(editing&&(base.div||0)!==(editing.div||0)) for(const y of buySeries(editing)) await store.items.update(y.id,{div:base.div||0});
     if(editing&&base.cat&&editing.cat!==base.cat) catLearnSet(base.type||typeOf(editing),cleanDesc({...editing,...base}),base.cat);
     if(rep==="1"){
       if(editing){await store.items.update(editing.id,base);toast(editing.paid===false&&base.paid!==false&&base.type==="desp"?"Marcado como pago":"Lançamento atualizado",true)}
@@ -4219,7 +4252,7 @@ function extPlan(e){
       return {...base,act:"done",match:hit.id,note:`já lançado como “${cleanDesc(hit)}”`}}
     let desc,cat,pay;
     if(r.shop){const g=invoiceEntry({desc:r.shop,shop:r.shop});desc=g.name;cat=g.cat;pay="Débito"}
-    else if(/pix/.test(k)){const sd=!out&&subShareOf(cents);
+    else if(/pix/.test(k)){const sd=!out&&(subShareOf(cents)||divShareOf(cents));
       desc=sd?`${sd.name} (divisão${sd.k>1?` ×${sd.k}`:""}) · ${titleCase(r.who||"")}`:out?`Pix para ${titleCase(r.who||"")}`:`Pix de ${titleCase(r.who||"")}`;cat=sd?"divid":out?"outros":"rout";pay="Pix"}
     else {desc=titleCase(r.det||r.kind);cat=out?"outros":"rout";pay=/debito|d[eé]bito/.test(k)?"Débito":"Pix"}
     return {...base,act:"add",on:true,desc:desc.trim(),cat:catLearnGet(base.type,desc)||cat,pay};
