@@ -3343,6 +3343,7 @@ function ofBanner(){
 }
 const ofCents=v=>Math.round((+v||0)*100);
 function ofTypeTxt(x){return x.type==="CREDIT"?"Cartão de crédito":x.subtype==="SAVINGS_ACCOUNT"?"Poupança":x.type==="BANK"?"Conta":String(x.type||"")}
+let ofOpenAcc=new Set();
 function ofAccHtml(x,k){
   const cr=x.type==="CREDIT", cd=x.creditData||{}, tx=x._tx||[];
   const top=cr?`Fatura atual ${R(ofCents(x.balance))}${cd.availableCreditLimit!=null?` · livre ${R(ofCents(cd.availableCreditLimit))}`:""}${cd.balanceDueDate?` · vence ${fmtDM(String(cd.balanceDueDate).slice(0,10))}`:""}`
@@ -3350,9 +3351,11 @@ function ofAccHtml(x,k){
   const rows=tx.slice(0,80).map(t=>{const m=t.creditCardMetadata||{}, v=ofCents(t.amount), out=cr?v>0:v<0;
     const p=m.totalInstallments>1?` · ${m.installmentNumber}/${m.totalInstallments}`:"";
     return `<div class="ofrow"><span class="ofd">${fmtDM(String(t.date).slice(0,10))}</span><span class="ofn">${esc(t.description||"")}<small>${esc(t.category||"")}${p}${t.status==="PENDING"?" · pendente":""}</small></span><b class="${out?"":"pos"}">${out?"−":"+"}${R(Math.abs(v))}</b></div>`}).join("");
+  const open=ofOpenAcc.has(k);
   return `<div class="ofacc"><div><b>${esc(x.name||x.marketingName||"")}</b> <span class="hint" style="margin:0">${ofTypeTxt(x)}</span></div>
-    <div class="hint" style="margin:2px 0 6px">${top}</div>${rows||`<div class="hint" style="margin:0">Nenhum movimento desde ${fmtDM(ofView.from)}.</div>`}${tx.length>80?`<div class="hint" style="margin:4px 0 0">+ ${tx.length-80} movimentos</div>`:""}
-    ${tx.length?`<div class="row" style="margin:8px 0 0"><button class="btn primary" data-ofimp="${k}">${cr?"Importar fatura em aberto":"Importar movimentos"}</button></div>`:""}</div>`;
+    <div class="hint" style="margin:2px 0 8px">${top}</div>
+    ${tx.length?`<div class="row" style="margin:0 0 4px"><button class="btn soft" data-oftog="${k}" aria-expanded="${open}">${open?"Esconder":`Ver ${tx.length}`} <i class="tlcar" style="display:inline-block;transform:rotate(${open?90:0}deg)">›</i></button><button class="btn primary" data-ofimp="${k}">${cr?"Importar fatura":"Importar movimentos"}</button></div>`:`<div class="hint" style="margin:0">Nenhum movimento desde ${fmtDM(ofView.from)}.</div>`}
+    ${open?`<div class="ofrows">${rows}${tx.length>80?`<div class="hint" style="margin:4px 0 0">+ ${tx.length-80} movimentos</div>`:""}</div>`:""}</div>`;
 }
 function ofCopy(){
   if(!ofView) return;
@@ -3622,6 +3625,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="rateRefresh"){if(t.disabled)return;t.disabled=true;t.textContent="Atualizando…";
     const ok=await fetchLiveRates();if(!ok){toast("Sem conexão com a cotação agora. Tente de novo.");render()}else toast("Euro e dólar atualizados");return}
   if(t.closest("[data-close]")||t.id==="scrim"){closeSheets();return}
+  {const tg=t.closest("[data-oftog]");if(tg){const k=+tg.dataset.oftog;ofOpenAcc.has(k)?ofOpenAcc.delete(k):ofOpenAcc.add(k);render();return}}
   {const o=t.closest("[data-ofload],[data-offorget],[data-ofimp]");if(o){
     if(o.dataset.ofimp!=null){if(o.dataset.ofnews&&ofView)ofSeen(ofView);ofImport(+o.dataset.ofimp);return}
     if(o.dataset.ofload){ofLoad(o,o.dataset.ofload);return}

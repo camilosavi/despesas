@@ -394,7 +394,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Meu Pluggy não atualiza pelo widget (fica parado no aviso); só 1x por dia, na hora da Pluggy. `ofItemTxt` mostra
   "Atualizado pelo banco em … · próxima atualização …" (`/item`: `lastUpdatedAt`, `nextAutoSyncAt`, `status`); Worker antigo
   sem `/item` → pede para publicar de novo. "Ver dados" mostra contas e
-  movimentos dos últimos 45 dias e "Copiar dados para o Claude" copia o JSON (para calibrar outro banco).
+  movimentos dos últimos 45 dias (lista de cada conta recolhida: "Ver N"/"Esconder", `ofOpenAcc`) e "Copiar dados para o Claude" copia o JSON (para calibrar outro banco).
   **Importar** (out/2026, calibrado com o JSON do Inter): conta → `ofExtrato` monta o mesmo objeto do `parseExtrato` e abre
   `openExtrato` (saldo da Pluggy vira Saldo na conta; "Tipo - detalhe"; "Compra no débito" = loja nos 22 primeiros
   caracteres (`ofShop`, largura fixa: depois vem a cidade); `category` "Same person transfer" → `r.self`; "Crédito liberado
