@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Painel de Acessos</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0E3B35">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Painel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: uma coluna de app — cabeçalho escuro com o número principal, KPIs em grade 2×3, gráfico de 30 dias, lista de pessoas */
+:root{
+  --bg:#F3F5F2;--surface:#fff;--ink:#13201D;--muted:#5E6E69;--line:#DDE3DF;--chip:#E8EEEB;
+  --head:#0E3B35;--head-ink:#EAF4F0;--head-muted:#9DBDB4;--accent:#12A57E;--accent-ink:#fff;--neg:#C2412D;
+  --display:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;--body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1513;--surface:#15211E;--ink:#E6EEEB;--muted:#93A6A0;--line:#24332F;--chip:#1E2C28;--head:#0F2E29;--accent:#2BC496;--accent-ink:#06231B;--neg:#F07462;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0C1513;--surface:#15211E;--ink:#E6EEEB;--muted:#93A6A0;--line:#24332F;--chip:#1E2C28;--head:#0F2E29;--accent:#2BC496;--accent-ink:#06231B;--neg:#F07462;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font-family:var(--body);font-size:16px;-webkit-tap-highlight-color:transparent}
+button,input{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:720px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+header{background:var(--head);color:var(--head-ink);margin-inline:-16px;padding:18px 20px 22px;border-radius:0 0 22px 22px}
+header h1{font-family:var(--display);font-weight:700;font-size:1.35rem;margin:0}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--head-muted);margin:18px 0 4px}
+.big{font-family:var(--display);font-weight:700;font-size:clamp(2.4rem,12vw,3.2rem);line-height:1;font-variant-numeric:tabular-nums}
+.sub{font-size:.85rem;color:var(--head-muted);margin-top:10px}
+section{margin-top:22px}
+h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:600;margin:0 0 10px;display:flex;justify-content:space-between;gap:8px}
+h2 small{text-transform:none;letter-spacing:0;font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{padding:12px;min-width:0}
+.kpi b{display:block;font-family:var(--display);font-size:1.6rem;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:.75rem;color:var(--muted);line-height:1.25;display:block;margin-top:4px}
+@media (max-width:380px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.chart{padding:14px 12px 10px}
+.chart svg{display:block;width:100%;height:auto}
+.people{overflow:hidden}
+.p{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:12px 14px}
+.p+.p{border-top:1px solid var(--line)}
+.p b{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p b small{color:var(--muted);font-weight:500;font-size:.78rem;margin-left:6px}
+.p .n{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.p .m{font-size:.8rem;color:var(--muted)}
+.p .m.r{text-align:right}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:6px;vertical-align:middle}
+.dot.on{background:var(--accent)}
+.empty{padding:22px 16px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--ink);font-family:var(--display);font-size:1.1rem;margin-bottom:6px}
+.lock{max-width:420px;margin:12vh auto 0;padding:24px 20px}
+.lock h1{font-family:var(--display);font-size:1.5rem;margin:0 0 6px}
+.lock p{color:var(--muted);margin:0 0 16px;line-height:1.45}
+.lock input[type=password]{width:100%;font-size:16px;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.lock label.chk{display:flex;gap:8px;align-items:center;margin:12px 0;font-size:.92rem}
+.btn{border:0;border-radius:14px;padding:14px 18px;font-weight:700;background:var(--accent);color:var(--accent-ink);width:100%;cursor:pointer}
+.btn.soft{background:var(--chip);color:var(--ink);width:auto;padding:10px 14px;font-size:.9rem}
+.err{color:var(--neg);font-size:.9rem;min-height:1.2em;margin-top:10px}
+.tools{display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.hint{font-size:.8rem;color:var(--muted);line-height:1.45}
+</style>
+</head><body>
+
+<div class="lock" id="lock">
+  <h1>Painel de acessos</h1>
+  <p>Quem está usando o Minhas Despesas. Os números ficam criptografados no GitHub; digite a senha do painel para abrir.</p>
+  <form id="lockForm" autocomplete="off">
+    <input type="password" id="pw" placeholder="Senha do painel" autocomplete="current-password">
+    <label class="chk"><input type="checkbox" id="remember" checked> Lembrar neste aparelho</label>
+    <button class="btn" id="go">Abrir</button>
+    <div class="err" id="err"></div>
+  </form>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <header>
+    <h1>Acessos</h1>
+    <p class="lbl">Pessoas que abriram o app (90 dias)</p>
+    <div class="big" id="kBig">0</div>
+    <div class="sub" id="kSub"></div>
+  </header>
+  <section><h2>Resumo</h2><div class="kpis" id="kpis"></div></section>
+  <section><h2>Visitantes por dia <small>últimos 30 dias</small></h2><div class="card chart" id="chart"></div></section>
+  <section><h2>Quem aceitou mostrar o nome <small id="pCount"></small></h2><div class="card people" id="people"></div></section>
+  <p class="hint" style="margin-top:14px">Atualiza sozinho a cada 6 horas. Nunca mostra gastos, valores ou cartões: só quem abriu o app e quando. “Pessoas” conta visitantes únicos do GoatCounter (um mesmo amigo em dois aparelhos conta duas vezes).</p>
+  <div class="tools"><button class="btn soft" id="reload">Recarregar</button><button class="btn soft" id="forget">Esquecer senha</button></div>
+</div>
+
+<script>
+const DATA_URL="https://raw.githubusercontent.com/camilosavi/despesas/painel-dados/dados.enc.json";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ub=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+const fmtDay=d=>{const[y,m,dd]=d.split("-");return `${dd}/${m}`};
+const today=()=>new Date().toISOString().slice(0,10);
+const daysAgo=d=>Math.round((new Date(today())-new Date(d))/864e5);
+
+async function decrypt(box,pw){
+  const enc=new TextEncoder();
+  const base=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(box.salt),iterations:box.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(box.iv)},key,ub(box.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function load(pw){
+  const r=await fetch(DATA_URL+"?t="+Date.now(),{cache:"no-store"});
+  if(r.status===404) throw {code:"nodata"};
+  if(!r.ok) throw {code:"net"};
+  const box=await r.json();
+  try{return await decrypt(box,pw)}catch(e){throw {code:"pw"}}
+}
+
+function render(d){
+  const norm=p=>(p||"").replace(/^\//,"");
+  const H=d.hits.map(h=>({...h,key:norm(h.path)}));
+  const byKey=k=>H.find(h=>h.key===k);
+  const cnt=k=>{const h=byKey(k);return h?h.count:0};
+  const app=byKey("app"), appDays=new Map((app?app.days:[]).map(x=>[x.day,x.n]));
+  const sumSince=n=>[...appDays].filter(([day])=>daysAgo(day)<n).reduce((s,[,v])=>s+v,0);
+  $("kBig").textContent=cnt("app");
+  const upd=new Date(d.updatedAt);
+  $("kSub").textContent=`atualizado ${upd.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} às ${upd.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}`;
+  const people=H.filter(h=>h.key.startsWith("pessoa/")).map(h=>{const[,user,tag]=h.key.split("/");const days=[...h.days].sort((a,b)=>a.day.localeCompare(b.day));
+    return {user:user||"?",tag:tag||"",opens:days.reduce((s,x)=>s+x.n,0),active:days.length,last:days.length?days[days.length-1].day:null}}).sort((a,b)=>(b.last||"").localeCompare(a.last||"")||b.opens-a.opens);
+  const k=[[sumSince(1),"abriram hoje"],[sumSince(7),"visitas nos últimos 7 dias"],[cnt("instalou"),"instalaram na tela de início"],[cnt("criou-conta"),"criaram conta"],[cnt("pessoa-nova"),"aceitaram mostrar o nome"],[cnt("usou-backup"),"já fizeram backup"]];
+  $("kpis").innerHTML=k.map(([v,t])=>`<div class="card kpi"><b>${v}</b><span>${t}</span></div>`).join("");
+  // gráfico 30 dias
+  const days=Array.from({length:30},(_,i)=>{const t=new Date(Date.now()-(29-i)*864e5).toISOString().slice(0,10);return {day:t,n:appDays.get(t)||0}});
+  const max=Math.max(1,...days.map(x=>x.n)), W=340,Hh=130,top=12,bot=20,bw=(W-8)/30;
+  const sc=v=>(Hh-top-bot)*v/max;
+  let svg=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Visitantes por dia nos últimos 30 dias">`;
+  svg+=`<line x1="0" x2="${W}" y1="${Hh-bot}" y2="${Hh-bot}" stroke="var(--line)"/>`;
+  days.forEach((x,i)=>{const h=sc(x.n);svg+=`<rect x="${4+i*bw+1}" y="${Hh-bot-h}" width="${bw-2}" height="${Math.max(h,x.n?2:0)}" rx="2" fill="${i===29?"var(--accent)":"color-mix(in srgb,var(--accent) 55%,transparent)"}"><title>${fmtDay(x.day)}: ${x.n}</title></rect>`;
+    if(i%7===1||i===29) svg+=`<text x="${i===29?W-2:4+i*bw+bw/2}" y="${Hh-5}" text-anchor="${i===29?"end":"middle"}" font-size="9" fill="var(--muted)" font-family="Figtree,system-ui">${fmtDay(x.day)}</text>`});
+  svg+=`<text x="2" y="${top}" font-size="9" fill="var(--muted)" font-family="Figtree,system-ui">máx. ${max}</text></svg>`;
+  $("chart").innerHTML=svg;
+  $("pCount").textContent=people.length?`${people.length} ${people.length===1?"pessoa":"pessoas"}`:"";
+  $("people").innerHTML=people.length?people.map(p=>{const ago=p.last?daysAgo(p.last):null;
+    return `<div class="p"><b><span class="dot ${ago!==null&&ago<=1?"on":""}"></span>@${esc(p.user)}<small>${esc(p.tag)}</small></b><span class="n">${p.opens}×</span><span class="m">${p.active} ${p.active===1?"dia":"dias"} de uso</span><span class="m r">${ago===null?"—":ago===0?"hoje":ago===1?"ontem":`há ${ago} dias`}</span></div>`}).join("")
+    :`<div class="empty"><strong>Ninguém ainda</strong>Quando um amigo tocar em “Pode avisar” no app, ele aparece aqui com o usuário e os dias de uso.</div>`;
+}
+
+async function open(pw,remember){
+  $("err").textContent="";$("go").disabled=true;$("go").textContent="Abrindo…";
+  try{
+    const d=await load(pw);
+    if(remember) ls.set("painel.pw",pw);
+    window.__pw=pw;$("lock").hidden=true;$("app").hidden=false;render(d);
+  }catch(e){
+    ls.set("painel.pw",null);$("lock").hidden=false;$("app").hidden=true;
+    $("err").textContent=e.code==="pw"?"Senha errada.":e.code==="nodata"?"Ainda não há dados. Rode o “Painel de acessos” no GitHub (Actions) ou espere até 6 horas.":"Não consegui baixar os dados. Confira a internet.";
+  }
+  $("go").disabled=false;$("go").textContent="Abrir";
+}
+$("lockForm").addEventListener("submit",e=>{e.preventDefault();const pw=$("pw").value;if(pw)open(pw,$("remember").checked)});
+$("reload").onclick=()=>open(window.__pw,!!ls.get("painel.pw"));
+$("forget").onclick=()=>{ls.set("painel.pw",null);location.reload()};
+const saved=ls.get("painel.pw"); if(saved) open(saved,true);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&window.__pw)open(window.__pw,!!ls.get("painel.pw"))});
+</script>
+</body></html>

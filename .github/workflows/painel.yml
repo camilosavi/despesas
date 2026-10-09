@@ -1,0 +1,30 @@
+name: Painel de acessos
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # a cada 6 horas
+  workflow_dispatch: {}      # botão "Run workflow" para atualizar na hora
+permissions:
+  contents: write
+concurrency: painel
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Buscar estatísticas e criptografar
+        env:
+          GOATCOUNTER_TOKEN: ${{ secrets.GOATCOUNTER_TOKEN }}
+          PAINEL_SENHA: ${{ secrets.PAINEL_SENHA }}
+        run: node tools/painel-fetch.mjs "$RUNNER_TEMP/dados.enc.json"
+      - name: Publicar no branch painel-dados (só o arquivo criptografado)
+        run: |
+          git config user.name "painel-bot"
+          git config user.email "painel-bot@users.noreply.github.com"
+          git checkout --orphan painel-tmp
+          git rm -rf --cached . >/dev/null
+          cp "$RUNNER_TEMP/dados.enc.json" dados.enc.json
+          git add dados.enc.json
+          git commit -m "Painel: dados de $(date -u +%Y-%m-%dT%H:%MZ)" >/dev/null
+          git push -f origin painel-tmp:painel-dados
