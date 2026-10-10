@@ -224,7 +224,7 @@ tfoot td{font-weight:700;border-bottom:0;border-top:2px solid var(--line)}
 nav.tabs{box-sizing:border-box;height:calc(64px + env(safe-area-inset-bottom,0px));grid-template-rows:58px;align-content:start;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 nav.tabs .tab{height:58px;align-content:center;font-size:.68rem!important;line-height:1.2}
 /* barra de abas (base) */
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(4,1fr);align-items:center;max-width:720px;margin:0 auto}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(3,1fr);align-items:center;max-width:720px;margin:0 auto}
 .tab{background:none;border:0;display:grid;justify-items:center;gap:3px;padding:6px 0;font-size:.7rem;color:var(--muted);font-weight:600}
 .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .tab[aria-current="page"]{color:var(--accent)}
@@ -752,7 +752,7 @@ table.mx{border-collapse:separate;border-spacing:0;font-size:.82rem;font-variant
 /* barra de baixo flutuante (estilo cápsula de vidro): ícones sem texto, pílula clara que desliza até a aba ativa,
    foto da pessoa no fim. Cor do vidro puxa o --head do tema. */
 nav.tabs{left:50%!important;right:auto!important;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom,0px))!important;
-  width:min(calc(100% - 28px),440px);height:64px!important;padding:6px!important;border-radius:32px;grid-template-columns:repeat(4,1fr) 64px!important;grid-template-rows:52px!important;align-content:center!important;
+  width:min(calc(100% - 28px),440px);height:64px!important;padding:6px!important;border-radius:32px;grid-template-columns:repeat(3,1fr) 64px!important;grid-template-rows:52px!important;align-content:center!important;
   background:color-mix(in srgb,var(--head) 78%,transparent)!important;-webkit-backdrop-filter:saturate(180%) blur(22px);backdrop-filter:saturate(180%) blur(22px);
   border:1px solid rgba(255,255,255,.14)!important;box-shadow:0 12px 32px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.10);isolation:isolate}
 
@@ -792,7 +792,7 @@ nav.tabs .tab,.tabav{transition:color .25s ease,transform .45s cubic-bezier(.34,
   .lock{padding-left:16px;padding-right:16px}
 }
 main section{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 14px)}
-nav.tabs::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:calc((100% - 12px - 64px)/4);border-radius:26px;background:rgba(255,255,255,.16);
+nav.tabs::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:calc((100% - 12px - 64px)/3);border-radius:26px;background:rgba(255,255,255,.16);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.12);transform:translateX(calc(var(--ti,0) * 100%));transition:transform .45s cubic-bezier(.3,1.3,.45,1);z-index:-1}
 nav.tabs .tab{height:52px!important;font-size:0!important;gap:0;padding:0;color:rgba(255,255,255,.72);border-radius:26px;place-items:center;transition:color .25s ease,transform .15s ease}
 nav.tabs .tab svg{width:26px;height:26px;stroke-width:2}
@@ -840,7 +840,7 @@ nav.tabs.onme::before{opacity:0}
   header.top{margin:20px 0 0!important;border-radius:26px!important;padding:22px 28px 24px!important}
   body::before{display:none}
   nav.tabs{left:24px!important;right:auto!important;top:50%;bottom:auto!important;transform:translateY(-50%);width:76px;height:auto!important;
-    padding:8px!important;border-radius:38px;grid-template-columns:1fr!important;grid-template-rows:repeat(4,58px) 70px!important;gap:6px;align-content:start!important}
+    padding:8px!important;border-radius:38px;grid-template-columns:1fr!important;grid-template-rows:repeat(3,58px) 70px!important;gap:6px;align-content:start!important}
   nav.tabs::before{left:8px;right:8px;top:8px;bottom:auto;width:auto;height:58px;transform:translateY(calc(var(--ti,0) * 64px))}
   nav.tabs .tab{height:58px!important}
   .tabav{width:46px;height:46px;align-self:center}
@@ -959,7 +959,9 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
 .banner .btn{padding-block:10px;font-size:.92rem}
 @media (max-width:979px){
   section{margin-top:26px}
-  #pHome>section+section,#mBody>section+section{border-top:1px solid var(--line);padding-top:20px}
+  #pHome>section+section,#mBody>section+section,#pAno>section+section{border-top:1px solid var(--line);padding-top:20px}
+  #pAno .card:not(:has(table)):not(.banner){background:none;border:0;border-radius:0;box-shadow:none;padding-left:0;padding-right:0}
+  #pAno .card:not(:has(table)) .due,#pAno .card:not(:has(table)) .item{padding-left:0;padding-right:0}
   /* listas direto no fundo */
   #pHome .card:not(.banner),#pHome .hcard,#mBody .card.list,#mBody .card:has(.tlg),#mBody .card:has(.catrows){background:none;border:0;border-radius:0;box-shadow:none}
   #pHome .hcard{padding:6px 0}
@@ -978,6 +980,37 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
   #mBody .card:has(.tlg){margin-top:0}
 }
 .tlafter{color:var(--muted)!important;font-weight:500!important}.tlafter.neg{color:var(--neg)!important;font-weight:600!important}
+/* ---------- novo app (out/2026, desenho aprovado: Hoje / Mês / Planejar) ---------- */
+.hbar{margin-top:18px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent);display:grid;gap:9px}
+.hbtop{display:flex;justify-content:space-between;align-items:baseline;font-size:.84rem;color:var(--head-muted)}
+.hbtop b{font-size:.98rem;color:#6FE0B6;font-variant-numeric:tabular-nums}.hbtop b.neg{color:#FFA898}
+.hbtrack{display:flex;gap:2px;height:12px;border-radius:6px;overflow:hidden;background:color-mix(in srgb,var(--head-ink) 9%,transparent)}
+.hbtrack i{background:var(--head-ink);transition:width .6s ease}.hbtrack i.op{background:color-mix(in srgb,var(--head-ink) 42%,transparent)}
+.hbleg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8rem;color:color-mix(in srgb,var(--head-ink) 78%,transparent);font-variant-numeric:tabular-nums}
+.hbleg span{display:inline-flex;align-items:center;gap:6px}.hbleg i{width:8px;height:8px;border-radius:4px;background:var(--head-ink)}
+.hbleg i.op{background:color-mix(in srgb,var(--head-ink) 42%,transparent)}.hbleg i.in{background:color-mix(in srgb,var(--head-ink) 14%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--head-ink) 30%,transparent)}
+.hbchart{display:flex;align-items:flex-end;gap:10px;height:86px}
+.hbchart span{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%}
+.hbchart i{width:100%;border-radius:6px;background:color-mix(in srgb,var(--head-ink) 32%,transparent)}
+.hbchart .now i{background:var(--head-ink)}.hbchart .neg i{background:#FF8A78}
+.hbchart small{font-size:.7rem;color:var(--head-muted)}
+.htiles{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px;scroll-snap-type:x mandatory}
+.htiles::-webkit-scrollbar{display:none}
+.htile{flex:1 0 152px;max-width:200px;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;text-align:left;padding:14px;border-radius:16px;border:0;background:var(--surface);color:var(--ink);font:inherit}
+.htn{display:flex;align-items:center;gap:8px;font-size:.92rem;min-width:0}.htn b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.htn .fi{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--display);line-height:1;flex:none;font-size:calc(.62rem * var(--k,1))}
+.htl{font-size:.76rem;color:var(--muted)}
+.htv{font-family:var(--display);font-weight:700;font-size:1.3rem;line-height:1;margin-top:-2px;font-variant-numeric:tabular-nums}
+.htile .mini{margin:2px 0 0;display:block}
+.due.hrec .dchip{color:var(--pos)}
+.hmore{display:inline-block}
+.catsumsec{border-top:0!important;padding-top:0!important}
+.catsum .minicats{margin:0;height:10px}
+.catleg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.catleg span{display:inline-flex;align-items:center;gap:6px}.catleg i{width:8px;height:8px;border-radius:4px}
+.bline{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surface);font-size:.92rem;border-top:0!important;margin-top:18px}
+.bline .bt{flex:1;min-width:0}.bline .bdot{width:8px;height:8px;border-radius:4px;background:var(--warn);flex:none}
+.bline .lk{padding:4px 0}.bline #bkLater{color:var(--muted);font-weight:500}
 /* topo do Início: número grande e duas linhas, sem anel e sem frase de data */
 body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 </style>
@@ -1004,6 +1037,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
       <div><span id="s1l">Receitas</span><b class="num" id="s1">R$ 0,00</b></div>
       <div><span id="s2l">Despesas</span><b class="num" id="s2">R$ 0,00</b></div>
     </div>
+    <div class="hbar" id="hBar" hidden></div>
     <div class="prog" id="hProg" hidden><i></i></div>
     <div class="foot" id="hFoot"></div>
   </header>
@@ -1024,10 +1058,9 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 
 <button class="fab" id="addBtn" aria-label="Novo lançamento"><b aria-hidden="true">+</b><span id="addLbl">Lançamento</span></button>
 <nav class="tabs" aria-label="Seções">
-  <button class="tab" data-tab="pHome" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Início</button>
+  <button class="tab" data-tab="pHome" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Hoje</button>
   <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Mês</button>
-  <button class="tab" data-tab="pFx"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6"/><path d="M12 9.2v5.6"/></svg>Moedas</button>
-  <button class="tab" data-tab="pAno"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Ano</button>
+  <button class="tab" data-tab="pAno"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Planejar</button>
   <button class="tabav" id="tabAv" aria-label="Você: perfil e ajustes"></button>
 </nav>
 
@@ -1620,10 +1653,10 @@ function setBig(sym,cents){
 }
 function header(){
   const isYear=tab==="pAno", isFx=tab==="pFx", isHome=tab==="pHome";
-  const isMe=tab==="pMe";$("mpill").hidden=isFx||isHome||isMe;$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
+  const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:null);
-  const titles={pHome:"Início",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:"Ano",pOrc:"Orçamento",pMe:"Você"};
+  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:"Planejar",pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=titles[tab]||"";
   const sub=tab==="pCards"||tab==="pOrc";
   $("backBtn").hidden=!sub;
@@ -1640,11 +1673,19 @@ function header(){
   if(isHome){
     const ym=curYM(), arr=inMonth(ym), rec=sumT(arr,"rec"), desp=sumT(arr,"desp"), acc=hasAcc(), mn=monthLabel(ym).split(" ")[0].toLowerCase();
     const open=acc?accFlow(ym).out:arr.filter(x=>typeOf(x)==="desp"&&!isPaid(x)).reduce((s,x)=>s+amt(x),0);
-    $("bigLabel").textContent=acc?`Na conta no fim de ${mn}`:`Saldo de ${mn}`;
-    setBig("R$",acc?endBal(ym):rec-desp);
-    if(acc){$("s1l").textContent="Na conta hoje";$("s1").textContent=R(accBal())}
+    $("bigLabel").textContent=acc?`Na conta hoje`:`Saldo de ${mn}`;
+    setBig("R$",acc?accBal():rec-desp);
+    if(acc){$("s1l").textContent="Fim de "+mn;$("s1").textContent=R(endBal(ym))}
     else{$("s1l").textContent="Entrou";$("s1").textContent=R(rec)}
     $("s2l").textContent="Falta pagar";$("s2").textContent=R(open);
+    /* novo app (out/2026): no celular, embaixo do "Na conta hoje" vai a barra do mês (pago / a pagar / entrou) */
+    if(!IS_WIDE.matches){
+      const paidS=arr.filter(x=>typeOf(x)==="desp"&&isPaid(x)&&!benOf(x)).reduce((s,x)=>s+amt(x),0), virt=salVirt(ym).reduce((s,x)=>s+x.cents,0);
+      const inn=rec+virt, tot=Math.max(inn,paidS+open,1), end=acc?endBal(ym):inn-paidS-open, w=v=>Math.max(0,Math.min(100,v/tot*100)).toFixed(1);
+      document.querySelector("header.top .split").hidden=true;$("hBar").hidden=false;
+      $("hBar").innerHTML=`<div class="hbtop"><span>${esc(monthLabel(ym).split(" ")[0])}</span><span>${acc?"fim do mês":end>=0?"sobra":"falta"} <b class="${end<0?"neg":""}">${R(Math.abs(end))}</b></span></div>
+        <div class="hbtrack"><i style="width:${w(paidS)}%"></i><i class="op" style="width:${w(open)}%"></i></div>
+        <div class="hbleg"><span><i></i>pago ${R(paidS)}</span><span><i class="op"></i>a pagar ${R(open)}</span><span><i class="in"></i>${virt?"entra":"entrou"} ${R(inn)}</span></div>`}
     /* banco limpo (out/2026): sem o anel de % e sem a frase com data; só avisa quando os gastos passam do que entrou */
     $("hRing").hidden=true;
     $("hFoot").textContent=rec&&desp>rec?"gastos do mês passaram do que entrou":"";
@@ -1704,6 +1745,23 @@ function header(){
     if(months) parts.push(`média de gastos: ${R(Math.round(desp/months))}/mês`);
   }
   $("hFoot").textContent=parts.join(" · ");
+  /* novo app (out/2026): Mês = "Gastou em <mês>" (de quanto entrou · sobra); Planejar = onde a conta chega em 6 meses */
+  if(!isYear){
+    const sob=rec-desp;
+    $("bigLabel").textContent=`Gastou em ${vmn}`;setBig("R$",desp);
+    $("s1l").textContent="Entrou";$("s1").textContent=R(rec);
+    $("s2l").textContent=chain&&hasAcc()?"Na conta no fim":"Sobra";$("s2").textContent=R(chain&&hasAcc()?saldo:sob);
+    if(!IS_WIDE.matches){document.querySelector("header.top .split").hidden=true;
+      $("hFoot").textContent=[rec?`de ${R(rec)} que entrou · ${sob>=0?"sobra":"falta"} ${R(Math.abs(sob))}`:"nada entrou ainda",...parts.filter(t=>/orçamento/.test(t))].join(" · ")}
+  } else {
+    const cur=curYM(), M=[0,1,2,3,4,5].map(i=>shiftYM(cur,i)), V=M.map(endBal), last=M[5], mx=Math.max(1,...V.map(v=>Math.abs(v)));
+    $("bigLabel").textContent=`${hasAcc()?"Na conta no fim":"Saldo acumulado no fim"} de ${monthLabel(last).split(" ")[0].toLowerCase()}`;setBig("R$",V[5]);
+    $("s1l").textContent=`Fim de ${monthLabel(cur).split(" ")[0].toLowerCase()}`;$("s1").textContent=R(V[0]);
+    $("s2l").textContent="Salário previsto";$("s2").textContent=salPrevOn()?"ligado":"desligado";
+    if(!IS_WIDE.matches){document.querySelector("header.top .split").hidden=true;$("hBar").hidden=false;
+      $("hBar").innerHTML=`<div class="hbchart">${M.map((m,i)=>`<span class="${i?"":"now"} ${V[i]<0?"neg":""}"><i style="height:${Math.max(6,Math.abs(V[i])/mx*64).toFixed(0)}px"></i><small>${MES[+m.slice(5)-1].toLowerCase()}</small></span>`).join("")}</div>`;
+      $("hFoot").textContent=salPrevOn()?"com o salário previsto e o que já está lançado":"com o que já está lançado"}
+  }
 }
 
 /* ---------- boas-vindas (aparelho novo) ---------- */
@@ -1741,6 +1799,8 @@ function backupBanner(){
   if(!PWA||!downloads||items.length<5) return "";
   if(daysSince(cfg.lastBackup)<7||daysSince(cfg.backupSnooze)<2) return "";
   const nd=daysSince(cfg.lastBackup);
+  /* novo app (out/2026): no celular o lembrete é uma linha só */
+  if(!IS_WIDE.matches) return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Nenhum backup ainda":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
   return `<section><div class="card banner"><strong>Hora do backup</strong><p>${nd===Infinity?"Você ainda não fez nenhum backup.":`Seu último backup foi há ${nd} dias.`} Os dados ficam só neste iPhone; salve o arquivo no iCloud Drive para não perder nada.</p><div class="row"><button class="btn soft" id="bkLater">Depois</button><button class="btn primary" id="bkExport">Fazer backup</button></div></div></section>`;
 }
 
@@ -1976,6 +2036,33 @@ function homeBlock(k){
   }
   return "";
 }
+/* Hoje (celular): próximos pagamentos até o fim do mês (pelo menos 10 dias) e o que ainda entra, numa lista só */
+function hojeList(){
+  const now=today(), ym=curYM(), end=`${ym}-${pad(lastDay(ym))}`, lim=[end,addDays(now,10)].sort()[1];
+  const days=Math.round((new Date(lim)-new Date(now))/864e5), U=upcoming(days).map(u=>({...u,out:1}));
+  const recs=[...items.filter(x=>typeOf(x)==="rec"),...salVirt(ym),...salVirt(shiftYM(ym,1))].filter(x=>{const d=recDay(x);return d>now&&d<=lim});
+  recs.forEach(x=>U.push({kind:"rec",x,date:recDay(x),cents:x.cents,name:cleanDesc(x)}));
+  U.sort((a,b)=>a.date.localeCompare(b.date));
+  const tot=U.filter(u=>u.out).reduce((s,u)=>s+u.cents,0);
+  const rows=U.map(u=>{const[,m,d]=u.date.split("-"),late=u.out&&u.date<now,isToday=u.date===now;
+    if(u.kind==="rec") return `<button class="due hrec" ${u.x.virt?`data-gotab="pAno" data-scroll="salSec"`:`data-id="${esc(u.x.id)}"`}><span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v pos">+ ${R(u.cents)}</span><span class="m">${u.x.virt?"previsto":catOf(u.x.cat,"rec").n}</span></button>`;
+    const attr=u.kind==="card"?`data-opencard="${esc(u.c)}" data-ym="${u.ym}"`:`data-id="${esc(u.x.id)}"`;
+    const n=u.kind==="card"?cardItems(u.c,u.ym).length:0;
+    const meta=late?"atrasado":isToday?"vence hoje":u.kind==="card"?`${n} ${n===1?"compra":"compras"}`:[catOf(u.x.cat,"desp").n,parcInfo(u.x)?u.x.parc:""].filter(Boolean).join(" · ");
+    return `<button class="due ${u.kind==="item"?"item":""} ${late||isToday?"late":""}" ${attr}><span class="dchip"><b>${d}</b><span>${late?"atras.":isToday?"hoje":MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v">${R(u.cents)}</span><span class="m">${esc(meta)}</span></button>`}).join("");
+  return `<section><h2>Próximos pagamentos <small>${tot?`${R(tot)} até ${fmtDM(lim)}`:`até ${fmtDM(lim)}`}</small></h2><div class="card list">${rows||`<div class="ok">Nada para pagar até ${fmtDM(lim)} ✓</div>`}</div><button class="lk hmore" data-gotab="pMes" style="padding:10px 0 0">Ver o mês inteiro</button></section>`;
+}
+/* Hoje (celular): cartões em quadros lado a lado — limite livre (ou a fatura, sem limite) e benefícios com o saldo */
+function hojeCards(){
+  const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
+  if(!cs.length&&!B.length) return "";
+  const tile=(c,lab,val,bar,sub,neg)=>`<button class="htile" data-opencard="${esc(c)}"><span class="htn">${cardBadge(c)}<b>${esc(c)}</b></span><span class="htl">${lab}</span><span class="htv ${neg?"neg":""}">${val}</span>${bar!=null?`<span class="mini"><i style="width:${bar}%;background:${bar>=100?"var(--neg)":bar>=80?"var(--warn)":"var(--accent)"}"></i></span>`:""}<span class="htl">${sub}</span></button>`;
+  const T=cs.map(c=>{const k=cardCfg(c);
+    if(k.limit){const f=cardFree(c).free, u=Math.max(0,Math.min(100,(k.limit-f)/k.limit*100));return tile(c,"livre",R(Math.max(0,f)),u,`de ${R(k.limit)}`,f<0)}
+    const bs=billShown(c,ym);return tile(c,"fatura",R(cardTotal(c,bs.ym)),null,dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym))});
+  B.forEach(b=>{const v=benBal(b), nx=benNext(b);T.push(tile(b.name,"saldo",R(v),null,nx?`crédito ${fmtDM(nx)}`:"vale",v<0))});
+  return `<section><h2>Cartões <button data-gocards="1">Ver todos</button></h2><div class="htiles">${T.join("")}</div></section>`;
+}
 /* resumo do mês que fechou: aparece nos 7 primeiros dias do mês, até tocar em Ok (cfg.recapSeen) */
 function recapCard(){
   const now=today(), pm=shiftYM(curYM(),-1);
@@ -2008,6 +2095,12 @@ function renderHome(){
      (Saldo na conta, Cartões, Dinheiro guardado); embaixo "Vence" largo à esquerda e Benefícios/Euro à direita.
      No celular continua a lista na ordem do "Organizar início". */
   let body;
+  /* novo app (out/2026, desenho aprovado por ele): no celular o Hoje é uma lista só (próximos pagamentos e o que entra),
+     os cartões em quadros com o limite livre, e no fim a conta e o dinheiro guardado. A ordem do "Organizar início" não vale. */
+  if(!IS_WIDE.matches){
+    $("pHome").innerHTML=oneBanner()+hojeList()+hojeCards()+contaBlock()+homeBlock("guard")+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
+    return;
+  }
   if(IS_WIDE.matches){const H={};o.forEach(k=>{const h=homeBlock(k);if(h)H[k]=h});
     const top=["conta","cards","guard"].filter(k=>H[k]), side=["bens","euro"].filter(k=>H[k]);
     body=`<div class="hdash">${top.length?`<div class="htop" style="--n:${top.length}">${top.map(k=>H[k]).join("")}</div>`:""}
@@ -2017,7 +2110,7 @@ function renderHome(){
 }
 
 /* ---------- aba Mês ---------- */
-let mq="", catNewOpen=false;
+let mq="", catNewOpen=false, catAll=false;
 const fold=t=>(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 function searchHits(q){
   const words=fold(q).split(/\s+/).filter(Boolean);
@@ -2052,12 +2145,16 @@ function renderMes(){
     $("mBody").innerHTML=`<section><div class="empty"><strong>Nada lançado em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}</strong>Toque no + para registrar um gasto ou uma receita.</div></section>`+cardStrip(view);
     return;
   }
-  h+=cardStrip(view)+timeline(view,arr);
+  h+=(IS_WIDE.matches?cardStrip(view):"")+timeline(view,arr); /* no celular os cartões ficam no Hoje (novo app, out/2026) */
   // categorias: cada linha abre os lançamentos dela no mês
   const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0);
   if(tot){
     const ks=Object.keys(byC).filter(k=>byC[k]).sort((a,b)=>byC[b]-byC[a]), mx=byC[ks[0]], B=budgets();
-    h+=`<section><h2>Por categoria <button id="goOrc">Orçamento</button></h2><div class="card list" style="padding:0"><div style="padding:14px 14px 4px"><div class="minicats" style="margin:0 0 6px">${ks.map(k=>`<i style="width:${byC[k]/tot*100}%;background:${catOf(k,"desp").c}"></i>`).join("")}</div></div><div class="catrows">${ks.map(k=>{
+    /* novo app (out/2026): no celular as categorias começam numa barra só com as 3 maiores; "Todas as categorias" abre a lista */
+    if(!IS_WIDE.matches&&!catAll){
+      h=`<section class="catsumsec"><div class="catsum"><div class="minicats">${ks.map(k=>`<i style="width:${byC[k]/tot*100}%;background:${catOf(k,"desp").c}"></i>`).join("")}</div><div class="catleg">${ks.slice(0,3).map(k=>`<span><i style="background:${catOf(k,"desp").c}"></i>${esc(catOf(k,"desp").n)} ${R(byC[k])}</span>`).join("")}</div><button class="lk" data-catall="1" style="padding:6px 0 0">Todas as categorias</button></div></section>`+h;
+    } else
+    h+=`<section id="catAllSec"><h2>Por categoria <button id="goOrc">Orçamento</button></h2><div class="card list" style="padding:0"><div style="padding:14px 14px 4px"><div class="minicats" style="margin:0 0 6px">${ks.map(k=>`<i style="width:${byC[k]/tot*100}%;background:${catOf(k,"desp").c}"></i>`).join("")}</div></div><div class="catrows">${ks.map(k=>{
       const c=catOf(k,"desp"),v=byC[k],b=B[k],open=catOpen.has(k),L=dA.filter(x=>x.cat===k&&amt(x)).sort((a,b2)=>b2.cents-a.cents);
       return `<div class="catg ${open?"open":""}"><button class="catrow" data-catopen="${esc(k)}" aria-expanded="${open}">${catIco(k,"desp")}<span class="cn">${esc(c.n)} <i class="tlcar">›</i></span><span class="cv">${R(v)}</span><span class="cb"><i><i style="width:${(b?Math.min(v/b,1):v/mx)*100}%;background:${b&&v>b?"var(--neg)":c.c}"></i></i><em class="${b&&v>b?"neg":""}">${b?`de ${R(b)}`:`${Math.round(v/tot*100)}%`}</em></span></button>`+
         (open?`<div class="tlitems">${L.map(itemHTML).join("")}</div>`:"")+`</div>`}).join("")}</div></div></section>`;
@@ -3022,6 +3119,12 @@ function projSection(){
   return `<section><h2>Próximos meses <small>toque para abrir</small></h2><div class="card tablewrap"><table class="proj"><thead><tr><th>Mês</th><th class="r">Entra</th><th class="r">Sai</th>${hA?"":`<th class="r">Saldo</th>`}<th class="r">${hA?"Na conta":"Acum."}</th></tr></thead><tbody>${hA?`<tr class="start"><td>hoje</td><td></td><td></td><td class="r"><b>${R(accBal()).replace("R$ ","")}</b></td></tr>`:""}${rows}</tbody></table></div>
     <p class="hint" style="margin-top:8px">${hA?`“Na conta” = quanto sobra no fim de cada mês, partindo do saldo na conta de hoje: soma o que ainda vai entrar e tira o que falta pagar (atrasados entram em ${shortMonth(cur)}).`:`Acumulado soma o saldo a partir de ${shortMonth(cur)}. Informe o saldo na conta no Início para ver quanto fica na conta em cada mês.`} ${salPrevOn()?`* inclui o salário previsto pelos holerites. `:""}Receitas só entram quando você lança.</p></section>`;
 }
+/* novo app (out/2026): Moedas saiu da barra; entra pelo Planejar (cotação e o que já comprou) */
+function fxRowSection(){
+  const r=currentRate(), e=fxStats("EUR"), u=fxStats("USD");
+  const meta=[e.eur?`${E(e.eur)} comprados`:"",u.amt?`${M(u.amt,"USD")} comprados`:""].filter(Boolean).join(" · ")||"compras de euro e dólar";
+  return `<section><h2>Euro e dólar</h2><div class="card list"><button class="due" data-gotab="pFx"><span class="dchip"><b>€</b></span><span class="d">${r?`€ 1 = R$ ${r4(r.rate)}`:"Cotação"}${sharedUsd&&sharedUsd.rate?` <small style="color:var(--muted);font-weight:500">· US$ ${r4(+sharedUsd.rate)}</small>`:""}</span><span class="v">›</span><span class="m">${esc(meta)}</span></button></div></section>`;
+}
 function renderAno(){
   const ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&ae.closest("#saveSec")) return;
   const yArr=items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=MIN_YM);
@@ -3038,7 +3141,7 @@ function renderAno(){
     svg+=`<rect x="${cx+1}" y="${H-bot-sc(despM[i])}" width="${bw2}" height="${sc(despM[i])}" rx="2" class="bar-r" fill="var(--c2)"/>`;
     svg+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Figtree,system-ui">${n}</text>`});
   svg+=`<text x="2" y="${top+9}" font-size="9" fill="var(--muted)" font-family="Figtree,system-ui">${R(max).replace(/,\d\d$/,"")}</text></svg>`;
-  let h=projSection()+saveSection()+`<section><h2>Receitas × despesas</h2><div class="card chart"><div class="legend"><span><i class="dot" style="background:var(--accent)"></i>Receitas</span><span><i class="dot" style="background:var(--c2)"></i>Despesas</span></div>${svg}</div></section>`;
+  let h=saveSection()+fxRowSection()+projSection()+`<section><h2>Receitas × despesas</h2><div class="card chart"><div class="legend"><span><i class="dot" style="background:var(--accent)"></i>Receitas</span><span><i class="dot" style="background:var(--c2)"></i>Despesas</span></div>${svg}</div></section>`;
   const k=(c,t)=>idx.map(i=>mon(i).filter(x=>typeOf(x)===t&&x.cat===c.k).reduce((s,x)=>s+amt(x),0));
   const cell=v=>`<td class="r">${v?brl(v):"<span style='color:var(--muted)'>–</span>"}</td>`;
   const line=(label,vals,cls="")=>{const tot=vals.reduce((a,b)=>a+b,0);return tot||cls?`<tr class="${cls}"><td>${label}</td>${vals.map(cell).join("")}<td class="r"><b>${brl(tot)}</b></td></tr>`:""};
@@ -3604,7 +3707,7 @@ function go(t){
   if(t==="pPlan") t="pMes";
   homeEdit=false;svForm=null;svOpen=null;fatEditing=false;limEditing=false;
   tab=t;
-  document.querySelectorAll(".tab").forEach((b,i)=>{if(b.dataset.tab===(t==="pOrc"||t==="pCards"?"pMes":t)){b.setAttribute("aria-current","page");document.querySelector("nav.tabs").style.setProperty("--ti",i)}else b.removeAttribute("aria-current")});
+  document.querySelectorAll(".tab").forEach((b,i)=>{if(b.dataset.tab===(t==="pOrc"||t==="pCards"?"pMes":t==="pFx"?"pAno":t)){b.setAttribute("aria-current","page");document.querySelector("nav.tabs").style.setProperty("--ti",i)}else b.removeAttribute("aria-current")});
   ["pHome","pMes","pCards","pPlan","pFx","pAno","pOrc","pMe"].forEach(p=>$(p).hidden=p!==tab);
   $("tabAv").toggleAttribute("aria-current",tab==="pMe");if(tab==="pMe")$("tabAv").setAttribute("aria-current","page");document.querySelector("nav.tabs").classList.toggle("onme",tab==="pMe");
   if(tab==="pAno") year=Math.max(MIN_YEAR,Number(view.slice(0,4)));
@@ -3654,7 +3757,7 @@ document.addEventListener("keydown",e=>{
   if(/^Numpad/.test(e.code||"")&&!numKey(e))return;
   const k=numKey(e)||e.key.toLowerCase();
   if(k==="n"){e.preventDefault();$("addBtn").click()}
-  else if(/^[1-5]$/.test(k)){const t=["pHome","pMes","pFx","pAno","pMe"][+k-1];if(t==="pCards")selCard=null;go(t)}
+  else if(/^[1-5]$/.test(k)){const t=["pHome","pMes","pAno","pMe","pFx"][+k-1];if(t==="pCards")selCard=null;go(t)}
   else if(e.key==="ArrowLeft"&&!$("mpill").hidden){e.preventDefault();$("prev").click()}
   else if(e.key==="ArrowRight"&&!$("mpill").hidden){e.preventDefault();$("next").click()}
   else if(e.key==="/"){e.preventDefault();if(tab!=="pMes")go("pMes");setTimeout(()=>$("mSearch")?.focus(),60)}
@@ -3682,6 +3785,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="syncOff"){if(syncSetup!=="off"){syncSetup="off";render();return}["despesas.syncPass","despesas.syncBase","despesas.syncMeta"].forEach(k=>lsSet(k,null));
     try{localStorage.removeItem("despesas.gtok")}catch(e){}SY.tok=null;syncSetup=null;toast("Sincronização desligada");render();return}
   if(t.id==="photoDel"){try{localStorage.removeItem("despesas.photo");localStorage.removeItem("despesas.photoColor");if(lsGet("despesas.theme")==="foto")localStorage.removeItem("despesas.theme")}catch(e){}applyTheme();render();syncSoon();return}
+  if(t.closest("[data-catall]")){catAll=true;renderMes();setTimeout(()=>$("catAllSec")?.scrollIntoView({block:"start"}),30);return}
   const co=t.closest("[data-catopen]"); if(co){const k=co.dataset.catopen;catOpen.has(k)?catOpen.delete(k):catOpen.add(k);renderMes();return}
   const tc=t.closest("[data-tlcard]"); if(tc){const c=tc.dataset.tlcard;tlOpen.has(c)?tlOpen.delete(c):tlOpen.add(c);renderMes();return}
   if(t.closest("[data-gocards]")){selCard=null;backTo="pMes";go("pCards");return}

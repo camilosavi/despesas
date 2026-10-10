@@ -441,6 +441,17 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   % e sem a frase com data (`hFoot` só avisa gastos > receitas); "Na conta" é uma linha por banco (`.acone`; ainda entra/
   falta/sobra já estão no topo; no PC continua o bloco completo); Euro some sem compra nem meta. Mês: rodapé do topo sem
   "na conta hoje"/"a pagar" (estão na linha do tempo); `.tlbal`/`.tlproj` sem caixa; "sobra R$ X" em cinza.
+- **Novo app: Hoje / Mês / Planejar** (out/2026, desenho aprovado por ele no canvas "Minhas Despesas — novo app"):
+  barra de baixo com **3 abas** (Hoje = `pHome`, Mês, Planejar = `pAno`) + foto; **Moedas saiu da barra** e abre pelo
+  Planejar (seção "Euro e dólar", `fxRowSection`) — `pFx` continua igual (atalho 5) e acende a aba Planejar.
+  Topo do **Hoje**: "Na conta hoje" (`accBal()`; sem saldo, "Saldo de <mês>") e, no celular, a barra do mês `#hBar`
+  (pago / a pagar / entrou, "fim do mês" = `endBal`, ou "sobra"). Corpo no celular (`renderHome`, sem "Organizar
+  início"): faixa única (backup vira uma linha, `.bline`), `hojeList()` = próximos pagamentos até o fim do mês (mín. 10
+  dias) + receitas que ainda caem (inclui `salVirt`), `hojeCards()` = cartões em quadros com limite livre (`.htile`;
+  benefícios com saldo), "Na conta" e Dinheiro guardado. No PC continua o painel. **Mês**: topo "Gastou em <mês>"
+  (`hFoot` "de R$ X que entrou · sobra R$ Y"); no celular sem faixa de cartões, categorias numa barra com as 3 maiores
+  (`.catsum`, "Todas as categorias" → `catAll`). **Planejar**: topo "Na conta no fim de <mês+5>" com 6 barras de
+  `endBal` (`.hbchart`), sem seletor de ano no celular; ordem caixinhas → Euro e dólar → próximos meses; listas sem caixa.
 - **Instalar app** (out/2026, `installBanner()` no topo do Início, só fora do app instalado): Android/Chrome guarda o
   `beforeinstallprompt` (`instEvt`) → botão "Instalar" (vira WebAPK; não precisa de APK/Play Store); iPhone (`IS_IOS`) →
   passo a passo Compartilhar → Adicionar à Tela de Início e, se já tem lançamentos, pede backup antes (no iPhone o app
