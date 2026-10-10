@@ -941,6 +941,56 @@ h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
   .cdsumtop{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
   .cdsum .mini{margin:8px 0}
 }
+/* ---------- banco limpo (out/2026, pedido dele: "não to convencido do visual"; escolheu "banco limpo" e o que incomodava
+   era informação demais e caixas/espaços) ----------
+   Fundo neutro quase preto (só um toque da cor do tema), cor forte só no topo e nos destaques. No celular as listas
+   ficam direto no fundo, sem caixa, separadas por linha fina; seções separadas por espaço e uma linha. Títulos em
+   frase normal (não caixa alta). */
+:root,:root[data-accent]:not([data-accent="verde"]){
+  --bg:color-mix(in srgb,var(--head) 3%,#F5F6F8);--surface:#FFFFFF;--zebra:color-mix(in srgb,var(--head) 2%,#F9FAFB);
+  --line:color-mix(in srgb,var(--head) 6%,#E3E5E9);--chip:color-mix(in srgb,var(--head) 5%,#EDEFF2);
+  --muted:color-mix(in srgb,var(--head) 15%,#646A73);--ink:color-mix(in srgb,var(--head) 10%,#15171A)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]),:root:not([data-theme="light"])[data-accent]:not([data-accent="verde"]){
+  --bg:color-mix(in srgb,var(--head) 10%,#0B0C0E);--surface:color-mix(in srgb,var(--head) 12%,#16181B);
+  --zebra:color-mix(in srgb,var(--head) 14%,#1A1C1F);--line:color-mix(in srgb,var(--head) 12%,#24272B);
+  --chip:color-mix(in srgb,var(--head) 14%,#1E2024);--muted:color-mix(in srgb,var(--head-muted) 30%,#989DA4);
+  --ink:#ECEEF0}}
+:root[data-theme="dark"],:root[data-theme="dark"][data-accent]:not([data-accent="verde"]){
+  --bg:color-mix(in srgb,var(--head) 10%,#0B0C0E);--surface:color-mix(in srgb,var(--head) 12%,#16181B);
+  --zebra:color-mix(in srgb,var(--head) 14%,#1A1C1F);--line:color-mix(in srgb,var(--head) 12%,#24272B);
+  --chip:color-mix(in srgb,var(--head) 14%,#1E2024);--muted:color-mix(in srgb,var(--head-muted) 30%,#989DA4);
+  --ink:#ECEEF0}
+h2{font-size:1.06rem;text-transform:none;letter-spacing:-.005em;color:var(--ink);font-weight:700;margin-bottom:6px}
+h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;text-transform:none}
+.split span{text-transform:none;letter-spacing:0;font-size:.8rem}
+.label{text-transform:none!important;letter-spacing:0!important;font-size:.86rem!important}
+/* faixas (backup, instalar, resumo): mais baixas, sem borda colorida */
+.banner{padding:14px 16px;gap:8px;border-color:transparent!important;background:var(--surface)}
+.banner strong{font-size:1rem}.banner p{font-size:.86rem}
+.banner .btn{padding-block:10px;font-size:.92rem}
+@media (max-width:979px){
+  section{margin-top:26px}
+  #pHome>section+section,#mBody>section+section{border-top:1px solid var(--line);padding-top:20px}
+  /* listas direto no fundo */
+  #pHome .card:not(.banner),#pHome .hcard,#mBody .card.list,#mBody .card:has(.tlg),#mBody .card:has(.catrows){background:none;border:0;border-radius:0;box-shadow:none}
+  #pHome .hcard{padding:6px 0}
+  #pHome .rate{padding:6px 0 0}
+  #pHome .due,#pHome .cardrow,#mBody .due,#mBody .tlrow,#mBody .item,#mBody .catrow{padding-left:0!important;padding-right:0!important}
+  #mBody .card.list>div[style*="padding:14px"]{padding:6px 0 4px!important}
+  /* saldo na conta: uma linha, como extrato de banco */
+  .acone{display:flex;align-items:center;gap:12px;padding:6px 0}
+  .acone .t{flex:1;min-width:0}.acone .t b{display:block;font-weight:600}.acone .t span{font-size:.8rem;color:var(--muted)}
+  .acone .fi{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--display);letter-spacing:-.02em;line-height:1;flex:none;font-size:calc(1.05rem * var(--k,1))}
+  .acone .v{font-family:var(--display);font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+}
+@media (max-width:979px){
+  .tlbal{background:none;border:0;border-radius:0;padding:4px 0 10px;margin-bottom:0;border-bottom:1px solid var(--line)}
+  .tlproj{background:none;border:0;border-radius:0;padding:14px 0 0;border-top:1px solid var(--line)}
+  #mBody .card:has(.tlg){margin-top:0}
+}
+.tlafter{color:var(--muted)!important;font-weight:500!important}.tlafter.neg{color:var(--neg)!important;font-weight:600!important}
+/* topo do Início: número grande e duas linhas, sem anel e sem frase de data */
+body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 </style>
 
 <div class="wrap">
@@ -1606,13 +1656,9 @@ function header(){
     if(acc){$("s1l").textContent="Na conta hoje";$("s1").textContent=R(accBal())}
     else{$("s1l").textContent="Entrou";$("s1").textContent=R(rec)}
     $("s2l").textContent="Falta pagar";$("s2").textContent=R(open);
-    const d=new Date(), pct=rec?desp/rec:0;
-    $("hRing").hidden=!rec;
-    if(rec){const fg=$("hRing").querySelector(".fg");
-      $("hRing").style.setProperty("--rc",pct>=1?"var(--neg)":pct>=.85?"var(--warn)":"var(--accent)");
-      requestAnimationFrame(()=>fg.style.strokeDashoffset=String(226.2*(1-Math.min(1,pct))));
-      $("hRingPct").textContent=Math.round(pct*100)+"%"}
-    $("hFoot").textContent=d.toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"})+(rec?` · ${pct>=1?"gastos passaram do que entrou":`sobra ${Math.round((1-pct)*100)}% do que entrou`}`:"");
+    /* banco limpo (out/2026): sem o anel de % e sem a frase com data; só avisa quando os gastos passam do que entrou */
+    $("hRing").hidden=true;
+    $("hFoot").textContent=rec&&desp>rec?"gastos do mês passaram do que entrou":"";
     return;
   }
   if(isFx){
@@ -1659,14 +1705,11 @@ function header(){
   $("s2l").textContent="Despesas";$("s2").textContent=R(desp);
   const parts=[];
   if(!isYear){
-    const open=arr.filter(x=>!isPaid(x)).reduce((s,x)=>s+amt(x),0);
-    if(open) parts.push(`${R(open)} ainda a pagar`);
-    if(chain){const pv=view===curYM()?(hasAcc()?accBal():null):endBal(shiftYM(view,-1));
-      if(pv!=null) parts.unshift(view===curYM()?`na conta hoje: ${R(pv)}`:`vem de ${monthLabel(shiftYM(view,-1)).split(" ")[0].toLowerCase()}: ${pv<0?"−":""}${R(Math.abs(pv))}`)}
+    /* banco limpo (out/2026): "na conta hoje", "vem de" e "a pagar" já estão no começo da linha do tempo; aqui fica uma frase só */
     const totBud=Object.values(budgets()).reduce((s,v)=>s+(v||0),0);
     if(totBud) parts.push(`${Math.round(desp/totBud*100)}% do orçamento`);
     const prev=sumT(inMonth(shiftYM(view,-1)),"desp");
-    if(prev){const d=desp-prev;parts.push(`gastos ${d>=0?"+":"−"} ${R(Math.abs(d))} vs. mês anterior`)}
+    if(prev&&!parts.length){const d=desp-prev;parts.push(`gastos ${d>=0?"+":"−"} ${R(Math.abs(d))} vs. mês anterior`)}
   } else {
     const months=new Set(items.filter(x=>(x.date||"").startsWith(year+"-")&&typeOf(x)==="desp").map(x=>x.date.slice(0,7))).size;
     if(months) parts.push(`média de gastos: ${R(Math.round(desp/months))}/mês`);
@@ -1842,7 +1885,14 @@ function contaBlock(){
   if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></section>`;
   const tot=accBal(), mv=accMoves(), fl=accFlow(ym), open=fl.out, after=endBal(ym);
   const at=A.map(a=>a.at).filter(Boolean).sort()[0], old=at&&at<addDays(today(),-3);
-  return `<section><h2>Saldo na conta <span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button id="acEdit">Atualizar</button></span></h2><div class="card rate">
+  const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button id="acEdit">Atualizar</button></span>`;
+  /* banco limpo (out/2026): no celular, uma linha por conta; "ainda entra / falta pagar / sobra" já estão no topo */
+  if(!IS_WIDE.matches) return `<section><h2>Na conta ${ext}</h2><div class="card">`+
+    A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:""}</span></span><span class="v">${R(A.length===1?tot:a.cents)}</span></div>`).join("")+
+    (A.length>1?`<div class="acone"><span class="t"><b>Total</b>${mv.out||mv.inn?`<span>com o que foi pago e recebido depois</span>`:""}</span><span class="v">${R(tot)}</span></div>`:"")+
+    (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
+    (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+`</div></section>`;
+  return `<section><h2>Saldo na conta ${ext}</h2><div class="card rate">
     <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div>${mv.out||mv.inn?`<div class="src">informado ${R(A.reduce((s,a)=>s+a.cents,0))}${mv.out?` · −${R(mv.out)} pago depois`:""}${mv.inn?` · +${R(mv.inn)} recebido`:""}</div>`:""}</div></div>
     ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${R(a.cents)}</b></div>`).join("")}</div>`:""}
     <div class="cmp">${fl.inn?`<div><span>Ainda entra em ${mn}</span><b class="pos">+ ${R(fl.inn)}</b></div>`:""}<div><span>Falta pagar em ${mn}${fl.late?` <small>(${R(fl.late)} atrasado)</small>`:""}</span><b>${R(open)}</b></div><div><span>${after>=0?`Sobra no fim de ${mn}`:"Vai faltar"}</span><b class="${after>=0?"pos":"neg"}">${R(Math.abs(after))}</b></div></div>
@@ -1893,7 +1943,7 @@ function homeBlock(k){
   if(k==="bens") return benBlock();
   if(k==="venc"){
     const U=upcoming(10), late=U.filter(u=>u.date<now);
-    return `<section><h2>Vence nos próximos 10 dias <small>${U.length?R(U.reduce((s,u)=>s+u.cents,0)):""}</small></h2><div class="card list">`+
+    return `<section><h2>Vence em 10 dias <small>${U.length?R(U.reduce((s,u)=>s+u.cents,0)):""}</small></h2><div class="card list">`+
     (U.length?U.map(u=>{const[,m,d]=u.date.split("-"),isLate=u.date<now;
       const when=isLate?"atrasado":u.date===now?"vence hoje":u.date===addDays(now,1)?"vence amanhã":`vence ${d}/${m}`;
       const attr=u.kind==="card"?`data-opencard="${esc(u.c)}" data-ym="${u.ym}"`:`data-id="${esc(u.x.id)}"`;
@@ -1913,6 +1963,7 @@ function homeBlock(k){
   }
   if(k==="euro"){
     const s=fxStats("EUR"), r=currentRate();
+    if(!s.eur&&!s.c.goal) return ""; /* sem euro comprado nem meta: não ocupa o Início (a cotação fica na aba Moedas) */
     return `<section><h2>Euro${s.c.dest?` · ${esc(s.c.dest)}`:""}</h2><button class="hcard" data-gotab="pFx">
       <div class="hhead"><b>${r?`R$ ${r4(r.rate)}`:"Cotação —"}</b><span>${r?`€ ${whenTxt(r)}`:""}${sharedUsd&&sharedUsd.rate?` · US$ ${r4(+sharedUsd.rate)}`:""}</span></div>
       ${s.c.goal?`<div class="mini"><i style="width:${Math.min(100,s.pct*100)}%"></i></div>`:""}

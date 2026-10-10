@@ -434,6 +434,13 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Atualizar viraram links no título (`h2 .h2act`), sem o botão "Fim de <próximo>". Ano: sem a coluna Saldo quando há
   Saldo na conta. **Você** recolhe as seções como o Ano (`FOLD`/`anoFold(pid)`: só Aparência aberta, `despesas.meOpen`);
   `renderAno`/`renderMe` chamam o `anoFold` no fim.
+- **Banco limpo** (out/2026, ele não estava convencido do visual; escolheu "banco limpo", incomodava informação demais e
+  caixas): bloco CSS "banco limpo" no fim do `<style>`. Fundo neutro quase preto (só ~10% da cor do tema; claro quase
+  branco), cor forte só no topo e nos destaques; títulos `h2` em frase normal (sem caixa alta). No celular (≤ 979 px) as
+  listas do Início e do Mês ficam direto no fundo (sem caixa), seções separadas por linha fina. Início: topo sem o anel de
+  % e sem a frase com data (`hFoot` só avisa gastos > receitas); "Na conta" é uma linha por banco (`.acone`; ainda entra/
+  falta/sobra já estão no topo; no PC continua o bloco completo); Euro some sem compra nem meta. Mês: rodapé do topo sem
+  "na conta hoje"/"a pagar" (estão na linha do tempo); `.tlbal`/`.tlproj` sem caixa; "sobra R$ X" em cinza.
 - **Instalar app** (out/2026, `installBanner()` no topo do Início, só fora do app instalado): Android/Chrome guarda o
   `beforeinstallprompt` (`instEvt`) → botão "Instalar" (vira WebAPK; não precisa de APK/Play Store); iPhone (`IS_IOS`) →
   passo a passo Compartilhar → Adicionar à Tela de Início e, se já tem lançamentos, pede backup antes (no iPhone o app
