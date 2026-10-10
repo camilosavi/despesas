@@ -1011,6 +1011,15 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
 .bline{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surface);font-size:.92rem;border-top:0!important;margin-top:18px}
 .bline .bt{flex:1;min-width:0}.bline .bdot{width:8px;height:8px;border-radius:4px;background:var(--warn);flex:none}
 .bline .lk{padding:4px 0}.bline #bkLater{color:var(--muted);font-weight:500}
+.fxrate{display:grid;gap:4px}
+.fxr1{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.fxrv{font-size:1.05rem}.fxrv b{font-family:var(--display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.fxr2{font-size:.84rem;color:var(--muted)}.fxr2 .pos{color:var(--pos);font-weight:600}
+.fxtot{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 2px;font-size:.84rem;color:var(--muted);border-top:1px solid var(--line)}
+.fxtot b{font-size:1rem;color:var(--ink)}
+.fxchip{font-family:var(--display);font-weight:700;font-size:1.05rem;color:var(--euro)}
+#pFx>section+section{border-top:1px solid var(--line);padding-top:20px}
+@media (max-width:979px){#pFx .card.list{background:none;border:0;border-radius:0}#pFx .due{padding-left:0;padding-right:0}}
 /* topo do Início: número grande e duas linhas, sem anel e sem frase de data */
 body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 </style>
@@ -1658,9 +1667,9 @@ function header(){
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:null);
   const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:"Planejar",pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=titles[tab]||"";
-  const sub=tab==="pCards"||tab==="pOrc";
+  const sub=tab==="pCards"||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
-  if(sub) $("backLbl").textContent=tab==="pCards"&&!selCard?"Mês":backTo==="pMes"?"Mês":backTo==="pHome"?"Início":"Cartões";
+  if(sub) $("backLbl").textContent=tab==="pFx"?"Planejar":tab==="pCards"&&!selCard?"Mês":backTo==="pMes"?"Mês":backTo==="pHome"?"Início":"Cartões";
   $("hProg").hidden=!isFx;$("hRing").hidden=true;
   if(isMe){
     $("meHead").innerHTML=`<span class="av">${avInner()}</span><div><p class="label">Seu perfil</p><div class="nm">${esc(myName()||"Você")}</div></div>`;
@@ -1693,14 +1702,14 @@ function header(){
   }
   if(isFx){
     const s=fxStats(), F=FXC[s.cur];
-    $("ptitle").textContent=s.c.dest?`Moedas · ${s.c.dest}`:"Moedas";
-    $("bigLabel").textContent=`${F.N} comprado`;
+    $("ptitle").textContent="Moedas";
+    const rr=rateFor(s.cur);
+    $("bigLabel").textContent=`${F.N} que você tem`;
     setBig(F.sym,s.amt);
-    $("s1l").textContent="Pago (R$)";$("s1").textContent=R(s.paid);
-    $("s2l").textContent="Preço médio";$("s2").textContent=s.amt?"R$ "+rate4(s.paid,s.amt):"—";
+    $("s1l").textContent="Vale hoje";$("s1").textContent=rr?R(Math.round(s.amt*rr.rate)):"—";
+    $("s2l").textContent="Você pagou";$("s2").textContent=R(s.paid);
     $("hProg").hidden=!s.c.goal;$("hProg").firstElementChild.style.width=Math.min(100,s.pct*100)+"%";
-    const parts=s.c.goal?[`${M(s.have,s.cur)} de ${M(s.c.goal,s.cur)} na caixinha`,`falta ${M(s.left,s.cur)}`]:[];
-    if(s.left&&s.months>0) parts.push(`~${M(Math.ceil(s.left/s.months),s.cur)} por mês até ${shortMonth(s.c.target)}`);
+    const parts=s.c.goal?[`meta ${esc(s.c.dest)}: ${M(s.c.goal,s.cur)}`,`falta ${M(s.left,s.cur)}`]:[];
     $("hFoot").textContent=parts.join(" · ");
     return;
   }
@@ -2948,17 +2957,21 @@ function rateCard(s){
     ${usdLine(s.cur)}</div>`;
 }
 function renderFx(){
-  const s=fxStats(), F=FXC[s.cur], rows=fx.filter(x=>fxCurOf(x)===s.cur).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
-  let h=`<section><h2>Cotação do dia</h2>${rateCard(s)}</section><section><h2>Compras de ${F.n} <button id="fxAdd">+ Nova compra</button></h2>`;
-  if(!rows.length){
-    h+=`<div class="empty"><strong>Nenhuma compra de ${F.n} ainda</strong>Toque em “Nova compra” e informe quanto em ${F.sym} caiu e quanto pagou em R$. A cotação e o preço médio saem sozinhos.</div>`;
-  } else {
-    h+=`<div class="card"><table class="fit"><thead><tr><th>Data · onde</th><th class="r">${F.sym} / R$</th><th class="r">Cotação</th></tr></thead><tbody>`+
-      rows.map(x=>{const[y,m,d]=x.date.split("-");return `<tr class="click fxrow" data-fx="${esc(x.id)}"><td class="wrapcell"><span class="main">${d}/${m}/${y.slice(2)} · ${esc(x.where||"—")}</span>${x.obs?`<span class="sub">${esc(x.obs)}</span>`:""}</td><td class="r"><span class="main eur">${M(fxAmt(x),s.cur)}</span><span class="sub">R$ ${brl(x.brl)}</span></td><td class="r"><span class="main">${rate4(x.brl,fxAmt(x))}</span><span class="sub">R$/${F.sym}</span></td></tr>`}).join("")+
-      `</tbody><tfoot><tr><td>Total</td><td class="r"><span class="main eur">${M(s.amt,s.cur)}</span><span class="sub">R$ ${brl(s.paid)}</span></td><td class="r"><span class="main">${s.amt?rate4(s.paid,s.amt):"—"}</span><span class="sub">médio</span></td></tr></tfoot></table></div>`;
-  }
+  /* novo app (out/2026, ele: "ficou bem ruim a parte das moedas"): cotação numa linha, compras como lista (igual ao
+     resto do app), sem tabela e sem repetir a meta da caixinha (ela fica no topo) */
+  const s=fxStats(), F=FXC[s.cur], r=rateFor(s.cur), rows=fx.filter(x=>fxCurOf(x)===s.cur).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  const avg=s.amt?s.paid/s.amt:0, diff=r&&avg?r.rate-avg:0;
+  const cmp=!r||!avg?"":Math.abs(diff)<0.00005?"igual ao seu preço médio":diff<0?`R$ ${r4(-diff)} abaixo do seu médio`:`R$ ${r4(diff)} acima do seu médio`;
+  let h=`<section class="fxrate"><div class="fxr1"><span class="fxrv">${r?`${F.sym} 1 = <b>R$ ${r4(r.rate)}</b>`:"Sem cotação agora"}</span><button class="lk" id="rateRefresh">Atualizar</button></div>
+    <div class="fxr2">${r?[`${r.at&&r.date===today()?`<i class="live" aria-hidden="true"></i>`:""}${esc(whenTxt(r))}`,cmp?`<span class="${diff<0?"pos":""}">${cmp}</span>`:""].filter(Boolean).join(" · "):"Confira a internet e toque em Atualizar."}</div></section>`;
+  h+=`<section><h2>Compras <button id="fxAdd">Nova compra</button></h2>`;
+  if(!rows.length) h+=`<div class="empty"><strong>Nenhuma compra de ${F.n} ainda</strong>Toque em “Nova compra” e informe quanto em ${F.sym} caiu e quanto pagou em R$.</div>`;
+  else h+=`<div class="card list">`+rows.map(x=>{const[,m,d]=x.date.split("-");
+      return `<button class="due fxrow" data-fx="${esc(x.id)}"><span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span><span class="d">${esc(x.where||"Compra")}</span><span class="v">${M(fxAmt(x),s.cur)}</span><span class="m">${R(x.brl||0)} · a R$ ${rate4(x.brl,fxAmt(x))}${x.obs?` · ${esc(x.obs)}`:""}</span></button>`}).join("")+
+    `<div class="fxtot"><span>${rows.length} ${rows.length===1?"compra":"compras"} · médio R$ ${s.amt?rate4(s.paid,s.amt):"—"}</span><b>${M(s.amt,s.cur)}</b></div></div>`;
   const fb=fxBoxFor(s.cur);
-  h+=`<p class="hint" style="margin-top:8px">${fb?`Essas compras entram na caixinha <b>${esc(fb.name)}</b> (aba Ano).`:`Quer uma meta para esse ${F.n}?`}</p>${fb?"":`<div class="toolbar"><button class="tbtn go" id="fxMeta">+ Criar meta</button></div>`}</section>`;
+  if(!fb) h+=`<div class="toolbar" style="margin-top:10px"><button class="tbtn go" id="fxMeta">+ Criar meta</button></div>`;
+  h+=`</section>`;
   $("pFx").innerHTML=h;
 }
 
@@ -3032,7 +3045,7 @@ function saveSection(){
       if(svForm&&svForm.id===b.id) return svFormHtml();
       const v=svBal(b), e=svEur(b), u=svUsd(b), pct=b.goal?Math.max(0,Math.min(100,svHave(b)/b.goal*100)):0, last=(b.moves||[]).slice(-1)[0];
       const bks=boxBanks(b);
-      const meta=[bks.join(" + "),e||u?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):"",svGoalTxt(b),svPaceTxt(b),b.fxAll?`inclui as compras de ${FXC[boxFx(b)].n}`:"",!b.goal&&last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur)}`:""].filter(Boolean).join(" · ")||"sem movimentos";
+      const meta=[e||u?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):"",svGoalTxt(b),svPaceTxt(b),!b.goal&&last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur)}`:""].filter(Boolean).join(" · ")||"sem movimentos";
       let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="d">${bks.map(cardBadge).join("")}${esc(b.name)}</span><span class="v ${v<0?"neg":""}">${R(v)}</span>${b.goal?`<span class="mini"><i style="width:${pct}%"></i></span>`:""}<span class="m">${esc(meta)}</span></button>`;
       if(svOpen===b.id){
         const allMv=[...(b.moves||[])].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=svAllMv?allMv:allMv.slice(0,5);
@@ -3121,9 +3134,10 @@ function projSection(){
 }
 /* novo app (out/2026): Moedas saiu da barra; entra pelo Planejar (cotação e o que já comprou) */
 function fxRowSection(){
-  const r=currentRate(), e=fxStats("EUR"), u=fxStats("USD");
-  const meta=[e.eur?`${E(e.eur)} comprados`:"",u.amt?`${M(u.amt,"USD")} comprados`:""].filter(Boolean).join(" · ")||"compras de euro e dólar";
-  return `<section><h2>Euro e dólar</h2><div class="card list"><button class="due" data-gotab="pFx"><span class="dchip"><b>€</b></span><span class="d">${r?`€ 1 = R$ ${r4(r.rate)}`:"Cotação"}${sharedUsd&&sharedUsd.rate?` <small style="color:var(--muted);font-weight:500">· US$ ${r4(+sharedUsd.rate)}</small>`:""}</span><span class="v">›</span><span class="m">${esc(meta)}</span></button></div></section>`;
+  const row=cur=>{const st=fxStats(cur), F=FXC[cur], r=rateFor(cur);
+    return `<button class="due fxgo" data-fxgo="${cur}"><span class="dchip fxchip">${F.sym}</span><span class="d">${F.N}</span><span class="v">${st.amt?M(st.amt,cur):"›"}</span><span class="m">${[r?`${F.sym} 1 = R$ ${r4(r.rate)}`:"",st.amt?`médio R$ ${rate4(st.paid,st.amt)}`:"nenhuma compra"].filter(Boolean).join(" · ")}</span></button>`};
+  const L=["EUR","USD"].filter((c,i)=>!i||fxStats(c).n);
+  return `<section><h2>Moedas</h2><div class="card list">${L.map(row).join("")}</div></section>`;
 }
 function renderAno(){
   const ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&ae.closest("#saveSec")) return;
@@ -3764,12 +3778,13 @@ document.addEventListener("keydown",e=>{
 });
 document.querySelectorAll(".tab").forEach((b,i)=>{b.title=`${b.textContent.trim()} (${i+1})`});$("tabAv").title="Você: perfil e ajustes (5)";
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{if(b.dataset.tab==="pCards")selCard=null;go(b.dataset.tab)});
-$("backBtn").onclick=()=>{if(tab==="pOrc"||(tab==="pCards"&&!selCard)){go("pMes");return}selCard=null;go(backTo==="pMes"||backTo==="pHome"?backTo:"pCards")};
+$("backBtn").onclick=()=>{if(tab==="pFx"){go("pAno");return}if(tab==="pOrc"||(tab==="pCards"&&!selCard)){go("pMes");return}selCard=null;go(backTo==="pMes"||backTo==="pHome"?backTo:"pCards")};
 $("prev").onclick=()=>{if(tab==="pAno"){if(year<=MIN_YEAR)return;year--;view=year+view.slice(4);if(view<MIN_YM)view=MIN_YM}else{if(view<=MIN_YM)return;view=shiftYM(view,-1)}render();slideIn($(tab),-1)};
 $("next").onclick=()=>{if(tab==="pAno"){year++;view=year+view.slice(4)}else view=shiftYM(view,1);render();slideIn($(tab),1)};
 
 document.addEventListener("click",async e=>{
   const t=e.target;
+  const fg=t.closest("[data-fxgo]"); if(fg){fxCur=fg.dataset.fxgo;lsSet("despesas.fxCur",fxCur);go("pFx");return}
   const fr=t.closest(".fxrow"); if(fr){openFx(fx.find(x=>x.id===fr.dataset.fx));return}
   const it=t.closest(".item,.tlrow,tr.click,td.c"); if(it&&it.dataset.id&&!swipeJust){openSheet(items.find(i=>i.id===it.dataset.id));return}
   if(t.closest("#hAv,#tabAv")){go("pMe");return}

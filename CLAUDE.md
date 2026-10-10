@@ -452,6 +452,12 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   (`hFoot` "de R$ X que entrou · sobra R$ Y"); no celular sem faixa de cartões, categorias numa barra com as 3 maiores
   (`.catsum`, "Todas as categorias" → `catAll`). **Planejar**: topo "Na conta no fim de <mês+5>" com 6 barras de
   `endBal` (`.hbchart`), sem seletor de ano no celular; ordem caixinhas → Euro e dólar → próximos meses; listas sem caixa.
+- **Moedas refeita** (out/2026, ele: "ficou bem ruim a parte das moedas"): `renderFx` sem tabela e sem cartão de cotação —
+  linha "€ 1 = R$ X" com "Atualizar" (`#rateRefresh`) e "acima/abaixo do seu médio", compras como lista `.due.fxrow`
+  (data, onde, R$ pago · a R$ cotação, valor em €) e total com o médio. Topo: título só "Moedas", "<Moeda> que você tem",
+  "Vale hoje" (× cotação) / "Você pagou", barra da meta da caixinha. Botão "‹ Planejar" volta (`backBtn` com `pFx`).
+  No Planejar, seção "Moedas" (`fxRowSection`): uma linha por moeda (euro sempre, dólar se tiver compra) com
+  `data-fxgo` → troca `fxCur` e abre `pFx`. Caixinha não repete "inclui as compras" nem os bancos no texto (selo já mostra).
 - **Instalar app** (out/2026, `installBanner()` no topo do Início, só fora do app instalado): Android/Chrome guarda o
   `beforeinstallprompt` (`instEvt`) → botão "Instalar" (vira WebAPK; não precisa de APK/Play Store); iPhone (`IS_IOS`) →
   passo a passo Compartilhar → Adicionar à Tela de Início e, se já tem lançamentos, pede backup antes (no iPhone o app
