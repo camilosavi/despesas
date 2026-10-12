@@ -847,14 +847,9 @@ nav.tabs.onme::before{opacity:0}
   .cdmain,.cdmain2,.cdside{display:block;min-width:0}
   .cdmain{grid-column:1;grid-row:1}.cdmain2{grid-column:1;grid-row:2;margin-top:14px}.cdside{grid-column:2;grid-row:1/3}
   .cstrip{flex-wrap:wrap;overflow:visible;margin:0;padding:0}
-  .wrap{max-width:1240px;padding:0 36px 64px 132px}
+  .wrap{max-width:var(--pcw);padding:0 36px 64px}
   header.top{margin:20px 0 0!important;border-radius:26px!important;padding:22px 28px 24px!important}
   body::before{display:none}
-  nav.tabs{left:24px!important;right:auto!important;top:50%;bottom:auto!important;transform:translateY(-50%);width:76px;height:auto!important;
-    padding:8px!important;border-radius:38px;grid-template-columns:1fr!important;grid-template-rows:repeat(3,58px) 70px!important;gap:6px;align-content:start!important}
-  nav.tabs::before{left:8px;right:8px;top:8px;bottom:auto;width:auto;height:58px;transform:translateY(calc(var(--ti,0) * 64px))}
-  nav.tabs .tab{height:58px!important}
-  .tabav{width:46px;height:46px;align-self:center}
   #pHome:not([hidden]),#pCards:not([hidden]),#pFx:not([hidden]),#pAno:not([hidden]),#pOrc:not([hidden]),#pMe:not([hidden]),#mBody{column-count:2;column-gap:22px;margin-top:6px}
   main:not([hidden]){padding-top:18px}
   main section,#mBody>section,#importBox>*{break-inside:avoid;-webkit-column-break-inside:avoid}
@@ -881,7 +876,7 @@ nav.tabs.onme::before{opacity:0}
 @media (min-width:1500px){
   .cdwrap{grid-template-columns:minmax(0,2fr) minmax(0,1fr)!important}
   .cdmain,.cdmain2{column-count:2;column-gap:22px}
-  .wrap{max-width:1480px}
+  :root{--pcw:1480px}
   #pHome:not([hidden]),#pAno:not([hidden]),#pCards:not([hidden]){column-count:3}
 }
 /* ---------- visual simples (out/2026, pedido dele: "simplificar o visual completo", ideia da tela do Meu Pluggy) ----------
@@ -1033,6 +1028,37 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
 @media (max-width:979px){#pFx .card.list{background:none;border:0;border-radius:0}#pFx .due{padding-left:0;padding-right:0}}
 /* topo do Início: número grande e duas linhas, sem anel e sem frase de data */
 body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
+/* ---------- barra de cima no computador (out/2026, ele: "essa aba lateral no pc tá boa?" → opção 1, como o Meu Pluggy) ----------
+   A cápsula de vidro vira uma barra fixa no topo, sólida: "Minhas Despesas" à esquerda, abas com ícone + nome, foto à direita.
+   Alinhada com a largura do conteúdo (--pcw). No celular nada muda. */
+.tabbrand{display:none}
+:root{--pcw:1240px}
+@media (min-width:980px){
+  body{padding-top:64px}
+  nav.tabs{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;transform:none!important;
+    width:auto!important;max-width:none!important;height:64px!important;margin:0!important;border-radius:0!important;
+    display:flex!important;align-items:center;gap:6px;
+    padding:0 max(36px,calc((100% - var(--pcw))/2 + 36px))!important;
+    background:color-mix(in srgb,var(--bg) 88%,transparent)!important;
+    -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
+    border:0!important;border-bottom:1px solid color-mix(in srgb,var(--line) 80%,transparent)!important;box-shadow:none!important;z-index:7}
+  nav.tabs::before{display:none}
+  .tabbrand{display:block;font-family:var(--display);font-weight:700;font-size:1.12rem;letter-spacing:-.01em;color:var(--ink);margin-right:28px;white-space:nowrap}
+  nav.tabs .tab{display:flex!important;align-items:center;gap:8px;height:40px!important;padding:0 16px!important;border-radius:12px;
+    font-size:.95rem!important;font-weight:600;color:var(--muted)!important;background:none}
+  nav.tabs .tab svg{width:19px!important;height:19px!important;stroke-width:2!important}
+  nav.tabs .tab:hover{color:var(--ink)!important;background:var(--chip)}
+  nav.tabs .tab[aria-current="page"]{color:var(--ink)!important;background:var(--chip)}
+  nav.tabs .tab:active{transform:scale(.97)!important}
+  .tabav{margin-left:auto;width:38px!important;height:38px!important;border-color:var(--line)!important;font-size:.95rem}
+  .tabav[aria-current="page"]{border-color:var(--accent)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent)!important}
+  .tabav[data-sync]::after{border-color:var(--bg)}
+  header.top{margin-top:22px!important}
+  main section{scroll-margin-top:84px}
+  /* nas 3 abas o nome já está na barra: some do topo (fica na tela do cartão e na Você) */
+  header.top:has(#backBtn[hidden]):has(#meHead[hidden]) #ptitle{display:none}
+  header.top:has(#backBtn[hidden]):has(#meHead[hidden]) .titlerow:not(:has(.hbell:not([hidden])):has(.hseg:not([hidden]))){min-height:0}
+}
 </style>
 
 <div class="wrap">
@@ -1078,6 +1104,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 
 <button class="fab" id="addBtn" aria-label="Novo lançamento"><b aria-hidden="true">+</b><span id="addLbl">Lançamento</span></button>
 <nav class="tabs" aria-label="Seções">
+  <span class="tabbrand" aria-hidden="true">Minhas Despesas</span>
   <button class="tab" data-tab="pHome" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Hoje</button>
   <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Mês</button>
   <button class="tab" data-tab="pAno"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Planejar</button>
@@ -2721,7 +2748,7 @@ function lookSection(){
     <div class="thgrid">${["ameixa","azul","roxo","laranja","rosa","grafite"].map(sw).join("")}
       ${userPhoto()&&pc?it("foto",`<button class="thsw photo" data-theme-pick="foto" style="background-image:url('${userPhoto()}')" aria-label="Tema da cor da sua foto" aria-pressed="${cur==="foto"}"></button>`,"Sua foto"):""}
       ${it("livre",`<span class="thsw free" role="button" aria-label="Escolher qualquer cor" aria-pressed="${cur==="livre"}" style="${cur==="livre"?`background:${fc}`:""}"><input type="color" id="themeFree" value="${fc}"></span>`,"Cor livre")}</div></div>
-    <div class="hint">A foto aparece na barra de baixo e na tela de entrada.${syncOn()?" Foto e tema vão junto na sincronização.":" Foto e tema ficam só neste aparelho."}</div></div></section>`;
+    <div class="hint">A foto aparece na barra das abas e na tela de entrada.${syncOn()?" Foto e tema vão junto na sincronização.":" Foto e tema ficam só neste aparelho."}</div></div></section>`;
 }
 function timeline(ym,arr){
   const now=today(), cur=ym===curYM(), dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), rA=arr.filter(x=>typeOf(x)==="rec"), E=[];

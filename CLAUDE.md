@@ -546,7 +546,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   sem ponto = em dia. A faixa `#syncBanner` diz quantas mudanças não foram.
   **Base64 em pedaços** (`binStr`): `String.fromCharCode(...array)` estourava a pilha ("Maximum call stack size
   exceeded") com o arquivo da sincronização grande (foto + muitos lançamentos). Nunca usar spread em array grande.
-- **Computador** (`@media (min-width:980px)`, out/2026): abas na lateral esquerda (cápsula vertical, pílula desliza em Y),
+- **Computador** (`@media (min-width:980px)`, out/2026): abas numa **barra fixa no topo** (out/2026, ele achou a lateral solta: `nav.tabs` vira barra sólida com "Minhas Despesas" (`.tabbrand`, só PC), abas com ícone + nome e a foto à direita, alinhada com `--pcw`; o título repetido Hoje/Mês/Planejar some do topo, fica na tela do cartão e na Você),
   topo vira cartão arredondado, conteúdo em 2 colunas (3 a partir de 1500 px) com `column-count` e `break-inside:avoid`
   nas seções, janelas de lançamento abrem no centro (modal), botão + no canto inferior direito. Testar em 1440×900.
   Tela do cartão: "Fora da fatura do banco" e "Parecidos" ficam sempre na coluna da direita (`.cdwrap` em grade:
