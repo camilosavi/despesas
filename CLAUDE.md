@@ -475,6 +475,10 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Patreon, Netflix…) ou cat `assin`, sem parcela; últimos 3 meses + próximo. Valor = soma do mês mais recente; mostra /mês,
   /ano e "fatura X de <mês>". **Divisão** (assinatura dividida com pessoas que pagam a parte por Pix): tocar abre
   "dividido entre quantas pessoas, contando você" (pedido dele: valor ÷ pessoas) → `cfg.subShare[nome]={n: pessoas − 1, c: valor ÷ pessoas}`;
+  **Valor por pessoa** (out/2026, ele: Gympass "não é o mesmo valor pra todo"): no editor, "Todos iguais | Valor por pessoa"
+  (`subMode`, `subRows`, `subEditor`); por pessoa grava `p:[{nm,c}]` (n = quantas, c = média). `shParts`/`shBack`/`shMatch`
+  (casa pelo nome do Pix com `nmSame`, depois só pelo valor) valem nos dois jeitos; `subShareOf(cents,who)` no extrato;
+  cobrança no WhatsApp com o valor de cada um (`shOwe`); quem tem nome e não pagou no mês aparece em "Faltam".
   Pix com arredondamento (8,99 para 8,98) conta: `shareK` aceita até 3 centavos por parte; mostra "sai R$ X para você" e quantos pagaram no mês (receitas = 1–3 × c).
   Na importação do extrato, Pix recebido de 1–3 × c vira "<assinatura> (divisão) · Fulano", cat de receita `divid`
   ("Divisões", `subShareOf`). `recurSection` não repete o que é assinatura.

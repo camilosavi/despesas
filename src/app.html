@@ -1048,6 +1048,11 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
   header.top:has(#backBtn[hidden]):has(#meHead[hidden]) #ptitle{display:none}
   header.top:has(#backBtn[hidden]):has(#meHead[hidden]) .titlerow:not(:has(.hbell:not([hidden])):has(.hseg:not([hidden]))){min-height:0}
 }
+.subrows{display:grid;gap:8px}
+.subrow{display:grid;grid-template-columns:1fr 120px auto;gap:8px;align-items:center}
+.subrow input{width:100%;min-width:0;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.subrow input[inputmode]{text-align:right;font-variant-numeric:tabular-nums}
+.subrow .acdel[hidden]{visibility:hidden;display:block}
 </style>
 
 <div class="wrap">
@@ -2354,7 +2359,8 @@ function feeYear(y){
     <p class="hint" style="margin:8px 2px 0">Dinheiro que foi para o banco, não para você. Some quando a fatura é paga inteira.</p></section>`;
 }
 /* ---------- assinaturas (out/2026): o que se paga todo mês para usar um serviço; divisão com outras pessoas em
-   cfg.subShare[nome] = {n: quantas pessoas te pagam, c: quanto cada uma} ---------- */
+   cfg.subShare[nome] = {n: quantas pessoas te pagam, c: quanto cada uma, p?: [{nm, c}] quando cada um paga um valor
+   (out/2026, ele: "a assinatura do Gympass não é o mesmo valor pra todo") } ---------- */
 const SUBN=[[/ubisoft|xsolla/,"Ubisoft+ / jogo (Xsolla)"],[/game ?pass|xbox/,"Xbox Game Pass"],[/ps ?plus|playstation/,"PlayStation Plus"],[/youtube/,"YouTube Premium"],[/google ?one|g1ai|googleone/,"Google One"],[/apple\.?com|icloud/,"Apple (iCloud/App Store)"],[/amazon ?prime|amazonprime/,"Amazon Prime"],
   [/udemy/,"Udemy"],[/patreon/,"Patreon"],[/netflix/,"Netflix"],[/spotify/,"Spotify"],[/disney/,"Disney+"],[/hbo|\bmax\b/,"Max"],[/globoplay/,"Globoplay"],
   [/deezer/,"Deezer"],[/crunchyroll/,"Crunchyroll"],[/claude|anthropic/,"Claude"],[/chatgpt|openai/,"ChatGPT"],[/xbox|game ?pass/,"Xbox Game Pass"],[/playstation|psn/,"PlayStation Plus"],[/wellhub|gympass/,"Wellhub"]];
@@ -2364,54 +2370,87 @@ function subOf(x){
   return m?m[1]:x.cat==="assin"?cleanDesc(x):null;
 }
 const subShare=()=>cfg.subShare&&typeof cfg.subShare==="object"?cfg.subShare:{};
+/* partes de quem te paga: com valores diferentes vem de sh.p; senão n partes iguais de sh.c */
+const shParts=sh=>!sh?[]:Array.isArray(sh.p)&&sh.p.length?sh.p:Array.from({length:sh.n||0},()=>({nm:"",c:sh.c}));
+const shBack=sh=>shParts(sh).reduce((s,x)=>s+(x.c||0),0);
+const nmSame=(a,b)=>{a=fold(a||"").trim();b=fold(b||"").trim();if(!a||!b)return false;const fa=a.split(/\s+/)[0], fb=b.split(/\s+/)[0];return a===b||fa===fb||a.startsWith(b)||b.startsWith(a)};
+/* um valor recebido (e quem mandou) bate com qual parte? primeiro pelo nome, depois só pelo valor */
+function shMatch(sh,cents,who){const P=shParts(sh).filter(x=>x.c);
+  if(who){const m=P.find(x=>x.nm&&nmSame(x.nm,who)&&shareK(cents,x.c));if(m)return {part:m,k:shareK(cents,m.c)}}
+  for(const x of P){const k=shareK(cents,x.c);if(k)return {part:x,k}}return null}
 function subList(){
   const cur=curYM(), lo=shiftYM(cur,-3), hi=shiftYM(cur,1), G={};
   items.forEach(x=>{const ym=(x.date||"").slice(0,7);if(ym<lo||ym>hi||ym<MIN_YM)return;const k=subOf(x);if(k)(G[k]=G[k]||[]).push(x)});
   return Object.entries(G).map(([name,L])=>{
     L.sort((a,b)=>b.date.localeCompare(a.date));const ym=L[0].date.slice(0,7), cents=L.filter(x=>x.date.startsWith(ym)).reduce((s,x)=>s+amt(x),0);
-    const card=cardOf(L[0]), sh=subShare()[name], back=sh?sh.n*sh.c:0;
-    let got=0;if(sh&&sh.c) inMonth(cur).filter(x=>typeOf(x)==="rec").forEach(x=>{const k=shareK(x.cents,sh.c);if(k&&(x.cat==="divid"||/^Pix de /i.test(x.desc||"")))got+=k});
-    return {name,cents,card,last:L[0],ym,sh,back,mine:Math.max(0,cents-back),got:Math.min(got,sh?sh.n:0),cat:L[0].cat};
+    const card=cardOf(L[0]), sh=subShare()[name], back=shBack(sh), np=shParts(sh).length;
+    let got=0;if(sh) inMonth(cur).filter(x=>typeOf(x)==="rec").forEach(x=>{const m=shMatch(sh,x.cents,shWho(x));if(m&&(x.cat==="divid"&&(x.desc||"").startsWith(name)||/^Pix de /i.test(x.desc||"")))got+=m.k});
+    return {name,cents,card,last:L[0],ym,sh,back,np,mine:Math.max(0,cents-back),got:Math.min(got,np),cat:L[0].cat};
   }).sort((a,b)=>b.cents-a.cents);
 }
 /* quem pagou a parte da assinatura no mês (pelos Pix/receitas de 1–3 × valor) e quem costuma pagar e ainda não pagou */
+const shWho=x=>{const d=x.desc||"";const m=/·\s*(.+)$/.exec(d)||/^Pix de\s+(.+)$/i.exec(d);return m?m[1].trim():""};
 function subPayers(name,sh){
-  const cur=curYM(), who=x=>{const d=x.desc||"";const m=/·\s*(.+)$/.exec(d)||/^Pix de\s+(.+)$/i.exec(d);return m?m[1].trim():""};
-  const ok=x=>{if(typeOf(x)!=="rec")return false;const k=shareK(x.cents,sh.c);return k&&(x.cat==="divid"&&(x.desc||"").startsWith(name)||/^Pix de /i.test(x.desc||""))};
+  const cur=curYM(), who=shWho;
+  const ok=x=>{if(typeOf(x)!=="rec")return false;const m=shMatch(sh,x.cents,who(x));return m&&(x.cat==="divid"&&(x.desc||"").startsWith(name)||/^Pix de /i.test(x.desc||""))};
   const L=items.filter(x=>ok(x)&&(x.date||"").slice(0,7)>=shiftYM(cur,-3));
   const paid=[...new Set(L.filter(x=>x.date.startsWith(cur)).map(who).filter(Boolean))];
-  const all=[...new Set(L.map(who).filter(Boolean))];
-  return {paid,miss:all.filter(n=>!paid.some(p=>fold(p)===fold(n)))};
+  const named=shParts(sh).map(x=>x.nm).filter(Boolean);
+  const all=[...new Set([...named,...L.map(who).filter(Boolean)])].filter((n,i,a)=>a.findIndex(o=>nmSame(o,n))===i);
+  return {paid,miss:all.filter(n=>!paid.some(p=>nmSame(p,n)))};
 }
+/* quanto aquela pessoa paga (valor dela, ou o valor igual de todos) */
+const shOwe=(sh,n)=>{const P=shParts(sh), m=P.find(x=>x.nm&&nmSame(x.nm,n));return m?m.c:(sh.c||(P[0]&&P[0].c)||0)};
 const waLink=t=>"https://wa.me/?text="+encodeURIComponent(t);
 /* quantas partes um valor recebido representa (1 a 3 meses), aceitando arredondamento de até 3 centavos por parte */
 const shareK=(cents,c)=>{for(let k=1;k<=3;k++)if(Math.abs(cents-k*c)<=3*k)return k;return 0};
-let subEdit=null;
+let subEdit=null, subMode="eq", subRows=[];
+/* abre o editor da divisão com o que já está salvo */
+function subOpen(name){const sh=subShare()[name];subMode=sh&&Array.isArray(sh.p)&&sh.p.length?"each":"eq";
+  subRows=subMode==="each"?sh.p.map(x=>({...x})):[{nm:"",c:0},{nm:"",c:0}]}
+function subReadRows(){subRows=subRows.map((r,i)=>({nm:($("subPn_"+i)?.value??r.nm).trim(),c:$("subPv_"+i)?digits($("subPv_"+i).value):r.c}))}
+function subEditor(r){
+  const each=subMode==="each", back=subRows.reduce((s,x)=>s+(x.c||0),0);
+  const seg=`<div class="seg" role="group" aria-label="Como divide" style="margin:0 0 10px"><button type="button" data-submode="eq" aria-pressed="${!each}">Todos iguais</button><button type="button" data-submode="each" aria-pressed="${each}">Valor por pessoa</button></div>`;
+  const eq=`<p class="hint" style="margin:0 0 8px">Diga entre quantas pessoas divide, <b>contando você</b>: cada um paga ${esc(R(r.cents))} ÷ pessoas.</p>
+    <div class="svrow2" style="grid-template-columns:1fr auto;align-items:center"><input id="subN" inputmode="numeric" placeholder="Pessoas (com você)" value="${r.sh&&!(r.sh.p&&r.sh.p.length)?r.sh.n+1:""}" aria-label="Dividido entre quantas pessoas, contando você" data-subtot="${r.cents}"><span id="subEach" class="hint" style="margin:0;white-space:nowrap">${r.sh&&!(r.sh.p&&r.sh.p.length)?R(r.sh.c)+" cada":"—"}</span></div>`;
+  const ea=`<p class="hint" style="margin:0 0 8px">Quem te paga e quanto (sem contar você). O nome ajuda a reconhecer o Pix de cada um no extrato.</p>
+    <div class="subrows">${subRows.map((x,i)=>`<div class="subrow"><input type="text" id="subPn_${i}" maxlength="24" placeholder="Nome" value="${esc(x.nm||"")}" aria-label="Nome da pessoa ${i+1}"><input type="text" id="subPv_${i}" inputmode="numeric" placeholder="R$ 0,00" value="${x.c?brl(x.c):""}" aria-label="Quanto a pessoa ${i+1} paga"><button type="button" class="acdel" data-subdel="${i}" aria-label="Tirar pessoa ${i+1}" ${subRows.length<2?"hidden":""}>×</button></div>`).join("")}</div>
+    <div class="toolbar" style="margin:6px 0 0"><button type="button" class="tbtn" id="subAdd">+ Pessoa</button></div>
+    <p class="hint" id="subMine" style="margin:8px 0 0">${back?`Recebe ${R(back)} · sai ${R(Math.max(0,r.cents-back))} para você`:"—"}</p>`;
+  return `<div class="svedit">${seg}${each?ea:eq}<p class="hint" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
+    <div class="svbtns">${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary" id="subSave" data-subtot="${r.cents}">Salvar</button></div></div>`;
+}
 function subSection(){
   const L=subList();if(!L.length) return "";
   const tot=L.reduce((s,r)=>s+r.cents,0), mine=L.reduce((s,r)=>s+r.mine,0), cur=curYM();
   const row=r=>{const nxt=r.card?`fatura ${r.card} de ${shortMonth(r.ym>cur?r.ym:shiftYM(r.ym,1))}`:`~${fmtDM(shiftYM(r.last.date.slice(0,7),1)+r.last.date.slice(7))}`;
-    const sub=[nxt,r.sh?`÷ ${r.sh.n+1} pessoas, ${R(r.sh.c)} cada · ${r.got} de ${r.sh.n} pagaram em ${shortMonth(cur)} · sai ${R(r.mine)} para você`:""].filter(Boolean).join(" · ");
+    const sub=[nxt,r.sh?`÷ ${r.np+1} pessoas, ${r.sh.p&&r.sh.p.length?"valores diferentes":R(r.sh.c)+" cada"} · ${r.got} de ${r.np} pagaram em ${shortMonth(cur)} · sai ${R(r.mine)} para você`:""].filter(Boolean).join(" · ");
     const ed=subEdit===r.name;
     return `<div class="subg"><button class="item rec-it" data-subdiv="${esc(r.name)}" aria-expanded="${ed}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit">${catIco("assin","desp")}<span class="t"><div class="d">${esc(r.name)}</div><div class="m">${esc(sub)}</div></span><span class="v">${R(r.cents)}<small style="display:block;font-weight:500;color:var(--muted)">${R(r.cents*12)}/ano</small></span></button>
       ${ed&&r.sh?(()=>{const P=subPayers(r.name,r.sh), mn=monthLabel(cur).split(" ")[0].toLowerCase(), first=n=>titleCase(n.split(" ")[0]);
         return `<div class="svedit" style="padding-bottom:0"><p class="hint" style="margin:0 0 6px">${P.paid.length?`Pagaram em ${mn}: ${esc(P.paid.map(first).join(", "))}.`:`Ninguém pagou em ${mn} ainda.`}${P.miss.length?` Faltam: ${esc(P.miss.map(first).join(", "))}.`:""}</p>
-        ${P.miss.length?`<div class="btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${P.miss.map(n=>`<a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi, ${first(n)}! Falta o ${r.name} de ${mn}: ${R(r.sh.c)}. Valeu!`)}">Cobrar ${esc(first(n))} no WhatsApp</a>`).join("")}</div>`:""}
+        ${P.miss.length?`<div class="btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${P.miss.map(n=>`<a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi, ${first(n)}! Falta o ${r.name} de ${mn}: ${R(shOwe(r.sh,n))}. Valeu!`)}">Cobrar ${esc(first(n))} no WhatsApp</a>`).join("")}</div>`:""}
         <p class="hint" style="margin:0">Quem pagou nos últimos 3 meses entra na lista. O WhatsApp abre com a mensagem pronta; você escolhe o contato.</p></div>`})():""}
-      ${ed?`<div class="svedit"><p class="hint" style="margin:0 0 8px">Divide com outras pessoas? Diga entre quantas, <b>contando você</b>: cada um paga ${esc(R(r.cents))} ÷ pessoas. Os Pix desse valor viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
-        <div class="svrow2" style="grid-template-columns:1fr auto;align-items:center"><input id="subN" inputmode="numeric" placeholder="Pessoas (com você)" value="${r.sh?r.sh.n+1:""}" aria-label="Dividido entre quantas pessoas, contando você" data-subtot="${r.cents}"><span id="subEach" class="hint" style="margin:0;white-space:nowrap">${r.sh?R(r.sh.c)+" cada":"—"}</span></div>
-        <div class="svbtns">${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary" id="subSave">Salvar</button></div></div>`:""}</div>`};
+      ${ed?subEditor(r):""}</div>`};
   return `<section id="subSec"><h2>Assinaturas <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">${L.map(row).join("")}</div>
     <p class="hint" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
 }
 async function subSave(off){
-  const p=off?0:parseInt(($("subN")?.value||"").replace(/\D/g,""),10)||0, tot=+($("subN")?.dataset.subtot||0), n=p-1, c=p?Math.round(tot/p):0;
-  if(!off&&(p<2||!c)){toast("Diga entre quantas pessoas divide, contando você (2 ou mais).");return}
-  const S={...subShare()};if(off)delete S[subEdit];else S[subEdit]={n,c};
+  const S={...subShare()};
+  if(off) delete S[subEdit];
+  else if(subMode==="each"){subReadRows();const P=subRows.filter(x=>x.c>0).map(x=>({nm:x.nm,c:x.c}));
+    if(!P.length){toast("Diga quanto pelo menos uma pessoa paga.");return}
+    S[subEdit]={n:P.length,c:Math.round(P.reduce((s,x)=>s+x.c,0)/P.length),p:P}}
+  else{const p=parseInt(($("subN")?.value||"").replace(/\D/g,""),10)||0, tot=+($("subN")?.dataset.subtot||0), c=p?Math.round(tot/p):0;
+    if(p<2||!c){toast("Diga entre quantas pessoas divide, contando você (2 ou mais).");return}
+    S[subEdit]={n:p-1,c}}
   try{await saveCfg({subShare:S});subEdit=null;toast(off?"Divisão tirada":"Divisão salva",true);render()}catch(e){toast("Não deu para salvar.")}
 }
 /* Pix recebido que é a parte de alguém numa assinatura dividida (1 a 3 meses de uma vez) */
-function subShareOf(cents){for(const[name,sh] of Object.entries(subShare())){if(!sh||!sh.c)continue;const k=shareK(cents,sh.c);if(k)return {name,k}}return null}
+function subShareOf(cents,who){const E=Object.entries(subShare()).filter(([,sh])=>sh&&shParts(sh).length);
+  if(who)for(const[name,sh] of E){const m=shMatch(sh,cents,who);if(m&&m.part.nm&&nmSame(m.part.nm,who))return {name,k:m.k}}
+  for(const[name,sh] of E){const m=shMatch(sh,cents,who);if(m)return {name,k:m.k}}return null}
 /* ---------- saída do parcelamento (por cartão): até quando vão as parcelas já lançadas ---------- */
 function parcPlan(c){
   const cur=curYM(), L=items.filter(x=>cardOf(x)===c&&!isPaid(x)&&(x.date||"").slice(0,7)>=cur&&(parcInfo(x)||/^Parcelamento da fatura/i.test(cleanDesc(x))));
@@ -3884,7 +3923,10 @@ document.addEventListener("click",async e=>{
   if(t.id==="fatDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para tirar";return}saveFat(true);return}
   if(t.id==="limCancel"){limEditing=false;renderCards();return}
   if(t.id==="limSave"){saveLimit();return}
-  {const sb=t.closest("[data-subdiv]");if(sb){subEdit=subEdit===sb.dataset.subdiv?null:sb.dataset.subdiv;render();if(subEdit)setTimeout(()=>$("subN")?.focus(),30);return}}
+  {const sb=t.closest("[data-subdiv]");if(sb){subEdit=subEdit===sb.dataset.subdiv?null:sb.dataset.subdiv;if(subEdit)subOpen(subEdit);render();if(subEdit)setTimeout(()=>($("subN")||$("subPn_0"))?.focus(),30);return}}
+  {const sm=t.closest("[data-submode]");if(sm){if(subMode==="each")subReadRows();subMode=sm.dataset.submode;render();setTimeout(()=>($(subMode==="each"?"subPn_0":"subN"))?.focus(),30);return}}
+  {const sd=t.closest("[data-subdel]");if(sd){subReadRows();subRows.splice(+sd.dataset.subdel,1);render();return}}
+  if(t.id==="subAdd"){subReadRows();subRows.push({nm:"",c:0});render();setTimeout(()=>$("subPn_"+(subRows.length-1))?.focus(),30);return}
   if(t.id==="subSave"){subSave(false);return}
   if(t.id==="canBuy"){canBuySheet();return}
   {const fh=t.closest("section.fold > h2");if(fh&&!t.closest("button:not(h2),a,input,label,select")){anoToggle(fh.parentElement);return}}
@@ -3994,7 +4036,8 @@ document.addEventListener("input",e=>{
   const id=e.target.id;
   if(id==="mSearch"){mq=e.target.value;$("mClear").hidden=!mq;clearTimeout(renderMes.t);renderMes.t=setTimeout(renderMes,180)}
   if(id==="fQ"){F.q=e.target.value;clearTimeout(renderPlan.t);renderPlan.t=setTimeout(()=>{renderPlan();const q=$("fQ");q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)}
-  if(id&&(id.startsWith("b_")||id.startsWith("acv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
+  if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
+  if(id&&id.startsWith("subPv_")&&$("subMine")){const tot=+($("subSave")?.dataset.subtot||0);let b=0;document.querySelectorAll("[id^=subPv_]").forEach(i=>b+=digits(i.value));$("subMine").textContent=b?`Recebe ${R(b)} · sai ${R(Math.max(0,tot-b))} para você`:"—"}
   if(id==="fxEur"||id==="fxBrl") fxRateHint();
   if(id==="fxWhere") fxPlaceChips();
   if(id==="themeFree"){lsSet("despesas.themeColor",e.target.value);lsSet("despesas.theme","livre");applyTheme()}
@@ -4681,7 +4724,7 @@ function extPlan(e){
       return {...base,act:"done",match:hit.id,note:`já lançado como “${cleanDesc(hit)}”`}}
     let desc,cat,pay;
     if(r.shop){const g=invoiceEntry({desc:r.shop,shop:r.shop});desc=g.name;cat=g.cat;pay="Débito"}
-    else if(/pix/.test(k)){const sd=!out&&(subShareOf(cents)||divShareOf(cents));
+    else if(/pix/.test(k)){const sd=!out&&(subShareOf(cents,r.who)||divShareOf(cents));
       desc=sd?`${sd.name} (divisão${sd.k>1?` ×${sd.k}`:""}) · ${titleCase(r.who||"")}`:out?`Pix para ${titleCase(r.who||"")}`:`Pix de ${titleCase(r.who||"")}`;cat=sd?"divid":out?"outros":"rout";pay="Pix"}
     else {desc=titleCase(r.det||r.kind);cat=out?"outros":"rout";pay=/debito|d[eé]bito/.test(k)?"Débito":"Pix"}
     return {...base,act:"add",on:true,desc:desc.trim(),cat:catLearnGet(base.type,desc)||cat,pay};
