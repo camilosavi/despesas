@@ -2800,6 +2800,13 @@ function timeline(ym,arr){
   salVirt(ym).forEach(x=>E.push({k:"rec",x,date:x.date,cents:x.cents,paid:true,virt:1}));
   E.sort((a,b)=>a.date.localeCompare(b.date)||(a.k==="rec"?-1:b.k==="rec"?1:0));
   const A=accts(), fut=ym>curYM(), hasBal=(cur||fut)&&A.length, lateB=cur&&hasBal?accFlow(ym).late:0;let bal=!hasBal?0:cur?accBal()-lateB:endBal(shiftYM(ym,-1));
+  E.forEach(e=>{
+    const rec=e.k==="rec";
+    if(hasBal&&!rec&&!e.paid&&!e.rolled){bal-=e.cents;e.after=`<span class="tlafter ${bal<0?"neg":""}">${bal<0?`falta ${R(-bal)}`:`sobra ${R(bal)}`}</span>`}
+    else if(hasBal&&rec&&recDay(e.x)>now){bal+=e.cents;e.after=`<span class="tlafter ${bal<0?"neg":""}">${bal<0?`falta ${R(-bal)}`:`fica ${R(bal)}`}</span>`}
+    else e.after="";
+  });
+  E.sort((a,b)=>b.date.localeCompare(a.date)||(b.k==="rec"?1:a.k==="rec"?-1:0));
   const prevN=monthLabel(shiftYM(ym,-1)).split(" ")[0].toLowerCase();
   const openT=E.filter(e=>e.k!=="rec"&&!e.paid&&!e.rolled).reduce((s,e)=>s+e.cents,0);
   let h=`<section><h2>Saídas do mês <small>${openT?`${R(openT)} a pagar`:"tudo pago ✓"}</small></h2>`;
@@ -2808,10 +2815,8 @@ function timeline(ym,arr){
     :`<button class="tlbal ask" data-gotab="pHome"><span>Informe o saldo da conta no Início para ver quanto sobra depois de cada pagamento</span><b>›</b></button>`;
   h+=`<div class="card tl">`+E.map(e=>{
     const [,m,d]=e.date.split("-"), late=!e.paid&&!e.rolled&&e.date<now, rec=e.k==="rec";
-    let after="";
-    if(hasBal&&!rec&&!e.paid&&!e.rolled){bal-=e.cents;after=`<span class="tlafter ${bal<0?"neg":""}">${bal<0?`falta ${R(-bal)}`:`sobra ${R(bal)}`}</span>`}
-    else if(hasBal&&rec&&recDay(e.x)>now){bal+=e.cents;after=`<span class="tlafter ${bal<0?"neg":""}">${bal<0?`falta ${R(-bal)}`:`fica ${R(bal)}`}</span>`}
     const chip=`<span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span>`;
+    const after=e.after||"";
     if(e.k==="card"){
       const n=e.L.filter(x=>!genFat(x)).length, open=false;
       const st=e.paid?"paga ✓":e.rolled?`não paga · foi para a fatura de ${monthLabel(e.to).split(" ")[0].toLowerCase()}`:late?"atrasada":"vence "+fmtDM(e.date);
@@ -2828,7 +2833,7 @@ function timeline(ym,arr){
       h+=`<div class="tlproj ${fim<0?"neg":""}"><span>Nesse ritmo, ${monthLabel(ym).split(" ")[0].toLowerCase()} fecha ${hasBal?"na conta ":""}com</span><b>${fim<0?"−":""}${R(Math.abs(fim))}</b><small>conta o que já está lançado${extra?` + ~${R(extra)} de gastos do dia a dia que ainda devem vir`:""}</small></div>`}}
   if(hasBal&&bal<0) h+=`<p class="hint" style="color:var(--neg);margin-top:8px">O saldo de hoje não cobre tudo: faltam ${R(-bal)} até o fim das contas do mês.</p>`;
   h+=`</section>`;
-  bens().forEach(b=>{const L=arr.filter(x=>x.pay===b.name&&typeOf(x)==="desp").sort((a,c)=>a.date.localeCompare(c.date));if(!L.length)return;
+  bens().forEach(b=>{const L=arr.filter(x=>x.pay===b.name&&typeOf(x)==="desp").sort((a,c)=>c.date.localeCompare(a.date));if(!L.length)return;
     h+=`<section><h2>Pago com ${esc(b.name)} <small>${R(L.reduce((s,x)=>s+x.cents,0))}${ym===curYM()?` · saldo ${R(benBal(b))}`:""}</small></h2><div class="card list">${L.map(itemHTML).join("")}</div></section>`});
   return h;
 }
@@ -2859,7 +2864,7 @@ function renderCards(){
     return;
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
-  const c=selCard, all=cardItems(c,view), G=all.filter(genFat), L=all.filter(x=>!genFat(x)).sort((a,b)=>{const pa=parcInfo(a),pb=parcInfo(b);return (pa?0:1)-(pb?0:1)||b.cents-a.cents});
+  const c=selCard, all=cardItems(c,view), G=all.filter(genFat), L=all.filter(x=>!genFat(x)).sort((a,b)=>{const pa=parcInfo(a),pb=parcInfo(b);return (pa?0:1)-(pb?0:1)||(b.buy||b.date).localeCompare(a.buy||a.date)||b.cents-a.cents});
   const g=G.reduce((s,x)=>s+x.cents,0), d=L.reduce((s,x)=>s+x.cents,0), tot=L.length?d:g, allPaid=all.length&&all.every(isPaid), mn=MES[+view.slice(5)-1].toLowerCase();
   let h=`<section><h2>Limite do cartão</h2>${limitBox(c)}</section>`;
   {const u=zmSnap();if(u&&u.card===c&&u.after===items.length) h+=`<section><div class="card banner"><strong>${esc(c)} de ${shortMonth(u.ym)} zerado</strong><p>${u.n} ${u.n===1?"lançamento apagado":"lançamentos apagados"} (com as parcelas seguintes dessas compras).</p><div class="row" style="margin:0"><button class="btn soft" id="zmOk">Ok</button><button class="btn primary" id="zmUndo">Desfazer</button></div></div></section>`}
