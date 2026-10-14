@@ -1,5 +1,5 @@
 import re,os,json,glob
-import os; os.chdir(os.path.dirname(os.path.abspath(__file__))); src=open('src/app.html').read()
+import os; os.chdir(os.path.dirname(os.path.abspath(__file__))); src=open('src/app.html', encoding='utf-8').read()
 assert 'const PWA=false;' in src
 body=src.replace('const PWA=false;','const PWA=true;',1)
 # drop the in-page <title>/<meta> lines that belong in head
@@ -24,11 +24,11 @@ doc=f'''<!doctype html>
 {body}
 </body></html>
 '''
-open('index.html','w').write(doc)
+open('index.html','w', encoding='utf-8').write(doc)
 json.dump({"name":"Minhas Despesas","short_name":"Despesas","start_url":"./","scope":"./","display":"standalone","background_color":"#0E3B35","theme_color":"#0E3B35","lang":"pt-BR",
- "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]},open('manifest.webmanifest','w'),ensure_ascii=False,indent=1)
+ "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]},open('manifest.webmanifest','w', encoding='utf-8'),ensure_ascii=False,indent=1)
 import hashlib; ver=hashlib.md5(doc.encode()).hexdigest()[:8]
-open('sw.js','w').write(f'''const C="despesas-{ver}", RT="despesas-runtime";
+open('sw.js','w', encoding='utf-8').write(f'''const C="despesas-{ver}", RT="despesas-runtime";
 const ASSETS=["./","index.html","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png"];
 self.addEventListener("install",e=>{{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));self.skipWaiting()}});
 self.addEventListener("activate",e=>{{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==RT&&x!=="despesas-av").map(x=>caches.delete(x)))));self.clients.claim()}});
@@ -66,5 +66,5 @@ self.addEventListener("notificationclick",e=>{{
   }}));
 }});
 ''')
-open('README.md','w').write("# Minhas Despesas\n\nApp pessoal de controle de gastos (PWA). Os dados ficam salvos só no aparelho (localStorage); nada é enviado para este repositório.\n\nAbra no Safari do iPhone → Compartilhar → Adicionar à Tela de Início.\n")
+open('README.md','w', encoding='utf-8').write("# Minhas Despesas\n\nApp pessoal de controle de gastos (PWA). Os dados ficam salvos só no aparelho (localStorage); nada é enviado para este repositório.\n\nAbra no Safari do iPhone → Compartilhar → Adicionar à Tela de Início.\n")
 print("index.html gerado",len(doc))
