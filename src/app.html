@@ -577,6 +577,18 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
 .chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:8px 12px;font-size:.88rem;display:flex;gap:6px;align-items:center;transition:background .15s ease,border-color .15s ease,transform .08s ease}
 .chip:active{transform:scale(.95)}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.catpick-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit;font-size:16px;font-weight:600;min-height:46px;cursor:pointer;transition:background .12s ease,border-color .12s ease,transform .08s ease}
+.catpick-btn:active{background:color-mix(in srgb,var(--ink) 4%,var(--bg));transform:scale(.985)}
+.catpick-curr{display:flex;align-items:center;gap:10px;min-width:0}
+.catpick-curr .dot{width:12px;height:12px;border-radius:4px;flex:none}
+.catpick-curr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.catpick-arrow{color:var(--muted);font-size:.84rem;font-weight:600;display:flex;align-items:center;gap:4px;flex:none}
+#catSheet{z-index:15;max-height:85dvh;box-shadow:0 -10px 36px rgba(0,0,0,.28)}
+.catgrid-sheet{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 0 16px;max-height:65dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.catitem-btn{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;font-size:.92rem;font-weight:600;text-align:left;cursor:pointer;transition:all .12s ease}
+.catitem-btn:active{transform:scale(.97);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.catitem-btn[aria-pressed="true"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,var(--surface));box-shadow:0 0 0 1.5px var(--accent)}
+.catitem-btn .dot{width:12px;height:12px;border-radius:4px;flex:none}
 .row{display:flex;gap:10px;margin-top:6px}
 .btn{flex:1;border:0;border-radius:14px;padding:15px;font-weight:700;font-size:1rem}
 .btn.primary{background:var(--btn);color:var(--btn-ink)}
@@ -1124,7 +1136,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
   <div class="seg" id="typeSeg"><button type="button" data-type="desp">Despesa</button><button type="button" data-type="rec">Receita</button></div>
   <div class="amount"><span>R$</span><input id="amt" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
   <div class="field"><label for="desc">Descrição</label><input type="text" id="desc" placeholder="Ex.: mercado, fatura Inter, salário" maxlength="80"></div>
-  <div class="field"><span class="lbl">Categoria</span><div class="chips" id="catChips"></div></div>
+  <div class="field" id="catField"><span class="lbl">Categoria</span><button type="button" class="catpick-btn" id="catPickBtn"><span class="catpick-curr"><i class="dot" id="catPickDot"></i><span id="catPickName">Alimentação</span></span><span class="catpick-arrow">Escolher ›</span></button></div>
   <div class="field" id="payField"><span class="lbl">Pagamento</span><div class="chips" id="payChips"></div></div>
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
@@ -1152,6 +1164,12 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
     <button type="submit" class="btn primary" id="saveBtn">Salvar</button>
   </div>
 </form>
+
+<div class="sheet" id="catSheet" hidden>
+  <div class="grip"></div>
+  <h3><span>Escolher categoria</span><button type="button" class="x" id="catSheetClose" aria-label="Fechar">✕</button></h3>
+  <div class="catgrid-sheet" id="catChips"></div>
+</div>
 
 <form class="sheet" id="fxSheet" hidden autocomplete="off">
   <div class="grip"></div>
@@ -3960,6 +3978,8 @@ document.addEventListener("click",async e=>{
   const mb=t.closest("[data-months]"); if(mb){F.months=+mb.dataset.months;renderPlan();return}
   if(t.id==="rateRefresh"){if(t.disabled)return;t.disabled=true;t.textContent="Atualizando…";
     const ok=await fetchLiveRates();if(!ok){toast("Sem conexão com a cotação agora. Tente de novo.");render()}else toast("Euro e dólar atualizados");return}
+  if(t.id==="catSheetClose"||t.closest("#catSheetClose")){if($("catSheet"))$("catSheet").hidden=true;return}
+  if(t.id==="scrim"&&$("catSheet")&&!$("catSheet").hidden){$("catSheet").hidden=true;return}
   if(t.closest("[data-close]")||t.id==="scrim"){closeSheets();return}
   {const tg=t.closest("[data-oftog]");if(tg){const k=+tg.dataset.oftog;ofOpenAcc.has(k)?ofOpenAcc.delete(k):ofOpenAcc.add(k);render();return}}
   {const o=t.closest("[data-ofload],[data-offorget],[data-ofimp]");if(o){
@@ -4120,8 +4140,11 @@ function chips(){
   const pl=$("pdfAnyLbl");if(pl)pl.textContent=form.type==="rec"?"Importar holerite (PDF)":"Importar fatura ou conta (PDF)";
   $("typeSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.type===form.type));
   $("paidSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.paid==="1")===form.paid));
-  $("catChips").innerHTML=CATS[form.type].map(c=>`<button type="button" class="chip" data-cat="${c.k}" aria-pressed="${form.cat===c.k}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")+
-    (form.type==="desp"?(catNewOpen?`<span class="catnew"><input type="text" id="catNewIn" maxlength="24" placeholder="Nova categoria" enterkeyhint="done" autocomplete="off"><button type="button" class="chip" id="catNewOk">Criar</button></span>`:`<button type="button" class="chip add" id="catNewBtn">+ Nova</button>`):"");
+  const curCat=catOf(form.cat,form.type);
+  if($("catPickDot")) $("catPickDot").style.background=curCat.c||"var(--accent)";
+  if($("catPickName")) $("catPickName").textContent=curCat.n||"Escolher categoria";
+  $("catChips").innerHTML=CATS[form.type].map(c=>`<button type="button" class="catitem-btn" data-cat="${c.k}" aria-pressed="${form.cat===c.k}"><i class="dot" style="background:${c.c}"></i><span>${esc(c.n)}</span></button>`).join("")+
+    (form.type==="desp"?(catNewOpen?`<div class="catnew" style="grid-column:1/-1;display:flex;gap:8px;padding:4px 0"><input type="text" id="catNewIn" maxlength="24" placeholder="Nova categoria" enterkeyhint="done" autocomplete="off" style="flex:1"><button type="button" class="btn primary" id="catNewOk" style="flex:none;padding:10px 18px">Criar</button></div>`:`<button type="button" class="catitem-btn add" id="catNewBtn" style="grid-column:1/-1;justify-content:center;border-style:dashed;color:var(--muted)">+ Nova categoria</button>`):"");
   const PY=[...PAYS,...bens().map(b=>b.name)];
   $("payChips").innerHTML=PY.map(p=>`<button type="button" class="chip" data-pay="${esc(p)}" aria-pressed="${form.pay===p}">${esc(p)}</button>`).join("");
   $("statusField").classList.toggle("dim",!!benOf({pay:form.pay}));
@@ -4182,7 +4205,7 @@ function openSheet(x){
   $("scrim").hidden=$("sheet").hidden=false;
   if(!x) setTimeout(()=>$("amt").focus(),60);
 }
-function closeSheets(keep){if(!$("impSheet").hidden)setTimeout(()=>cardTheme(tab==="pCards"&&selCard?selCard:null));$("sheet").hidden=$("fxSheet").hidden=$("cardSheet").hidden=$("impSheet").hidden=$("diagSheet").hidden=$("xlsSheet").hidden=true;if(!keep)$("scrim").hidden=true;editing=null;fxEditing=null}
+function closeSheets(keep){if(!$("impSheet").hidden)setTimeout(()=>cardTheme(tab==="pCards"&&selCard?selCard:null));$("sheet").hidden=$("catSheet").hidden=$("fxSheet").hidden=$("cardSheet").hidden=$("impSheet").hidden=$("diagSheet").hidden=$("xlsSheet").hidden=true;if(!keep)$("scrim").hidden=true;editing=null;fxEditing=null}
 function toast(t,ok){const el=$("toast");el.hidden=true;el.classList.toggle("ok",!!ok);el.textContent=t;
   if(ok){el.insertAdjacentHTML("afterbegin",'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>');haptic()}
   void el.offsetWidth;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
@@ -4196,9 +4219,11 @@ $("date").addEventListener("change",()=>{dateTouched=true;dateHint();if(!editing
 $("desc").addEventListener("input",()=>applyRule());
 $("catChips").addEventListener("click",async e=>{
   if(e.target.closest("#catNewBtn")){catNewOpen=true;chips();$("catNewIn")?.focus();return}
-  if(e.target.closest("#catNewOk")){const k=await addCat($("catNewIn").value);if(k){form.cat=k;catNewOpen=false;chips()}return}
-  const b=e.target.closest("[data-cat]");if(b){form.cat=b.dataset.cat;chips();applyRule()}});
-$("catChips").addEventListener("keydown",async e=>{if(e.target.id==="catNewIn"&&e.key==="Enter"){e.preventDefault();const k=await addCat(e.target.value);if(k){form.cat=k;catNewOpen=false;chips()}}});
+  if(e.target.closest("#catNewOk")){const k=await addCat($("catNewIn").value);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}return}
+  const b=e.target.closest("[data-cat]");if(b){form.cat=b.dataset.cat;chips();applyRule();$("catSheet").hidden=true}});
+$("catChips").addEventListener("keydown",async e=>{if(e.target.id==="catNewIn"&&e.key==="Enter"){e.preventDefault();const k=await addCat(e.target.value);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}}});
+$("catPickBtn").addEventListener("click",()=>{catNewOpen=false;chips();$("catSheet").hidden=false});
+$("catSheetClose").addEventListener("click",()=>{$("catSheet").hidden=true});
 $("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false}else if(!editing)form.paid=($("date").value||today())<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
 function splitHint(){const h=$("splitHint");if(!h)return;const v=digits($("splitVal")?.value);h.textContent=v&&form.cents?(v<form.cents?`${form.pay}: ${R(form.cents-v)}`:"maior que o total"):""}
 $("splitField").addEventListener("click",e=>{
