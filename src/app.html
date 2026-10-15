@@ -1141,6 +1141,8 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 .subrow input{width:100%;min-width:0;font:inherit;font-size:16px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .subrow input[inputmode]{text-align:right;font-variant-numeric:tabular-nums}
 .subrow .acdel[hidden]{visibility:hidden;display:block}
+/* selos de banco: sigla limpa, mesma cara em todo lugar (cor lisa, sem brilho) */
+.fi{font-family:var(--display);font-weight:800;letter-spacing:-.035em;text-align:center;white-space:nowrap;overflow:hidden;font-kerning:normal;-webkit-font-smoothing:antialiased;padding-bottom:.04em}
 </style>
 
 <div class="wrap">
@@ -1654,7 +1656,7 @@ const boxBanks=b=>b.bank?[b.bank]:b.fxAll?[...new Set(fx.filter(x=>fxCurOf(x)===
 const bankOf=n=>{const t=(n||"").trim().toLowerCase();return t?BANKS.find(b=>b.m.test(t))||null:null};
 const cardLabel=c=>{const b=bankOf(c);if(b)return b.l;const w=(c||"?").trim().split(/\s+/)[0];return w.length<=5?w:w.slice(0,3)};
 function cardBadge(c){
-  const col=cardColor(c), l=cardLabel(c), dark=lumHex(col)>.5, fs=l.length<=2?1:l.length===3?.86:l.length===4?.72:.62;
+  const col=cardColor(c), l=cardLabel(c), dark=lumHex(col)>.5, fs=l.length<=2?1:l.length===3?.88:l.length===4?.76:.66;
   return `<span class="fi" style="background:${col};color:${dark?"#1A1A1A":"#fff"};--k:${fs}">${esc(l)}</span>`;
 }
 const CARD_PALETTE=["#8A05BE","#E8730C","#2C6BD6","#C8102E","#0F8F6C","#1F1F1F","#D4A017","#6B7A75"];
