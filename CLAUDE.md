@@ -256,8 +256,7 @@ card?, parc?:"i/n", group?, createdAt}`
 - Confete quando uma caixinha bate a meta (`svCelCheck`, uma vez por "id:meta" em `cfg.svCel`; na 1ª vez só registra as
   já batidas, sem comemorar).
 - Cartões: bancos conhecidos (`BANKS`/`bankOf`) vêm com a cor do banco e uma sigla ("Nu", "Itaú", "BB"…; Renner e Revolut só "R", a pedido dele) escrita na
-  fonte do app (`cardBadge`). **Logos dos bancos** (out/2026, ele decidiu manter): `bankLogoSvg(nome)` desenha um SVG simples por banco
-  (Nubank, Inter, Itaú, Bradesco…) no selo; banco sem SVG cai na sigla. Não copiar arquivos de logo oficiais para o repositório.
+  fonte do app (`cardBadge`). **Não usar logos nem fontes dos bancos** (marcas; repositório e site são públicos; out/2026: ele testou SVGs e achou horríveis, voltou à sigla).
   "Novo cartão" abre com uma grade (`BANK_PICK` + câmbio `FX_PICK`: Wise, Nomad, ARQ (ex-DolarApp), Revolut) que preenche nome e cor;
   "Outro" mostra o campo de nome. Cartão que já existe fica desativado na grade.
   Cores dos bancos tiradas de referências públicas (out/2026). `migrateBankCol1()` (marca `cfg.bankCol1:"v1"`) troca
