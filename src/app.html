@@ -2216,7 +2216,7 @@ function hojeList(){
   U.sort((a,b)=>a.date.localeCompare(b.date));
   const tot=U.filter(u=>u.out).reduce((s,u)=>s+u.cents,0);
   const rows=U.map(u=>{const[,m,d]=u.date.split("-"),late=u.out&&u.date<now,isToday=u.date===now;
-    if(u.kind==="rec") return `<button class="due hrec" ${u.x.virt?`data-gotab="pAno" data-scroll="salSec"`:`data-id="${esc(u.x.id)}"`}><span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v pos">+ ${R(u.cents)}</span><span class="m">${u.x.virt?"previsto":catOf(u.x.cat,"rec").n}</span></button>`;
+    if(u.kind==="rec") return `<button class="due hrec" ${u.x.virt?`data-virt="${esc(u.x.id)}"`:`data-id="${esc(u.x.id)}"`}><span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v pos">+ ${R(u.cents)}</span><span class="m">${u.x.virt?"previsto":catOf(u.x.cat,"rec").n}</span></button>`;
     const attr=u.kind==="card"?`data-opencard="${esc(u.c)}" data-ym="${u.ym}"`:`data-id="${esc(u.x.id)}"`;
     const n=u.kind==="card"?cardItems(u.c,u.ym).length:0;
     const meta=late?"atrasado":isToday?"vence hoje":u.kind==="card"?`${n} ${n===1?"compra":"compras"}`:[catOf(u.x.cat,"desp").n,parcInfo(u.x)?u.x.parc:""].filter(Boolean).join(" · ");
@@ -2998,7 +2998,7 @@ function timeline(ym,arr){
     const x=e.x, t=typeOf(x);
     if(e.virt) {
       const salIco=`<span class="ico cat" style="--cc:var(--pos)" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>`;
-      return `<button class="due tlrow rec virt" data-gotab="pAno" data-scroll="salSec">${salIco}<span class="d">${esc(x.desc)}</span><span class="v pos">+ ${R(e.cents)}</span><span class="m"><b>${dateTxt}</b> · ${x.fell?`cai ${fmtDM(x.fell)} · `:""}previsto pelos holerites <i class="tlcar">›</i></span>${after}</button>`;
+      return `<button class="due tlrow rec virt" data-virt="${esc(x.id)}">${salIco}<span class="d">${esc(x.desc)}</span><span class="v pos">+ ${R(e.cents)}</span><span class="m"><b>${dateTxt}</b> · ${x.fell?`cai ${fmtDM(x.fell)} · `:""}${x.ov?"ajustado por você":"previsto pelos holerites"} <i class="tlcar">›</i></span>${after}</button>`;
     }
     const ico=catIco(x.cat, t);
     const metaParts=[`<b>${dateTxt}</b>`, rec?catOf(x.cat,t).n+(x.fell?` · caiu ${fmtDM(x.fell)}`:"")+(x.conv?` · convênio ${R(x.conv)}`:""):e.paid?"pago ✓":late?"atrasado":catOf(x.cat,t).n, !rec&&x.pay&&!e.paid?esc(x.pay):""].filter(Boolean);
@@ -4239,6 +4239,10 @@ document.addEventListener("click",async e=>{
   if(t.id==="onbSkip"){saveCfg({onb:1}).then(render).catch(()=>{});return}
   if(t.id==="mesShare"){mesShare(view);return}
   if(t.id==="cbGo"){canBuyGo();return}
+  {const so=t.closest("[data-virt]");if(so){salOvSheet(so.dataset.virt);return}}
+  if(t.id==="soSave"){const v=digits($("soV").value||"");if(!v){toast("Digite o valor.");return}salOvSet(soId,{c:v}).then(()=>toast("Previsão ajustada",true));return}
+  if(t.id==="soReset"){salOvSet(soId,null);return}
+  if(t.id==="soSkip"){salOvSet(soId,{skip:1}).then(()=>toast("Tirado deste mês"));return}
   if(t.id==="salXSave"){salXSave(false);return}
   if(t.id==="salXClear"){salXSave(true);return}
   if(t.id==="subOff"){subSave(true);return}
@@ -4333,7 +4337,7 @@ document.addEventListener("change",e=>{
   if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
 });
-const maskIds=new Set(["cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
+const maskIds=new Set(["soV","cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
 document.addEventListener("input",e=>{
   if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
   if(e.target.id==="subN"){const p=parseInt(e.target.value.replace(/\D/g,""),10)||0, t=+e.target.dataset.subtot||0;if($("subEach"))$("subEach").textContent=p>=2?R(Math.round(t/p))+" cada":"—";return}
@@ -5217,6 +5221,23 @@ function sal13(P,y){
   const fp=P.fp||0;return Math.max(0,Math.round(fp-(first||fp/2)-fp*P.rate));
 }
 const salFer=P=>Math.round((P.fp||0)/3*(1-P.rate));
+/* ajustar uma previsão de salário só naquele mês (out/2026, pedido dele: "se o previsto não for o que cair eu não consigo alterar").
+   cfg.salOv[id virtual] = {c: valor à mão} ou {skip:1} (não vai cair). Some sozinho quando o holerite de verdade é lançado. */
+function salOvSheet(id){
+  const x=[curYM(),shiftYM(curYM(),1),shiftYM(curYM(),2)].flatMap(m=>salVirt(m)).find(v=>v.id===id), O=(cfg.salOv||{})[id];
+  if(!x) return;
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>${esc(x.desc)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+    <p class="hint" style="margin:0 0 10px">Cai em ${fmtDM(x.fell||x.date)}. Mude só para este mês; quando você lançar o que caiu de verdade, o previsto some sozinho.</p>
+    <div class="svedit" style="padding:0;border:0;background:none"><div class="svrow2"><input id="soV" class="limin" inputmode="numeric" placeholder="Valor R$ 0,00" value="${brl(x.cents)}" aria-label="Valor previsto"></div></div>
+    <button type="button" class="btn primary" id="soSave" style="width:100%;margin-top:10px">Salvar valor</button>
+    ${x.ov?`<button type="button" class="btn soft" id="soReset" style="width:100%;margin-top:8px">Voltar ao previsto (${R(x.orig)})</button>`:""}
+    <button type="button" class="btn soft" id="soSkip" style="width:100%;margin-top:8px">Não vai cair este mês</button>
+    <button type="button" class="tbtn" data-gotab="pAno" data-scroll="salSec" style="margin-top:8px">Ver como o previsto é calculado</button>`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+  soId=id;
+}
+let soId=null;
+async function salOvSet(id,v){const O={...(cfg.salOv||{})};if(v==null)delete O[id];else O[id]=v;await saveCfg({salOv:O});closeSheets();render()}
 function salVirt(ym){
   if(ym<curYM()||!salPrevOn()) return [];
   const P=salPlanC(), now=today(), out=[], R0=items.filter(x=>typeOf(x)==="rec"&&x.cat==="sal"&&(x.date||"").startsWith(ym));
@@ -5228,7 +5249,8 @@ function salVirt(ym){
   const v=cfg.salPrev==="base"?B.base:B.avg;
   if(v>0&&!hasSal){const pm=shiftYM(ym,-1), fell=`${pm}-${pad(P.fell==="last"?lastDay(pm):Math.min(P.fell,lastDay(pm)))}`;
     if(fell>=now) out.push({id:"_sp_sal_"+ym,virt:1,type:"rec",cat:"sal",desc:"Salário (previsto)",cents:v,date:+fell.slice(8)>=25?`${ym}-01`:fell,fell:+fell.slice(8)>=25?fell:undefined})}
-  return out;
+  const O=cfg.salOv||{};
+  return out.filter(x=>!(O[x.id]&&O[x.id].skip)).map(x=>O[x.id]&&O[x.id].c>0?{...x,orig:x.cents,cents:O[x.id].c,ov:1,desc:x.desc.replace(" (previsto"," (ajustado")}:x);
 }
 let salXOpen=false;
 function salXHtml(P){
