@@ -2330,7 +2330,7 @@ function renderHome(){
   }
   let body;
   if(!IS_WIDE.matches){
-    $("pHome").innerHTML=oneBanner()+hojeList()+possoComprarCard()+hojeCards()+contaBlock()+homeBlock("guard")+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
+    $("pHome").innerHTML=oneBanner()+contaBlock()+hojeList()+possoComprarCard()+hojeCards()+homeBlock("guard")+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
     return;
   }
   if(IS_WIDE.matches){const H={};o.forEach(k=>{const h=homeBlock(k);if(h)H[k]=h});
