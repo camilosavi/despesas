@@ -499,6 +499,10 @@ body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area
    Dynamic Island. O html passa a ter a cor do topo; só o corpo da página fica claro (min-height evita faixa escura embaixo) */
 html{background:var(--head)}
 body{background:var(--bg);min-height:100vh;min-height:100dvh}
+/* TESTE (15/10/2026): 4 jeitos da faixa do relógio, escolhidos em Você → Aparência, para achar o que tira a névoa no iPhone */
+:root[data-topo="sem"] body::before{display:none}
+:root[data-topo="rola"] body::before{position:absolute}
+:root[data-topo="antes"]{background:var(--bg)}
 /* tablet/janela média (721–979 px): o topo vira cartão alinhado com os cards (antes era uma aba solta de canto reto,
    mais larga que o conteúdo); a faixa do relógio não é mais necessária */
 @media (min-width:721px) and (max-width:979px){
@@ -2943,6 +2947,7 @@ function genTheme(hex){
 }
 function applyTheme(){const t=lsGet("despesas.theme"), root=document.documentElement, mode=lsGet("despesas.mode");
   if(mode==="light"||mode==="dark")root.dataset.theme=mode;else delete root.dataset.theme;
+  {const tp=lsGet("despesas.topo");if(tp)root.dataset.topo=tp;else delete root.dataset.topo}
   const gen=t==="livre"?lsGet("despesas.themeColor"):t==="foto"?lsGet("despesas.photoColor"):null;
   let st=$("thCustom");if(!st){st=document.createElement("style");st.id="thCustom";document.head.appendChild(st)}
   st.textContent=gen&&/^#[0-9a-f]{6}$/i.test(gen)?genTheme(gen):"";
@@ -2991,6 +2996,8 @@ function lookSection(){
     <div class="look"><div><b>Sua foto</b><div class="btns" style="margin-top:8px"><label class="tbtn" style="cursor:pointer">${userPhoto()?"Trocar foto":"Escolher foto"}<input type="file" id="photoIn" accept="image/*" hidden></label>${userPhoto()?`<button class="tbtn" id="photoDel">Tirar foto</button>`:""}</div></div></div>
     ${photoSug&&userPhoto()&&pc?`<div class="thsug"><i style="background:${pc}"></i><span style="font-size:.88rem">Combinar o app com a cor da sua foto?</span><button class="tbtn go" data-theme-pick="foto">Usar</button></div>`:""}
     <div class="segc" role="group" aria-label="Claro ou escuro" style="justify-self:start">${[["auto","Automático"],["light","Claro"],["dark","Escuro"]].map(([k,n])=>`<button data-mode-pick="${k}" aria-pressed="${mode===k}">${n}</button>`).join("")}</div>
+    <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Faixa do relógio (teste)</div>
+    <div class="segc" role="group" aria-label="Faixa do relógio" style="justify-self:start;flex-wrap:wrap">${[["","Atual"],["sem","Sem faixa"],["rola","Rola junto"],["antes","Como antes"]].map(([k,n])=>`<button data-topo-pick="${k}" aria-pressed="${(lsGet("despesas.topo")||"")===k}">${n}</button>`).join("")}</div></div>
     <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Sóbrios</div>
     <div class="thgrid">${["verde","meianoite","bordo","petroleo","oliva","cafe"].map(sw).join("")}</div></div>
     <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Vivos e mais</div>
@@ -4188,6 +4195,7 @@ document.addEventListener("click",async e=>{
   const avr=t.closest("[data-av]"); if(avr){const e=avLog().find(x=>x.k===avr.dataset.av);avGo(e&&e.go);return}
   if(t.closest("[data-av-me]")){avGo({me:1});return}
   const thp=t.closest("[data-theme-pick]"); if(thp){syncSoon();try{localStorage.setItem("despesas.theme",thp.dataset.themePick)}catch(e){}if(thp.dataset.themePick==="foto")photoSug=false;applyTheme();haptic&&haptic();render();return}
+  const tpk=t.closest("[data-topo-pick]"); if(tpk){lsSet("despesas.topo",tpk.dataset.topoPick||null);applyTheme();render();return}
   const mdp=t.closest("[data-mode-pick]"); if(mdp){lsSet("despesas.mode",mdp.dataset.modePick==="auto"?null:mdp.dataset.modePick);applyTheme();render();return}
   if(t.id==="syncStart"){syncStart();return}
   if(t.id==="syPassOk"){syncPassOk();return}
