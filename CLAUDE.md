@@ -256,7 +256,8 @@ card?, parc?:"i/n", group?, createdAt}`
 - Confete quando uma caixinha bate a meta (`svCelCheck`, uma vez por "id:meta" em `cfg.svCel`; na 1ª vez só registra as
   já batidas, sem comemorar).
 - Cartões: bancos conhecidos (`BANKS`/`bankOf`) vêm com a cor do banco e uma sigla ("Nu", "Itaú", "BB"…; Renner e Revolut só "R", a pedido dele) escrita na
-  fonte do app (`cardBadge`). **Não usar logos nem fontes dos bancos** (marcas; repositório e site são públicos).
+  fonte do app (`cardBadge`). **Logos dos bancos** (out/2026, ele decidiu manter): `bankLogoSvg(nome)` desenha um SVG simples por banco
+  (Nubank, Inter, Itaú, Bradesco…) no selo; banco sem SVG cai na sigla. Não copiar arquivos de logo oficiais para o repositório.
   "Novo cartão" abre com uma grade (`BANK_PICK` + câmbio `FX_PICK`: Wise, Nomad, ARQ (ex-DolarApp), Revolut) que preenche nome e cor;
   "Outro" mostra o campo de nome. Cartão que já existe fica desativado na grade.
   Cores dos bancos tiradas de referências públicas (out/2026). `migrateBankCol1()` (marca `cfg.bankCol1:"v1"`) troca
@@ -568,3 +569,17 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   zera. Celular continua: ao abrir e depois de 5 min fora. **Teclado numérico**: `numKey(e)` lê `e.code` NumpadN (com Num
   Lock desligado o navegador manda End/←/↓…); vale na senha, nos campos de valor (insere o dígito) e nos atalhos.
 
+
+## Mudanças de 14–15/10/2026 (feitas no Antigravity, revisadas e corrigidas)
+
+- **Planejar tem 3 sub-abas** (`anoSubTab`, `despesas.anoTab`): Metas & Caixinhas / Visão do Ano / Fixos & Salários. A barra
+  usa `.ano-subnav` (não usar `.mestab-bar`: ela é escondida no PC). Em ≤ 480 px os emojis das abas somem e o texto encolhe.
+- **Mês no celular** tem sub-abas Lançamentos | Categorias (`mesSubTab`); no PC é 2 colunas (`.mes-split`). A barra com as 3 maiores
+  categorias do desenho antigo foi substituída por elas.
+- **Cartões voltou como aba só no PC** (`.tab.pconly`). A pílula da barra (`--ti`) conta só as abas visíveis. Atalhos 1–N = abas
+  visíveis, 5 = Você.
+- **Posso comprar?** é um card no Hoje (celular) e um botão no rodapé do Início (PC); o clique usa `closest("#canBuy")`.
+- **★ Melhor dia** (`isBestDay`): do dia seguinte ao fechamento até 3 dias depois, olhando fechamentos de vários meses.
+- Tela do cartão com cartão físico (`.phys-card`) e ciclo da fatura; caixinhas em € sem converter para R$; categoria do lançamento
+  num botão que abre a gaveta `#catSheet`; lista do Mês do mais recente para o mais antigo.
+- O `.fab` fica só "+" no PC e em telas pequenas (`.fab span#addLbl` precisa de `display:none!important` nesses casos).

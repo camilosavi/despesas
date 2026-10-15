@@ -855,7 +855,7 @@ nav.tabs.onme::before{opacity:0}
    e o teclado da senha encolhe com a altura da tela (antes o 0 ficava cortado) */
 @media (max-width:400px),(max-width:979px) and (max-height:760px){
   .fab{padding:0!important;width:56px!important;min-width:56px;height:56px;right:14px!important;bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 4px)!important}
-  .fab span{display:none}.fab b{margin-top:-2px}
+  .fab span,.fab span#addLbl{display:none!important}.fab b{margin-top:-2px}
   nav.tabs{left:14px!important;transform:none!important;width:calc(100% - 28px - 64px)!important}
   body:has(#addBtn[hidden]) nav.tabs{left:50%!important;transform:translateX(-50%)!important;width:calc(100% - 28px)!important}
   .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
@@ -959,7 +959,7 @@ h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
   .hdash{gap:20px}.htop{gap:20px}
   #pHome .homefoot{margin-top:14px!important}
   .wrap{min-height:0!important}
-  .fab{right:24px!important;bottom:24px!important;padding:0!important;width:58px!important}.fab span{display:none}.fab b{margin-top:-2px}
+  .fab{right:24px!important;bottom:24px!important;padding:0!important;width:58px!important}.fab span,.fab span#addLbl{display:none!important}.fab b{margin-top:-2px}
   .cdsum{padding:14px 14px 12px;border-bottom:1px solid var(--line)}
   .cdsumtop{display:flex;justify-content:space-between;gap:10px;font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
   .cdsum .mini{margin:8px 0}
@@ -1096,7 +1096,9 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
 .phys-brand .bank-fi svg.bk-svg{max-width:24px;max-height:24px}
 .ano-subnav{display:flex;justify-content:center;margin:6px 0 16px}
 .ano-ctrl{max-width:440px;width:100%}
-.ano-ctrl .seg-btn{font-size:.82rem;padding:7px 10px;white-space:nowrap}
+.ano-ctrl{overflow:hidden}
+.ano-ctrl .seg-btn{font-size:.82rem;padding:7px 6px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:480px){.ano-ctrl .seg-btn{font-size:.78rem}.ano-ctrl .seg-btn .ei{display:none}}
 .ano-kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .ano-kpi-grid .card{padding:12px 14px;margin:0}
 .ano-kpi-grid small{font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:2px}
@@ -2240,9 +2242,12 @@ function hojeList(){
 }
 function isBestDay(c){
   const dd=dueOf(c);if(!dd)return false;
-  const now=today(), D=`${curYM()}-${pad(Math.min(dd,lastDay(curYM())))}`;
-  const close=closeOfDue(c,D);
-  return now>=close && now<=addDays(close,3);
+  const now=today();
+  for(let k=-1;k<=2;k++){
+    const ym=shiftYM(curYM(),k), D=`${ym}-${pad(Math.min(dd,lastDay(ym)))}`, close=closeOfDue(c,D);
+    if(now>=addDays(close,1)&&now<=addDays(close,3)) return true;
+  }
+  return false;
 }
 function possoComprarCard(){
   return `<section><div class="canbuy-card" id="canBuy" role="button" tabindex="0">
@@ -2314,7 +2319,7 @@ function renderHome(){
     body=`<div class="hdash">${top.length?`<div class="htop" style="--n:${top.length}">${top.map(k=>H[k]).join("")}</div>`:""}
       ${(()=>{const L=["venc","bens","euro"].filter(k=>H[k]);return L.length?`<div class="htop hlow" style="--n:${L.length}">${L.map(k=>H[k]).join("")}</div>`:""})()}</div>`}
   else body=o.map(homeBlock).join("");
-  $("pHome").innerHTML=oneBanner()+body+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="homeEditBtn">Organizar início</button><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
+  $("pHome").innerHTML=oneBanner()+body+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" id="canBuy">Posso comprar?</button><button class="tbtn" id="homeEditBtn">Organizar início</button><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
 }
 
 /* ---------- aba Mês ---------- */
@@ -3440,11 +3445,11 @@ function renderAno(){
   const recM=idx.map(i=>sumT(mon(i),"rec")), despM=idx.map(i=>sumT(mon(i),"desp"));
   const recTot=recM.reduce((a,b)=>a+b,0), despTot=despM.reduce((a,b)=>a+b,0), saldoTot=recTot-despTot;
 
-  let h = `<div class="mestab-bar ano-subnav">
+  let h = `<div class="ano-subnav">
     <div class="seg-ctrl ano-ctrl">
-      <button type="button" class="seg-btn ${anoSubTab==='metas'?'active':''}" data-anotab="metas">🎯 Metas & Caixinhas</button>
-      <button type="button" class="seg-btn ${anoSubTab==='ano'?'active':''}" data-anotab="ano">📊 Visão do Ano</button>
-      <button type="button" class="seg-btn ${anoSubTab==='fixos'?'active':''}" data-anotab="fixos">🗓️ Fixos & Salários</button>
+      <button type="button" class="seg-btn ${anoSubTab==='metas'?'active':''}" data-anotab="metas"><span class="ei">🎯 </span>Metas & Caixinhas</button>
+      <button type="button" class="seg-btn ${anoSubTab==='ano'?'active':''}" data-anotab="ano"><span class="ei">📊 </span>Visão do Ano</button>
+      <button type="button" class="seg-btn ${anoSubTab==='fixos'?'active':''}" data-anotab="fixos"><span class="ei">🗓️ </span>Fixos & Salários</button>
     </div>
   </div>`;
 
@@ -4051,7 +4056,7 @@ function go(t){
   if(t==="pPlan") t="pMes";
   homeEdit=false;svForm=null;svOpen=null;fatEditing=false;limEditing=false;
   tab=t;
-  document.querySelectorAll(".tab").forEach((b,i)=>{
+  [...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).forEach((b,i)=>{
     const isPcardTab = b.dataset.tab === "pCards";
     const cur = t==="pOrc"?"pMes":t==="pFx"?"pAno":t;
     const match = b.dataset.tab === cur || (t === "pCards" && (isPcardTab || b.dataset.tab === "pMes"));
@@ -4111,7 +4116,7 @@ document.addEventListener("keydown",e=>{
   if(/^Numpad/.test(e.code||"")&&!numKey(e))return;
   const k=numKey(e)||e.key.toLowerCase();
   if(k==="n"){e.preventDefault();$("addBtn").click()}
-  else if(/^[1-5]$/.test(k)){const t=["pHome","pMes","pAno","pMe","pFx"][+k-1];if(t==="pCards")selCard=null;go(t)}
+  else if(/^[1-5]$/.test(k)){const T=[...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).map(b=>b.dataset.tab), t=+k<=T.length?T[+k-1]:(+k===5?"pMe":null);if(t){if(t==="pCards")selCard=null;go(t)}}
   else if(e.key==="ArrowLeft"&&!$("mpill").hidden){e.preventDefault();$("prev").click()}
   else if(e.key==="ArrowRight"&&!$("mpill").hidden){e.preventDefault();$("next").click()}
   else if(e.key==="/"){e.preventDefault();if(tab!=="pMes")go("pMes");setTimeout(()=>$("mSearch")?.focus(),60)}
@@ -4215,7 +4220,7 @@ document.addEventListener("click",async e=>{
   {const sd=t.closest("[data-subdel]");if(sd){subReadRows();subRows.splice(+sd.dataset.subdel,1);render();return}}
   if(t.id==="subAdd"){subReadRows();subRows.push({nm:"",c:0});render();setTimeout(()=>$("subPn_"+(subRows.length-1))?.focus(),30);return}
   if(t.id==="subSave"){subSave(false);return}
-  if(t.id==="canBuy"){canBuySheet();return}
+  if(t.closest("#canBuy")){canBuySheet();return}
   {const fh=t.closest("section.fold > h2");if(fh&&!t.closest("button:not(h2),a,input,label,select")){anoToggle(fh.parentElement);return}}
   if(t.id==="lancHelpBtn"){const b=$("lancHelp");b.hidden=!b.hidden;if(!b.hidden){b.innerHTML=HELP.lanc[1].map(x=>`<p class="helpp">${esc(x)}</p>`).join("");b.scrollIntoView({block:"nearest",behavior:"smooth"})}return}
   {const hb=t.closest("[data-help]");if(hb){helpSheet(hb.dataset.help);return}}
@@ -4476,6 +4481,7 @@ $("catChips").addEventListener("click",async e=>{
   if(e.target.closest("#catNewOk")){const k=await addCat($("catNewIn").value);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}return}
   const b=e.target.closest("[data-cat]");if(b){form.cat=b.dataset.cat;chips();applyRule();$("catSheet").hidden=true}});
 $("catChips").addEventListener("keydown",async e=>{if(e.target.id==="catNewIn"&&e.key==="Enter"){e.preventDefault();const k=await addCat(e.target.value);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}}});
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target&&e.target.id==="canBuy"){e.preventDefault();canBuySheet()}});
 $("catPickBtn").addEventListener("click",()=>{catNewOpen=false;chips();$("catSheet").hidden=false});
 $("catSheetClose").addEventListener("click",()=>{$("catSheet").hidden=true});
 $("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false}else if(!editing)form.paid=($("date").value||today())<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
