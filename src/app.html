@@ -2538,6 +2538,22 @@ const nmSame=(a,b)=>{a=fold(a||"").trim();b=fold(b||"").trim();if(!a||!b)return 
 function shMatch(sh,cents,who){const P=shParts(sh).filter(x=>x.c);
   if(who){const m=P.find(x=>x.nm&&nmSame(x.nm,who)&&shareK(cents,x.c));if(m)return {part:m,k:shareK(cents,m.c)}}
   for(const x of P){const k=shareK(cents,x.c);if(k)return {part:x,k}}return null}
+/* assinaturas que costumam cair neste cartão e ainda não estão lançadas no mês visto (out/2026, pedido dele: "o que é
+   assinatura aparecer como gasto previsto no cartão que cobra"). Só informativo: não entra nos totais. */
+function subPlanned(c,ym){
+  const cur=curYM();
+  if(ym<cur||ym>shiftYM(cur,3)||ym<MIN_YM) return [];
+  const G={};
+  items.forEach(x=>{const m=(x.date||"").slice(0,7);if(m<MIN_YM||cardOf(x)!==c||typeOf(x)!=="desp")return;const k=subOf(x);if(k)(G[k]=G[k]||[]).push(x)});
+  const out=[];
+  Object.entries(G).forEach(([name,L])=>{
+    if(L.some(x=>x.date.startsWith(ym))) return;
+    const yms=[...new Set(L.map(x=>x.date.slice(0,7)))].sort(), last=yms[yms.length-1];
+    if(last>=ym||last>shiftYM(cur,1)||last<shiftYM(ym,-3)) return;
+    out.push({name,cents:L.filter(x=>x.date.startsWith(last)).reduce((t,x)=>t+amt(x),0),cat:L[0].cat});
+  });
+  return out.filter(o=>o.cents>0).sort((a,b)=>b.cents-a.cents);
+}
 function subList(){
   const cur=curYM(), lo=shiftYM(cur,-3), hi=shiftYM(cur,1), G={};
   items.forEach(x=>{const ym=(x.date||"").slice(0,7);if(ym<lo||ym>hi||ym<MIN_YM)return;const k=subOf(x);if(k)(G[k]=G[k]||[]).push(x)});
@@ -3060,6 +3076,7 @@ function renderCards(){
   {const ri=rolledIn(c,view), rv=ri.reduce((s,x)=>s+amt(x),0), gn=cardItems(c,view).filter(x=>rollYM(x)), to=gn.length?rollYM(gn[0]):null;
     if(rv) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">+ ${R(rv)} da fatura de ${[...new Set(ri.map(x=>shortMonth(x.date.slice(0,7))))].join(", ")} que não foi paga: o banco cobra nesta. Conta no saldo deste mês.</div>`;
     if(gn.length) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">Venceu e não foi paga: ${R(gn.reduce((s,x)=>s+amt(x),0))} foram para a fatura de ${shortMonth(to)}. Se você pagou, marque como paga.</div>`;}
+  let mainSP="";
   h+=`<section><h2>Fatura de ${shortMonth(view)}</h2>${fb}`;
   if(!all.length) h+=`<div class="empty" style="margin-top:12px"><strong>Nada no ${esc(c)} em ${mn}</strong>Use as setas lá em cima para ver outros meses.</div></section>`;
   else{
@@ -3072,6 +3089,9 @@ function renderCards(){
       (endNext?`<div class="cbfoot"><span>Termina neste mês</span><span>−${R(endNext)} na próxima</span></div>`:"")+`</div>
       </section>`;
   }
+  {const SP=subPlanned(c,view);if(SP.length){const t=SP.reduce((n,o)=>n+o.cents,0);
+    mainSP=`<section><h2>Assinaturas previstas <small>${R(t)}</small></h2><div class="card cardblock">`+SP.map(o=>`<div class="cline"><span class="d">${esc(o.name)}</span><span class="v">${R(o.cents)}</span><span class="meta"><span class="pill">previsto</span><span>cobra todo mês neste cartão</span></span></div>`).join("")+`<div class="cbfoot"><span>Fatura com as previstas</span><b style="color:var(--ink)">${R(tot+t)}</b></div></div></section>`}}
+  h+=mainSP;
   /* mesclar fica numa coluna própria à direita no computador (cdside); no celular a ordem continua a mesma */
   const mainA=h;h="";
   {const IM=L.filter(x=>x.imp), LO=L.filter(x=>!x.imp);
