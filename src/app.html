@@ -1144,6 +1144,11 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 /* selos de banco: sigla limpa, mesma cara em todo lugar (cor lisa, sem brilho) */
 .fi{font-family:var(--display);font-weight:800;letter-spacing:-.035em;text-align:center;white-space:nowrap;overflow:hidden;font-kerning:normal;-webkit-font-smoothing:antialiased;padding-bottom:.04em}
 .paytop{width:100%;margin-top:12px}
+.prevbox{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}
+.prevbox>div{display:flex;justify-content:space-between;gap:10px;font-size:.92rem;color:var(--muted)}
+.prevbox b{color:var(--ink);font-variant-numeric:tabular-nums}
+.prevbox .tot{border-top:1px solid var(--line);padding-top:8px;font-weight:700;color:var(--ink)}
+.prevbox .tot b{font-size:1.05rem}
 </style>
 
 <div class="wrap">
@@ -3077,6 +3082,8 @@ function renderCards(){
     if(rv) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">+ ${R(rv)} da fatura de ${[...new Set(ri.map(x=>shortMonth(x.date.slice(0,7))))].join(", ")} que não foi paga: o banco cobra nesta. Conta no saldo deste mês.</div>`;
     if(gn.length) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">Venceu e não foi paga: ${R(gn.reduce((s,x)=>s+amt(x),0))} foram para a fatura de ${shortMonth(to)}. Se você pagou, marque como paga.</div>`;}
   let mainSP="";
+  const SP=subPlanned(c,view), spT=SP.reduce((n,o)=>n+o.cents,0);
+  if(spT) fb+=`<div class="prevbox"><div><span>Já cobrado / lançado</span><b>${R(tot)}</b></div><div><span>Previsto (assinaturas)</span><b>${R(spT)}</b></div><div class="tot"><span>Total previsto</span><b id="totPrev">${R(tot+spT)}</b></div></div>`;
   h+=`<section><h2>Fatura de ${shortMonth(view)}</h2>${fb}`;
   if(!all.length) h+=`<div class="empty" style="margin-top:12px"><strong>Nada no ${esc(c)} em ${mn}</strong>Use as setas lá em cima para ver outros meses.</div></section>`;
   else{
@@ -3089,8 +3096,8 @@ function renderCards(){
       (endNext?`<div class="cbfoot"><span>Termina neste mês</span><span>−${R(endNext)} na próxima</span></div>`:"")+`</div>
       </section>`;
   }
-  {const SP=subPlanned(c,view);if(SP.length){const t=SP.reduce((n,o)=>n+o.cents,0);
-    mainSP=`<section><h2>Assinaturas previstas <small>${R(t)}</small></h2><div class="card cardblock">`+SP.map(o=>`<div class="cline"><span class="d">${esc(o.name)}</span><span class="v">${R(o.cents)}</span><span class="meta"><span class="pill">previsto</span><span>cobra todo mês neste cartão</span></span></div>`).join("")+`<div class="cbfoot"><span>Fatura com as previstas</span><b style="color:var(--ink)">${R(tot+t)}</b></div></div></section>`}}
+  {if(SP.length){const t=spT;
+    mainSP=`<section><h2>Assinaturas previstas <small>${R(t)}</small></h2><div class="card cardblock">`+SP.map(o=>`<div class="cline"><span class="d">${esc(o.name)}</span><span class="v">${R(o.cents)}</span><span class="meta"><span class="pill">previsto</span><span>cobra todo mês neste cartão</span></span></div>`).join("")+`<div class="cbfoot"><span>Previsto</span><b style="color:var(--ink)">${R(t)}</b></div></div></section>`}}
   h+=mainSP;
   /* mesclar fica numa coluna própria à direita no computador (cdside); no celular a ordem continua a mesma */
   const mainA=h;h="";
