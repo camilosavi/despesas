@@ -1144,6 +1144,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 /* selos de banco: sigla limpa, mesma cara em todo lugar (cor lisa, sem brilho) */
 .fi{font-family:var(--display);font-weight:800;letter-spacing:-.035em;text-align:center;white-space:nowrap;overflow:hidden;font-kerning:normal;-webkit-font-smoothing:antialiased;padding-bottom:.04em}
 .paytop{width:100%;margin-top:12px}
+.split>div[hidden]{display:none}.split:has(>div[hidden]){grid-template-columns:1fr}
 .prevbox{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}
 .prevbox>div{display:flex;justify-content:space-between;gap:10px;font-size:.92rem;color:var(--muted)}
 .prevbox b{color:var(--ink);font-variant-numeric:tabular-nums}
@@ -1814,6 +1815,7 @@ function setBig(sym,cents){
   setBig.raf=requestAnimationFrame(step);
 }
 function header(){
+  $("s1").parentElement.hidden=false;
   const isYear=tab==="pAno", isFx=tab==="pFx", isHome=tab==="pHome";
   const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
@@ -1869,6 +1871,7 @@ function header(){
   if(tab==="pCards"){
     $("period").textContent=monthLabel(view);
     $("next").disabled=view>=shiftYM(curYM(),24);$("prev").disabled=view<=MIN_YM;
+    $("s1").parentElement.hidden=!!selCard&&!isBen(selCard); /* o vencimento já está no cartão (pedido dele) */
     if(selCard&&isBen(selCard)){const b=bens().find(x=>x.name===selCard), sp=items.filter(x=>x.pay===selCard&&typeOf(x)==="desp"&&x.date.startsWith(view)).reduce((t,x)=>t+x.cents,0), nx=benNext(b);
       $("bigLabel").textContent=`Saldo ${selCard}`;setBig("R$",benBal(b));
       $("s1l").textContent="Gasto no mês";$("s1").textContent=R(sp);$("s2l").textContent=b.daily?"Por dia útil":"Crédito por mês";$("s2").textContent=b.daily?R(b.daily):b.credit?R(b.credit):"—";
