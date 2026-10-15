@@ -2674,6 +2674,7 @@ let tlOpen=new Set(), catOpen=new Set();
 function billShown(c,ym){
   const L=cardItems(c,ym).filter(x=>!rollYM(x)), paid=L.length&&L.every(isPaid)&&!rollAmt(c,ym);
   if(!paid) return {ym,from:null};
+  {const d=cardDue(c,ym);if(d&&d>=today()) return {ym,from:null}} /* só passa para a próxima se a fatura já venceu (pedido dele, 15/10/2026) */
   for(let i=1;i<=12;i++){const m=shiftYM(ym,i);if(cardTotal(c,m)||rollAmt(c,m)) return {ym:m,from:ym}}
   return {ym,from:null};
 }
@@ -4170,7 +4171,7 @@ document.addEventListener("click",async e=>{
   const co=t.closest("[data-catopen]"); if(co){const k=co.dataset.catopen;catOpen.has(k)?catOpen.delete(k):catOpen.add(k);renderMes();return}
   const tc=t.closest("[data-tlcard]"); if(tc){const c=tc.dataset.tlcard;tlOpen.has(c)?tlOpen.delete(c):tlOpen.add(c);renderMes();return}
   if(t.closest("[data-gocards]")){selCard=null;backTo="pMes";go("pCards");return}
-  const oc=t.closest("[data-opencard]"); if(oc){backTo=tab==="pMes"||tab==="pHome"?tab:"pCards";selCard=oc.dataset.opencard;if(oc.dataset.ym)view=oc.dataset.ym;go("pCards");return}
+  const oc=t.closest("[data-opencard]"); if(oc){backTo=tab==="pMes"||tab==="pHome"?tab:"pCards";selCard=oc.dataset.opencard;if(oc.dataset.ym)view=oc.dataset.ym;else if(view===curYM()&&!isBen(selCard))view=billShown(selCard,view).ym;go("pCards");return}
   const hm=t.closest("[data-hmove]"); if(hm){if(!hm.disabled)moveHome(hm.dataset.hmove,+hm.dataset.dir);return}
   if(t.classList&&t.classList.contains("pdfpaste")){pastePdf();return}
   if(t.id==="diagCopy"){copyDiag();return}
