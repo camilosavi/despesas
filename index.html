@@ -1154,6 +1154,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 .subrow .acdel[hidden]{visibility:hidden;display:block}
 /* selos de banco: sigla limpa, mesma cara em todo lugar (cor lisa, sem brilho) */
 .fi{font-family:var(--display);font-weight:800;letter-spacing:-.035em;text-align:center;white-space:nowrap;overflow:hidden;font-kerning:normal;-webkit-font-smoothing:antialiased;padding-bottom:.04em}
+.paytop{width:100%;margin-top:12px}
 </style>
 
 <div class="wrap">
@@ -1741,6 +1742,24 @@ function limBreak(c){
     (futV?(()=>{const S={};usedItems(c).filter(x=>fut.includes((x.date||"").slice(0,7))).forEach(x=>{const k=x.group||cleanDesc(x);(S[k]=S[k]||{n:cleanDesc(x),v:0,q:0}).v+=amt(x);S[k].q++});
       const L=Object.values(S).sort((p,q)=>q.v-p.v);
       return `<details class="hldet" style="margin:4px 0 0"><summary style="display:flex;justify-content:space-between;gap:10px"><span>Parcelas dos meses seguintes <small class="muted">${fut.length} ${fut.length===1?"mês":"meses"}</small></span><b style="color:var(--ink)">${R(futV)}</b></summary>${L.map(e=>`<div class="hlrow"><span>${esc(e.n)} <small class="muted">${e.q} ${e.q===1?"parcela":"parcelas"}</small></span><b>${R(e.v)}</b></div>`).join("")}</details>`})():"")+`</div>`;
+}
+/* cartão também é conta: saldo informado por cartão (usa a mesma lista cfg.accts do "Saldo na conta" do Hoje) */
+const acctOf=c=>accts().find(a=>a.name===c);
+function cardAcctBox(c){
+  const a=acctOf(c);
+  return `<section id="cardAcct"><h2>Saldo na conta ${esc(c)}${a&&a.at?` <small>atualizado ${a.at===today()?"hoje":fmtDate(a.at)}</small>`:""}</h2><div class="card rate">
+    <div class="src">Quanto aparece de saldo no app do ${esc(c)}. Entra no "Na conta" do Hoje, junto com as outras contas.</div>
+    <div class="row" style="margin:0"><input id="cardBal" class="limin" inputmode="numeric" placeholder="R$ 0,00" value="${a&&a.cents?brl(a.cents):""}" aria-label="Saldo do ${esc(c)}"><button class="btn primary" id="cardBalSave" style="flex:none;padding:12px 18px">Salvar saldo</button></div>
+    ${a?`<button class="svdel" id="cardBalDel">Tirar este saldo</button>`:""}</div></section>`;
+}
+/* grava o saldo de UMA conta sem desmontar as outras: os pagamentos/recebimentos desde o último saldo entram na 1ª das outras contas */
+async function setAcctBal(name,cents){
+  const A=accts().map(a=>({...a})), mv=accMoves(), net=mv.inn-mv.out, others=A.filter(a=>a.name!==name), now=Date.now();
+  if(others.length&&net) others[0].cents+=net;
+  let L=A.filter(a=>a.name!==name||cents!=null);
+  if(cents!=null){const a=L.find(x=>x.name===name);if(a)a.cents=cents;else L.push({id:"a"+now+Math.random().toString(36).slice(2,5),name,cents})}
+  L=L.map(a=>({...a,at:today(),atTs:now}));
+  await saveCfg({accts:L});
 }
 function limitBox(c){
   const k=cardCfg(c), used=cardUsed(c);
@@ -3006,7 +3025,7 @@ function renderCards(){
         return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv ${v<0?"neg":""}">${R(v)}</span><span class="fm">saldo do vale${nx?` · crédito ${fmtDM(nx)}`:""}</span></button>`}
       const tot=cardTotal(c,view), n=cardItems(c,view).length, max=Math.max(...months.map(m=>cardTotal(c,m)),1);
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
-      return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
+      return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${acctOf(c)?`saldo ${R(acctOf(c).cents)} · `:""}${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
       `</div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar fatura ou conta (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
@@ -3032,8 +3051,8 @@ function renderCards(){
       <div class="cycle-step ${isClosed?"done":"active"}"><span>${closeDate?`Fecha ${fmtDM(closeDate)}`:"Fechamento"}</span><i></i></div>
       <div class="cycle-step ${allPaid?"done":""}"><span>${dueDate?`Vence ${fmtDM(dueDate)}`:"Vencimento"}</span><i></i></div>
     </div>
-  </div></section>`;
-  let h=cardHero+`<section><h2>Limite do cartão</h2>${limitBox(c)}</section>`;
+  </div>${all.length?`<button class="btn ${allPaid?"soft":"primary"} paytop" id="payCard">${allPaid?`Fatura de ${mn} paga ✓ · marcar como a pagar`:`Marcar fatura de ${mn} como paga`}</button>`:""}</section>`;
+  let h=cardHero;
   {const u=zmSnap();if(u&&u.card===c&&u.after===items.length) h+=`<section><div class="card banner"><strong>${esc(c)} de ${shortMonth(u.ym)} zerado</strong><p>${u.n} ${u.n===1?"lançamento apagado":"lançamentos apagados"} (com as parcelas seguintes dessas compras).</p><div class="row" style="margin:0"><button class="btn soft" id="zmOk">Ok</button><button class="btn primary" id="zmUndo">Desfazer</button></div></div></section>`}
   let fb;
   if(fatEditing) fb=`<div class="card rate"><div><b>Valor da fatura de ${mn}</b><div class="src">Quanto o banco mostra nesta fatura. Serve só para conferir: o total é sempre a soma do que você lançou.</div></div>
@@ -3062,7 +3081,7 @@ function renderCards(){
       (L.length?"":`<div class="cline"><span class="d" style="color:var(--muted)">Nenhum item descrito ainda</span></div>`)+
       `<div class="cbfoot"><span>Total da fatura</span><b style="color:var(--ink)">${R(tot)}</b></div>`+
       (endNext?`<div class="cbfoot"><span>Termina neste mês</span><span>−${R(endNext)} na próxima</span></div>`:"")+`</div>
-      <div class="toolbar"><button class="tbtn ${allPaid?"":"go"}" id="payCard">${allPaid?"Marcar como a pagar":"Marcar fatura como paga"}</button><button class="tbtn" id="zeroMonth">Zerar ${mn}</button></div></section>`;
+      </section>`;
   }
   /* mesclar fica numa coluna própria à direita no computador (cdside); no celular a ordem continua a mesma */
   const mainA=h;h="";
@@ -3078,13 +3097,16 @@ function renderCards(){
    }}
   {const P=dupPairs(L);if(P.length) h+=`<section><h2>Parecidos <small>${P.length}</small></h2>${P.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(P.map(([a,b])=>a.id+"|"+b.id).join(","))}">Mesclar todos os ${P.length} pares</button></div>`:""}<div class="card">`+P.map(([a,b])=>`<div class="duprow"><div><b>${esc(cleanDesc(a))}</b> e <b>${esc(cleanDesc(b))}</b><span>${R(a.cents)}${a.parc?` · ${a.parc}`:""} · parecem o mesmo lançamento</span></div><div class="svbtns"><button class="btn soft" data-notdup="${esc(dupKey(a,b))}">Não são</button><button class="btn primary" data-merge="${esc(a.id)}|${esc(b.id)}">Mesclar</button></div></div>`).join("")+`</div></section>`}
   const side=h;h="";
-  h+=`<section><h2>Fatura em PDF</h2><div class="card rate"><div class="hint expl">Baixe a fatura em PDF no app do banco e importe aqui. O app lê no próprio iPhone, mostra as compras para você conferir e só adiciona as que você marcar.</div>
-    <label class="btn soft" style="text-align:center;cursor:pointer;display:block">Importar fatura do ${esc(c)} (PDF)<input type="file" id="impFile" accept="application/pdf,.pdf" hidden></label></div></section>`;
+  h+=`<section><h2>Limite do cartão</h2>${limitBox(c)}</section>`;
+  h+=cardAcctBox(c);
   const months=Array.from({length:12},(_,i)=>shiftYM(view,i)).filter((m,i)=>i===0||cardTotal(c,m));
   const max=Math.max(...months.map(m=>cardTotal(c,m)),1);
   h+=`<section><h2>Próximas faturas <small>já comprometido</small></h2><div class="card flist">`+months.map(m=>{const v=cardTotal(c,m);
     return `<button class="frow ${m===view?"sel":""}" data-cardmonth="${m}"><span>${shortMonth(m)}</span><span class="b"><i style="width:${v/max*100}%"></i></span><span>${R(v)}</span></button>`}).join("")+`</div></section>`;
   h+=parcSection(c);
+  h+=`<section><h2>Importar e limpar</h2><div class="card rate"><div class="hint expl">Baixe a fatura em PDF no app do banco e importe aqui. O app lê no próprio aparelho, mostra as compras para você conferir e só adiciona as que você marcar.</div>
+    <label class="btn soft" style="text-align:center;cursor:pointer;display:block">Importar fatura do ${esc(c)} (PDF)<input type="file" id="impFile" accept="application/pdf,.pdf" hidden></label>
+    ${all.length?`<button class="tbtn" id="zeroMonth" style="margin-top:10px">Zerar ${mn}</button>`:""}</div></section>`;
   h=side?`<div class="cdwrap"><div class="cdmain">${mainA}</div><aside class="cdside">${side}</aside><div class="cdmain2">${h}</div></div>`:mainA+h;
   $("pCards").innerHTML=h;
 }
@@ -4166,6 +4188,8 @@ document.addEventListener("click",async e=>{
   const cm=t.closest("[data-cardmonth]"); if(cm){view=cm.dataset.cardmonth;render();window.scrollTo(0,0);return}
 
   if(t.id==="payCard"){payCard();return}
+  if(t.id==="cardBalSave"){const v=digits($("cardBal").value);if(!v){toast("Digite o saldo.");return}t.disabled=true;try{await setAcctBal(selCard,v);toast("Saldo salvo",true);render()}catch(e){toast("Não deu para salvar.");t.disabled=false}return}
+  if(t.id==="cardBalDel"){try{await setAcctBal(selCard,null);toast("Saldo tirado");render()}catch(e){toast("Não deu para salvar.")}return}
   const pb=t.closest("[data-paidbill]"); if(pb){const[c,m]=pb.dataset.paidbill.split("|"), d=cardDue(c,m)||`${m}-${pad(lastDay(m))}`, ts=new Date(d+"T12:00").getTime();
     const L=items.filter(x=>cardOf(x)===c&&(x.date||"").startsWith(m)&&!isPaid(x));pb.disabled=true;
     try{for(const x of L) await store.items.update(x.id,{paid:true,paidAt:ts});toast(`Fatura de ${shortMonth(m)} marcada como paga`,true);render()}catch(e){toast("Não deu para salvar.")}return}
@@ -4293,7 +4317,7 @@ document.addEventListener("change",e=>{
   if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
 });
-const maskIds=new Set(["cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
+const maskIds=new Set(["cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
 document.addEventListener("input",e=>{
   if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
   if(e.target.id==="subN"){const p=parseInt(e.target.value.replace(/\D/g,""),10)||0, t=+e.target.dataset.subtot||0;if($("subEach"))$("subEach").textContent=p>=2?R(Math.round(t/p))+" cada":"—";return}

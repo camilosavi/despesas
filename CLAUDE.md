@@ -582,3 +582,8 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - Tela do cartão com cartão físico (`.phys-card`) e ciclo da fatura; caixinhas em € sem converter para R$; categoria do lançamento
   num botão que abre a gaveta `#catSheet`; lista do Mês do mais recente para o mais antigo.
 - O `.fab` fica só "+" no PC e em telas pequenas (`.fab span#addLbl` precisa de `display:none!important` nesses casos).
+
+## Tela do cartão (15/10/2026, pedido dele)
+- **"Marcar fatura de <mês> como paga"** é o botão `#payCard` logo abaixo do cartão (topo); alterna pago ↔ a pagar. Saiu da barra do fim.
+- Ordem: cartão + pagar → Fatura do mês → Itens → Limite → **Saldo na conta <cartão>** → Próximas faturas → Parcelas → "Importar e limpar" (PDF, Zerar mês). Lado direito (PC): Fora da fatura / Parecidos.
+- **Cartão também é conta**: `cardAcctBox(c)` grava em `cfg.accts` pelo nome do cartão (`setAcctBal`, `#cardBal`/`#cardBalSave`/`#cardBalDel`) e entra no "Na conta" do Hoje. Como o app tem um só `atTs`, `setAcctBal` joga o que mexeu desde o último saldo na 1ª outra conta antes de regravar, para o `accBal()` não mudar. A lista de cartões mostra "saldo R$ X".
