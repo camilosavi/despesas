@@ -1145,11 +1145,20 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 .fi{font-family:var(--display);font-weight:800;letter-spacing:-.035em;text-align:center;white-space:nowrap;overflow:hidden;font-kerning:normal;-webkit-font-smoothing:antialiased;padding-bottom:.04em}
 .paytop{width:100%;margin-top:12px}
 .split>div[hidden]{display:none}.split:has(>div[hidden]){grid-template-columns:1fr}
-.prevbox{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}
-.prevbox>div{display:flex;justify-content:space-between;gap:10px;font-size:.92rem;color:var(--muted)}
-.prevbox b{color:var(--ink);font-variant-numeric:tabular-nums}
-.prevbox .tot{border-top:1px solid var(--line);padding-top:8px;font-weight:700;color:var(--ink)}
-.prevbox .tot b{font-size:1.05rem}
+.prevcard{margin-top:12px;padding:14px 16px}
+.pvtop{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.pvtop span{font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pvtop b{font-size:1.35rem;font-variant-numeric:tabular-nums;color:var(--ink)}
+.pvbar{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--line);margin:12px 0 12px}
+.pvbar i{display:block;height:100%;min-width:0}
+.pvbar i+i{margin-left:2px}
+.pvleg{display:grid;gap:8px}
+.pvleg>div{display:grid;grid-template-columns:14px 1fr auto;align-items:center;gap:8px;font-size:.92rem;color:var(--muted)}
+.pvleg b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+.pvbar i.a,.pvleg i.a{background:var(--accent)}
+.pvbar i.b,.pvleg i.b{background:color-mix(in srgb,var(--accent) 50%,transparent)}
+.pvbar i.c,.pvleg i.c{background:repeating-linear-gradient(135deg,var(--accent) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--accent)}
+.pvleg i{display:block;width:14px;height:10px;border-radius:3px}
 </style>
 
 <div class="wrap">
@@ -3093,7 +3102,10 @@ function renderCards(){
     if(gn.length) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">Venceu e não foi paga: ${R(gn.reduce((s,x)=>s+amt(x),0))} foram para a fatura de ${shortMonth(to)}. Se você pagou, marque como paga.</div>`;}
   let mainSP="";
   const SP=subPlanned(c,view), spT=SP.reduce((n,o)=>n+o.cents,0), spC=SP.filter(o=>o.charged).reduce((n,o)=>n+o.cents,0), spF=spT-spC;
-  if(spT) fb+=`<div class="prevbox"><div><span>Já cobrado${spC?` (inclui ${R(spC)} de assinaturas sem lançar)`:""}</span><b>${R(tot+spC)}</b></div>${spF?`<div><span>Previsto (assinaturas)</span><b>${R(spF)}</b></div>`:""}<div class="tot"><span>Total previsto</span><b id="totPrev">${R(tot+spT)}</b></div></div>`;
+  if(spT){const W=tot+spT||1, pa=tot/W*100, pb=spC/W*100, pc=spF/W*100;
+    fb+=`<div class="card prevcard"><div class="pvtop"><span>Previsão da fatura</span><b id="totPrev">${R(tot+spT)}</b></div>
+      <div class="pvbar" role="img" aria-label="Lançado ${R(tot)}, cobrado sem lançar ${R(spC)}, previsto ${R(spF)}"><i class="a" style="width:${pa}%"></i><i class="b" style="width:${pb}%"></i><i class="c" style="width:${pc}%"></i></div>
+      <div class="pvleg"><div><i class="a"></i><span>Lançado</span><b>${R(tot)}</b></div>${spC?`<div><i class="b"></i><span>Cobrado, sem lançar</span><b>${R(spC)}</b></div>`:""}${spF?`<div><i class="c"></i><span>Previsto</span><b>${R(spF)}</b></div>`:""}</div></div>`}
   h+=`<section><h2>Fatura de ${shortMonth(view)}</h2>${fb}`;
   if(!all.length) h+=`<div class="empty" style="margin-top:12px"><strong>Nada no ${esc(c)} em ${mn}</strong>Use as setas lá em cima para ver outros meses.</div></section>`;
   else{
