@@ -810,12 +810,12 @@ nav.tabs{left:50%!important;right:auto!important;transform:translateX(-50%);bott
 /* vidro v3 (out/2026, ele achou o v2 "falso" e o reflexo do canto forte demais): mais perto do Liquid Glass do iOS.
    Vidro bem transparente e só levemente tingido (--head / --btn), desfoque menor com saturação e brilho, borda de luz fina
    e igual em volta (hairline), nada de reflexo no canto nem degradê. Mantém o "gel" ao tocar. Campos e janelas sólidos. */
-nav.tabs{background:color-mix(in srgb,var(--head) var(--glass-t,64%),transparent)!important;
-  -webkit-backdrop-filter:blur(12px) saturate(190%) brightness(1.06);backdrop-filter:blur(12px) saturate(190%) brightness(1.06);border:0!important;
+nav.tabs{background:color-mix(in srgb,var(--head) var(--glass-t,76%),transparent)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(190%) brightness(1.06);backdrop-filter:blur(20px) saturate(190%) brightness(1.06);border:0!important;
   box-shadow:inset 0 0 0 .5px rgba(255,255,255,.30),inset 0 .5px 0 rgba(255,255,255,.18),0 0 0 .5px rgba(0,0,0,.18),0 10px 28px rgba(0,0,0,.24)!important}
 /* no escuro o vidro pode ser mais transparente; no claro, mais tinta para os ícones brancos lerem */
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--glass-t:46%;--glass-b:74%}}
-:root[data-theme="dark"]{--glass-t:46%;--glass-b:74%}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--glass-t:62%;--glass-b:82%}}
+:root[data-theme="dark"]{--glass-t:62%;--glass-b:82%}
 nav.tabs::before{background:rgba(255,255,255,.15)!important;
   box-shadow:inset 0 0 0 .5px rgba(255,255,255,.26)!important;transition:transform .5s cubic-bezier(.34,1.45,.5,1)!important}
 nav.tabs .tab:active,.tabav:active{transform:scale(1.12)!important;transition:transform .12s ease!important}
@@ -869,7 +869,7 @@ nav.tabs.onme::before{opacity:0}
 .fab{bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 78px)!important}
 /* telas menores (iPhone SE/mini, Android pequeno): o + fica só redondo para não cobrir botões,
    e o teclado da senha encolhe com a altura da tela (antes o 0 ficava cortado) */
-@media (max-width:400px),(max-width:979px) and (max-height:760px){
+@media (max-width:979px){
   .fab{padding:0!important;width:56px!important;min-width:56px;height:56px;right:14px!important;bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 4px)!important}
   .fab span,.fab span#addLbl{display:none!important}.fab b{margin-top:-2px}
   nav.tabs{left:14px!important;transform:none!important;width:calc(100% - 28px - 64px)!important}
@@ -1186,6 +1186,14 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 .pvbar i.b,.pvleg i.b{background:color-mix(in srgb,var(--accent) 50%,transparent)}
 .pvbar i.c,.pvleg i.c{background:repeating-linear-gradient(135deg,var(--accent) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--accent)}
 .pvleg i{display:block;width:14px;height:10px;border-radius:3px}
+/* menos texto e menos peso visual (15/10/2026, pedido dele: "tira esses textos de apoio, carrega muito o app") */
+.hcard .hint:empty{display:none}
+.tlbal .tbtn{background:none!important;border:0;color:var(--accent);padding:4px 0;font-weight:600}
+@media (min-width:980px){
+  #pHome .card.list{display:grid;grid-template-columns:1fr 1fr;column-gap:36px}
+  #pHome .card.list>.ok{grid-column:1/-1}
+  .card.banner{max-width:560px}
+}
 </style>
 
 <div class="wrap">
@@ -1321,7 +1329,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
     <div class="field"><label for="cdDue">Dia do vencimento</label><select id="cdDue"><option value="">Não sei</option><option value="1">Dia 1</option><option value="2">Dia 2</option><option value="3">Dia 3</option><option value="4">Dia 4</option><option value="5">Dia 5</option><option value="6">Dia 6</option><option value="7">Dia 7</option><option value="8">Dia 8</option><option value="9">Dia 9</option><option value="10">Dia 10</option><option value="11">Dia 11</option><option value="12">Dia 12</option><option value="13">Dia 13</option><option value="14">Dia 14</option><option value="15">Dia 15</option><option value="16">Dia 16</option><option value="17">Dia 17</option><option value="18">Dia 18</option><option value="19">Dia 19</option><option value="20">Dia 20</option><option value="21">Dia 21</option><option value="22">Dia 22</option><option value="23">Dia 23</option><option value="24">Dia 24</option><option value="25">Dia 25</option><option value="26">Dia 26</option><option value="27">Dia 27</option><option value="28">Dia 28</option><option value="29">Dia 29</option><option value="30">Dia 30</option><option value="31">Dia 31</option></select></div>
   </div>
   <div class="field"><span class="lbl">Cor</span><div class="swatches" id="cdColors"></div></div>
-  <p class="hint" id="cdHint" style="margin:-4px 0 14px">Depois é só lançar uma compra no <b>Crédito</b> e escolher este cartão.</p>
+  <p class="hint expl" id="cdHint" style="margin:-4px 0 14px">Depois é só lançar uma compra no <b>Crédito</b> e escolher este cartão.</p>
   <p class="err" id="cdErr"></p>
   <div class="row"><button type="submit" class="btn primary">Criar cartão</button></div>
 </form>
@@ -1867,7 +1875,7 @@ function header(){
     const bk=cfg.lastBackup?daysSince(cfg.lastBackup):null;
     $("s1l").textContent="Último backup";$("s1").textContent=bk==null?"nunca":bk===0?"hoje":`há ${bk} ${bk===1?"dia":"dias"}`;
     $("s2l").textContent="Google Drive";$("s2").textContent=syncOn()?"ligado":"desligado";
-    $("hFoot").textContent=syncOn()?"Dados neste aparelho e no seu Google Drive":"Dados guardados só neste aparelho";
+    $("hFoot").textContent="";
     return;
   }
   if(isHome){
@@ -1888,7 +1896,7 @@ function header(){
         <div class="hbleg"><span><i></i>pago ${R(paidS)}</span><span><i class="op"></i>a pagar ${R(open)}</span><span><i class="in"></i>${virt?"entra":"entrou"} ${R(inn)}</span></div>`}
     /* banco limpo (out/2026): sem o anel de % e sem a frase com data; só avisa quando os gastos passam do que entrou */
     $("hRing").hidden=true;
-    $("hFoot").textContent=rec&&desp>rec?"gastos do mês passaram do que entrou":"";
+    $("hFoot").textContent="";
     return;
   }
   if(isFx){
@@ -1961,7 +1969,7 @@ function header(){
     $("s2l").textContent="Salário previsto";$("s2").textContent=salPrevOn()?"ligado":"desligado";
     if(!IS_WIDE.matches){document.querySelector("header.top .split").hidden=true;$("hBar").hidden=false;
       $("hBar").innerHTML=`<div class="hbchart">${M.map((m,i)=>`<span class="${i?"":"now"} ${V[i]<0?"neg":""}"><i style="height:${Math.max(6,Math.abs(V[i])/mx*64).toFixed(0)}px"></i><small>${MES[+m.slice(5)-1].toLowerCase()}</small></span>`).join("")}</div>`;
-      $("hFoot").textContent=salPrevOn()?"com o salário previsto e o que já está lançado":"com o que já está lançado"}
+      $("hFoot").textContent=""}
   }
 }
 
@@ -2016,14 +2024,14 @@ let userEditing=false;
 function userForm(title,lead){
   const sug=userName()||userSlug(authData()&&authData().name);
   return `<section><div class="card banner"><strong>${title}</strong><p>${lead}</p>
-    <div class="field" style="margin:0"><label for="userIn">Nome de usuário</label><input type="text" id="userIn" class="limin" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="ex.: joao.silva" value="${esc(sug)}"><span class="hint">Letras, números, ponto ou _. Use algo que o Camilo reconheça (apelido, sobrenome).</span></div>
+    <div class="field" style="margin:0"><label for="userIn">Nome de usuário</label><input type="text" id="userIn" class="limin" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="ex.: joao.silva" value="${esc(sug)}"><span class="hint expl">Letras, números, ponto ou _.</span></div>
     <div class="row">${userEditing?`<button class="btn soft" id="userCancel">Cancelar</button>`:`<button class="btn soft" id="shareNo">Prefiro não</button>`}<button class="btn primary" id="shareYes">${userEditing?"Salvar":"Pode avisar"}</button></div></div></section>`;
 }
 function shareBanner(){
   if(!PWA||!GC_CODE||!authData()) return "";
   if(userEditing) return userForm("Mudar nome de usuário","O Camilo vai ver este nome no lugar do anterior.");
   if(shareName()!==null) return "";
-  return userForm("Pode avisar o Camilo que você usa o app?","Ele vê só o seu nome de usuário e em que dias você abriu o app. Nunca vê seus gastos, valores ou cartões. Dá para mudar depois tocando na sua foto, na barra de baixo.");
+  return userForm("Pode avisar o Camilo que você usa o app?","Ele vê só seu nome de usuário e os dias em que você abriu o app. Nunca vê gastos, valores ou cartões.");
 }
 function saveUser(){
   const u=userSlug($("userIn").value);
@@ -2132,7 +2140,7 @@ function contaBlock(){
         :`<input type="text" id="acn_${i}" class="limin" maxlength="24" placeholder="Banco" value="${esc(a.name)}" aria-label="Nome da conta">`;
       return `<div class="acrow">${cs.length&&!a.free?cardBadge(a.name||cs[0]):""}${nm}<input type="text" id="acv_${i}" class="limin" inputmode="numeric" placeholder="R$ 0,00" value="${a.cents?brl(a.cents):""}" aria-label="Saldo"><button class="acdel" data-acdel="${i}" aria-label="Tirar conta" ${acDraft.length<2?"hidden":""}>×</button></div>`}).join("")+
     `<div class="toolbar" style="margin:0"><button class="tbtn" id="acAdd">+ Outra conta</button></div><div class="row" style="margin:0">${A.length?`<button class="btn soft" id="acCancel">Cancelar</button>`:""}<button class="btn primary" id="acSave">Salvar saldo</button></div></div></section>`;
-  if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></section>`;
+  if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint expl">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></section>`;
   const tot=accBal(), mv=accMoves(), fl=accFlow(ym), open=fl.out, after=endBal(ym);
   const at=A.map(a=>a.at).filter(Boolean).sort()[0], old=at&&at<addDays(today(),-3);
   const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button id="acEdit">Atualizar</button></span>`;
@@ -2171,7 +2179,7 @@ function benDetail(c){
     :`<div class="card rate"><div class="top"><div><div class="val ${v<0?"neg":""}"><small>R$</small>${v<0?"−":""}${brl(Math.abs(v))}</div><div class="src">${[nx?`próximo crédito ${fmtDM(nx)}${b.credit||b.daily?` (+${R(benCreditOn(b,nx))})`:""}`:"sem crédito informado",`atualizado ${fmtDate(b.at)}`].join(" · ")}</div></div><button class="tbtn" id="bnEdit">Atualizar</button></div>
       ${b.daily&&nx?(()=>{const ym=benCreditYM(b,nx), n=bizDays(ym);return `<div class="hint">Crédito de ${fmtDM(nx)} (para ${monthLabel(ym).split(" ")[0].toLowerCase()}): ${n} dias úteis × ${R(b.daily)} = <b>${R(n*b.daily)}</b></div>`})():""}
       ${(()=>{const ro=benRunOut(b);if(!ro)return "";const short=nx&&ro.date<nx;return `<div class="${short?"warn":"hint"}" style="font-size:.88rem;font-weight:${short?600:400}">Você está gastando ~${R(Math.round(ro.per))} por dia. Nesse ritmo o saldo ${short?`acaba em ${fmtDM(ro.date)}, antes do próximo crédito`:`dura até depois do próximo crédito`}.</div>`})()}
-      <div class="hint">Não entra no saldo do mês nem no dinheiro da conta. Nas compras, escolha ${esc(c)} em Pagamento.</div></div>`;
+      <div class="hint expl">Não entra no saldo do mês nem no dinheiro da conta. Nas compras, escolha ${esc(c)} em Pagamento.</div></div>`;
   h+=`</section><section><h2>Compras em ${MES[+view.slice(5)-1].toLowerCase()} <small>${R(L.reduce((s,x)=>s+x.cents,0))}</small></h2>`+
     (L.length?`<div class="card list">${L.map(itemHTML).join("")}</div>`:`<div class="empty"><strong>Nenhuma compra no ${esc(c)} neste mês</strong>Toque em + Compra para lançar.</div>`)+`</section>`;
   h+=`<section><div class="toolbar"><button class="tbtn" id="bnDel">${benEditing==="del"?"Toque de novo para apagar o cartão":"Apagar este cartão"}</button></div></section>`;
@@ -2197,8 +2205,8 @@ function homeBlock(k){
     (U.length?U.map(u=>{const[,m,d]=u.date.split("-"),isLate=u.date<now;
       const when=isLate?"atrasado":u.date===now?"vence hoje":u.date===addDays(now,1)?"vence amanhã":`vence ${d}/${m}`;
       const attr=u.kind==="card"?`data-opencard="${esc(u.c)}" data-ym="${u.ym}"`:`data-id="${esc(u.x.id)}"`;
-      const meta=u.kind==="card"?`${when} · ${cardItems(u.c,u.ym).length} ${cardItems(u.c,u.ym).length===1?"item":"itens"}`:[when,catOf(u.x.cat,"desp").n,parcInfo(u.x)?u.x.parc:""].filter(Boolean).join(" · ");
-      return `<button class="due ${u.kind==="item"?"item":""} ${isLate?"late":""}" ${attr}><span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v">${R(u.cents)}</span><span class="m">${esc(meta)}</span></button>`}).join("")
+      const soon=isLate||u.date===now||u.date===addDays(now,1), meta=[soon?when:"",u.kind==="item"&&parcInfo(u.x)?`parcela ${u.x.parc}`:""].filter(Boolean).join(" · ");
+      return `<button class="due ${u.kind==="item"?"item":""} ${isLate?"late":""}" ${attr}><span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v">${R(u.cents)}</span>${meta?`<span class="m">${esc(meta)}</span>`:""}</button>`}).join("")
      :`<div class="ok">Nada vencendo nos próximos 10 dias ✓</div>`)+`</div>${late.length?`<p class="hint" style="margin-top:8px;color:var(--neg)">${late.length} ${late.length===1?"conta atrasada":"contas atrasadas"}. Toque para marcar como pago.</p>`:""}</section>`;
   }
   if(k==="cards"){
@@ -2225,17 +2233,17 @@ function homeBlock(k){
     return `<section><h2>Fôlego <small>${hasAcc()?"quanto fica na conta":`saldo acumulado a partir de ${MES[+ym.slice(5)-1].toLowerCase()}`}</small></h2><div class="hgrid">
       <button class="hcard" data-gotab="pAno"><small>Em 3 meses</small><b class="${a3<0?"neg":"pos"}">${signR(a3)}</b><span>até ${shortMonth(shiftYM(ym,2))}</span></button>
       <button class="hcard" data-gotab="pAno"><small>Em 6 meses</small><b class="${a6<0?"neg":"pos"}">${signR(a6)}</b><span>até ${shortMonth(shiftYM(ym,5))}</span></button>
-    </div><p class="hint" style="margin-top:8px">${hasAcc()?"Parte do saldo na conta de hoje. ":""}Conta só as receitas que você já lançou.</p></section>`;
+    </div><p class="hint expl" style="margin-top:8px">${hasAcc()?"Parte do saldo na conta de hoje. ":""}Conta só as receitas que você já lançou.</p></section>`;
   }
   if(k==="guard"){
     const B=saves(), tot=svTotal();
     return `<section><h2>Dinheiro guardado</h2><button class="hcard" data-gotab="pAno" data-scroll="saveSec">
-      <div class="hhead"><b>${B.length?R(tot):"Nenhuma caixinha"}</b><span>${B.length?`${B.length} ${B.length===1?"caixinha":"caixinhas"}`:""}</span></div>
+      <div class="hhead"><b>${B.length?R(tot):"Criar uma caixinha"}</b><span>${B.length?`${B.length} ${B.length===1?"caixinha":"caixinhas"}`:"›"}</span></div>
       <span class="hint pcno">${B.length?B.slice(0,3).map(b=>{
         const isFx=b.goalCur&&b.goalCur!=="BRL";
         const val=isFx?svMoney(svHave(b),b.goalCur):R(svBal(b));
         return `${esc(b.name)} ${val}${b.goal?` (${Math.round(Math.max(0,Math.min(1,svHave(b)/b.goal))*100)}%)`:""}`;
-      }).join(" · "):"Toque para criar uma caixinha e registrar o que você guarda."}</span>
+      }).join(" · "):""}</span>
       ${B.length?`<span class="pconly svmini">${B.slice(0,5).map(b=>{
         const isFx=b.goalCur&&b.goalCur!=="BRL";
         const val=isFx?svMoney(svHave(b),b.goalCur):R(svBal(b));
@@ -2258,8 +2266,8 @@ function hojeList(){
     if(u.kind==="rec") return `<button class="due hrec" ${u.x.virt?`data-virt="${esc(u.x.id)}"`:`data-id="${esc(u.x.id)}"`}><span class="dchip"><b>${d}</b><span>${MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v pos">+ ${R(u.cents)}</span><span class="m">${u.x.virt?"previsto":catOf(u.x.cat,"rec").n}</span></button>`;
     const attr=u.kind==="card"?`data-opencard="${esc(u.c)}" data-ym="${u.ym}"`:`data-id="${esc(u.x.id)}"`;
     const n=u.kind==="card"?cardItems(u.c,u.ym).length:0;
-    const meta=late?"atrasado":isToday?"vence hoje":u.kind==="card"?`${n} ${n===1?"compra":"compras"}`:[catOf(u.x.cat,"desp").n,parcInfo(u.x)?u.x.parc:""].filter(Boolean).join(" · ");
-    return `<button class="due ${u.kind==="item"?"item":""} ${late||isToday?"late":""}" ${attr}><span class="dchip"><b>${d}</b><span>${late?"atras.":isToday?"hoje":MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v">${R(u.cents)}</span><span class="m">${esc(meta)}</span></button>`}).join("");
+    const meta=late?"atrasado":isToday?"vence hoje":u.kind==="card"?"":(parcInfo(u.x)?`parcela ${u.x.parc}`:"");
+    return `<button class="due ${u.kind==="item"?"item":""} ${late||isToday?"late":""}" ${attr}><span class="dchip"><b>${d}</b><span>${late?"atras.":isToday?"hoje":MES[+m-1]}</span></span><span class="d">${esc(u.name)}</span><span class="v">${R(u.cents)}</span>${meta?`<span class="m">${esc(meta)}</span>`:""}</button>`}).join("");
   return `<section><h2>Próximos pagamentos <small>${tot?`${R(tot)} até ${fmtDM(lim)}`:`até ${fmtDM(lim)}`}</small></h2><div class="card list">${rows||`<div class="ok">Nada para pagar até ${fmtDM(lim)} ✓</div>`}</div><button class="lk hmore" data-gotab="pMes" style="padding:10px 0 0">Ver o mês inteiro</button></section>`;
 }
 function isBestDay(c){
@@ -2328,7 +2336,7 @@ function renderHome(){
       `<div class="hrow"><span class="hpos">${i+1}</span><span class="t"><b>${HOME_BLOCKS[k].n}</b><span>${HOME_BLOCKS[k].d}</span></span>
         <button class="hmv" data-hmove="${k}" data-dir="-1" aria-label="Subir ${HOME_BLOCKS[k].n}" ${i===0?"disabled":""}>↑</button>
         <button class="hmv" data-hmove="${k}" data-dir="1" aria-label="Descer ${HOME_BLOCKS[k].n}" ${i===o.length-1?"disabled":""}>↓</button></div>`).join("")+
-      `</div><p class="hint" style="margin-top:8px">O saldo do mês fica sempre no topo.</p><div class="row" style="margin-top:14px"><button class="btn primary" id="homeDone">Concluir</button></div></section>`;
+      `</div><p class="hint expl" style="margin-top:8px">O saldo do mês fica sempre no topo.</p><div class="row" style="margin-top:14px"><button class="btn primary" id="homeDone">Concluir</button></div></section>`;
     return;
   }
   let body;
@@ -2433,7 +2441,7 @@ function divSection(){
   const miss=L.reduce((s,d)=>s+d.miss,0);
   return `<section id="divSec"><h2>Contas divididas <small>${miss?`falta receber ${R(miss)}`:"tudo recebido ✓"}</small></h2><div class="card list">${L.map(d=>`<div class="divg"><div class="item rec-it">${catIco(d.cat,"desp")}<span class="t"><div class="d">${esc(d.name)}</div><div class="m">÷${d.n} · cada um ${R(d.per)}${d.parcN>1?` (${d.parcN}× ${R(d.unit)})`:""} · recebido ${R(d.got)} de ${R(d.back)}</div></span><span class="v ${d.miss?"":"pos"}">${d.miss?R(d.miss):"✓"}<small style="display:block;font-weight:500;color:var(--muted)">${d.miss?"falta":"recebido"}</small></span></div>
     ${d.miss?`<div style="padding:0 0 12px 50px"><a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi! Sua parte de ${d.name}: ${R(d.per)}${d.parcN>1?` (ou ${d.parcN}× ${R(d.unit)})`:""}. Pode mandar no Pix. Valeu!`)}">Cobrar no WhatsApp</a></div>`:""}</div>`).join("")}</div>
-    <p class="hint" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
+    <p class="hint expl" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
 }
 function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
   $("divHint").textContent=n>=2&&form.cents?`${R(Math.round(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
@@ -2516,7 +2524,7 @@ function helpSheet(k){
   const H=HELP[k]||HELP.pHome;closeSheets(true);
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Como funciona: ${esc(H[0])}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
     <div class="card" style="padding:4px 16px">${H[1].map(t=>`<p class="helpp">${esc(t)}</p>`).join("")}</div>
-    <p class="hint" style="margin:10px 2px 0">Cada tela tem esta ajuda no fim. Seus dados ficam só neste aparelho.</p>`;
+    <p class="hint expl" style="margin:10px 2px 0">Cada tela tem esta ajuda no fim. Seus dados ficam só neste aparelho.</p>`;
   $("scrim").hidden=$("diagSheet").hidden=false;
 }
 /* ---------- "Posso comprar?" (out/2026): simula a compra antes de fazer ---------- */
@@ -2542,7 +2550,7 @@ function canBuySheet(){
     <div class="svedit" style="padding:0;border:0;background:none"><div class="svrow2"><input id="cbV" class="limin" inputmode="numeric" placeholder="Valor R$ 0,00" value="${cbuy.v?brl(cbuy.v):""}" aria-label="Valor"><select id="cbN" aria-label="Parcelas">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${cbuy.n===i+1?"selected":""}>${i+1}×</option>`).join("")}</select></div>
     <select id="cbW" style="margin-top:8px;width:100%" aria-label="Como vai pagar">${opts.map(([k,n])=>`<option value="${esc(k)}" ${k===w?"selected":""}>${esc(n)}</option>`).join("")}</select></div>
     <button type="button" class="btn primary" id="cbGo" style="width:100%;margin-top:10px">Ver como fica</button>${res}
-    <p class="hint" style="margin:10px 0 0">Só simula: nada é lançado. Conta com o que já está no app (e com o salário previsto, se ligado).</p>`;
+    <p class="hint expl" style="margin:10px 0 0">Só simula: nada é lançado. Conta com o que já está no app (e com o salário previsto, se ligado).</p>`;
   $("scrim").hidden=$("diagSheet").hidden=false;
 }
 function canBuyGo(){cbuy={v:digits($("cbV").value||""),n:+$("cbN").value||1,w:$("cbW").value};if(!cbuy.v){toast("Digite o valor.");return}canBuySheet()}
@@ -2553,14 +2561,14 @@ function feeSection(ym){
   const L=inMonth(ym).filter(isFee).sort((a,b)=>b.cents-a.cents);if(!L.length) return "";
   const t=L.reduce((s,x)=>s+amt(x),0);
   return `<section><h2>Juros, IOF e tarifas <small>${R(t)}</small></h2><div class="card list" style="padding:0 14px">${L.map(itemHTML).join("")}</div>
-    <p class="hint" style="margin:8px 2px 0">Vêm de pagar a fatura em parte (rotativo), de parcelar a fatura e de compras no exterior. Pagando a fatura inteira, os juros e encargos não aparecem.</p></section>`;
+    <p class="hint expl" style="margin:8px 2px 0">Vêm de pagar a fatura em parte (rotativo), de parcelar a fatura e de compras no exterior. Pagando a fatura inteira, os juros e encargos não aparecem.</p></section>`;
 }
 function feeYear(y){
   const ms=Array.from({length:12},(_,i)=>`${y}-${pad(i+1)}`).filter(m=>m>=MIN_YM&&m<=curYM());
   const per=ms.map(m=>inMonth(m).filter(isFee).reduce((s,x)=>s+amt(x),0)), t=per.reduce((a,b)=>a+b,0);if(!t) return "";
   const mx=Math.max(...per,1);
   return `<section><h2>Juros, IOF e tarifas em ${y} <small>${R(t)}</small></h2><div class="card flist">${ms.map((m,i)=>`<div class="frow"><span>${shortMonth(m)}</span><span class="b"><i style="width:${per[i]/mx*100}%;background:var(--neg)"></i></span><span>${R(per[i])}</span></div>`).join("")}</div>
-    <p class="hint" style="margin:8px 2px 0">Dinheiro que foi para o banco, não para você. Some quando a fatura é paga inteira.</p></section>`;
+    <p class="hint expl" style="margin:8px 2px 0">Dinheiro que foi para o banco, não para você. Some quando a fatura é paga inteira.</p></section>`;
 }
 /* ---------- assinaturas (out/2026): o que se paga todo mês para usar um serviço; divisão com outras pessoas em
    cfg.subShare[nome] = {n: quantas pessoas te pagam, c: quanto cada uma, p?: [{nm, c}] quando cada um paga um valor
@@ -2637,14 +2645,14 @@ function subReadRows(){subRows=subRows.map((r,i)=>({nm:($("subPn_"+i)?.value??r.
 function subEditor(r){
   const each=subMode==="each", back=subRows.reduce((s,x)=>s+(x.c||0),0);
   const seg=`<div class="seg" role="group" aria-label="Como divide" style="margin:0 0 10px"><button type="button" data-submode="eq" aria-pressed="${!each}">Todos iguais</button><button type="button" data-submode="each" aria-pressed="${each}">Valor por pessoa</button></div>`;
-  const eq=`<p class="hint" style="margin:0 0 8px">Diga entre quantas pessoas divide, <b>contando você</b>: cada um paga ${esc(R(r.cents))} ÷ pessoas.</p>
+  const eq=`<p class="hint expl" style="margin:0 0 8px">Diga entre quantas pessoas divide, <b>contando você</b>: cada um paga ${esc(R(r.cents))} ÷ pessoas.</p>
     <div class="svrow2" style="grid-template-columns:1fr auto;align-items:center"><input id="subN" inputmode="numeric" placeholder="Pessoas (com você)" value="${r.sh&&!(r.sh.p&&r.sh.p.length)?r.sh.n+1:""}" aria-label="Dividido entre quantas pessoas, contando você" data-subtot="${r.cents}"><span id="subEach" class="hint" style="margin:0;white-space:nowrap">${r.sh&&!(r.sh.p&&r.sh.p.length)?R(r.sh.c)+" cada":"—"}</span></div>`;
-  const ea=`<p class="hint" style="margin:0 0 8px">Quem te paga e quanto (sem contar você). O nome ajuda a reconhecer o Pix de cada um no extrato.</p>
+  const ea=`<p class="hint expl" style="margin:0 0 8px">Quem te paga e quanto (sem contar você). O nome ajuda a reconhecer o Pix de cada um no extrato.</p>
     <div class="subrows">${subRows.map((x,i)=>`<div class="subrow"><input type="text" id="subPn_${i}" maxlength="24" placeholder="Nome" value="${esc(x.nm||"")}" aria-label="Nome da pessoa ${i+1}"><input type="text" id="subPv_${i}" inputmode="numeric" placeholder="R$ 0,00" value="${x.c?brl(x.c):""}" aria-label="Quanto a pessoa ${i+1} paga"><button type="button" class="acdel" data-subdel="${i}" aria-label="Tirar pessoa ${i+1}" ${subRows.length<2?"hidden":""}>×</button></div>`).join("")}</div>
     <div class="toolbar" style="margin:6px 0 0"><button type="button" class="tbtn" id="subAdd">+ Pessoa</button></div>
     <p class="hint" id="subMine" style="margin:8px 0 0">${back?`Recebe ${R(back)} · sai ${R(Math.max(0,r.cents-back))} para você`:"—"}</p>`;
   const dd=subDayOf(r.name,r.last), dayBox=`<div class="svrow2" style="grid-template-columns:1fr auto;align-items:center;margin:0 0 12px"><label class="hint" style="margin:0">Dia da cobrança no cartão${dd.manual?"":" (visto nos lançamentos)"}<input id="subDay" inputmode="numeric" maxlength="2" placeholder="Dia (1 a 31)" value="${dd.d||""}" aria-label="Dia da cobrança" style="display:block;width:100%;margin-top:4px"></label><button type="button" class="btn soft" id="subDaySave">Salvar dia</button></div>`;
-  return `<div class="svedit">${dayBox}${seg}${each?ea:eq}<p class="hint" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
+  return `<div class="svedit">${dayBox}${seg}${each?ea:eq}<p class="hint expl" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
     <div class="svbtns">${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary" id="subSave" data-subtot="${r.cents}">Salvar</button></div></div>`;
 }
 function subSection(){
@@ -2657,10 +2665,10 @@ function subSection(){
       ${ed&&r.sh?(()=>{const P=subPayers(r.name,r.sh), mn=monthLabel(cur).split(" ")[0].toLowerCase(), first=n=>titleCase(n.split(" ")[0]);
         return `<div class="svedit" style="padding-bottom:0"><p class="hint" style="margin:0 0 6px">${P.paid.length?`Pagaram em ${mn}: ${esc(P.paid.map(first).join(", "))}.`:`Ninguém pagou em ${mn} ainda.`}${P.miss.length?` Faltam: ${esc(P.miss.map(first).join(", "))}.`:""}</p>
         ${P.miss.length?`<div class="btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${P.miss.map(n=>`<a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi, ${first(n)}! Falta o ${r.name} de ${mn}: ${R(shOwe(r.sh,n))}. Valeu!`)}">Cobrar ${esc(first(n))} no WhatsApp</a>`).join("")}</div>`:""}
-        <p class="hint" style="margin:0">Quem pagou nos últimos 3 meses entra na lista. O WhatsApp abre com a mensagem pronta; você escolhe o contato.</p></div>`})():""}
+        <p class="hint expl" style="margin:0">Quem pagou nos últimos 3 meses entra na lista. O WhatsApp abre com a mensagem pronta; você escolhe o contato.</p></div>`})():""}
       ${ed?subEditor(r):""}</div>`};
   return `<section id="subSec"><h2>Assinaturas <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">${L.map(row).join("")}</div>
-    <p class="hint" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
+    <p class="hint expl" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
 }
 async function subSave(off){
   const S={...subShare()};
@@ -2697,7 +2705,7 @@ function parcSection(c){
     fee?`Nos últimos 3 meses foram ${R(fee)} de juros, IOF e tarifas neste cartão.`:""].filter(Boolean);
   return `<section><h2>Saindo do parcelamento</h2><div class="card rate">${lines.map(l=>`<div class="hint" style="margin:0">${esc(l)}</div>`).join("")}
     <div class="flist" style="margin-top:6px">${P.per.map(p=>`<div class="frow"><span>${shortMonth(p.m)}</span><span class="b"><i style="width:${(p.fin+p.buy)/mx*100}%;background:${p.fin?"var(--c2)":"var(--accent)"}"></i></span><span>${R(p.fin+p.buy)}</span></div>`).join("")}</div>
-    <div class="hint" style="margin:0">Laranja: mês com parcela do parcelamento da fatura. Só conta o que já está lançado.</div></div></section>`;
+    <div class="hint expl" style="margin:0">Laranja: mês com parcela do parcelamento da fatura. Só conta o que já está lançado.</div></div></section>`;
 }
 /* Mês como linha do tempo: o que sai da conta na ordem em que sai. Cada fatura de cartão é uma linha na data de
    vencimento (abre os itens ali mesmo); contas na data delas; receitas entram como +. No mês atual, com o Saldo na conta
@@ -2890,7 +2898,7 @@ let syncSetup=null;
 function syncSection(){
   if(!PWA||!GDRIVE_CLIENT) return "";
   if(syncOn()) return `<section id="syncSec"><h2>Sincronizar com o Google Drive</h2><div class="card rate"><div id="syncState">${syncStateHtml()}</div>
-    <div class="hint">É automático e nos dois sentidos: o que você muda aqui vai para o Drive, e o que mudou no outro aparelho chega aqui (ao abrir o app, 3 s depois de mexer e a cada 2 min). Não precisa escolher enviar ou receber. Os dados vão criptografados com a sua senha de sincronização, numa pasta escondida do seu Drive.</div>
+    <div class="hint expl">É automático e nos dois sentidos: o que você muda aqui vai para o Drive, e o que mudou no outro aparelho chega aqui (ao abrir o app, 3 s depois de mexer e a cada 2 min). Não precisa escolher enviar ou receber. Os dados vão criptografados com a sua senha de sincronização, numa pasta escondida do seu Drive.</div>
     <div class="row" style="margin:0"><button class="btn soft" id="syncOff">${syncSetup==="off"?"Toque de novo para desligar":"Desligar"}</button><button class="btn primary" id="syncGo">${syncPend()?"Enviar agora":"Conferir agora"}</button></div></div></section>`;
   if(syncSetup&&syncSetup.step==="pass") return `<section id="syncSec"><h2>Sincronizar com o Google Drive</h2><div class="card rate">
     <div><b>${syncSetup.exists?"Senha da sincronização":"Crie uma senha para a sincronização"}</b><div class="src">${syncSetup.exists?"A mesma que você criou no outro aparelho.":"Ela criptografa seus dados no Drive. Use a mesma nos outros aparelhos. Se esquecer, não dá para recuperar o que está no Drive (os dados deste aparelho continuam aqui)."}</div></div>
@@ -2899,7 +2907,7 @@ function syncSection(){
     <p class="err" id="syErr" style="margin:0"></p>
     <div class="row" style="margin:0"><button class="btn soft" id="syCancel">Cancelar</button><button class="btn primary" id="syPassOk">${syncSetup.exists?"Entrar":"Ligar sincronização"}</button></div></div></section>`;
   return `<section id="syncSec"><h2>Sincronizar com o Google Drive</h2><div class="card rate">
-    <div class="hint">Use o app no celular e no computador com os mesmos dados. Só funciona para contas Google liberadas no app; para os outros, tudo continua só neste aparelho.</div>
+    <div class="hint expl">Use o app no celular e no computador com os mesmos dados. Só funciona para contas Google liberadas no app; para os outros, tudo continua só neste aparelho.</div>
     <div class="row" style="margin:0"><button class="btn primary" id="syncStart">Conectar Google Drive</button></div></div></section>`;
 }
 async function syncStart(){
@@ -3006,7 +3014,7 @@ function lookSection(){
     <div class="thgrid">${["ameixa","azul","roxo","laranja","rosa","grafite"].map(sw).join("")}
       ${userPhoto()&&pc?it("foto",`<button class="thsw photo" data-theme-pick="foto" style="background-image:url('${userPhoto()}')" aria-label="Tema da cor da sua foto" aria-pressed="${cur==="foto"}"></button>`,"Sua foto"):""}
       ${it("livre",`<span class="thsw free" role="button" aria-label="Escolher qualquer cor" aria-pressed="${cur==="livre"}" style="${cur==="livre"?`background:${fc}`:""}"><input type="color" id="themeFree" value="${fc}"></span>`,"Cor livre")}</div></div>
-    <div class="hint">A foto aparece na barra das abas e na tela de entrada.${syncOn()?" Foto e tema vão junto na sincronização.":" Foto e tema ficam só neste aparelho."}</div></div></section>`;
+    <div class="hint expl">A foto aparece na barra das abas e na tela de entrada.${syncOn()?" Foto e tema vão junto na sincronização.":" Foto e tema ficam só neste aparelho."}</div></div></section>`;
 }
 function timeline(ym,arr){
   const now=today(), cur=ym===curYM(), dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), rA=arr.filter(x=>typeOf(x)==="rec"), E=[];
@@ -3022,8 +3030,8 @@ function timeline(ym,arr){
   const A=accts(), fut=ym>curYM(), hasBal=(cur||fut)&&A.length, lateB=cur&&hasBal?accFlow(ym).late:0;let bal=!hasBal?0:cur?accBal()-lateB:endBal(shiftYM(ym,-1));
   E.forEach(e=>{
     const rec=e.k==="rec";
-    if(hasBal&&!rec&&!e.paid&&!e.rolled){bal-=e.cents;e.after=`<span class="tlafter ${bal<0?"neg":""}">${bal<0?`falta ${R(-bal)}`:`sobra ${R(bal)}`}</span>`}
-    else if(hasBal&&rec&&recDay(e.x)>now){bal+=e.cents;e.after=`<span class="tlafter ${bal<0?"neg":""}">${bal<0?`falta ${R(-bal)}`:`fica ${R(bal)}`}</span>`}
+    if(hasBal&&!rec&&!e.paid&&!e.rolled){bal-=e.cents;e.after=bal<0?`<span class="tlafter neg">falta ${R(-bal)}</span>`:""}
+    else if(hasBal&&rec&&recDay(e.x)>now){bal+=e.cents;e.after=bal<0?`<span class="tlafter neg">falta ${R(-bal)}</span>`:""}
     else e.after="";
   });
   E.sort((a,b)=>b.date.localeCompare(a.date)||(b.k==="rec"?1:a.k==="rec"?-1:0));
@@ -3042,7 +3050,7 @@ function timeline(ym,arr){
       const st=e.paid?"paga ✓":e.rolled?`não paga · foi para a fatura de ${monthLabel(e.to).split(" ")[0].toLowerCase()}`:late?"atrasada":"vence "+fmtDM(e.date);
       const col=cardColor(e.c);
       const cardIco=`<span class="ico cat" style="--cc:${col}" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>`;
-      return `<div class="tlg"><button class="due tlrow ${late?"late":""} ${e.paid||e.rolled?"done":""}" data-opencard="${esc(e.c)}" data-ym="${ym}">${cardIco}<span class="d">${cardBadge(e.c)}Fatura ${esc(e.c)}</span><span class="v">${R(e.rolled?e.shown:e.cents)}</span><span class="m"><b>${dateTxt}</b> · ${st} · ${n||"sem"} ${n===1?"item":"itens"}${e.rv?` · inclui ${R(e.rv)} anterior`:""} <i class="tlcar">›</i></span>${after}</button></div>`;
+      return `<div class="tlg"><button class="due tlrow ${late?"late":""} ${e.paid||e.rolled?"done":""}" data-opencard="${esc(e.c)}" data-ym="${ym}">${cardIco}<span class="d">${cardBadge(e.c)}Fatura ${esc(e.c)}</span><span class="v">${R(e.rolled?e.shown:e.cents)}</span><span class="m"><b>${dateTxt}</b> · ${st} ${e.rv?` · inclui ${R(e.rv)} anterior`:""} <i class="tlcar">›</i></span>${after}</button></div>`;
     }
     const x=e.x, t=typeOf(x);
     if(e.virt) {
@@ -3050,7 +3058,7 @@ function timeline(ym,arr){
       return `<button class="due tlrow rec virt" data-virt="${esc(x.id)}">${salIco}<span class="d">${esc(x.desc)}</span><span class="v pos">+ ${R(e.cents)}</span><span class="m"><b>${dateTxt}</b> · ${x.fell?`cai ${fmtDM(x.fell)} · `:""}${x.ov?"ajustado por você":"previsto pelos holerites"} <i class="tlcar">›</i></span>${after}</button>`;
     }
     const ico=catIco(x.cat, t);
-    const metaParts=[`<b>${dateTxt}</b>`, rec?catOf(x.cat,t).n+(x.fell?` · caiu ${fmtDM(x.fell)}`:"")+(x.conv?` · convênio ${R(x.conv)}`:""):e.paid?"pago ✓":late?"atrasado":catOf(x.cat,t).n, !rec&&x.pay&&!e.paid?esc(x.pay):""].filter(Boolean);
+    const metaParts=[`<b>${dateTxt}</b>`, rec?(x.fell?`caiu ${fmtDM(x.fell)}`:"")+(x.conv?`${x.fell?" · ":""}convênio ${R(x.conv)}`:""):e.paid?"pago ✓":late?"atrasado":""].filter(Boolean);
     return `<button class="due tlrow ${late?"late":""} ${e.paid&&!rec?"done":""} ${rec?"rec":""}" data-id="${esc(x.id)}">${ico}<span class="d">${esc(cleanDesc(x))}</span><span class="v ${rec?"pos":""}">${rec?"+ ":""}${R(e.cents)}</span><span class="m">${metaParts.join(" · ")}</span>${after}</button>`;
   }).join("")+`</div>`;
   if(cur){const day=+now.slice(8), last=lastDay(ym);
@@ -3079,14 +3087,14 @@ function renderCards(){
     const cs=allCards().sort((a,b)=>cardTotal(b,view)-cardTotal(a,view)||a.localeCompare(b));
     if(!cs.length){$("pCards").innerHTML=`<section><div class="empty"><strong>Nenhum cartão ainda</strong>Toque em “+ Cartão” para criar o seu, com limite e dia de vencimento. Depois é só lançar compras no Crédito escolhendo o cartão.</div></section>`;return}
     const months=Array.from({length:6},(_,i)=>shiftYM(view,i));
-    $("pCards").innerHTML=`<section><h2>Seus cartões <small>toque para abrir</small></h2><div class="folders">`+cs.map(c=>{
+    $("pCards").innerHTML=`<section><h2>Seus cartões</h2><div class="folders">`+cs.map(c=>{
       if(isBen(c)){const b=bens().find(x=>x.name===c), v=benBal(b), nx=benNext(b);
         return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv ${v<0?"neg":""}">${R(v)}</span><span class="fm">saldo do vale${nx?` · crédito ${fmtDM(nx)}`:""}</span></button>`}
       const tot=cardTotal(c,view), n=cardItems(c,view).length, max=Math.max(...months.map(m=>cardTotal(c,m)),1);
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
       return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${acctOf(c)?`saldo ${R(acctOf(c).cents)} · `:""}${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
-      `</div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar fatura ou conta (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
+      `</div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar fatura ou conta (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
@@ -3158,7 +3166,7 @@ function renderCards(){
      const used=new Set(), sug=x=>{const c=findSimilar(x,IM,used)||IM.filter(y=>!used.has(y.id)&&Math.abs(y.cents-x.cents)<=Math.max(1,Math.round(x.cents*0.005))).sort((p,q)=>nameSim(x.desc,q.desc)-nameSim(x.desc,p.desc))[0]||(x.parc?IM.filter(y=>!used.has(y.id)&&y.parc===x.parc&&nameSim(x.desc,y.desc)>=0.5)[0]:null);if(c)used.add(c.id);return c};
      const tl=LO.reduce((s,x)=>s+x.cents,0), MP=[], sugC=new Map();
      LO.forEach(x=>{const c=sug(x);sugC.set(x.id,c);if(c)MP.push(`${x.id}|${c.id}`)});
-     h+=`<section><h2>Fora da fatura do banco <small>${R(tl)}</small></h2><p class="hint" style="margin:-4px 0 8px">Lançados à mão em ${mn} que não vieram da fatura importada. Se forem repetidos, mescle ou apague; se forem compras novas, deixe.</p>${MP.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(MP.join(","))}">Mesclar todos os ${MP.length} com a fatura</button></div>`:""}<div class="card">`+
+     h+=`<section><h2>Fora da fatura do banco <small>${R(tl)}</small></h2><p class="hint expl" style="margin:-4px 0 8px">Lançados à mão em ${mn} que não vieram da fatura importada. Se forem repetidos, mescle ou apague; se forem compras novas, deixe.</p>${MP.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(MP.join(","))}">Mesclar todos os ${MP.length} com a fatura</button></div>`:""}<div class="card">`+
        LO.map(x=>{const c=sugC.get(x.id), sib=laterSiblings(x).length;
          return `<div class="duprow"><div><b>${esc(cleanDesc(x))}</b> · ${R(x.cents)}${x.parc?` · ${x.parc}`:""}<span>${c?`parece “${esc(cleanDesc(c))}” (${R(c.cents)}${c.parc?` · ${c.parc}`:""}) da fatura`:"nada parecido na fatura"}${sib?` · leva junto ${sib} ${sib===1?"parcela seguinte":"parcelas seguintes"}`:""}</span></div><div class="svbtns">${c?`<button class="btn soft" data-lodel="${esc(x.id)}">Apagar</button><button class="btn primary" data-merge="${esc(x.id)}|${esc(c.id)}">Mesclar</button>`:`<button class="btn soft" data-lodel="${esc(x.id)}" style="grid-column:1/-1">Apagar</button>`}</div></div>`}).join("")+
        `</div>${LO.length>1?`<div class="toolbar"><button class="tbtn" id="loAll">Apagar todos os ${LO.length} (${R(tl)})</button></div>`:""}</section>`;
@@ -3223,7 +3231,7 @@ function renderPlan(){
   <input id="fQ" type="search" placeholder="Filtrar linhas" value="${esc(F.q)}" aria-label="Filtrar linhas"></div>`;
   if(!arr.length) h+=`<div class="empty"><strong>Nada nesses meses</strong>Use as setas lá em cima para mudar o mês inicial, ou toque no + para lançar.</div>`;
   else h+=`<div class="card mxwrap"><table class="mx"><thead><tr><th class="lab">${F.q?"Filtrado":"Lançamento"}</th>${months.map(ym=>`<th class="${ym===cur?"now":""}">${mhead(ym)}</th>`).join("")}</tr></thead><tbody>${body}${foot}</tbody></table></div>
-    <p class="hint" style="margin-top:8px">✓ = pago. Parcelas da mesma compra ficam numa linha só. Começa em ${shortMonth(months[0])}; use as setas do topo para andar.</p>`;
+    <p class="hint expl" style="margin-top:8px">✓ = pago. Parcelas da mesma compra ficam numa linha só. Começa em ${shortMonth(months[0])}; use as setas do topo para andar.</p>`;
   h+=`<div class="toolbar">${downloads?`<button class="tbtn" id="csvBtn">Exportar para Excel (.csv)</button>`:""}</div></section>`;
   $("pPlan").innerHTML=h;
 }
@@ -3291,7 +3299,7 @@ function rateCard(s){
   return `<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">${r.at&&r.date===today()?`<i class="live" aria-hidden="true"></i>`:""}${F.N} ${whenTxt(r)}</span><div class="val"><small>R$</small>${r4(r.rate)}</div><div class="src">${esc(r.src)}${r.date&&r.date!==today()?` · de ${fmtDate(r.date)}`:""}</div></div><button class="tbtn" id="rateRefresh">Atualizar</button></div>
     ${cmpTxt?`<div class="${diff<0?"pos":diff>0?"warn":""}" style="font-size:.88rem;font-weight:600">${cmpTxt}</div>`:""}
     <div class="cmp"><div><span>${F.sym} 100 hoje</span><b>${R(Math.round(100*r.rate*100))}</b></div>${s.c.goal?`<div><span>O que falta (${M(s.left,s.cur)})</span><b>≈ ${R(cost)}</b></div>`:`<div><span>Seus ${F.sym} hoje</span><b>≈ ${R(Math.round(s.amt*r.rate))}</b></div>`}</div>
-    <div class="hint">A cotação comercial é de referência; no app o valor vem um pouco acima por causa do spread e do IOF. Atualiza sozinha a cada 5 min.</div>
+    <div class="hint expl">A cotação comercial é de referência; no app o valor vem um pouco acima por causa do spread e do IOF. Atualiza sozinha a cada 5 min.</div>
     ${usdLine(s.cur)}</div>`;
 }
 function renderFx(){
@@ -3390,7 +3398,7 @@ function saveSection(){
   let h=`<section id="saveSec"><h2>Dinheiro guardado ${svForm?"":`<button id="svAdd">+ Nova caixinha</button>`}</h2>`;
   if(svForm&&!svForm.id) h+=svFormHtml();
   if(!B.length){
-    h+=svForm?"":`<div class="empty"><strong>Nenhuma caixinha ainda</strong>Crie caixinhas como Reserva ou Viagem e registre quanto guardou ou tirou, em R$, € ou US$. Isso não entra como despesa do mês.</div>`;
+    h+=svForm?"":`<div class="empty"><strong>Nenhuma caixinha ainda</strong></div>`;
     return h+`</section>`;
   }
   h+=`<div class="card"><div class="svtot"><small>Total guardado${(tE&&r)||(tU&&rU)?" (moedas na cotação de hoje)":""}</small><b>${R(svTotal())}</b>${tE||tU?`<span>${[R(tB),tE?E(tE):"",tU?M(tU,"USD"):""].filter(Boolean).join(" + ")}${(tE&&!r)||(tU&&!rU)?" · sem cotação para converter":""}</span>`:""}${looseE||looseU?`<span>+ ${[looseE?E(looseE):"",looseU?M(looseU,"USD"):""].filter(Boolean).join(" e ")} comprados na aba Moedas, fora das caixinhas</span>`:""}</div>`+
@@ -3412,7 +3420,7 @@ function saveSection(){
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
           `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
-      return row}).join("")+`</div><p class="hint" style="margin-top:8px">Toque numa caixinha para guardar ou tirar, em R$, € ou US$. Não entra nas despesas do mês.</p></section>`;
+      return row}).join("")+`</div><p class="hint expl" style="margin-top:8px">Toque numa caixinha para guardar ou tirar, em R$, € ou US$. Não entra nas despesas do mês.</p></section>`;
   return h;
 }
 async function svSave(list,msg,extra){document.activeElement?.blur?.();try{await saveCfg({save:list,...(extra||{})});if(msg)toast(msg,true);render()}catch(e){toast("Não deu para salvar. Tente de novo.")}}
@@ -3486,8 +3494,8 @@ function projSection(){
     const[y,m]=ym.split("-");
     return `<tr class="${ym===cur?"now":""} ${!r&&!d&&ym!==cur?"zero":""}" data-gomonth="${ym}"><td>${MES[+m-1].toLowerCase()}/${y.slice(2)}</td><td class="r pos">${r?brl(r):"–"}${sv?`<sup title="inclui salário previsto">*</sup>`:""}</td><td class="r neg">${d?brl(d):"–"}</td>${hA?"":`<td class="r ${v<0?"neg":""}">${v<0?"−":""}${brl(Math.abs(v))}</td>`}<td class="r ${acc<0?"neg":""}"><b>${acc<0?"−":""}${brl(Math.abs(acc))}</b></td></tr>`;
   }).join("");
-  return `<section><h2>Próximos meses <small>toque para abrir</small></h2><div class="card tablewrap"><table class="proj"><thead><tr><th>Mês</th><th class="r">Entra</th><th class="r">Sai</th>${hA?"":`<th class="r">Saldo</th>`}<th class="r">${hA?"Na conta":"Acum."}</th></tr></thead><tbody>${hA?`<tr class="start"><td>hoje</td><td></td><td></td><td class="r"><b>${R(accBal()).replace("R$ ","")}</b></td></tr>`:""}${rows}</tbody></table></div>
-    <p class="hint" style="margin-top:8px">${hA?`“Na conta” = quanto sobra no fim de cada mês, partindo do saldo na conta de hoje: soma o que ainda vai entrar e tira o que falta pagar (atrasados entram em ${shortMonth(cur)}).`:`Acumulado soma o saldo a partir de ${shortMonth(cur)}. Informe o saldo na conta no Início para ver quanto fica na conta em cada mês.`} ${salPrevOn()?`* inclui o salário previsto pelos holerites. `:""}Receitas só entram quando você lança.</p></section>`;
+  return `<section><h2>Próximos meses</h2><div class="card tablewrap"><table class="proj"><thead><tr><th>Mês</th><th class="r">Entra</th><th class="r">Sai</th>${hA?"":`<th class="r">Saldo</th>`}<th class="r">${hA?"Na conta":"Acum."}</th></tr></thead><tbody>${hA?`<tr class="start"><td>hoje</td><td></td><td></td><td class="r"><b>${R(accBal()).replace("R$ ","")}</b></td></tr>`:""}${rows}</tbody></table></div>
+    <p class="hint expl" style="margin-top:8px">${hA?`“Na conta” = quanto sobra no fim de cada mês, partindo do saldo na conta de hoje: soma o que ainda vai entrar e tira o que falta pagar (atrasados entram em ${shortMonth(cur)}).`:`Acumulado soma o saldo a partir de ${shortMonth(cur)}. Informe o saldo na conta no Início para ver quanto fica na conta em cada mês.`} ${salPrevOn()?`* inclui o salário previsto pelos holerites. `:""}Receitas só entram quando você lança.</p></section>`;
 }
 /* novo app (out/2026): Moedas saiu da barra; entra pelo Planejar (cotação e o que já comprou) */
 function fxRowSection(){
@@ -3585,24 +3593,24 @@ function renderAno(){
 /* ---------- Você (perfil e ajustes): abre pela foto na barra de baixo ---------- */
 function secSection(){
   if(!PWA||!authData()) return "";
-  return `<section id="secSec"><h2>Senha e ${esc(bioN(1))}</h2><div class="card rate"><div class="hint">A senha de 6 dígitos fica só neste aparelho. O app pede de novo ao reabrir ou depois de 5 min em segundo plano.</div>
+  return `<section id="secSec"><h2>Senha e ${esc(bioN(1))}</h2><div class="card rate"><div class="hint expl">A senha de 6 dígitos fica só neste aparelho. O app pede de novo ao reabrir ou depois de 5 min em segundo plano.</div>
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn soft" id="lockNow">Bloquear app</button>${bioCapable?`<button class="btn soft" id="bioToggle">${authData().bio?"Desativar "+esc(bioN()):"Ativar "+esc(bioN())}</button>`:""}</div></div></section>`;
 }
 function renderMe(){
   let h=lookSection()+secSection()+pushSection()+syncSection()+ofSection();
   h+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${CATS.desp.map(c=>`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}${CAT_LOCK.includes(c.k)?"":`<button data-catdel="${c.k}" aria-label="Apagar ${esc(c.n)}">×</button>`}</span>`).join("")}</div>
     <div class="catadd"><input type="text" id="catAddIn" maxlength="24" placeholder="Nova categoria (ex.: Celular)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtn">Criar</button></div>
-    <div class="hint">Ao apagar, os lançamentos dela vão para Outros. Faturas de cartão, Câmbio e Outros ficam fixas.</div></div></section>`;
+    <div class="hint expl">Ao apagar, os lançamentos dela vão para Outros. Faturas de cartão, Câmbio e Outros ficam fixas.</div></div></section>`;
   h+=`<section><h2>Backup e exportação</h2><div class="card rate"><div class="${daysSince(cfg.lastBackup)>=7?"warn":"pos"}" style="font-size:.88rem;font-weight:600">${cfg.lastBackup?(daysSince(cfg.lastBackup)===0?"Último backup: hoje ✓":`Último backup: há ${daysSince(cfg.lastBackup)} ${daysSince(cfg.lastBackup)===1?"dia":"dias"}`):"Você ainda não fez nenhum backup"}</div><div class="hint">Backup: arquivo com todos os lançamentos, compras de euro, limites e previstos; guarde no iCloud Drive. Excel: lançamentos de ${shortMonth(curYM())} até ${shortMonth(shiftYM(curYM(),11))}, para abrir numa planilha.</div>
     <div class="row" style="margin:0;flex-wrap:wrap">${downloads?`<button class="btn soft" id="bkExport">Exportar backup</button><button class="btn soft" id="csvBtn">Excel (.csv) · 12 meses</button>`:""}${PWA?`<label class="btn soft" style="text-align:center;cursor:pointer">Importar backup<input type="file" id="bkImport" accept=".json,application/json" hidden></label>`:""}</div></div></section>`;
-  h+=`<section><h2>Importar planilha</h2><div class="card rate"><div class="hint">Traga os gastos de uma planilha (Excel, CSV, Google Planilhas baixada, Numbers exportada). Serve lista com data e valor ou planilha com os meses nas colunas; você confere antes de lançar.</div>
+  h+=`<section><h2>Importar planilha</h2><div class="card rate"><div class="hint expl">Traga os gastos de uma planilha (Excel, CSV, Google Planilhas baixada, Numbers exportada). Serve lista com data e valor ou planilha com os meses nas colunas; você confere antes de lançar.</div>
     <div class="row" style="margin:0;flex-wrap:wrap"><label class="btn soft" style="text-align:center;cursor:pointer">Escolher planilha<input type="file" class="xlsany" accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden></label>${cfg.xlsLast?`<button class="btn soft" id="xlsUndo">Desfazer importação (${cfg.xlsLast.n})</button>`:""}</div>${readsBox()}</div></section>`;
-  if(PWA&&GC_CODE) h+=`<section><h2>Estatísticas</h2><div class="card rate"><div class="hint">O app conta, de forma anônima, quantas pessoas abrem e instalam. Não envia nome, valores nem lançamentos.</div>
+  if(PWA&&GC_CODE) h+=`<section><h2>Estatísticas</h2><div class="card rate"><div class="hint expl">O app conta, de forma anônima, quantas pessoas abrem e instalam. Não envia nome, valores nem lançamentos.</div>
     <div class="row" style="margin:0;flex-wrap:wrap">${authData()?(shareName()==="1"&&userName()?`<button class="btn soft" id="userEdit">Mudar usuário (@${esc(userName())})</button><button class="btn soft" id="shareFlip">Parar de mostrar meu nome</button>`:`<button class="btn soft" id="shareFlip">Mostrar meu nome ao Camilo</button>`):""}<button class="btn soft" id="statsToggle">${localStorage.getItem("despesas.noStats")==="1"?"Ativar estatísticas":"Desativar estatísticas"}</button></div></div></section>`;
   {const u=lancSnap();
-  h+=`<section><h2>Zerar lançamentos</h2><div class="card rate"><div class="hint">Apaga todas as despesas e receitas e o saldo na conta, para relançar do zero. Cartões, compras de euro, caixinhas e categorias continuam.${u?"":" Fica uma cópia aqui no aparelho para desfazer."}</div>
+  h+=`<section><h2>Zerar lançamentos</h2><div class="card rate"><div class="hint expl">Apaga todas as despesas e receitas e o saldo na conta, para relançar do zero. Cartões, compras de euro, caixinhas e categorias continuam.${u?"":" Fica uma cópia aqui no aparelho para desfazer."}</div>
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn danger" id="wipeLanc">Zerar lançamentos e saldo</button>${u?`<button class="btn soft" id="undoLanc">Desfazer (${u.items.length})</button>`:""}</div></div></section>`}
-  h+=`<section><h2>Zerar tudo</h2><div class="card rate"><div class="hint">Apaga lançamentos, cartões, compras de euro, caixinhas e configurações deste aparelho e volta à tela de boas-vindas. A senha e ${BIO.f?"a":"o"} ${esc(bioN())} continuam. Fica uma cópia de segurança aqui no aparelho: na tela de boas-vindas dá para desfazer.</div>
+  h+=`<section><h2>Zerar tudo</h2><div class="card rate"><div class="hint expl">Apaga lançamentos, cartões, compras de euro, caixinhas e configurações deste aparelho e volta à tela de boas-vindas. A senha e ${BIO.f?"a":"o"} ${esc(bioN())} continuam. Fica uma cópia de segurança aqui no aparelho: na tela de boas-vindas dá para desfazer.</div>
     <div class="row" style="margin:0"><button class="btn danger" id="wipeAll">Zerar tudo</button></div></div></section>`;
   $("pMe").innerHTML=h;anoFold("pMe");
 }
@@ -3840,14 +3848,14 @@ function pushSection(){
   if(!pushOk()||ios&&!standalone()) return head+`<div class="hint">${ios?"Para receber avisos no iPhone, abra o app pelo ícone da tela de início (Safari → Compartilhar → Adicionar à Tela de Início). Precisa do iOS 16.4 ou mais novo.":"Este navegador não aceita notificações de app."}</div></div></section>`;
   if(Notification.permission==="denied") return head+`<div class="hint">As notificações estão bloqueadas para o app. ${ios?"Libere em Ajustes → Notificações → Despesas":"Libere nas permissões do site no navegador"} e volte aqui.</div></div></section>`;
   const opts=PUSH_HOURS.map(h=>`<option value="${h}"${(p.h??9)===h?" selected":""}>${h}h</option>`).join("");
-  if(!p.on) return head+`<div class="hint">O celular avisa na véspera e no dia do vencimento de contas e faturas em aberto, mesmo com o app fechado. Se passar do dia sem marcar como pago, avisa mais uma vez. O aviso sai criptografado deste aparelho; o servidor só sabe o horário.</div>
+  if(!p.on) return head+`<div class="hint expl">O celular avisa na véspera e no dia do vencimento de contas e faturas em aberto, mesmo com o app fechado. Se passar do dia sem marcar como pago, avisa mais uma vez. O aviso sai criptografado deste aparelho; o servidor só sabe o horário.</div>
     <div class="row" style="margin:0"><button class="btn primary" id="pushOn">Ativar avisos</button></div></div></section>`;
   const nx=p.next?new Date(p.next):null;
   const st=p.err?`<div class="neg" style="font-size:.88rem;font-weight:600">Não deu para agendar: ${esc(p.err)}</div>`
     :`<div class="pos" style="font-size:.88rem;font-weight:600">Ligado ✓ ${p.n?`· ${p.n} ${p.n===1?"aviso agendado":"avisos agendados"}`:"· nada vencendo no próximo mês"}</div>${nx?`<div class="hint" style="margin:2px 0 0">Próximo: ${pad(nx.getDate())}/${pad(nx.getMonth()+1)} às ${nx.getHours()}h</div>`:""}`;
   return head+st+`<div class="row" style="margin:0;align-items:center;flex-wrap:wrap"><label class="hint" for="pushH" style="margin:0">Horário</label><select id="pushH" class="limin" style="width:auto">${opts}</select>
     <label class="hint" style="margin:0;display:flex;gap:6px;align-items:center"><input type="checkbox" id="pushV" style="accent-color:var(--accent)"${p.v!==0?" checked":""}> Mostrar valores</label></div>
-    <div class="hint">Os avisos são atualizados sempre que você abre o app ou mexe nos lançamentos.</div>
+    <div class="hint expl">Os avisos são atualizados sempre que você abre o app ou mexe nos lançamentos.</div>
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn soft" id="pushOff">Desligar</button><button class="btn soft" id="pushTest">Mandar um teste</button></div></div></section>`;
 }
 /* Open Finance pelo Meu Pluggy (out/2026). As chaves da Pluggy ficam num Worker do Cloudflare do próprio usuário
@@ -4830,7 +4838,7 @@ function parsePan(pages,all){
 const READS=[["Faturas de cartão","Inter, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
   ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
-const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
+const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint expl" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
 /* PicPay (out/2026, fatura de uma amiga do Camilo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
    colunas, "DD/MM  ESTABELECIMENTO  valor" (sem R$; negativo = pagamento/crédito), um bloco por cartão (titular e "final XXXX");
    parcela grudada no nome ("AMAZON MARKETPPARC03/05"). Estorno ("CREDITO …") com o mesmo valor de uma compra cancela a compra;
@@ -5281,7 +5289,7 @@ function salOvSheet(id){
   const x=[curYM(),shiftYM(curYM(),1),shiftYM(curYM(),2)].flatMap(m=>salVirt(m)).find(v=>v.id===id), O=(cfg.salOv||{})[id];
   if(!x) return;
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>${esc(x.desc)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-    <p class="hint" style="margin:0 0 10px">Cai em ${fmtDM(x.fell||x.date)}. Mude só para este mês; quando você lançar o que caiu de verdade, o previsto some sozinho.</p>
+    <p class="hint expl" style="margin:0 0 10px">Cai em ${fmtDM(x.fell||x.date)}. Mude só para este mês; quando você lançar o que caiu de verdade, o previsto some sozinho.</p>
     <div class="svedit" style="padding:0;border:0;background:none"><div class="svrow2"><input id="soV" class="limin" inputmode="numeric" placeholder="Valor R$ 0,00" value="${brl(x.cents)}" aria-label="Valor previsto"></div></div>
     <button type="button" class="btn primary" id="soSave" style="width:100%;margin-top:10px">Salvar valor</button>
     ${x.ov?`<button type="button" class="btn soft" id="soReset" style="width:100%;margin-top:8px">Voltar ao previsto (${R(x.orig)})</button>`:""}
@@ -5310,15 +5318,15 @@ let salXOpen=false;
 function salXHtml(P){
   const r=cfg.salRaise||{}, X=cfg.salX||{}, y=curYM().slice(0,4), d13=sal13(P,y);
   return `<div class="svedit" style="display:grid;gap:8px;margin-top:8px;padding:10px 0 0;background:none">
-    <div class="hint" style="margin:0"><b>Aumento</b>: diga a partir de qual folha e o novo salário bruto (o app tira os descontos na mesma proporção de hoje), ou o líquido que você espera no mês.</div>
+    <div class="hint expl" style="margin:0"><b>Aumento</b>: diga a partir de qual folha e o novo salário bruto (o app tira os descontos na mesma proporção de hoje), ou o líquido que você espera no mês.</div>
     <div class="svrow2" style="grid-template-columns:1fr 1fr"><label class="svlab">Folha de<input id="srFrom" type="month" value="${esc(r.from||"")}"></label><label class="svlab">Novo bruto<input id="srGross" class="limin" inputmode="numeric" placeholder="R$ 0,00" value="${r.gross?brl(r.gross):""}"></label></div>
     <label class="svlab">ou líquido no mês (adiantamento + folha)<input id="srNet" class="limin" inputmode="numeric" placeholder="opcional" value="${r.net?brl(r.net):""}"></label>
-    <div class="hint" style="margin:6px 0 0"><b>13º</b>: a 2ª parcela entra prevista em 20/12. Estimativa: ${R(sal13({...P},y))}${X.d13?" (valor seu)":""}.</div>
+    <div class="hint expl" style="margin:6px 0 0"><b>13º</b>: a 2ª parcela entra prevista em 20/12. Estimativa: ${R(sal13({...P},y))}${X.d13?" (valor seu)":""}.</div>
     <label class="svlab">Valor da 2ª parcela (se souber)<input id="sx13" class="limin" inputmode="numeric" placeholder="${brl(d13)}" value="${X.d13?brl(X.d13):""}"></label>
-    <div class="hint" style="margin:6px 0 0"><b>Férias</b>: o salário dos dias de férias vem adiantado; o que entra a mais é o terço (~${R(salFer(P))} líquido).</div>
+    <div class="hint expl" style="margin:6px 0 0"><b>Férias</b>: o salário dos dias de férias vem adiantado; o que entra a mais é o terço (~${R(salFer(P))} líquido).</div>
     <label class="svlab">Mês das férias<input id="sxFer" type="month" value="${esc(X.fer||"")}"></label>
     <div class="svbtns">${r.from||X.d13||X.fer?`<button class="btn soft" id="salXClear">Limpar</button>`:""}<button class="btn primary" id="salXSave">Salvar</button></div>
-    <div class="hint" style="margin:0">É estimativa: com aumento grande o INSS sobe de faixa e pode entrar imposto de renda. Some quando o holerite de verdade é lançado.</div></div>`;
+    <div class="hint expl" style="margin:0">É estimativa: com aumento grande o INSS sobe de faixa e pode entrar imposto de renda. Some quando o holerite de verdade é lançado.</div></div>`;
 }
 async function salXSave(clear){
   const g=v=>digits($(v)?.value||""), from=$("srFrom")?.value||"", gross=g("srGross"), net=g("srNet"), d13=g("sx13"), fer=$("sxFer")?.value||"";
@@ -5337,7 +5345,7 @@ function salSection(){
     ${(()=>{const r=salRaise();if(!r)return "";const A=salAdj(P,r.from), v=mode==="base"?A.base:A.avg;return `<div class="src" style="color:var(--ink)"><b>Com o aumento</b> (folha de ${ml(r.from)} em diante): <b>${R(v+A.adv)}</b> no mês — ${R(A.adv)} dia 15 + ${R(v)} fim do mês.</div>`})()}
     <div class="src">Folha que caiu nos últimos meses${P.adv?" (sem o adiantamento)":""}: ${P.real.map(r=>`${ml(r.ref)} ${R(r.liq)}`).join(" · ")}</div>
     <div class="segc" role="group" aria-label="Previsão" style="justify-self:start">${[["off","Não usar"],["base","Só o fixo"],["avg","Com a média"]].map(([k,n])=>`<button data-salprev="${k}" aria-pressed="${k==="off"?!on:on&&mode===k}">${n}</button>`).join("")}</div>
-    <div class="hint">${on?`Entra como “previsto” nos saldos dos próximos meses (Início, Mês e Ano) e some quando você lança ou importa o holerite de verdade. Não é lançamento.`:`Desligado: os saldos só contam o que está lançado.`}</div>
+    <div class="hint expl">${on?`Entra como “previsto” nos saldos dos próximos meses (Início, Mês e Ano) e some quando você lança ou importa o holerite de verdade. Não é lançamento.`:`Desligado: os saldos só contam o que está lançado.`}</div>
     <details class="hldet" ${salXOpen?"open":""}><summary>Aumento, 13º e férias</summary>${salXHtml(P)}</details>
     <details class="hldet"><summary>Ver o que é fixo e o que varia</summary>
       <div class="hlrow tot"><span>Fixo (todo mês igual)</span><b></b></div>${P.fix.filter(e=>e.s==="p").map(ln).join("")}${P.adv?ln({s:"d",d:"Adiantamento quinzenal",c:P.adv}):""}${P.taxB?ln({s:"d",d:`I.N.S.S. (~${(P.rate*100).toFixed(1).replace(".",",")}%)`,c:P.taxB}):""}${P.fix.filter(e=>e.s==="d").map(ln).join("")}
@@ -5683,7 +5691,7 @@ function xlRender(){
   });
   if(nFut) h+=`<label class="check"><input type="checkbox" id="xRecFut" ${xl.recFut?"checked":""}> Lançar também receitas de meses que ainda não chegaram (${nFut})</label>`;
   if(nOld||nDup) h+=`<p class="hint" style="margin:6px 0">${nOld?`${nOld} de antes de ${shortMonth(MIN_YM)} ${nOld===1?"fica":"ficam"} de fora (faturas só de ${shortMonth(MIN_DUE.slice(0,7))} em diante). `:""}${nDup?`${nDup} já ${nDup===1?"está lançado":"estão lançados"} no app e não ${nDup===1?"entra":"entram"} de novo.`:""}</p>`;
-  h+=`<p class="hint" style="margin:6px 0 12px">Totais, fórmulas que somam outras células e linhas vazias são ignorados. Depois dá para desfazer na tela Você.</p>
+  h+=`<p class="hint expl" style="margin:6px 0 12px">Totais, fórmulas que somam outras células e linhas vazias são ignorados. Depois dá para desfazer na tela Você.</p>
   <div class="row"><button type="button" class="btn primary" id="xlsGo" ${on.length?"":"disabled"}>${on.length?`Lançar ${on.length}`:"Nada para lançar"}</button></div>`;
   $("xlsSheet").innerHTML=h;
 }
@@ -5779,7 +5787,7 @@ function openDiag(msg){
   $("diagSheet").innerHTML=`<div class="grip"></div>
   <h3><span>Diagnóstico da fatura</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   ${msg?`<p class="err" style="margin:0 0 8px">${esc(msg)}</p>`:""}
-  <p class="hint" style="margin:0 0 10px">Copie e cole no Claude para ele ajustar o leitor. Nomes (lojas, o seu) viram “Xxxx” e números longos (CPF, código de barras) viram “#”. Datas e valores ficam: o leitor precisa deles.</p>
+  <p class="hint expl" style="margin:0 0 10px">Copie e cole no Claude para ele ajustar o leitor. Nomes (lojas, o seu) viram “Xxxx” e números longos (CPF, código de barras) viram “#”. Datas e valores ficam: o leitor precisa deles.</p>
   <textarea id="diagTxt" class="diagtxt" readonly rows="12">${esc(diagText())}</textarea>
   <div class="row"><button type="button" class="btn primary" id="diagCopy">Copiar diagnóstico</button></div>`;
   $("scrim").hidden=$("diagSheet").hidden=false;$("diagSheet").scrollTop=0;
