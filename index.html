@@ -2559,17 +2559,22 @@ function shMatch(sh,cents,who){const P=shParts(sh).filter(x=>x.c);
   for(const x of P){const k=shareK(cents,x.c);if(k)return {part:x,k}}return null}
 /* assinaturas que costumam cair neste cartão e ainda não estão lançadas no mês visto (out/2026, pedido dele: "o que é
    assinatura aparecer como gasto previsto no cartão que cobra"). Só informativo: não entra nos totais. */
+function subDayOf(name,x){const d=(cfg.subDay||{})[name];if(d>=1&&d<=31)return {d,manual:true};const ds=(x&&(x.buy||x.date)||"").slice(8,10);return {d:+ds||0,manual:false}}
 function subPlanned(c,ym){
   const cur=curYM();
   if(ym<cur||ym>shiftYM(cur,3)||ym<MIN_YM) return [];
   const G={};
   items.forEach(x=>{const m=(x.date||"").slice(0,7);if(m<MIN_YM||cardOf(x)!==c||typeOf(x)!=="desp")return;const k=subOf(x);if(k)(G[k]=G[k]||[]).push(x)});
-  const out=[];
+  const out=[], now=today();
   Object.entries(G).forEach(([name,L])=>{
     if(L.some(x=>x.date.startsWith(ym))) return;
+    L.sort((a,b)=>(a.date||"").localeCompare(b.date||""));
     const yms=[...new Set(L.map(x=>x.date.slice(0,7)))].sort(), last=yms[yms.length-1];
     if(last>=ym||last>shiftYM(cur,1)||last<shiftYM(ym,-3)) return;
-    out.push({name,cents:L.filter(x=>x.date.startsWith(last)).reduce((t,x)=>t+amt(x),0),cat:L[0].cat});
+    const lastL=L[L.length-1], {d}=subDayOf(name,lastL);
+    let when=null;
+    if(d){for(const m of [shiftYM(ym,-2),shiftYM(ym,-1),ym]){const dt=`${m}-${pad(Math.min(d,lastDay(m)))}`;const b=dueOf(c)?billDate(c,dt):dt;if((b||dt).slice(0,7)===ym){when=dt;break}}}
+    out.push({name,cents:L.filter(x=>x.date.startsWith(last)).reduce((t,x)=>t+amt(x),0),cat:L[0].cat,day:d,when,charged:!!(when&&when<=now)});
   });
   return out.filter(o=>o.cents>0).sort((a,b)=>b.cents-a.cents);
 }
@@ -2613,7 +2618,8 @@ function subEditor(r){
     <div class="subrows">${subRows.map((x,i)=>`<div class="subrow"><input type="text" id="subPn_${i}" maxlength="24" placeholder="Nome" value="${esc(x.nm||"")}" aria-label="Nome da pessoa ${i+1}"><input type="text" id="subPv_${i}" inputmode="numeric" placeholder="R$ 0,00" value="${x.c?brl(x.c):""}" aria-label="Quanto a pessoa ${i+1} paga"><button type="button" class="acdel" data-subdel="${i}" aria-label="Tirar pessoa ${i+1}" ${subRows.length<2?"hidden":""}>×</button></div>`).join("")}</div>
     <div class="toolbar" style="margin:6px 0 0"><button type="button" class="tbtn" id="subAdd">+ Pessoa</button></div>
     <p class="hint" id="subMine" style="margin:8px 0 0">${back?`Recebe ${R(back)} · sai ${R(Math.max(0,r.cents-back))} para você`:"—"}</p>`;
-  return `<div class="svedit">${seg}${each?ea:eq}<p class="hint" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
+  const dd=subDayOf(r.name,r.last), dayBox=`<div class="svrow2" style="grid-template-columns:1fr auto;align-items:center;margin:0 0 12px"><label class="hint" style="margin:0">Dia da cobrança no cartão${dd.manual?"":" (visto nos lançamentos)"}<input id="subDay" inputmode="numeric" maxlength="2" placeholder="Dia (1 a 31)" value="${dd.d||""}" aria-label="Dia da cobrança" style="display:block;width:100%;margin-top:4px"></label><button type="button" class="btn soft" id="subDaySave">Salvar dia</button></div>`;
+  return `<div class="svedit">${dayBox}${seg}${each?ea:eq}<p class="hint" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
     <div class="svbtns">${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary" id="subSave" data-subtot="${r.cents}">Salvar</button></div></div>`;
 }
 function subSection(){
@@ -3097,8 +3103,8 @@ function renderCards(){
     if(rv) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">+ ${R(rv)} da fatura de ${[...new Set(ri.map(x=>shortMonth(x.date.slice(0,7))))].join(", ")} que não foi paga: o banco cobra nesta. Conta no saldo deste mês.</div>`;
     if(gn.length) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">Venceu e não foi paga: ${R(gn.reduce((s,x)=>s+amt(x),0))} foram para a fatura de ${shortMonth(to)}. Se você pagou, marque como paga.</div>`;}
   let mainSP="";
-  const SP=subPlanned(c,view), spT=SP.reduce((n,o)=>n+o.cents,0);
-  if(spT) fb+=`<div class="prevbox"><div><span>Já cobrado / lançado</span><b>${R(tot)}</b></div><div><span>Previsto (assinaturas)</span><b>${R(spT)}</b></div><div class="tot"><span>Total previsto</span><b id="totPrev">${R(tot+spT)}</b></div></div>`;
+  const SP=subPlanned(c,view), spT=SP.reduce((n,o)=>n+o.cents,0), spC=SP.filter(o=>o.charged).reduce((n,o)=>n+o.cents,0), spF=spT-spC;
+  if(spT) fb+=`<div class="prevbox"><div><span>Já cobrado${spC?` (inclui ${R(spC)} de assinaturas sem lançar)`:""}</span><b>${R(tot+spC)}</b></div>${spF?`<div><span>Previsto (assinaturas)</span><b>${R(spF)}</b></div>`:""}<div class="tot"><span>Total previsto</span><b id="totPrev">${R(tot+spT)}</b></div></div>`;
   h+=`<section><h2>Fatura de ${shortMonth(view)}</h2>${fb}`;
   if(!all.length) h+=`<div class="empty" style="margin-top:12px"><strong>Nada no ${esc(c)} em ${mn}</strong>Use as setas lá em cima para ver outros meses.</div></section>`;
   else{
@@ -3112,7 +3118,7 @@ function renderCards(){
       </section>`;
   }
   {if(SP.length){const t=spT;
-    mainSP=`<section><h2>Assinaturas previstas <small>${R(t)}</small></h2><div class="card cardblock">`+SP.map(o=>`<div class="cline"><span class="d">${esc(o.name)}</span><span class="v">${R(o.cents)}</span><span class="meta"><span class="pill">previsto</span><span>cobra todo mês neste cartão</span></span></div>`).join("")+`<div class="cbfoot"><span>Previsto</span><b style="color:var(--ink)">${R(t)}</b></div></div></section>`}}
+    mainSP=`<section><h2>Assinaturas previstas <small>${R(t)}</small></h2><div class="card cardblock">`+SP.map(o=>`<div class="cline"><span class="d">${esc(o.name)}</span><span class="v">${R(o.cents)}</span><span class="meta"><span class="pill">${o.charged?"cobrada":"previsto"}</span><span>${o.when?(o.charged?`cobrada dia ${fmtDM(o.when)} · falta lançar`:`cobra dia ${fmtDM(o.when)}`):"cobra todo mês neste cartão"}</span></span></div>`).join("")+`<div class="cbfoot"><span>Total das assinaturas</span><b style="color:var(--ink)">${R(t)}</b></div></div></section>`}}
   h+=mainSP;
   /* mesclar fica numa coluna própria à direita no computador (cdside); no celular a ordem continua a mesma */
   const mainA=h;h="";
@@ -4245,6 +4251,7 @@ document.addEventListener("click",async e=>{
   {const sd=t.closest("[data-subdel]");if(sd){subReadRows();subRows.splice(+sd.dataset.subdel,1);render();return}}
   if(t.id==="subAdd"){subReadRows();subRows.push({nm:"",c:0});render();setTimeout(()=>$("subPn_"+(subRows.length-1))?.focus(),30);return}
   if(t.id==="subSave"){subSave(false);return}
+  if(t.id==="subDaySave"){const d=parseInt(($("subDay").value||"").replace(/\D/g,""),10)||0;if(d<1||d>31){toast("Dia de 1 a 31.");return}saveCfg({subDay:{...(cfg.subDay||{}),[subEdit]:d}}).then(()=>{toast("Dia salvo",true);render()}).catch(()=>toast("Não deu para salvar."));return}
   if(t.closest("#canBuy")){canBuySheet();return}
   {const fh=t.closest("section.fold > h2");if(fh&&!t.closest("button:not(h2),a,input,label,select")){anoToggle(fh.parentElement);return}}
   if(t.id==="lancHelpBtn"){const b=$("lancHelp");b.hidden=!b.hidden;if(!b.hidden){b.innerHTML=HELP.lanc[1].map(x=>`<p class="helpp">${esc(x)}</p>`).join("");b.scrollIntoView({block:"nearest",behavior:"smooth"})}return}
