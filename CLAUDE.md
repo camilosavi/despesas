@@ -599,3 +599,9 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - Listas: sem categoria/forma de pagamento sob o nome (o ícone já mostra); fica só status (atrasado, vence hoje, pago ✓, parcela). "sobra/fica R$" por linha só aparece quando **falta** (vermelho). Sem a frase no topo do Hoje/Planejar/Você (`hFoot` vazio).
 - `+` fica redondo ao lado da barra em qualquer celular (≤ 979 px), não só nas telas pequenas. Vidro da barra com mais tinta e desfoque 20px.
 - PC: "Vence em 10 dias" em 2 colunas; caixinha vazia vira "Criar uma caixinha"; pedido de nome de usuário com 1 linha de aviso (mantida de propósito: é o aviso do que o Camilo vê).
+
+## Redesenho visual (19/10/2026, pedido dele: "não to feliz com o visual")
+- **Híbrido Papel + Blocos**: Fraunces (`--serif`) só em números grandes, títulos de seção e dia; topo vira bloco flutuante arredondado com névoa (degradê vertical do `--head`); seções em blocos arredondados sem borda e sem linhas entre elas. Cards dos cartões (`.htile`) mantêm o degradê/brilho na cor do cartão.
+- **Tela do cartão inteira na cor do cartão**: `cardTheme()` também puxa `--bg/--surface/--zebra/--line/--chip` para a cor do cartão (volta ao normal ao sair).
+- **Mês (celular)**: versão "Categorias primeiro" (`mesV2`; a "Dia a dia" `mesV1` fica atrás de `despesas.mesV="1"`) + filtro `mesFilterBar()`: quadrinhos dos cartões + pílulas Todos / A pagar / Pagos / Receitas (`mesF`).
+- Ainda não feito (combinado, só desenhado): barra Hoje / Carteira / Mês (Planejar some, conteúdo vai para o Mês) e a aba Carteira (cartões, contas, VR, caixinhas, conta em euro).

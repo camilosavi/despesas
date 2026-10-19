@@ -3,7 +3,7 @@
 <meta name="apple-mobile-web-app-title" content="Despesas">
 <meta name="theme-color" content="#0E3B35">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap">
 <style>
 /* Layout: app de uma coluna com barra de abas embaixo (Início, Mês, Cartões, Moedas, Ano) e cabeçalho escuro com o número principal de cada aba */
 :root{
@@ -1183,6 +1183,57 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
   #pHome .card.list>.ok{grid-column:1/-1}
   .card.banner{max-width:560px}
 }
+
+/* ===== redesenho: Papel (tipografia) + Blocos ===== */
+:root{--serif:"Fraunces",Georgia,serif}
+@media (max-width:979px){
+ body::before{display:none!important}
+ html{background:var(--bg)!important}
+ .wrap{padding-top:max(12px,env(safe-area-inset-top,0px))!important}
+ header.top{margin:0!important;border-radius:30px!important;padding:18px 20px 20px!important;background:linear-gradient(180deg,color-mix(in srgb,var(--head) 62%,#000) 0%,var(--head) 48%,color-mix(in srgb,var(--head) 90%,#fff) 100%)!important;box-shadow:none!important}
+ .big{font-family:var(--serif)!important;font-weight:400!important;letter-spacing:-.025em!important;font-size:clamp(2.6rem,13vw,3.5rem)!important}
+ .big small{font-family:var(--body);font-size:.34em!important;font-weight:500;margin-right:8px}
+ .titlerow h1,#ptitle{font-family:var(--serif)!important;font-weight:400!important}
+ .hbtrack{height:8px!important}
+ h2{font-family:var(--serif)!important;font-weight:400!important;font-size:1.3rem!important;letter-spacing:-.01em!important;margin:0 4px 10px!important}
+ section{margin-top:14px!important}
+ .wrap{padding-inline:12px!important}
+ .wrap section>.card,.wrap section>.card.list,.wrap section>.htiles{background:var(--surface)!important;border:0!important;border-radius:26px!important;box-shadow:none!important}
+ .wrap section>.card,.wrap section>.card.list{padding:6px 16px!important}
+ .wrap section>.htiles{background:none!important;padding:0 12px!important;margin-inline:-12px!important}
+ .wrap .due.item,.wrap .acone{padding-inline:0!important}
+ .wrap .card.list .item+.item{border-top:.5px solid var(--line)}
+ .dchip b{font-family:var(--serif)!important;font-weight:400!important;font-size:1.35rem!important}
+ .htile{border-radius:22px!important}
+ .bline{background:var(--surface)!important;border:0!important;border-radius:22px!important;margin-top:14px}
+ .acone .v{font-family:var(--serif)!important;font-weight:400!important}
+ h2 small,h2 .h2act,h2 .lk,h2 button,h2 span{font-family:var(--body)!important}
+ #pHome>section+section,#mBody>section+section,#pAno>section+section{border-top:0!important;padding-top:0!important}
+}
+
+.mstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.mstats>div{background:var(--surface);border-radius:22px;padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.mstats span{font-size:.78rem;color:var(--muted)}
+.mstats b{font-family:var(--serif);font-weight:400;font-size:1.12rem;letter-spacing:-.01em;white-space:nowrap}
+.mstack{margin-top:14px!important;background:var(--surface);border-radius:22px;padding:14px 16px}
+.mstack .minicats{margin:0 0 10px!important;height:10px}
+.mleg{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:.82rem;color:var(--muted)}
+.mleg span{display:inline-flex;align-items:center;gap:6px}.mleg i{width:8px;height:8px;border-radius:50%;display:inline-block}.mleg b{color:var(--ink);font-weight:600}
+.mleg .lk{margin-left:auto}
+.mdc{background:var(--surface)!important;border:0!important;border-radius:22px!important;padding:4px 16px!important;box-shadow:none!important}.mday{margin-bottom:12px}.mdh{padding:0 6px 6px;font-size:.85rem;color:var(--muted)}.mdh b{font-weight:600}
+
+.mfbar{margin:10px -12px 0;padding:0 12px}
+.mfrow{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px 0 4px}
+.mfrow::-webkit-scrollbar{display:none}
+
+.mftiles{margin:0 -12px!important;padding:2px 12px 4px!important}
+.mft{flex:0 0 156px!important;max-width:none!important;box-shadow:inset 0 0 0 1.5px transparent!important;transition:box-shadow .15s,transform .15s}
+.mft.on{box-shadow:inset 0 0 0 2px var(--card-acc)!important}
+.mfbar .mfrow{margin-top:6px}
+.mfp{height:38px!important}
+
+.mfp{flex:none;border:0!important;background:var(--surface)!important;color:var(--ink)!important;border-radius:999px!important;padding:0 18px!important;height:38px!important;font:inherit;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;box-shadow:inset 0 0 0 1px var(--line)}
+.mfp.on{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none}
 </style>
 
 <div class="wrap">
@@ -1707,12 +1758,18 @@ const mixHex=(h,t,k)=>{const a=hexRgb(h),b=hexRgb(t);return "#"+a.map((v,i)=>Mat
 const lumHex=h=>{const[r,g,b]=hexRgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};
 const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches};
 function cardTheme(c){
-  const st=document.documentElement.style, K=["--accent","--accent-ink","--head","--head-muted","--btn","--btn-ink"];
+  const st=document.documentElement.style, K=["--accent","--accent-ink","--head","--head-muted","--btn","--btn-ink","--bg","--surface","--zebra","--line","--chip"];
   if(!c){K.forEach(k=>st.removeProperty(k));return}
   let col=cardColor(c);const dk=isDark();
   if(dk){for(let i=0;i<6&&lumHex(col)<.22;i++)col=mixHex(col,"#ffffff",.25)}else{for(let i=0;i<6&&lumHex(col)>.32;i++)col=mixHex(col,"#000000",.2)}
   st.setProperty("--accent",col);st.setProperty("--accent-ink",lumHex(col)>.4?"#13201D":"#FFFFFF");st.setProperty("--btn","var(--accent)");st.setProperty("--btn-ink","var(--accent-ink)");
   const hd=mixHex(cardColor(c),"#000000",dk?.7:.55);st.setProperty("--head",hd);st.setProperty("--head-muted",mixHex(hd,"#ffffff",.6));
+  /* tela inteira na cor do cartão (fundo, blocos e linhas puxados para a cor) */
+  ["--bg","--surface","--zebra","--line","--chip"].forEach(k=>st.removeProperty(k));
+  const pr=document.createElement("div");pr.style.cssText="position:absolute;visibility:hidden";document.body.appendChild(pr);
+  const base=k=>{pr.style.background="var("+k+")";return getComputedStyle(pr).backgroundColor};
+  const tint=[["--bg",dk?.16:.10],["--surface",dk?.2:.12],["--zebra",dk?.22:.14],["--line",dk?.3:.2],["--chip",dk?.3:.18]].map(([k,a])=>[k,"color-mix(in srgb,"+cardColor(c)+" "+Math.round(a*100)+"%,"+base(k)+")"]);
+  pr.remove();tint.forEach(([k,v])=>st.setProperty(k,v));
 }
 const dueOf=c=>+(((cfg.cards||{})[c]||{}).due)||0;
 /* mês em que a fatura conta: vence do dia 10 em diante → paga no próprio mês (ex.: Renner dia 15, com o adiantamento);
@@ -2375,6 +2432,59 @@ function catsBlockHtml(arr, dA, tot, byC){
     return `<div class="catg ${open?"open":""}"><button class="catrow" data-catopen="${esc(k)}" aria-expanded="${open}">${catIco(k,"desp")}<span class="cn">${esc(c.n)} <i class="tlcar">›</i></span><span class="cv">${R(v)}</span><span class="cb"><i><i style="width:${(b?Math.min(v/b,1):v/mx)*100}%;background:${b&&v>b?"var(--neg)":c.c}"></i></i><em class="${b&&v>b?"neg":""}">${b?`de ${R(b)}`:`${Math.round(v/tot*100)}%`}</em></span></button>`+
       (open?`<div class="tlitems">${L.map(itemHTML).join("")}</div>`:"")+`</div>`}).join("")}</div></div></section>`;
 }
+
+/* ===== Mês redesenhado (teste): versão 1 "Dia a dia" e 2 "Categorias primeiro" ===== */
+const MESV=()=>{try{return localStorage.getItem("despesas.mesV")||"2"}catch(e){return "2"}};
+function mesStats(arr){
+  const rec=sumT(arr,"rec"), desp=sumT(arr,"desp"), sob=rec-desp;
+  return `<div class="mstats"><div><span>Entrou</span><b class="pos">${R(rec)}</b></div><div><span>Saiu</span><b>${R(desp)}</b></div><div><span>Sobra</span><b class="${sob<0?"neg":""}">${R(sob)}</b></div></div>`;
+}
+function mesStack(byC,tot){
+  if(!tot) return "";
+  const ks=Object.keys(byC).filter(k=>byC[k]).sort((a,b)=>byC[b]-byC[a]), top=ks.slice(0,3);
+  return `<section class="mstack"><div class="minicats">${ks.map(k=>`<i style="width:${byC[k]/tot*100}%;background:${catOf(k,"desp").c}"></i>`).join("")}</div>
+    <div class="mleg">${top.map(k=>`<span><i style="background:${catOf(k,"desp").c}"></i>${esc(catOf(k,"desp").n)} <b>${Math.round(byC[k]/tot*100)}%</b></span>`).join("")}<button class="lk" data-mestab="cats">Todas</button></div></section>`;
+}
+function mesDays(L){
+  const G={};L.forEach(x=>{const d=(x.buy&&x.date>today()?x.date:x.date);(G[d]=G[d]||[]).push(x)});
+  return Object.keys(G).sort((a,b)=>b.localeCompare(a)).map(d=>{
+    const t=today(), lab=d===t?"Hoje":d===shiftDay(t,-1)?"Ontem":fmtDM(d);
+    return `<div class="mday"><div class="mdh"><b>${lab}</b></div><div class="card list mdc">${G[d].map(itemHTML).join("")}</div></div>`}).join("");
+}
+function shiftDay(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function mesV1(arr,dA,byC,tot){
+  const open=dA.filter(x=>!isPaid(x)).sort((a,b)=>a.date.localeCompare(b.date)), openS=open.reduce((s,x)=>s+amt(x),0);
+  const done=arr.filter(x=>!(typeOf(x)==="desp"&&!isPaid(x)));
+  return mesStack(byC,tot)+
+    (open.length?`<section><h2>A pagar <small>${R(openS)}</small></h2><div class="card list">${open.map(itemHTML).join("")}</div></section>`:"")+
+    (done.length?`<section><h2>Já movimentado</h2>${mesDays(done)}</section>`:"");
+}
+function mesV2(arr,dA,byC,tot){
+  const all=sorted(arr.filter(x=>!benOf(x))), more=all.length>8;
+  return catsBlockHtml(arr,dA,tot,byC)+
+    `<section><h2>Últimos lançamentos <small>${all.length}</small></h2><div class="card list">${all.slice(0,8).map(itemHTML).join("")}</div></section>`;
+}
+
+let mesF="all";
+function mesApply(arr){
+  if(mesF==="open") return arr.filter(x=>typeOf(x)==="desp"&&!isPaid(x));
+  if(mesF==="paid") return arr.filter(x=>typeOf(x)==="desp"&&isPaid(x));
+  if(mesF==="rec") return arr.filter(x=>typeOf(x)==="rec");
+  if(mesF.startsWith("card:")){const c=mesF.slice(5);return arr.filter(x=>cardOf(x)===c)}
+  return arr;
+}
+function mesFilterBar(){
+  const cs=credCards().filter(c=>cardTotal(c,view)||cardCfg(c).limit);
+  const chip=(k,t)=>`<button class="mfp ${mesF===k?"on":""}" data-mesf="${esc(k)}">${t}</button>`;
+  const tile=c=>{const col=cardColor(c), k=cardCfg(c), due=dueOf(c)?`vence ${fmtDM(cardDue(c,view))}`:"";
+    return `<button class="htile mft ${mesF==="card:"+c?"on":""}" data-mesf="card:${esc(c)}" style="--card-acc:${col}">
+      <span class="htn">${cardBadge(c)}<b>${esc(c)}</b></span>
+      <span class="htl">fatura</span>
+      <span class="htv">${R(cardTotal(c,view))}</span>
+      <span class="htl htsub">${due||"&nbsp;"}</span></button>`};
+  return `<div class="mfbar">${cs.length?`<div class="htiles mftiles">${cs.map(tile).join("")}</div>`:""}<div class="mfrow">`+
+    chip("all","Todos")+chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+`</div></div>`;
+}
 function renderMes(){
   mesShell();
   if(mq.trim()){$("mBody").innerHTML=searchBody();return}
@@ -2392,6 +2502,10 @@ function renderMes(){
     $("mBody").innerHTML=`<div class="mes-split">${leftCol}${rightCol}</div>`;
     return;
   }
+  if(MESV()==="1"||MESV()==="2"){
+    const F=mesApply(arr), dF=F.filter(x=>typeOf(x)==="desp"), bF=byCat(F,"desp"), tF=Object.values(bF).reduce((a,v)=>a+v,0);
+    const body=F.length?(MESV()==="1"?mesV1(F,dF,bF,tF):mesV2(F,dF,bF,tF)):`<section><div class="empty"><strong>Nada neste filtro</strong>Toque em Todos para ver o mês inteiro.</div></section>`;
+    $("mBody").innerHTML=mesFilterBar()+body;return}
   const subTabs=`<div class="mestab-bar"><div class="seg-ctrl" role="tablist" aria-label="Visualização do mês">
     <button class="seg-btn ${mesSubTab==="lanc"?"active":""}" data-mestab="lanc" role="tab" aria-selected="${mesSubTab==="lanc"}">Lançamentos</button>
     <button class="seg-btn ${mesSubTab==="cats"?"active":""}" data-mestab="cats" role="tab" aria-selected="${mesSubTab==="cats"}">Categorias</button>
@@ -4203,6 +4317,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="syncOff"){if(syncSetup!=="off"){syncSetup="off";render();return}["despesas.syncPass","despesas.syncBase","despesas.syncMeta"].forEach(k=>lsSet(k,null));
     try{localStorage.removeItem("despesas.gtok")}catch(e){}SY.tok=null;syncSetup=null;toast("Sincronização desligada");render();return}
   if(t.id==="photoDel"){try{localStorage.removeItem("despesas.photo");localStorage.removeItem("despesas.photoColor");if(lsGet("despesas.theme")==="foto")localStorage.removeItem("despesas.theme")}catch(e){}applyTheme();render();syncSoon();return}
+  const mf=t.closest("[data-mesf]"); if(mf){const k=mf.dataset.mesf;mesF=(k===mesF||k==="all")?"all":k;renderMes();return}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
   const at=t.closest("[data-anotab]"); if(at){anoSubTab=at.dataset.anotab;lsSet("despesas.anoTab",anoSubTab);renderAno();return}
   if(t.closest("[data-catall]")){mesSubTab="cats";renderMes();setTimeout(()=>$("catAllSec")?.scrollIntoView({block:"start"}),30);return}
