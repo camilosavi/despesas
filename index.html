@@ -2484,6 +2484,11 @@ function mesApply(arr){
   if(mesF.startsWith("card:")){const c=mesF.slice(5);return arr.filter(x=>cardOf(x)===c)}
   return arr;
 }
+function mesPayBtn(){
+  if(!mesF.startsWith("card:"))return "";
+  const c=mesF.slice(5), L=cardItems(c,view);if(!L.length)return "";
+  const mn=MES[+view.slice(5)-1].toLowerCase(), paid=L.every(isPaid);
+  return `<button class="btn ${paid?"soft":"primary"} paytop" id="mesPay">${paid?`Fatura de ${mn} paga ✓ · ver a próxima`:`Marcar fatura de ${mn} como paga`}</button>`}
 function mesFilterBar(){
   const cs=credCards().filter(c=>cardTotal(c,view)||cardCfg(c).limit);
   const chip=(k,t)=>`<button class="mfp ${mesF===k?"on":""}" data-mesf="${esc(k)}">${t}</button>`;
@@ -2494,7 +2499,7 @@ function mesFilterBar(){
       <span class="htv">${R(cardTotal(c,view))}</span>
       <span class="htl htsub">${due||"&nbsp;"}</span></button>`};
   return `<div class="mfbar">${cs.length?`<div class="htiles mftiles">${cs.map(tile).join("")}</div>`:""}<div class="mfrow">`+
-    chip("all","Todos")+chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+`</div></div>`;
+    chip("all","Todos")+chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+`</div>${mesPayBtn()}</div>`;
 }
 function renderMes(){
   mesShell();
@@ -4328,6 +4333,9 @@ document.addEventListener("click",async e=>{
   if(t.id==="syncOff"){if(syncSetup!=="off"){syncSetup="off";render();return}["despesas.syncPass","despesas.syncBase","despesas.syncMeta"].forEach(k=>lsSet(k,null));
     try{localStorage.removeItem("despesas.gtok")}catch(e){}SY.tok=null;syncSetup=null;toast("Sincronização desligada");render();return}
   if(t.id==="photoDel"){try{localStorage.removeItem("despesas.photo");localStorage.removeItem("despesas.photoColor");if(lsGet("despesas.theme")==="foto")localStorage.removeItem("despesas.theme")}catch(e){}applyTheme();render();syncSoon();return}
+  if(t.id==="mesPay"){(async()=>{const c=mesF.slice(5), L=cardItems(c,view);
+    try{if(!L.every(isPaid)){for(const x of L){if(!isPaid(x)) await store.items.update(x.id,paidPatch(true))}toast("Fatura marcada como paga",true)}
+      view=shiftYM(view,1);render();slideIn($(tab),1)}catch(e){toast("Não deu para salvar. Tente de novo.")}})();return}
   const mf=t.closest("[data-mesf]"); if(mf){const k=mf.dataset.mesf;mesF=(k===mesF||k==="all")?"all":k;renderMes();cardTheme(mesF.startsWith("card:")?mesF.slice(5):null);return}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
   const at=t.closest("[data-anotab]"); if(at){anoSubTab=at.dataset.anotab;lsSet("despesas.anoTab",anoSubTab);renderAno();return}
