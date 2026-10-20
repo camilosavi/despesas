@@ -619,3 +619,10 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Bricolage Grotesque bold (`--serif` agora aponta para ela; Fraunces não é mais usada), seções = blocos de 28 px com tinta por área via
   `:has()` (pagamentos laranja, contas turquesa, moedas azul, categorias azul, benefícios roxo; `--blk`), listas sem caixa interna, KPIs do
   Ano em 4 blocos. Caixinhas (`#saveSec`) e cartões (`.htile`, tela do cartão, `.phys-card`) ficam com o visual anterior.
+
+## Dívidas (20/10/2026, pedido dele: "preciso de uma área dívidas")
+- Seção **Dívidas** (`debtSection()`, `#debtSec`) na **Carteira**, logo abaixo de Dinheiro guardado. Mesmo padrão das caixinhas (linha → toque abre; `dbOpen`/`dbForm`/`dbMvEdit`).
+- Dados em `cfg.debts=[{id,name,total (centavos),who?,per? (parcela),day? (dia do vencimento 1–31),moves:[{id,date,cents}]}]`;
+  `cents > 0` = pagou ("Paguei"), `cents < 0` = acrescentou (juros / valor novo). Falta = total + acrescentos − pagos (`dbLeft`). Quitada vira selo "QUITADA".
+- **Não entra como despesa/receita nem em saldos**: serve para acompanhar o que falta, sem somar duas vezes com parcelas e faturas já lançadas.
+  Mostra total em aberto, barra de progresso, parcelas restantes (`per`) e próximo vencimento (`dbNext`). Sem valores no código; fica em `cfg` (backup/sincronização já levam).

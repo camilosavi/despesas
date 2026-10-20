@@ -1691,7 +1691,7 @@ function note(t){$("note").textContent=t}
 (()=>{let last=0,lx=0,ly=0;
   document.addEventListener("touchend",e=>{const t=e.changedTouches&&e.changedTouches[0];if(!t)return;const n=Date.now();
     if(n-last<350&&Math.abs(t.clientX-lx)<40&&Math.abs(t.clientY-ly)<40&&!e.target.closest("input,textarea,select,[contenteditable]")){
-      e.preventDefault();(e.target.closest("button,a,label,[data-k],[data-id],[data-sv],[data-svmv],[data-fxcur],[data-fxsheet],[data-opencard],[data-gotab],[data-gomonth],[data-cardmonth],.item,tr.click,td.c,.fxrow")||e.target).click()}
+      e.preventDefault();(e.target.closest("button,a,label,[data-k],[data-id],[data-sv],[data-svmv],[data-db],[data-dbmv],[data-fxcur],[data-fxsheet],[data-opencard],[data-gotab],[data-gomonth],[data-cardmonth],.item,tr.click,td.c,.fxrow")||e.target).click()}
     last=n;lx=t.clientX;ly=t.clientY},{passive:false});
   ["gesturestart","gesturechange"].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
 })();
@@ -3678,6 +3678,109 @@ async function svMvDel(btn){
   const id=svMvEdit;svMvEdit=null;
   await svSave(saves().map(b=>b.id!==svOpen?b:{...b,moves:(b.moves||[]).filter(m=>m.id!==id)}),"Movimento apagado");
 }
+/* ---------- dívidas: cfg.debts (o que a pessoa deve; fica na Carteira e NÃO entra como despesa do mês, para não somar duas vezes
+   com parcelas/faturas que ela já lançou). {id,name,total (centavos),who?,per? (parcela),day? (dia do vencimento 1–31),
+   moves:[{id,date,cents}]} — cents > 0 = pagou, cents < 0 = acrescentou (juros, valor novo) */
+const debts=()=>Array.isArray(cfg.debts)?cfg.debts:[];
+const dbPaid=d=>(d.moves||[]).reduce((s,m)=>s+(m.cents>0?m.cents:0),0);
+const dbAdded=d=>(d.moves||[]).reduce((s,m)=>s+(m.cents<0?-m.cents:0),0);
+const dbAll=d=>(d.total||0)+dbAdded(d);
+const dbLeft=d=>Math.max(0,dbAll(d)-dbPaid(d));
+const dbOpenSum=()=>debts().reduce((s,d)=>s+dbLeft(d),0);
+function dbNext(d){
+  const day=+d.day;if(!day||day<1||day>31) return "";
+  const t=today();let ym=t.slice(0,7), dd=Math.min(day,lastDay(ym));
+  if(`${ym}-${pad(dd)}`<t){ym=shiftYM(ym,1);dd=Math.min(day,lastDay(ym))}
+  return `${ym}-${pad(dd)}`;
+}
+const dbAvatar=n=>{
+  const s=(n||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+  if(/interc|viag|voo|travel/.test(s)) return "✈️";
+  if(/cartao|fatura|renner|\binter\b|\bpan\b|nubank|credito/.test(s)) return "💳";
+  if(/celular|iphone|aparelho|claro|vivo|\btim\b/.test(s)) return "📱";
+  if(/carro|moto|veic|financ/.test(s)) return "🚗";
+  if(/casa|ape|aluguel|condom/.test(s)) return "🏠";
+  if(/emprest|banco|consign|cheque/.test(s)) return "🏦";
+  if(/amig|pai|mae|irmao|familia|primo|tio/.test(s)) return "🤝";
+  return "🧾";
+};
+let dbOpen=null, dbForm=null, dbMvEdit=null, dbAllMv=false;
+function dbMeta(d){
+  const left=dbLeft(d), paid=dbPaid(d), all=dbAll(d);
+  if(!left) return `quitada ✓${paid?` · pagou ${R(paid)}`:""}`;
+  const n=d.per?Math.ceil(left/d.per):0, nx=dbNext(d), [,nm,nd]=nx?nx.split("-"):[];
+  return [d.who||"",paid?`pago ${R(paid)} de ${R(all)}`:"",d.per?`parcela ${R(d.per)}${n>1?` · faltam ~${n}`:""}`:"",nx?(nx===today()?"vence hoje":`vence ${nd}/${nm}`):""].filter(Boolean).join(" · ");
+}
+function dbFormHtml(){
+  const d=dbForm.id?debts().find(x=>x.id===dbForm.id)||{}:{};
+  return `<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><input id="dbName" maxlength="30" placeholder="Nome (ex.: Parcelamento da fatura)" value="${esc(d.name||"")}">
+    <label class="svlab">Valor da dívida<input id="dbTotal" inputmode="numeric" placeholder="R$ 0,00" value="${d.total?brl(d.total):""}"></label>
+    <label class="svlab">Para quem (opcional)<input id="dbWho" maxlength="30" placeholder="Banco, loja, pessoa…" value="${esc(d.who||"")}"></label>
+    <div class="svrow2" style="grid-template-columns:1fr 1fr"><label class="svlab" style="margin:0">Parcela (opcional)<input id="dbPer" inputmode="numeric" placeholder="R$ 0,00" value="${d.per?brl(d.per):""}"></label><label class="svlab" style="margin:0">Dia do vencimento<input id="dbDay" inputmode="numeric" maxlength="2" placeholder="1 a 31" value="${d.day||""}"></label></div>
+    <div class="svbtns"><button class="btn soft" id="dbCancel">Cancelar</button><button class="btn primary" id="dbCreate">${dbForm.id?"Salvar":"Criar"}</button></div></div>`;
+}
+function dbMvForm(m){
+  return `<div class="svmvf"><div class="svrow2"><select id="dmSign" aria-label="Tipo"><option value="1">Pagou</option><option value="-1" ${m.cents<0?"selected":""}>Acrescentou</option></select><input id="dmDate" type="date" value="${esc(m.date)}" aria-label="Data"></div>
+    <div class="svrow2 v"><input id="dmVal" inputmode="numeric" value="${brl(Math.abs(m.cents))}" aria-label="Valor"><span></span></div>
+    <div class="svbtns"><button class="btn soft" id="dmCancel">Cancelar</button><button class="btn primary" id="dmSave">Salvar</button></div>
+    <button class="svdel" id="dmDel">Apagar este movimento</button></div>`;
+}
+function debtSection(){
+  const L=debts(), open=L.filter(d=>dbLeft(d)>0);
+  let h=`<section id="debtSec"><h2>Dívidas ${dbForm?"":`<button id="dbAdd">+ Nova dívida</button>`}</h2>`;
+  if(dbForm&&!dbForm.id) h+=dbFormHtml();
+  if(!L.length){
+    h+=dbForm?"":`<div class="empty"><strong>Nenhuma dívida</strong></div>`;
+    return h+`</section>`;
+  }
+  const rows=[...L].sort((a,b)=>(dbLeft(a)>0?0:1)-(dbLeft(b)>0?0:1));
+  h+=`<div class="card"><div class="svtot"><small>Total em aberto</small><b class="${open.length?"neg":""}">${R(dbOpenSum())}</b><span>${open.length?`${open.length} ${open.length===1?"dívida":"dívidas"} a pagar`:"tudo quitado ✓"}</span></div>`+
+    rows.map(d=>{
+      if(dbForm&&dbForm.id===d.id) return dbFormHtml();
+      const left=dbLeft(d), all=dbAll(d), pct=all?Math.max(0,Math.min(100,dbPaid(d)/all*100)):0, won=!left;
+      let row=`<button class="svrow" data-db="${esc(d.id)}" aria-expanded="${dbOpen===d.id}"><span class="d"><span class="sv-ico">${dbAvatar(d.name+" "+(d.who||""))}</span>${esc(d.name)}${won?`<span class="sv-won">QUITADA</span>`:""}</span><span class="v ${left?"neg":""}">${R(left)}</span><span class="mini"><i style="width:${pct}%;background:${won?"var(--pos)":"var(--accent)"}"></i></span><span class="m">${esc(dbMeta(d))}</span></button>`;
+      if(dbOpen===d.id){
+        const all2=[...(d.moves||[])].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=dbAllMv?all2:all2.slice(0,5);
+        row+=`<div class="svedit"><input id="dbVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="dbOut">+ Acrescentar</button><button class="btn primary" id="dbIn">Paguei</button></div>`+
+          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>dbMvEdit===m.id?dbMvForm(m):`<button class="svmv" data-dbmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"acrescentou":"pagou"}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"+":"−"} ${R(Math.abs(m.cents))}</span><span class="ed">editar</span></span></button>`).join("")+
+            (all2.length>5?`<button class="svmore" id="dbAllMv">${dbAllMv?"Mostrar só os 5 últimos":`Ver todos os ${all2.length} movimentos`}</button>`:"")+`</div>`:"")+
+          `<div class="svfoot"><button class="svlink" id="dbEdit">Editar dívida</button><button class="svdel" id="dbDel">Excluir</button></div></div>`;
+      }
+      return row}).join("")+`</div></section>`;
+  return h;
+}
+async function dbSave(list,msg){document.activeElement?.blur?.();try{await saveCfg({debts:list});if(msg)toast(msg,true);render()}catch(e){toast("Não deu para salvar. Tente de novo.")}}
+async function dbCreate(){
+  const name=$("dbName").value.trim(), total=digits($("dbTotal").value), who=$("dbWho").value.trim(), per=digits($("dbPer").value), day=parseInt(($("dbDay").value||"").replace(/\D/g,""),10)||0;
+  if(!name){toast("Dê um nome à dívida.");return}
+  if(!total){toast("Informe o valor da dívida.");return}
+  if(day&&(day<1||day>31)){toast("O dia do vencimento vai de 1 a 31.");return}
+  const id=dbForm.id;
+  if(debts().some(d=>d.id!==id&&d.name.toLowerCase()===name.toLowerCase())){toast("Já existe uma dívida com esse nome.");return}
+  const data={name,total,...(who?{who}:{}),...(per?{per}:{}),...(day?{day}:{})};
+  if(id){dbForm=null;await dbSave(debts().map(d=>d.id!==id?d:{id:d.id,moves:d.moves||[],...data}),"Dívida salva");return}
+  const nid="d"+Date.now();dbForm=null;dbOpen=nid;
+  await dbSave([...debts(),{id:nid,...data,moves:[]}],"Dívida criada");
+}
+async function dbMove(sign){
+  const cents=digits($("dbVal")?.value);if(!cents){toast("Informe o valor.");return}
+  const d=debts().find(x=>x.id===dbOpen), was=d?dbLeft(d):0;
+  const list=debts().map(x=>x.id!==dbOpen?x:{...x,moves:[...(x.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign>0?cents:-cents}]});
+  const nd=list.find(x=>x.id===dbOpen);
+  await dbSave(list,sign>0?(nd&&!dbLeft(nd)&&was?"Dívida quitada 🎉":`Pago ${R(cents)}`):`Acrescentado ${R(cents)}`);
+}
+async function dbMvSave(){
+  const cents=digits($("dmVal").value), sign=$("dmSign").value==="-1"?-1:1, date=$("dmDate").value;
+  if(!cents){toast("Informe o valor.");return}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast("Escolha a data.");return}
+  const id=dbMvEdit;dbMvEdit=null;
+  await dbSave(debts().map(d=>d.id!==dbOpen?d:{...d,moves:(d.moves||[]).map(m=>m.id!==id?m:{...m,date,cents:sign>0?cents:-cents})}),"Movimento atualizado");
+}
+async function dbMvDel(btn){
+  if(!btn.classList.contains("sure")){btn.classList.add("sure");btn.textContent="Toque de novo para apagar";return}
+  const id=dbMvEdit;dbMvEdit=null;
+  await dbSave(debts().map(d=>d.id!==dbOpen?d:{...d,moves:(d.moves||[]).filter(m=>m.id!==id)}),"Movimento apagado");
+}
 /* migração única (idempotente, marca cfg.bankCol1): cartões de banco que ainda estão com a cor padrão antiga
    (nunca trocada) passam para a cor oficial nova. Cor escolhida à mão fica como está. */
 const OLD_BANK_COL={inter:["#E8730C"],pan:["#2C6BD6"],renner:["#C8102E"],bradesco:["#CC092F"],santander:["#E30613"],"banco do brasil":["#F5D000"],bb:["#F5D000"],caixa:["#0066B3"],"mercado pago":["#00A6E0"],picpay:["#11B663"]};
@@ -3725,7 +3828,7 @@ function fxRowSection(){
 }
 let anoSubTab = lsGet("despesas.anoTab") || "metas";
 function renderAno(){
-  const ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&(ae.closest("#saveSec")||/^ac[nv]_\d/.test(ae.id))) return;
+  const ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&(ae.closest("#saveSec")||ae.closest("#debtSec")||/^ac[nv]_\d/.test(ae.id))) return;
   const yArr=items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=MIN_YM);
   const mon=m=>yArr.filter(x=>x.date.slice(5,7)===pad(m+1));
   const idx=MES.map((_,i)=>i).filter(i=>`${year}-${pad(i+1)}`>=MIN_YM), NM=idx.length;
@@ -3737,7 +3840,7 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main">${contaBlock()}${hojeCards()}${saveSection()}</div>
+      <div class="ano-col-main">${contaBlock()}${hojeCards()}${saveSection()}${debtSection()}</div>
       <div class="ano-col-side">${fxRowSection()}${divSection()}</div>
     </div>`;
   } else if(anoSubTab === "ano"){
@@ -4479,6 +4582,10 @@ document.addEventListener("click",async e=>{
   const smv=t.closest("[data-svmv]"); if(smv){svMvEdit=smv.dataset.svmv;renderAno();setTimeout(()=>{const v=$("mvVal");v&&v.scrollIntoView({block:"center",behavior:"smooth"})},30);return}
   if(t.id==="svDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const b=saves().find(x=>x.id===svOpen);svOpen=null;svSave(saves().filter(x=>x!==b),"Caixinha excluída");return}
+  const dbr=t.closest("[data-db]"); if(dbr){dbForm=null;dbMvEdit=null;dbAllMv=false;dbOpen=dbOpen===dbr.dataset.db?null:dbr.dataset.db;renderAno();return}
+  const dmv=t.closest("[data-dbmv]"); if(dmv){dbMvEdit=dmv.dataset.dbmv;renderAno();setTimeout(()=>{const v=$("dmVal");v&&v.scrollIntoView({block:"center",behavior:"smooth"})},30);return}
+  if(t.id==="dbDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
+    const b=debts().find(x=>x.id===dbOpen);dbOpen=null;dbSave(debts().filter(x=>x!==b),"Dívida excluída");return}
   if(t.id==="svFx"||t.closest(".svchk")) return;
   const gm=t.closest("[data-gomonth]"); if(gm){view=gm.dataset.gomonth;go("pMes");return}
   const cm=t.closest("[data-cardmonth]"); if(cm){view=cm.dataset.cardmonth;render();window.scrollTo(0,0);return}
@@ -4597,6 +4704,16 @@ document.addEventListener("click",async e=>{
     case "svAllMv":svAllMv=!svAllMv;svMvEdit=null;renderAno();break;
     case "fxMeta":go("pWal");svForm={preset:{goalCur:fxCur,fxAll:true}};svOpen=null;renderAno();setTimeout(()=>{$("saveSec")?.scrollIntoView({block:"start"});$("svName")?.focus()},40);break;
     case "svCreate":svCreate();break;
+    case "dbAdd":dbForm={};dbOpen=null;svForm=null;renderAno();setTimeout(()=>$("dbName")?.focus(),30);break;
+    case "dbEdit":dbForm={id:dbOpen};dbOpen=null;renderAno();break;
+    case "dbCancel":dbForm=null;renderAno();break;
+    case "dbCreate":dbCreate();break;
+    case "dbIn":dbMove(1);break;
+    case "dbOut":dbMove(-1);break;
+    case "dmCancel":dbMvEdit=null;renderAno();break;
+    case "dmSave":dbMvSave();break;
+    case "dmDel":dbMvDel(t);break;
+    case "dbAllMv":dbAllMv=!dbAllMv;dbMvEdit=null;renderAno();break;
     case "svIn":svMove(1);break;
     case "svOut":svMove(-1);break;
   }
@@ -4618,7 +4735,7 @@ document.addEventListener("change",e=>{
   if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
 });
-const maskIds=new Set(["soV","cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
+const maskIds=new Set(["soV","cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","dbTotal","dbPer","dbVal","dmVal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
 document.addEventListener("input",e=>{
   if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
   if(e.target.id==="subN"){const p=parseInt(e.target.value.replace(/\D/g,""),10)||0, t=+e.target.dataset.subtot||0;if($("subEach"))$("subEach").textContent=p>=2?R(Math.round(t/p))+" cada":"—";return}
