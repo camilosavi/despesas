@@ -604,5 +604,18 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Híbrido Papel + Blocos**: Fraunces (`--serif`) só em números grandes, títulos de seção e dia; topo vira bloco flutuante arredondado com névoa (degradê vertical do `--head`); seções em blocos arredondados sem borda e sem linhas entre elas. Cards dos cartões (`.htile`) mantêm o degradê/brilho na cor do cartão.
 - **Tela do cartão inteira na cor do cartão**: `cardTheme()` também puxa `--bg/--surface/--zebra/--line/--chip` para a cor do cartão (volta ao normal ao sair).
 - **Mês (celular)**: versão "Categorias primeiro" (`mesV2`; a "Dia a dia" `mesV1` fica atrás de `despesas.mesV="1"`) + filtro `mesFilterBar()`: quadrinhos dos cartões + pílulas Todos / A pagar / Pagos / Receitas (`mesF`).
-- Ainda não feito (combinado, só desenhado): barra Hoje / Carteira / Mês (Planejar some, conteúdo vai para o Mês) e a aba Carteira (cartões, contas, VR, caixinhas, conta em euro).
+- (feito em 20/10: ver "Blocos coloridos" abaixo.)
 - **PC (20/10/2026)**: mesmo híbrido do celular (topo com névoa, Fraunces, blocos); tela do cartão em 2 colunas (`.cdhero`+`.cdmain2` à esquerda, 420 px; `.cdmain`+`.cdside` à direita); só a aba Cartões acende dentro do cartão; Mês no PC tem `mesFilterBar()` na largura toda (e `mesApply` filtra a linha do tempo); backup é sempre a linha `.bline`.
+
+## Blocos coloridos + Hoje / Carteira / Mês (20/10/2026, pedido dele: "redesenhar tudo"; só caixinhas e cartões ficam como estavam)
+- **Estrutura**: barra de baixo com 3 abas (Hoje, **Carteira**, Mês) + foto. A aba Planejar saiu e a aba Cartões do PC também.
+  Carteira não tem painel próprio: `go("pWal")` abre o painel `pAno` com `anoSubTab==="metas"` (`inWal()` também vale para `pCards` e
+  `pFx`, que acendem a Carteira). Carteira = `contaBlock()` + `hojeCards()` + `saveSection()` (+ `fxRowSection()`/`divSection()`).
+  Mês tem o seletor **Mês | Ano | Fixos** (`mesSwitch`, `data-msw`): Ano e Fixos são `pAno` com `anoSubTab` "ano"/"fixos"; a barra
+  acende Mês. Hoje (celular) = faixa + próximos pagamentos + Posso comprar + cartões; "Na conta" e "Dinheiro guardado" foram para a Carteira.
+  `go()` limpa o HTML de `pHome`/`pAno` quando escondidos (ids repetidos como `#acEdit`); `rr()` re-renderiza a tela certa ao editar contas.
+  Voltar de Moedas/lista de cartões vai para a Carteira. Cabeçalho da Carteira: "Na conta e guardado" com Nas contas / Guardado.
+- **Visual** (bloco CSS "Blocos coloridos" no fim do `<style>`): fundo liso, topo sólido na cor do tema (sem névoa/degradê), números em
+  Bricolage Grotesque bold (`--serif` agora aponta para ela; Fraunces não é mais usada), seções = blocos de 28 px com tinta por área via
+  `:has()` (pagamentos laranja, contas turquesa, moedas azul, categorias azul, benefícios roxo; `--blk`), listas sem caixa interna, KPIs do
+  Ano em 4 blocos. Caixinhas (`#saveSec`) e cartões (`.htile`, tela do cartão, `.phys-card`) ficam com o visual anterior.

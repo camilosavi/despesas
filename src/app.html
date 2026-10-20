@@ -1258,6 +1258,72 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
  .cdwrap .cdmain{grid-column:2!important;grid-row:1!important;column-count:1!important}
  .cdwrap .cdside{grid-column:2!important;grid-row:2!important}
 }
+/* ===== Blocos coloridos (20/10/2026, pedido dele: "redesenhar tudo", só caixinhas e cartões ficam como estavam) =====
+   chão liso, blocos grandes de cantos 28px, cada área com sua cor (tinta sobre o fundo, serve no claro e no escuro),
+   números em sans bold, sem degradê, névoa, vidro novo nem serifa. Fora: #saveSec (caixinhas), .htile/.htiles e a tela do cartão. */
+:root{--serif:"Bricolage Grotesque",var(--display);--r:28px;--blk:var(--surface);
+  --t-pay:var(--c2);--t-acc:var(--c7);--t-fx:var(--euro);--t-ben:var(--c6);--t-cat:var(--c3);--t-in:var(--c1)}
+html{background:var(--bg)!important}
+body::before{display:none!important}
+.wrap{padding-inline:12px!important;padding-top:max(12px,env(safe-area-inset-top,0px))!important}
+header.top{margin:0!important;border-radius:32px!important;background:var(--head)!important;box-shadow:none!important;padding:18px 18px 18px!important}
+.titlerow h1,#ptitle{font-family:var(--serif)!important;font-weight:700!important;font-size:1.05rem!important;letter-spacing:-.01em!important;opacity:.82}
+.big{font-family:var(--serif)!important;font-weight:700!important;letter-spacing:-.04em!important;font-variant-numeric:tabular-nums;font-size:clamp(2.7rem,13.5vw,3.6rem)!important}
+.big small{font-family:var(--body)!important;font-weight:600!important;font-size:.32em!important;letter-spacing:0;opacity:.7;margin-right:6px}
+header.top .label{opacity:.78}
+header.top .split{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;border:0!important;padding:0!important;margin-top:16px!important}
+header.top .split div,header.top .split div+div{background:color-mix(in srgb,var(--head-ink) 11%,transparent)!important;border:0!important;border-radius:20px!important;padding:11px 14px!important}
+header.top .split b{font-family:var(--serif);font-weight:700;font-size:1.08rem!important;letter-spacing:-.02em}
+header.top .split span{text-transform:none!important;letter-spacing:0!important;font-size:.78rem!important}
+.hbtrack{height:10px!important;border-radius:6px!important}
+header.top .foot:empty{display:none}
+.monthpill{border-radius:999px!important}
+/* seções = blocos */
+.wrap main section,.wrap main section+section,#pHome>section+section,#mBody>section+section,#pAno>section+section{margin-top:12px!important;padding:16px 16px 14px!important;border-top:0!important;border-radius:var(--r)!important;background:var(--blk)!important;border:0!important;box-shadow:none!important}
+.wrap main section>h2,.wrap main section>.empty{font-family:var(--serif)!important;font-weight:700!important;font-size:1.02rem!important;letter-spacing:-.015em!important;margin:0 0 10px!important;text-transform:none!important;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.wrap main section>h2 small{font-family:var(--body)!important;font-weight:500;font-size:.8rem;color:var(--muted);margin-left:auto}
+.wrap main section>h2 .h2act,.wrap main section>h2>button,.wrap main section>h2>.lk{margin-left:auto;font-family:var(--body)!important;font-weight:700;font-size:.84rem}
+.wrap main section>.card,.wrap main section>.card.list,.wrap main section>.card.rate,.wrap main section>.card.chart{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}
+.wrap main section>.card.list .item+.item,.wrap main section>.card.list .due+.due,.wrap main section>.card .acone+.acone{border-top:1px solid color-mix(in srgb,var(--ink) 9%,transparent)!important}
+.wrap main section .due,.wrap main section .item{padding-inline:0!important;background:none!important}
+.dchip{background:color-mix(in srgb,var(--ink) 8%,transparent)!important;border-radius:14px!important}
+.dchip b{font-family:var(--serif)!important;font-weight:700!important;font-size:1.15rem!important}
+.acone .v,.item .v,.due .v{font-family:var(--serif);font-weight:700;letter-spacing:-.02em}
+/* cor por área */
+section:has(>.card .due):not(:has(.htiles)){--blk:color-mix(in srgb,var(--t-pay) 15%,var(--surface))}
+section:has(.acone),section:has(.acrow),section:has(.aclist){--blk:color-mix(in srgb,var(--t-acc) 15%,var(--surface))}
+section:has(.fxrow):not(.x):not(.y),section:has([data-fxgo]):not(.x):not(.y){--blk:color-mix(in srgb,var(--t-fx) 14%,var(--surface))}
+section:has(.cardrow[data-opencard]):not(:has(.htiles)){--blk:color-mix(in srgb,var(--t-ben) 14%,var(--surface))}
+section:has(.catrows){--blk:color-mix(in srgb,var(--t-cat) 13%,var(--surface))}
+section:has(.canbuy-card){--blk:transparent;padding:0!important}
+.canbuy-card{background:var(--ink)!important;color:var(--bg)!important;border-radius:var(--r)!important;border:0!important}
+.canbuy-card span,.canbuy-card b{color:inherit!important}
+/* mantém como estava: caixinhas e cartões */
+#saveSec,section:has(.htiles),section:has(.htile){--blk:var(--surface)}
+/* números do Ano */
+.ano-kpi-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important;margin-top:12px!important}
+.ano-kpi-grid .hcard{border:0!important;box-shadow:none!important;border-radius:24px!important;padding:14px 16px!important;background:color-mix(in srgb,var(--c1) 15%,var(--surface))!important}
+.ano-kpi-grid .hcard:nth-child(2){background:color-mix(in srgb,var(--c5) 14%,var(--surface))!important}
+.ano-kpi-grid .hcard:nth-child(3){background:color-mix(in srgb,var(--c3) 15%,var(--surface))!important}
+.ano-kpi-grid .hcard:nth-child(4){background:color-mix(in srgb,var(--c6) 15%,var(--surface))!important}
+.ano-kpi-grid .hcard b{font-family:var(--serif)!important;font-weight:700!important;letter-spacing:-.03em}
+/* seletor Mês / Ano / Fixos */
+.mesw{display:flex;gap:6px;margin:12px 0 0;padding:5px;border-radius:999px;background:var(--chip)}
+.mesw button{flex:1;border:0;border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:.92rem;padding:10px 0;cursor:pointer;transition:background .18s,color .18s}
+.mesw button.on{background:var(--ink);color:var(--bg)}
+/* busca e filtros */
+.msearch{border-radius:999px!important;background:var(--surface)!important;border:0!important;margin-top:12px!important}
+.mfp{border-radius:999px!important}
+.mfp.on{background:var(--ink)!important;color:var(--bg)!important}
+.bline,.mstack,.mstats>div{border-radius:22px!important}
+.mstats b{font-family:var(--serif)!important;font-weight:700!important}
+/* barra de baixo e botão + */
+.fab{border-radius:999px!important}
+@media (max-width:370px){header.top .split b{font-size:.92rem!important;white-space:nowrap}header.top .split div,header.top .split div+div{padding:10px 10px!important}}
+@media (min-width:980px){
+ header.top{border-radius:32px!important}
+ .wrap main section{break-inside:avoid}
+ .wrap main section>h2{font-size:1.1rem!important}
 }
 </style>
 
@@ -1306,9 +1372,8 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 <nav class="tabs" aria-label="Seções">
   <span class="tabbrand" aria-hidden="true">Minhas Despesas</span>
   <button class="tab" data-tab="pHome" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>Hoje</button>
+  <button class="tab" data-tab="pWal"><svg viewBox="0 0 24 24"><path d="M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M16 13.5h2.5"/></svg>Carteira</button>
   <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Mês</button>
-  <button class="tab pconly" data-tab="pCards"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Cartões</button>
-  <button class="tab" data-tab="pAno"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Planejar</button>
   <button class="tabav" id="tabAv" aria-label="Você: perfil e ajustes"></button>
 </nav>
 
@@ -1931,15 +1996,15 @@ function setBig(sym,cents){
 }
 function header(){
   $("s1").parentElement.hidden=false;
-  const isYear=tab==="pAno", isFx=tab==="pFx", isHome=tab==="pHome";
-  const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
+  const wal=tab==="pAno"&&anoSubTab==="metas", isYear=tab==="pAno"&&!wal, isFx=tab==="pFx", isHome=tab==="pHome";
+  const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
-  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:"Planejar",pOrc:"Orçamento",pMe:"Você"};
+  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:wal?"Carteira":"Ano",pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=titles[tab]||"";
   const sub=tab==="pCards"||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
-  if(sub) $("backLbl").textContent=tab==="pFx"?"Planejar":tab==="pCards"&&!selCard?"Mês":backTo==="pMes"?"Mês":backTo==="pHome"?"Início":"Cartões";
+  if(sub) $("backLbl").textContent=tab==="pFx"?"Carteira":tab==="pCards"&&!selCard?"Carteira":backTo==="pMes"?"Mês":backTo==="pHome"?"Hoje":"Cartões";
   $("hProg").hidden=!isFx;$("hRing").hidden=true;
   if(isMe){
     $("meHead").innerHTML=`<span class="av">${avInner()}</span><div><p class="label">Seu perfil</p><div class="nm">${esc(myName()||"Você")}</div></div>`;
@@ -1968,6 +2033,16 @@ function header(){
     /* banco limpo (out/2026): sem o anel de % e sem a frase com data; só avisa quando os gastos passam do que entrou */
     $("hRing").hidden=true;
     $("hFoot").textContent="";
+    return;
+  }
+  if(wal){
+    const cash=hasAcc()?accBal():0, kept=svTotal(), tot=cash+kept;
+    $("ptitle").textContent="Carteira";
+    $("bigLabel").textContent=hasAcc()?"Na conta e guardado":"Guardado";
+    setBig("R$",tot);
+    $("s1l").textContent="Nas contas";$("s1").textContent=hasAcc()?R(cash):"—";
+    $("s2l").textContent="Guardado";$("s2").textContent=R(kept);
+    $("hProg").hidden=true;$("hFoot").textContent="";
     return;
   }
   if(isFx){
@@ -2152,6 +2227,7 @@ async function moveHome(k,dir){
 /* saldo na conta: valor que a pessoa vê no app do banco, digitado à mão (cfg.accts=[{id,name,cents,at}], só no aparelho).
    "Depois de pagar" = saldo − o que falta pagar no mês atual (mesmo número do cabeçalho do Início). */
 let acDraft=null;
+const rr=()=>tab==="pHome"?renderHome():render();
 const accts=()=>Array.isArray(cfg.accts)?cfg.accts:[];
 /* depois de informar o saldo: desconta o que foi marcado como pago (paidAt) e soma o que entrou (receita lançada depois) */
 const accTs=()=>{const A=accts();if(!A.length)return 0;return Math.max(...A.map(a=>a.atTs||Date.parse(a.at+"T23:59:59")))};
@@ -2264,7 +2340,7 @@ async function saveBen(){
 async function saveAccts(){
   acReadDraft();const L=acDraft.filter(a=>a.name||a.cents).map(a=>({id:a.id||"a"+Date.now()+Math.random().toString(36).slice(2,5),name:a.name,cents:a.cents,at:today(),atTs:Date.now()}));
   if(!L.length){toast("Digite o saldo.");return}
-  try{document.activeElement?.blur();await saveCfg({accts:L});acDraft=null;toast("Saldo salvo",true);renderHome()}catch(e){toast("Não deu para salvar.")}
+  try{document.activeElement?.blur();await saveCfg({accts:L});acDraft=null;toast("Saldo salvo",true);rr()}catch(e){toast("Não deu para salvar.")}
 }
 function homeBlock(k){
   const now=today(), ym=curYM();
@@ -2398,7 +2474,7 @@ function recapCard(){
     ${lines.length?`<p>${lines.join(" ")}</p>`:""}<div class="row" style="margin:0"><button class="btn soft" id="recapOk">Ok</button><button class="btn primary" data-gomonth="${pm}">Ver ${nm.toLowerCase()}</button></div></div></section>`;
 }
 const IS_WIDE=matchMedia("(min-width:980px)");
-try{IS_WIDE.addEventListener("change",()=>{if(typeof tab!=="undefined"){if(tab==="pHome")renderHome();if(tab==="pMes")renderMes()}})}catch(e){}
+try{IS_WIDE.addEventListener("change",()=>{if(typeof tab!=="undefined"){if(tab==="pHome")renderHome();if(tab==="pMes")renderMes();if(tab==="pAno")renderAno()}})}catch(e){}
 function renderHome(){
   if(document.activeElement&&(document.activeElement.id==="userIn"||/^ac[nv]_\d/.test(document.activeElement.id))) return;
   const o=homeOrder();
@@ -2412,7 +2488,7 @@ function renderHome(){
   }
   let body;
   if(!IS_WIDE.matches){
-    $("pHome").innerHTML=oneBanner()+contaBlock()+hojeList()+possoComprarCard()+hojeCards()+homeBlock("guard")+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
+    $("pHome").innerHTML=oneBanner()+hojeList()+possoComprarCard()+hojeCards()+`<div class="toolbar homefoot helpbar" style="justify-content:center;margin-top:18px"><button class="tbtn" data-help="pHome">Como funciona esta tela</button></div>`;
     return;
   }
   if(IS_WIDE.matches){const H={};o.forEach(k=>{const h=homeBlock(k);if(h)H[k]=h});
@@ -2444,9 +2520,10 @@ function searchBody(){
   if(H.length>300) h+=`<p class="hint">Mostrando os 300 mais recentes de ${H.length}. Digite mais para filtrar.</p>`;
   return h;
 }
+const mesSwitch=cur=>`<div class="mesw" role="tablist" aria-label="Mês, ano e fixos">${[["mes","Mês"],["ano","Ano"],["fixos","Fixos"]].map(([k,t])=>`<button type="button" role="tab" class="${k===cur?"on":""}" aria-selected="${k===cur}" data-msw="${k}">${t}</button>`).join("")}</div>`;
 function mesShell(){
   if($("mSearch")) return;
-  $("pMes").innerHTML=`<div class="msearch" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="mSearch" type="search" placeholder="Buscar em todos os meses" aria-label="Buscar lançamentos" autocomplete="off" enterkeyhint="search" value="${esc(mq)}"><button class="clr" id="mClear" aria-label="Limpar busca" ${mq?"":"hidden"}>×</button></div><div id="mBody"></div>`;
+  $("pMes").innerHTML=mesSwitch("mes")+`<div class="msearch" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="mSearch" type="search" placeholder="Buscar em todos os meses" aria-label="Buscar lançamentos" autocomplete="off" enterkeyhint="search" value="${esc(mq)}"><button class="clr" id="mClear" aria-label="Limpar busca" ${mq?"":"hidden"}>×</button></div><div id="mBody"></div>`;
   $("mSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();e.target.blur()}});
 }
 function catsBlockHtml(arr, dA, tot, byC){
@@ -2613,7 +2690,7 @@ function onbCard(){
     <div class="row" style="margin-top:6px"><button class="btn soft" id="onbSkip">Pular</button><button class="btn soft" data-help="pHome">Como o app funciona</button></div></div></section>`;
 }
 function onbGo(k){
-  if(k==="conta"){$("acEdit")?.click();setTimeout(()=>document.querySelector(".acrow")?.scrollIntoView({block:"center",behavior:"smooth"}),120);return}
+  if(k==="conta"){if(!IS_WIDE.matches){go("pWal");setTimeout(()=>$("acEdit")?.click(),60)}else $("acEdit")?.click();setTimeout(()=>document.querySelector(".acrow")?.scrollIntoView({block:"center",behavior:"smooth"}),180);return}
   if(k==="cartao"){backTo="pHome";selCard=null;go("pCards");setTimeout(openCardSheet,60);return}
   if(k==="renda"){form={...form,type:"rec"};openSheet()}
 }
@@ -3641,24 +3718,19 @@ function fxRowSection(){
 }
 let anoSubTab = lsGet("despesas.anoTab") || "metas";
 function renderAno(){
-  const ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&ae.closest("#saveSec")) return;
+  const ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&(ae.closest("#saveSec")||/^ac[nv]_\d/.test(ae.id))) return;
   const yArr=items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=MIN_YM);
   const mon=m=>yArr.filter(x=>x.date.slice(5,7)===pad(m+1));
   const idx=MES.map((_,i)=>i).filter(i=>`${year}-${pad(i+1)}`>=MIN_YM), NM=idx.length;
   const recM=idx.map(i=>sumT(mon(i),"rec")), despM=idx.map(i=>sumT(mon(i),"desp"));
   const recTot=recM.reduce((a,b)=>a+b,0), despTot=despM.reduce((a,b)=>a+b,0), saldoTot=recTot-despTot;
 
-  let h = `<div class="ano-subnav">
-    <div class="seg-ctrl ano-ctrl">
-      <button type="button" class="seg-btn ${anoSubTab==='metas'?'active':''}" data-anotab="metas"><span class="ei">🎯 </span>Metas & Caixinhas</button>
-      <button type="button" class="seg-btn ${anoSubTab==='ano'?'active':''}" data-anotab="ano"><span class="ei">📊 </span>Visão do Ano</button>
-      <button type="button" class="seg-btn ${anoSubTab==='fixos'?'active':''}" data-anotab="fixos"><span class="ei">🗓️ </span>Fixos & Salários</button>
-    </div>
-  </div>`;
+  if(anoSubTab!=="metas"&&anoSubTab!=="fixos") anoSubTab="ano";
+  let h = anoSubTab==="metas"?"":mesSwitch(anoSubTab);
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main">${saveSection()}</div>
+      <div class="ano-col-main">${contaBlock()}${hojeCards()}${saveSection()}</div>
       <div class="ano-col-side">${fxRowSection()}${divSection()}</div>
     </div>`;
   } else if(anoSubTab === "ano"){
@@ -4225,7 +4297,7 @@ function appBadge(){if(!("setAppBadge" in navigator)||!cfgLoaded)return;
 function render(){
   applyCats();header();clearTimeout(appBadge.t);appBadge.t=setTimeout(appBadge,400);clearTimeout(pushSync.t);pushSync.t=setTimeout(pushSync,2000);renderImport();updateFab();$("note").hidden=tab!=="pMe";
   ({pHome:renderHome,pMes:renderMes,pCards:renderCards,pPlan:renderPlan,pFx:renderFx,pAno:renderAno,pOrc:renderOrc,pMe:renderMe})[tab]();
-  if(tab==="pAno"||tab==="pMe") anoFold(tab);
+  if((tab==="pAno"&&anoSubTab!=="metas")||tab==="pMe") anoFold(tab);
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();
 }
@@ -4255,23 +4327,21 @@ function confetti(){
 }
 
 /* ---------- navegação ---------- */
+const inWal=()=>tab==='pFx'||tab==='pCards'||(tab==='pAno'&&anoSubTab==='metas');
 function go(t){
-  if(t==="pPlan") t="pMes";
+  if(t==="pWal"){t="pAno";anoSubTab="metas";lsSet("despesas.anoTab","metas")}
+  else if(t==="pPlan") t="pMes";
   homeEdit=false;svForm=null;svOpen=null;fatEditing=false;limEditing=false;
   tab=t;
+  /* Carteira = caixinhas/contas/cartões/moedas (painel pAno com anoSubTab "metas"); Mês = Mês, Ano e Fixos */
+  const cur=inWal()?"pWal":t==="pOrc"||t==="pAno"?"pMes":t;
   [...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).forEach((b,i)=>{
-    const isPcardTab = b.dataset.tab === "pCards";
-    const cur = t==="pOrc"?"pMes":t==="pFx"?"pAno":t;
-    const hasCardTab=[...document.querySelectorAll(".tab")].some(x=>x.dataset.tab==="pCards"&&x.offsetParent);
-    const match = b.dataset.tab === cur || (t === "pCards" && (isPcardTab || (!hasCardTab && b.dataset.tab === "pMes")));
-    if(match){
-      b.setAttribute("aria-current","page");
-      if(!isPcardTab) document.querySelector("nav.tabs").style.setProperty("--ti",i);
-    } else {
-      b.removeAttribute("aria-current");
-    }
+    if(b.dataset.tab===cur){b.setAttribute("aria-current","page");document.querySelector("nav.tabs").style.setProperty("--ti",i)}
+    else b.removeAttribute("aria-current");
   });
   ["pHome","pMes","pCards","pPlan","pFx","pAno","pOrc","pMe"].forEach(p=>$(p).hidden=p!==tab);
+  /* painéis que repetem ids (acEdit, saveSec…) não ficam desenhados escondidos */
+  ["pHome","pAno"].forEach(p=>{if(p!==tab)$(p).innerHTML=""});
   $("tabAv").toggleAttribute("aria-current",tab==="pMe");if(tab==="pMe")$("tabAv").setAttribute("aria-current","page");document.querySelector("nav.tabs").classList.toggle("onme",tab==="pMe");
   if(tab==="pAno") year=Math.max(MIN_YEAR,Number(view.slice(0,4)));
   animIn();render();window.scrollTo(0,0);
@@ -4327,7 +4397,7 @@ document.addEventListener("keydown",e=>{
 });
 document.querySelectorAll(".tab").forEach((b,i)=>{b.title=`${b.textContent.trim()} (${i+1})`});$("tabAv").title="Você: perfil e ajustes (5)";
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{if(b.dataset.tab==="pCards")selCard=null;go(b.dataset.tab)});
-$("backBtn").onclick=()=>{if(tab==="pFx"){go("pAno");return}if(tab==="pOrc"||(tab==="pCards"&&!selCard)){go("pMes");return}selCard=null;go(backTo==="pMes"||backTo==="pHome"?backTo:"pCards")};
+$("backBtn").onclick=()=>{if(tab==="pFx"){go("pWal");return}if(tab==="pOrc"){go("pMes");return}if(tab==="pCards"&&!selCard){go("pWal");return}selCard=null;go(backTo==="pMes"||backTo==="pHome"?backTo:"pCards")};
 $("prev").onclick=()=>{if(tab==="pAno"){if(year<=MIN_YEAR)return;year--;view=year+view.slice(4);if(view<MIN_YM)view=MIN_YM}else{if(view<=MIN_YM)return;view=shiftYM(view,-1)}render();slideIn($(tab),-1)};
 $("next").onclick=()=>{if(tab==="pAno"){year++;view=year+view.slice(4)}else view=shiftYM(view,1);render();slideIn($(tab),1)};
 
@@ -4355,6 +4425,7 @@ document.addEventListener("click",async e=>{
       view=shiftYM(view,1);render();slideIn($(tab),1)}catch(e){toast("Não deu para salvar. Tente de novo.")}})();return}
   const mf=t.closest("[data-mesf]"); if(mf){const k=mf.dataset.mesf;mesF=(k===mesF||k==="all")?"all":k;renderMes();cardTheme(mesF.startsWith("card:")?mesF.slice(5):null);return}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
+  const msw=t.closest("[data-msw]"); if(msw){const k=msw.dataset.msw;if(k==="mes")go("pMes");else{anoSubTab=k;lsSet("despesas.anoTab",k);go("pAno")}return}
   const at=t.closest("[data-anotab]"); if(at){anoSubTab=at.dataset.anotab;lsSet("despesas.anoTab",anoSubTab);renderAno();return}
   if(t.closest("[data-catall]")){mesSubTab="cats";renderMes();setTimeout(()=>$("catAllSec")?.scrollIntoView({block:"start"}),30);return}
   const co=t.closest("[data-catopen]"); if(co){const k=co.dataset.catopen;catOpen.has(k)?catOpen.delete(k):catOpen.add(k);renderMes();return}
@@ -4371,11 +4442,11 @@ document.addEventListener("click",async e=>{
   if(t.id==="bnSave"){saveBen();return}
   if(t.id==="bnDel"){if(benEditing!=="del"){benEditing="del";renderCards();return}
     const cur={...(cfg.cards||{})};delete cur[selCard];benEditing=false;await saveCfg({cards:cur});selCard=null;toast("Cartão apagado");go("pCards");return}
-  if(t.closest("#acEdit")){if(tab!=="pHome")go("pHome");const A=accts();acDraft=A.length?A.map(a=>({...a,free:!!a.name&&!ALL_BANKS().includes(a.name)})):[{name:ALL_BANKS()[0],cents:0}];renderHome();setTimeout(()=>$("acv_0")?.focus(),30);return}
-  const acb=t.closest("[data-acbank]"); if(acb){acReadDraft();acDraft=acDraft.filter(a=>a.name||a.cents);acDraft.push({name:acb.dataset.acbank,cents:0});renderHome();setTimeout(()=>$("acv_"+(acDraft.length-1))?.focus(),30);return}
-  if(t.id==="acAdd"){acReadDraft();acDraft.push({name:ALL_BANKS().find(c=>!acDraft.some(a=>a.name===c))||"",cents:0});renderHome();setTimeout(()=>$("acn_"+(acDraft.length-1))?.focus(),30);return}
-  const acd=t.closest("[data-acdel]"); if(acd){acReadDraft();acDraft.splice(+acd.dataset.acdel,1);renderHome();return}
-  if(t.id==="acCancel"){acDraft=null;renderHome();return}
+  if(t.closest("#acEdit")){if(tab!=="pHome"&&!inWal())go(IS_WIDE.matches?"pHome":"pWal");const A=accts();acDraft=A.length?A.map(a=>({...a,free:!!a.name&&!ALL_BANKS().includes(a.name)})):[{name:ALL_BANKS()[0],cents:0}];rr();setTimeout(()=>$("acv_0")?.focus(),30);return}
+  const acb=t.closest("[data-acbank]"); if(acb){acReadDraft();acDraft=acDraft.filter(a=>a.name||a.cents);acDraft.push({name:acb.dataset.acbank,cents:0});rr();setTimeout(()=>$("acv_"+(acDraft.length-1))?.focus(),30);return}
+  if(t.id==="acAdd"){acReadDraft();acDraft.push({name:ALL_BANKS().find(c=>!acDraft.some(a=>a.name===c))||"",cents:0});rr();setTimeout(()=>$("acn_"+(acDraft.length-1))?.focus(),30);return}
+  const acd=t.closest("[data-acdel]"); if(acd){acReadDraft();acDraft.splice(+acd.dataset.acdel,1);rr();return}
+  if(t.id==="acCancel"){acDraft=null;rr();return}
   if(t.id==="acSave"){saveAccts();return}
   const cd=t.closest("[data-catdel]"); if(cd){delCat(cd.dataset.catdel);return}
   if(t.id==="catAddBtn"){const v=$("catAddIn").value;if(await addCat(v)){toast("Categoria criada",true);render();setTimeout(()=>$("catSec")?.scrollIntoView({block:"start"}),30)}return}
@@ -4517,7 +4588,7 @@ document.addEventListener("click",async e=>{
     case "mvSave":svMvSave();break;
     case "mvDel":svMvDel(t);break;
     case "svAllMv":svAllMv=!svAllMv;svMvEdit=null;renderAno();break;
-    case "fxMeta":go("pAno");svForm={preset:{goalCur:fxCur,fxAll:true}};svOpen=null;renderAno();setTimeout(()=>{$("saveSec")?.scrollIntoView({block:"start"});$("svName")?.focus()},40);break;
+    case "fxMeta":go("pWal");svForm={preset:{goalCur:fxCur,fxAll:true}};svOpen=null;renderAno();setTimeout(()=>{$("saveSec")?.scrollIntoView({block:"start"});$("svName")?.focus()},40);break;
     case "svCreate":svCreate();break;
     case "svIn":svMove(1);break;
     case "svOut":svMove(-1);break;
@@ -4527,7 +4598,7 @@ document.addEventListener("change",e=>{
   if(e.target.dataset&&e.target.dataset.ext!=null&&ext){const p=ext.plan[+e.target.dataset.ext];if(p){p.on=e.target.checked;extRender()}return}
   if(e.target.id==="exBal"&&ext){ext.setBal=e.target.checked;return}
   if(/^acn_\d+$/.test(e.target.id)&&e.target.tagName==="SELECT"){const i=+e.target.id.slice(4);acReadDraft();e.target.blur();
-    if(e.target.value==="__new"){acDraft[i].free=true;acDraft[i].name=""}renderHome();if(acDraft[i].free)setTimeout(()=>$("acn_"+i)?.focus(),30);return}
+    if(e.target.value==="__new"){acDraft[i].free=true;acDraft[i].name=""}rr();if(acDraft[i].free)setTimeout(()=>$("acn_"+i)?.focus(),30);return}
   if(e.target.id==="pushH"){pushSet({h:+e.target.value});pushSync(true);return}
   if(e.target.id==="pushV"){pushSet({v:e.target.checked?1:0});pushSync(true);return}
   if(e.target.id==="themeFree"){lsSet("despesas.themeColor",e.target.value);lsSet("despesas.theme","livre");applyTheme();render();syncSoon();return}
@@ -5079,7 +5150,7 @@ async function readMany(files){
   const open=H.filter(h=>h.date>=MIN_YM+"-01"&&!holDup(h)).sort((a,b)=>b.date.localeCompare(a.date)||(holKey(b.kind)==="sal")-(holKey(a.kind)==="sal"))[0];
   const msg=`${H.length} ${H.length>1?"holerites lidos":"holerite lido"} para o salário previsto${other?` · ${other} ${other>1?"outros PDFs ignorados":"outro PDF ignorado"}`:""}`;
   if(open){openHolerite(open);setTimeout(()=>toast(msg,true),300)}
-  else{go("pAno");setTimeout(()=>{$("salSec")?.scrollIntoView({block:"start"});toast(msg,true)},250)}
+  else{anoSubTab="fixos";lsSet("despesas.anoTab","fixos");go("pAno");setTimeout(()=>{$("salSec")?.scrollIntoView({block:"start"});toast(msg,true)},250)}
 }
 async function readInvoice(file,auto){
   try{const head=new TextDecoder("latin1").decode(new Uint8Array(await file.slice(0,600).arrayBuffer()));
