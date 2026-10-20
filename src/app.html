@@ -1334,6 +1334,7 @@ header.top{padding:18px 16px!important}
 }
 #saveSec .svgrp{display:flex;justify-content:space-between;align-items:baseline;padding:14px 4px 4px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 #saveSec .svgrp span:last-child{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+#saveSec .svt1{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}#saveSec .svt1 span{font-size:13px;color:var(--muted)}#saveSec .svt1 b{font-size:22px}
 </style>
 
 <div class="wrap">
@@ -3622,7 +3623,7 @@ function saveSection(){
     h+=svForm?"":`<div class="empty"><strong>Nenhuma caixinha ainda</strong></div>`;
     return h+`</section>`;
   }
-  h+=`<div class="card"><div class="svtot"><small>Total guardado${(tE&&r)||(tU&&rU)?" (moedas na cotação de hoje)":""}</small><b>${R(svTotal())}</b>${tE||tU?`<span>${[R(tB),tE?E(tE):"",tU?M(tU,"USD"):""].filter(Boolean).join(" + ")}${(tE&&!r)||(tU&&!rU)?" · sem cotação para converter":""}</span>`:""}${looseE||looseU?`<span>+ ${[looseE?E(looseE):"",looseU?M(looseU,"USD"):""].filter(Boolean).join(" e ")} comprados na aba Moedas, fora das caixinhas</span>`:""}</div>`;
+  h+=`<div class="card"><div class="svtot"><small>Total guardado</small>${[[tB,"Em real",R(tB)],[tE,"Em euro",E(tE)],[tU,"Em dólar",M(tU,"USD")]].filter((x,k)=>x[0]||(k===0&&!tE&&!tU)).map(x=>`<div class="svt1"><span>${x[1]}</span><b>${x[2]}</b></div>`).join("")}${looseE||looseU?`<span>+ ${[looseE?E(looseE):"",looseU?M(looseU,"USD"):""].filter(Boolean).join(" e ")} comprados na aba Moedas, fora das caixinhas</span>`:""}</div>`;
   const rowOf=b=>{
       if(svForm&&svForm.id===b.id) return svFormHtml();
       const isFx=b.goalCur&&b.goalCur!=="BRL";
