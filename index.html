@@ -1343,6 +1343,8 @@ header.top{padding:18px 16px!important}
  .wrap main section{break-inside:avoid}
  .wrap main section>h2{font-size:1.1rem!important}
 }
+#saveSec .svgrp{display:flex;justify-content:space-between;align-items:baseline;padding:14px 4px 4px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+#saveSec .svgrp span:last-child{text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
 </style>
 
 <div class="wrap">
@@ -3631,8 +3633,8 @@ function saveSection(){
     h+=svForm?"":`<div class="empty"><strong>Nenhuma caixinha ainda</strong></div>`;
     return h+`</section>`;
   }
-  h+=`<div class="card"><div class="svtot"><small>Total guardado${(tE&&r)||(tU&&rU)?" (moedas na cotação de hoje)":""}</small><b>${R(svTotal())}</b>${tE||tU?`<span>${[R(tB),tE?E(tE):"",tU?M(tU,"USD"):""].filter(Boolean).join(" + ")}${(tE&&!r)||(tU&&!rU)?" · sem cotação para converter":""}</span>`:""}${looseE||looseU?`<span>+ ${[looseE?E(looseE):"",looseU?M(looseU,"USD"):""].filter(Boolean).join(" e ")} comprados na aba Moedas, fora das caixinhas</span>`:""}</div>`+
-    B.map(b=>{
+  h+=`<div class="card"><div class="svtot"><small>Total guardado${(tE&&r)||(tU&&rU)?" (moedas na cotação de hoje)":""}</small><b>${R(svTotal())}</b>${tE||tU?`<span>${[R(tB),tE?E(tE):"",tU?M(tU,"USD"):""].filter(Boolean).join(" + ")}${(tE&&!r)||(tU&&!rU)?" · sem cotação para converter":""}</span>`:""}${looseE||looseU?`<span>+ ${[looseE?E(looseE):"",looseU?M(looseU,"USD"):""].filter(Boolean).join(" e ")} comprados na aba Moedas, fora das caixinhas</span>`:""}</div>`;
+  const rowOf=b=>{
       if(svForm&&svForm.id===b.id) return svFormHtml();
       const isFx=b.goalCur&&b.goalCur!=="BRL";
       const v=isFx?svHave(b):svBal(b), e=svEur(b), u=svUsd(b);
@@ -3650,7 +3652,11 @@ function saveSection(){
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
           `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
-      return row}).join("")+`</div><p class="hint expl" style="margin-top:8px">Toque numa caixinha para guardar ou tirar, em R$, € ou US$. Não entra nas despesas do mês.</p></section>`;
+      return row};
+  const isF=b=>b.goalCur&&b.goalCur!=="BRL", gR=B.filter(b=>!isF(b)), gF=B.filter(isF);
+  const grp=(t,sub,L)=>L.length?`<div class="svgrp"><span>${t}</span><span>${sub}</span></div>`+L.map(rowOf).join(""):"";
+  const fSub=[gF.reduce((x,b)=>x+svEur(b),0),gF.reduce((x,b)=>x+svUsd(b),0)];
+  h+=(gR.length&&gF.length?grp("Em real",R(gR.reduce((x,b)=>x+svBrl(b),0)),gR)+grp("Em outras moedas",[fSub[0]?E(fSub[0]):"",fSub[1]?M(fSub[1],"USD"):""].filter(Boolean).join(" + "),gF):B.map(rowOf).join(""))+`</div><p class="hint expl" style="margin-top:8px">Toque numa caixinha para guardar ou tirar, em R$, € ou US$. Não entra nas despesas do mês.</p></section>`;
   return h;
 }
 async function svSave(list,msg,extra){document.activeElement?.blur?.();try{await saveCfg({save:list,...(extra||{})});if(msg)toast(msg,true);render()}catch(e){toast("Não deu para salvar. Tente de novo.")}}

@@ -626,3 +626,4 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   `cents > 0` = pagou ("Paguei"), `cents < 0` = acrescentou (juros / valor novo). Falta = total + acrescentos − pagos (`dbLeft`). Quitada vira selo "QUITADA".
 - **Não entra como despesa/receita nem em saldos**: serve para acompanhar o que falta, sem somar duas vezes com parcelas e faturas já lançadas.
   Mostra total em aberto, barra de progresso, parcelas restantes (`per`) e próximo vencimento (`dbNext`). Sem valores no código; fica em `cfg` (backup/sincronização já levam).
+- **Caixinhas separadas por moeda** (20/10/2026, pedido dele): com caixinhas em R$ e em €/US$ ao mesmo tempo, `saveSection` mostra dois grupos ("Em real" / "Em outras moedas", `.svgrp`) com subtotal de cada um; só um tipo = lista como antes. O total geral não muda.
