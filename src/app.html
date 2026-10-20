@@ -360,6 +360,12 @@ button.svmv .ed{color:var(--accent);font-weight:600;margin-left:8px}
 .svrow2{display:grid;grid-template-columns:1fr 76px;gap:8px;margin-top:8px}
 .svrow2:first-child{margin-top:0}
 .svedit select{font:inherit;font-size:16px;width:100%;padding:10px 8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);min-height:44px}
+.svkinds{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.svk{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border-radius:999px;background:var(--chip);border:1px solid transparent;font:inherit;font-size:.84rem;color:var(--ink);cursor:pointer}
+.svk.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,var(--chip));font-weight:600}
+.svbanks{margin:0 0 12px}.svbanks small{display:block;color:var(--muted);font-size:.78rem;margin-bottom:2px}
+.svbk{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;font-size:.9rem}.svbk+.svbk{border-top:1px solid var(--line)}
+.svbk>span{display:flex;align-items:center;gap:6px;min-width:0}.svbk b{font-variant-numeric:tabular-nums;white-space:nowrap}
 .svlab{display:block;font-size:.78rem;color:var(--muted);margin-top:8px}
 .svlab input,.svlab select{margin-top:4px}
 .svchk{display:flex;gap:10px;align-items:center;font-size:.88rem;margin-top:12px}
@@ -1881,7 +1887,10 @@ const ALL_BANKS=()=>[...new Set([...credCards(),...BANK_PICK,...FX_PICK])];
 /* banco/conta de câmbio a partir do "Onde" de uma compra (ex.: "Revolut app" → "Revolut") */
 const fxPlaceBank=w=>{const bk=bankOf(w);return bk?[...FX_PICK,...BANK_PICK].find(n=>bankOf(n)===bk)||null:null};
 /* onde está o dinheiro da caixinha: o banco escolhido, ou (sem escolha e somando a aba Moedas) os bancos onde comprou */
-const boxBanks=b=>b.bank?[b.bank]:b.fxAll?[...new Set(fx.filter(x=>fxCurOf(x)===boxFx(b)).map(x=>fxPlaceBank(x.where)).filter(Boolean))]:[];
+/* bancos de uma caixinha (20/10/2026, pedido dele: dinheiro em vários bancos): o principal, os de cada movimento que ainda tem saldo
+   e, com fxAll, onde as compras de moeda foram feitas */
+const svFxBanks=b=>b.fxAll?[...new Set(fx.filter(x=>fxCurOf(x)===boxFx(b)).map(x=>fxPlaceBank(x.where)).filter(Boolean))]:[];
+const boxBanks=b=>[...new Set([...(b.bank?[b.bank]:[]),...svBankRows(b).filter(r=>r.bank&&r.pos).map(r=>r.bank),...svFxBanks(b)])];
 const bankOf=n=>{const t=(n||"").trim().toLowerCase();return t?BANKS.find(b=>b.m.test(t))||null:null};
 const cardLabel=c=>{const b=bankOf(c);if(b)return b.l;const w=(c||"?").trim().split(/\s+/)[0];return w.length<=5?w:w.slice(0,3)};
 function cardBadge(c){
@@ -3618,6 +3627,30 @@ const boxAvatar=n=>{
   if(/saude|odonto|dente|cirurg|med/i.test(s)) return "🏥";
   return "💰";
 };
+/* tipos de caixinha mais comuns (Nubank, Inter, Mercado Pago…): toque preenche o nome e dá o ícone; `kind` fica na caixinha */
+const SV_KINDS=[
+  {k:"viagem",n:"Viagem",nm:"Viagem",i:"✈️"},{k:"reserva",n:"Reserva de emergência",nm:"Reserva de emergência",i:"🛡️"},
+  {k:"casa",n:"Casa própria",nm:"Casa própria",i:"🏠"},{k:"carro",n:"Carro ou moto",nm:"Carro",i:"🚗"},
+  {k:"casamento",n:"Casamento",nm:"Casamento",i:"💍"},{k:"estudos",n:"Estudos",nm:"Estudos",i:"📚"},
+  {k:"tech",n:"Celular e eletrônicos",nm:"Celular novo",i:"💻"},{k:"presente",n:"Presente",nm:"Presente",i:"🎁"},
+  {k:"saude",n:"Saúde",nm:"Saúde",i:"🏥"},{k:"invest",n:"Investir",nm:"Investimentos",i:"📈"},
+  {k:"outro",n:"Outro",nm:"",i:"💰"}];
+const svIcon=b=>{const K=SV_KINDS.find(x=>x.k===b.kind);return K?K.i:boxAvatar(b.name)};
+/* saldo de cada banco: movimentos sem banco contam no principal (ou "sem banco"); compras de moeda (fxAll) contam onde foram feitas */
+function svBankRows(b){
+  const M={}, add=(bank,cur,c)=>{const k=bank||"";(M[k]=M[k]||{BRL:0,EUR:0,USD:0})[cur]+=c};
+  (b.moves||[]).forEach(m=>add(m.bank||b.bank||"",m.cur||"BRL",m.cents));
+  if(b.fxAll)fx.filter(x=>fxCurOf(x)===boxFx(b)).forEach(x=>add(fxPlaceBank(x.where)||b.bank||"",boxFx(b),fxAmt(x)));
+  return Object.keys(M).map(k=>({bank:k,amts:M[k],pos:M[k].BRL>0||M[k].EUR>0||M[k].USD>0,eq:M[k].BRL+Math.round(M[k].EUR*rateNum("EUR"))+Math.round(M[k].USD*rateNum("USD"))}))
+    .filter(r=>r.amts.BRL||r.amts.EUR||r.amts.USD).sort((p,q)=>q.eq-p.eq);
+}
+const svAmtsTxt=a=>[a.BRL?R(a.BRL):"",a.EUR?E(a.EUR):"",a.USD?M(a.USD,"USD"):""].filter(Boolean).join(" + ")||R(0);
+/* seletor de banco (guardar/tirar e editar movimento): bancos conhecidos + os já usados nessa caixinha + "Outro banco…" */
+function svBankField(selId,newId,box,cur){
+  const used=svBankRows(box).map(r=>r.bank).filter(Boolean), list=[...new Set([...used,...(box.bank?[box.bank]:[]),...ALL_BANKS()])];
+  return `<label class="svlab">Em qual banco<select id="${selId}"><option value="">Sem banco definido</option>${list.map(n=>`<option ${n===cur?"selected":""}>${esc(n)}</option>`).join("")}<option value="__new">Outro banco…</option></select></label><input id="${newId}" maxlength="30" placeholder="Nome do banco" hidden>`;
+}
+const svBankVal=(selId,newId)=>{const v=$(selId)?.value||"";return v==="__new"?($(newId)?.value||"").trim().slice(0,30):v};
 let svOpen=null, svForm=null, svMvEdit=null, svAllMv=false;
 function svGoalTxt(b){
   if(!b.goal) return "";
@@ -3651,11 +3684,13 @@ function svNeedTxt(b){
   const pct=Math.round(sob/per*100);
   return pct>=100?`A sobra prevista de ${mn} (${R(sob)}) cobre o que precisa guardar este mês (~${R(per)}) ✓`:`A sobra prevista de ${mn} (${R(sob)}) cobre ${pct}% do que precisa guardar este mês (~${R(per)}).`;
 }
+/* tipo escolhido no formulário (toque na grade): o da caixinha que está editando, ou Viagem quando vem do atalho da aba Moedas */
+const svFormKind=()=>{if(svForm.kind!==undefined)return svForm.kind;const b=svForm.id?saves().find(x=>x.id===svForm.id)||{}:(svForm.preset||{});return b.kind||(!svForm.id&&b.fxAll?"viagem":"")};
 function svFormHtml(){
-  const b=svForm.id?saves().find(x=>x.id===svForm.id)||{}:(svForm.preset||{}), fc=boxFx(b), other=saves().some(x=>x.fxAll&&x.id!==b.id&&boxFx(x)===fc);
-  return `<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><input id="svName" maxlength="30" placeholder="Nome (ex.: Reserva, Viagem)" value="${esc(b.name||"")}">
+  const b=svForm.id?saves().find(x=>x.id===svForm.id)||{}:(svForm.preset||{}), fc=boxFx(b), other=saves().some(x=>x.fxAll&&x.id!==b.id&&boxFx(x)===fc), kind=svFormKind();
+  return `<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><div class="svkinds" role="group" aria-label="Tipo de caixinha">${SV_KINDS.map(K=>`<button type="button" class="svk ${K.k===kind?"on":""}" data-svkind="${K.k}"><span aria-hidden="true">${K.i}</span>${esc(K.n)}</button>`).join("")}</div><input id="svName" maxlength="30" placeholder="Nome (ex.: Reserva, Viagem)" value="${esc(b.name||"")}">
     <div class="svrow2"><input id="svGoal" inputmode="numeric" placeholder="${svForm.preset?"Meta":"Meta (opcional)"}" value="${b.goal?brl(b.goal):""}"><select id="svGoalCur" aria-label="Moeda da meta"><option value="BRL">R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>
-    <label class="svlab">Onde está o dinheiro<select id="svBank"><option value="">${b.fxAll&&boxBanks({...b,bank:""}).length?`Onde comprou (${esc(boxBanks({...b,bank:""}).join(" + "))})`:"—"}</option>${[...new Set([...ALL_BANKS(),...(b.bank?[b.bank]:[])])].map(n=>`<option ${n===b.bank?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+    <label class="svlab">Banco principal (opcional, cada depósito pode ter o seu)<select id="svBank"><option value="">${b.fxAll&&boxBanks({...b,bank:""}).length?`Onde comprou (${esc(boxBanks({...b,bank:""}).join(" + "))})`:"—"}</option>${[...new Set([...ALL_BANKS(),...(b.bank?[b.bank]:[])])].map(n=>`<option ${n===b.bank?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
     <label class="svlab">Até quando (opcional)<input id="svTarget" type="month" value="${esc(b.target||"")}"></label>
     ${fx.length||b.fxAll?`<label class="svchk"><input type="checkbox" id="svFx" ${b.fxAll?"checked":""} ${other?"disabled":""}> Somar as compras de ${FXC[fc].n} da aba Moedas${other?" (já está em outra caixinha)":""}</label>`:""}
     <div class="svbtns"><button class="btn soft" id="svCancel">Cancelar</button><button class="btn primary" id="svCreate">${svForm.id?"Salvar":"Criar"}</button></div></div>`;
@@ -3679,12 +3714,13 @@ function saveSection(){
       const isWon=b.goal&&svHave(b)>=b.goal;
       const bks=boxBanks(b);
       const meta=[!isFx&&(e||u)?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):"",svGoalTxt(b),svPaceTxt(b),!b.goal&&last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur||b.goalCur||"BRL")}`:""].filter(Boolean).join(" · ")||"sem movimentos";
-      let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="d"><span class="sv-ico">${boxAvatar(b.name)}</span>${bks.map(cardBadge).join("")}${esc(b.name)}${isWon?`<span class="sv-won">META BATIDA 🎉</span>`:""}</span><span class="v ${v<0?"neg":""}">${dispVal}</span>${b.goal?`<span class="mini"><i style="width:${pct}%;background:${isFx?"var(--euro)":isWon?"var(--pos)":"var(--accent)"}"></i></span>`:""}<span class="m">${esc(meta)}</span></button>`;
+      let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="d"><span class="sv-ico">${svIcon(b)}</span>${bks.map(cardBadge).join("")}${esc(b.name)}${isWon?`<span class="sv-won">META BATIDA 🎉</span>`:""}</span><span class="v ${v<0?"neg":""}">${dispVal}</span>${b.goal?`<span class="mini"><i style="width:${pct}%;background:${isFx?"var(--euro)":isWon?"var(--pos)":"var(--accent)"}"></i></span>`:""}<span class="m">${esc(meta)}</span></button>`;
       if(svOpen===b.id){
         const allMv=[...(b.moves||[])].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=svAllMv?allMv:allMv.slice(0,5);
         const pc=svPace(b), need=[pc&&pc.late?`Pela linha reta até ${shortMonth(b.target)}, era para ter ${svMoney(pc.exp,pc.cur)} agora. Para recuperar, guarde ~${svMoney(pc.per,pc.cur)} por mês daqui em diante.`:"",svNeedTxt(b)].filter(Boolean).join(" ");
-        row+=`<div class="svedit">${need?`<p class="hint" style="margin:0 0 10px">${esc(need)}</p>`:""}<div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
-          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
+        const bkRows=svBankRows(b), bkShow=bkRows.length>1||(bkRows[0]&&bkRows[0].bank);
+        row+=`<div class="svedit">${need?`<p class="hint" style="margin:0 0 10px">${esc(need)}</p>`:""}${bkShow?`<div class="svbanks"><small>Onde está o dinheiro</small>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}${esc(r.bank||"Sem banco definido")}</span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
+          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
           `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
@@ -3702,7 +3738,8 @@ async function svCreate(){
   const id=svForm.id;
   if(saves().some(b=>b.id!==id&&b.name.toLowerCase()===name.toLowerCase())){toast("Já existe uma caixinha com esse nome.");return}
   const bank=$("svBank")?.value||"";
-  const data={name,goalCur,...(bank?{bank}:{}),...(goal?{goal}:{}),...(target?{target}:{}),...(fxAll?{fxAll:true}:{})};
+  const kind=svFormKind();
+  const data={name,goalCur,...(kind?{kind}:{}),...(bank?{bank}:{}),...(goal?{goal}:{}),...(target?{target}:{}),...(fxAll?{fxAll:true}:{})};
   if(id){svForm=null;await svSave(saves().map(b=>b.id!==id?b:{id:b.id,moves:b.moves||[],...data}),"Caixinha salva");return}
   const nid="s"+Date.now();svForm=null;svOpen=nid;
   await svSave([...saves(),{id:nid,...data,moves:[]}],"Caixinha criada");
@@ -3731,12 +3768,15 @@ async function svMove(sign){
     else if(cur===gc) mv={cents,cur:gc,brl:Math.round(cents*rt),rate:rt};
   }
   if(!mv.cents){toast("Valor pequeno demais para essa cotação.");return}
-  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:[...(b.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign*mv.cents,...(mv.cur!=="BRL"?{cur:mv.cur}:{}),...(mv.rate?{brl:mv.brl,rate:mv.rate}:{})}]});
-  await svSave(list,`${sign>0?"Guardado":"Retirado"} ${svMoney(mv.cents,mv.cur)}${mv.rate?` (R$ ${rateTxt(mv.rate)} por ${FXC[mv.cur].sym})`:""}`);
+  /* banco do depósito (20/10/2026, pedido dele: dinheiro em vários bancos): fica no movimento; sem escolha vale o banco principal */
+  const bank=svBankVal("svBk","svBkNew");
+  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:[...(b.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign*mv.cents,...(mv.cur!=="BRL"?{cur:mv.cur}:{}),...(mv.rate?{brl:mv.brl,rate:mv.rate}:{}),...(bank?{bank}:{})}]});
+  await svSave(list,`${sign>0?"Guardado":"Retirado"} ${svMoney(mv.cents,mv.cur)}${bank?` ${sign>0?"no":"do"} ${bank}`:""}${mv.rate?` (R$ ${rateTxt(mv.rate)} por ${FXC[mv.cur].sym})`:""}`);
 }
 function svMvForm(m){
   return `<div class="svmvf"><div class="svrow2"><select id="mvSign" aria-label="Tipo"><option value="1">Guardou</option><option value="-1" ${m.cents<0?"selected":""}>Tirou</option></select><input id="mvDate" type="date" value="${esc(m.date)}" min="${MIN_YM}-01" aria-label="Data"></div>
     <div class="svrow2 v"><input id="mvVal" inputmode="numeric" value="${brl(Math.abs(m.cents))}" aria-label="Valor"><select id="mvCur" aria-label="Moeda"><option value="BRL">R$</option><option value="EUR" ${m.cur==="EUR"?"selected":""}>€</option><option value="USD" ${m.cur==="USD"?"selected":""}>US$</option></select></div>
+    ${svBankField("mvBk","mvBkNew",saves().find(x=>x.id===svOpen)||{},m.bank||"")}
     <div class="svbtns"><button class="btn soft" id="mvCancel">Cancelar</button><button class="btn primary" id="mvSave">Salvar</button></div>
     <button class="svdel" id="mvDel">Apagar este movimento</button></div>`;
 }
@@ -3744,8 +3784,8 @@ async function svMvSave(){
   const cents=digits($("mvVal").value), cv=$("mvCur").value, cur=cv==="EUR"||cv==="USD"?cv:"BRL", sign=$("mvSign").value==="-1"?-1:1, date=$("mvDate").value;
   if(!cents){toast("Informe o valor.");return}
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast("Escolha a data.");return}
-  const id=svMvEdit;svMvEdit=null;
-  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:(b.moves||[]).map(m=>{if(m.id!==id)return m;const{cur:_c,...r}=m;const o={...r,date,cents:sign*cents,...(cur!=="BRL"?{cur}:{})};if(o.rate){if(cur===m.cur)o.brl=Math.round(cents*o.rate);else{delete o.rate;delete o.brl}}return o})});
+  const id=svMvEdit, bank=svBankVal("mvBk","mvBkNew");svMvEdit=null;
+  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:(b.moves||[]).map(m=>{if(m.id!==id)return m;const{cur:_c,bank:_b,...r}=m;const o={...r,date,cents:sign*cents,...(cur!=="BRL"?{cur}:{}),...(bank?{bank}:{})};if(o.rate){if(cur===m.cur)o.brl=Math.round(cents*o.rate);else{delete o.rate;delete o.brl}}return o})});
   await svSave(list,"Movimento atualizado");
 }
 async function svMvDel(btn){
@@ -4653,6 +4693,10 @@ document.addEventListener("click",async e=>{
     if(gt.dataset.scroll)setTimeout(()=>$(gt.dataset.scroll)?.scrollIntoView({block:"start"}),30);
     return;
   }
+  const sk=t.closest("[data-svkind]"); if(sk&&svForm){
+    const K=SV_KINDS.find(x=>x.k===sk.dataset.svkind), prev=SV_KINDS.find(x=>x.k===svFormKind()), nm=$("svName");if(!K) return;
+    svForm.kind=K.k;document.querySelectorAll("[data-svkind]").forEach(el=>el.classList.toggle("on",el===sk));
+    if(nm&&(!nm.value.trim()||(prev&&nm.value.trim()===prev.nm)))nm.value=K.nm;return}
   const sv=t.closest("[data-sv]"); if(sv){svForm=null;svMvEdit=null;svAllMv=false;svOpen=svOpen===sv.dataset.sv?null:sv.dataset.sv;renderAno();return}
   const fc=t.closest("[data-fxcur]"); if(fc){const nc=fc.dataset.fxcur;if(nc===fxCur)return;const dir=nc==="USD"?1:-1;fxCur=nc;lsSet("despesas.fxCur",fxCur);render();slideIn($("pFx"),dir);return}
   const fpl=t.closest("[data-fxplace]"); if(fpl){$("fxWhere").value=fpl.dataset.fxplace;fxPlaceChips();return}
@@ -4809,6 +4853,7 @@ document.addEventListener("click",async e=>{
 });
 document.addEventListener("change",e=>{
   if(e.target.id==="svCur")svEqHint();
+  if(e.target.id==="svBk"||e.target.id==="mvBk"){const n=$(e.target.id+"New");if(n){n.hidden=e.target.value!=="__new";if(!n.hidden)n.focus()}return}
   if(e.target.dataset&&e.target.dataset.ext!=null&&ext){const p=ext.plan[+e.target.dataset.ext];if(p){p.on=e.target.checked;extRender()}return}
   if(e.target.id==="exBal"&&ext){ext.setBal=e.target.checked;return}
   if(/^acn_\d+$/.test(e.target.id)&&e.target.tagName==="SELECT"){const i=+e.target.id.slice(4);acReadDraft();e.target.blur();

@@ -657,3 +657,8 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 
 ## Adicionar cartão fácil (20/10/2026, pedido dele: "tinha que ter um botão fácil pra adicionar cartão")
 - Lista "Seus cartões" (`renderCards`) tem **"+ Novo cartão"** no título (`#cardNew`) e um quadro tracejado **"Adicionar cartão"** (`.foladd`, `#cardNew2`) no fim da grade; sem cartão, botão grande no aviso vazio. Os dois abrem `openCardSheet()` (clique delegado no documento).
+
+## Caixinha por tipo e com vários bancos (20/10/2026, pedido dele: "caixinha de categoria viagem, colocar dinheiro em vários bancos, as caixinhas mais famosas")
+- Formulário da caixinha começa com a grade de **tipos** (`SV_KINDS`: Viagem, Reserva de emergência, Casa própria, Carro ou moto, Casamento, Estudos, Celular e eletrônicos, Presente, Saúde, Investir, Outro). Tocar preenche o nome (só se estiver vazio ou ainda com o nome do tipo anterior) e guarda `b.kind`; o ícone da linha vem de `svIcon(b)` (kind, senão pelo nome via `boxAvatar`). `svFormKind()` dá o tipo escolhido (Viagem por padrão no atalho `fxMeta` da aba Moedas).
+- **Banco em cada movimento**: `moves[].bank` (texto, de `ALL_BANKS()` ou "Outro banco…"). Guardar/Tirar e editar movimento têm "Em qual banco" (`svBankField`/`svBankVal`; ids `svBk`/`svBkNew`, `mvBk`/`mvBkNew`). Movimento sem banco conta no `b.bank` (banco principal, opcional), senão em "Sem banco definido".
+- Caixinha aberta mostra **"Onde está o dinheiro"** (`svBankRows(b)`: saldo por banco, R$/€/US$; compras de moeda com `fxAll` contam onde foram feitas). `boxBanks(b)` junta principal + bancos com saldo + `svFxBanks` e dá os selos ao lado do nome. O total da caixinha não muda (soma de tudo).
