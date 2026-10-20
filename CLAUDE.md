@@ -627,3 +627,9 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Não entra como despesa/receita nem em saldos**: serve para acompanhar o que falta, sem somar duas vezes com parcelas e faturas já lançadas.
   Mostra total em aberto, barra de progresso, parcelas restantes (`per`) e próximo vencimento (`dbNext`). Sem valores no código; fica em `cfg` (backup/sincronização já levam).
 - **Caixinhas separadas por moeda, sem somar** (20/10/2026, pedido dele; total e topo da Carteira também em linhas por moeda, sem converter): com caixinhas em R$ e em €/US$ ao mesmo tempo, `saveSection` mostra dois grupos ("Em real" / "Em outras moedas", `.svgrp`) com subtotal de cada um; só um tipo = lista como antes. O total geral não muda.
+
+## Conta e categoria em cada lançamento (20/10/2026, pedido dele: "quando eu lanço uma receita ou despesa, em que conta entra ou sai… e a categoria, se não existe poder criar")
+- Lançamento ganha `acct` (nome de uma conta de `cfg.accts`). No formulário o campo **"Entra na conta" / "Sai da conta"** (`#acctField`) só aparece com 2+ contas e não aparece em compra com benefício; vale também para despesa no Crédito (conta que paga a fatura).
+  Sem `acct` (ou conta que não existe mais) = 1ª conta (`accOf`). `accMoves(nome)` e `accBalOf(a)` dão o saldo de cada conta (saldo informado + receitas que entraram − despesas pagas depois, só do que é dessa conta); a soma das contas continua `accBal()`.
+  `setAcctBal` agora devolve a cada outra conta o que mexeu nela (antes jogava tudo na 1ª).
+- **Categoria de receita criável**: "+ Nova categoria" aparece também em Receita (`addCat(nome,"rec")`) e a tela Você tem "Categorias de receita". Criadas em `cfg.catsRec=[{k:"ur_…",n,c}]` (chave `ur_`; `applyCats()` põe antes de "Outras receitas"); apagar move para `rout`. As padrão de receita não se apagam.

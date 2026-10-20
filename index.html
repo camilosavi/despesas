@@ -1409,6 +1409,7 @@ header.top{padding:18px 16px!important}
   <div class="field"><label for="desc">Descrição</label><input type="text" id="desc" placeholder="Ex.: mercado, fatura Inter, salário" maxlength="80"></div>
   <div class="field" id="catField"><span class="lbl">Categoria</span><button type="button" class="catpick-btn" id="catPickBtn"><span class="catpick-curr"><i class="dot" id="catPickDot"></i><span id="catPickName">Alimentação</span></span><span class="catpick-arrow">Escolher ›</span></button></div>
   <div class="field" id="payField"><span class="lbl">Pagamento</span><div class="chips" id="payChips"></div></div>
+  <div class="field" id="acctField" hidden><span class="lbl" id="acctLbl">Conta</span><div class="chips" id="acctChips"></div></div>
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
   <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div style="display:flex;gap:10px;align-items:center"><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"><span class="hint" id="divHint" style="margin:0">quantas pessoas, contando você</span></div></div>
@@ -1588,13 +1589,21 @@ const benNext=b=>{if(!b.day)return "";const ym=curYM(), d=`${ym}-${pad(Math.min(
 const isPaid=x=>typeOf(x)==="rec"||x.paid!==false;
 /* categorias de despesa da pessoa: cfg.cats=[{k:"u_…",n,c}] (criadas) e cfg.catHide=[k] (padrão apagadas).
    Faturas de cartão, Câmbio e Outros não saem (o app depende delas). Apagar move os lançamentos para Outros. */
-const BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
+const BASE_REC=CATS.rec.slice(), BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
 function applyCats(){
   const hide=Array.isArray(cfg.catHide)?cfg.catHide:[], mine=Array.isArray(cfg.cats)?cfg.cats:[];
   CATS.desp=[...BASE_DESP.filter(c=>c.k!=="outros"&&!hide.includes(c.k)),...mine,BASE_DESP.find(c=>c.k==="outros")];
+  /* receitas: as padrão ficam; as criadas (cfg.catsRec, chave "ur_…") entram antes de "Outras receitas" */
+  const mr=Array.isArray(cfg.catsRec)?cfg.catsRec:[];
+  CATS.rec=[...BASE_REC.filter(c=>c.k!=="rout"),...mr,BASE_REC.find(c=>c.k==="rout")];
 }
-async function addCat(name){
+async function addCat(name,type){
   name=(name||"").trim().replace(/\s+/g," ").slice(0,24);if(!name){toast("Digite o nome da categoria.");return null}
+  if(type==="rec"){
+    const ex=CATS.rec.find(c=>fold(c.n)===fold(name));if(ex){toast("Essa categoria já existe.");return ex.k}
+    const mr=Array.isArray(cfg.catsRec)?cfg.catsRec:[], c={k:"ur_"+Date.now().toString(36),n:name,c:CAT_COLS[mr.length%CAT_COLS.length]};
+    await saveCfg({catsRec:[...mr,c]});applyCats();return c.k;
+  }
   const ex=CATS.desp.find(c=>fold(c.n)===fold(name));if(ex){toast("Essa categoria já existe.");return ex.k}
   const hb=BASE_DESP.find(c=>fold(c.n)===fold(name));
   if(hb){await saveCfg({catHide:(cfg.catHide||[]).filter(k=>k!==hb.k)});applyCats();return hb.k}
@@ -1602,6 +1611,13 @@ async function addCat(name){
   await saveCfg({cats:[...mine,c]});applyCats();return c.k;
 }
 async function delCat(k){
+  if(k.startsWith("ur_")){
+    const c=catOf(k,"rec"), L=items.filter(x=>x.cat===k);
+    if(!confirm(`Apagar a categoria “${c.n}”?${L.length?` ${L.length} ${L.length===1?"lançamento vai":"lançamentos vão"} para Outras receitas.`:""}`)) return;
+    for(const x of L) await store.items.update(x.id,{cat:"rout"});
+    await saveCfg({catsRec:(cfg.catsRec||[]).filter(c=>c.k!==k)});
+    applyCats();if(form&&form.cat===k)form.cat="rout";toast("Categoria apagada",true);render();return;
+  }
   if(CAT_LOCK.includes(k)) return;
   const c=catOf(k,"desp"), L=items.filter(x=>x.cat===k);
   if(!confirm(`Apagar a categoria “${c.n}”?${L.length?` ${L.length} ${L.length===1?"lançamento vai":"lançamentos vão"} para Outros.`:""}`)) return;
@@ -1950,8 +1966,10 @@ function cardAcctBox(c){
 }
 /* grava o saldo de UMA conta sem desmontar as outras: os pagamentos/recebimentos desde o último saldo entram na 1ª das outras contas */
 async function setAcctBal(name,cents){
-  const A=accts().map(a=>({...a})), mv=accMoves(), net=mv.inn-mv.out, others=A.filter(a=>a.name!==name), now=Date.now();
-  if(others.length&&net) others[0].cents+=net;
+  const A=accts().map(a=>({...a})), others=A.filter(a=>a.name!==name), now=Date.now();
+  /* cada outra conta guarda o que mexeu nela desde o último saldo; se esta conta sair, o que mexeu nela vai para a 1ª das outras */
+  others.forEach(o=>{const m=accMoves(o.name);o.cents+=m.inn-m.out});
+  if(cents==null&&others.length){const m=accMoves(name);others[0].cents+=m.inn-m.out}
   let L=A.filter(a=>a.name!==name||cents!=null);
   if(cents!=null){const a=L.find(x=>x.name===name);if(a)a.cents=cents;else L.push({id:"a"+now+Math.random().toString(36).slice(2,5),name,cents})}
   L=L.map(a=>({...a,at:today(),atTs:now}));
@@ -2255,11 +2273,14 @@ const accts=()=>Array.isArray(cfg.accts)?cfg.accts:[];
 const accTs=()=>{const A=accts();if(!A.length)return 0;return Math.max(...A.map(a=>a.atTs||Date.parse(a.at+"T23:59:59")))};
 /* dia em que a receita cai na conta: salário do fim do mês conta no mês seguinte (date = dia 1º), mas o dinheiro já caiu em `fell` */
 const recDay=x=>x.fell||x.date;
-function accMoves(){const ts=accTs(), now=today();
-  const out=items.filter(x=>typeOf(x)==="desp"&&x.paidAt&&x.paidAt>ts&&!benOf(x)).reduce((s,x)=>s+amt(x),0);
-  const inn=items.filter(x=>typeOf(x)==="rec"&&(x.createdAt||0)>ts&&recDay(x)<=now).reduce((s,x)=>s+x.cents,0);
+function accMoves(name){const ts=accTs(), now=today(), mine=x=>!name||accOf(x)===name;
+  const out=items.filter(x=>typeOf(x)==="desp"&&x.paidAt&&x.paidAt>ts&&!benOf(x)&&mine(x)).reduce((s,x)=>s+amt(x),0);
+  const inn=items.filter(x=>typeOf(x)==="rec"&&(x.createdAt||0)>ts&&recDay(x)<=now&&mine(x)).reduce((s,x)=>s+x.cents,0);
   return {out,inn}}
 const accBal=()=>{const A=accts();if(!A.length)return 0;const m=accMoves();return A.reduce((s,a)=>s+a.cents,0)+m.inn-m.out};
+/* em que conta cada lançamento entra/sai: x.acct (nome); sem conta ou conta que não existe mais = 1ª conta. A soma das contas = accBal() */
+const accOf=x=>{const A=accts();if(!A.length)return"";return x.acct&&A.some(a=>a.name===x.acct)?x.acct:A[0].name};
+const accBalOf=a=>{const m=accMoves(a.name);return a.cents+m.inn-m.out};
 /* ---------- saldos interligados: conta hoje → fim do mês → meses seguintes ----------
    Com Saldo na conta, o que já foi pago e o que já caiu está no saldo. Daqui para a frente só mexe na conta:
    receitas que ainda vão cair (+) e despesas a pagar (−), cada uma no mês dela. Atrasados de meses anteriores
@@ -2315,13 +2336,13 @@ function contaBlock(){
   const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button id="acEdit">Atualizar</button></span>`;
   /* banco limpo (out/2026): no celular, uma linha por conta; "ainda entra / falta pagar / sobra" já estão no topo */
   if(!IS_WIDE.matches) return `<section><h2>Na conta ${ext}</h2><div class="card">`+
-    A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:""}</span></span><span class="v">${R(A.length===1?tot:a.cents)}</span></div>`).join("")+
+    A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:""}</span></span><span class="v">${R(A.length===1?tot:accBalOf(a))}</span></div>`).join("")+
     (A.length>1?`<div class="acone"><span class="t"><b>Total</b></span><span class="v">${R(tot)}</span></div>`:"")+
     (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
     (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+`</div></section>`;
   return `<section><h2>Saldo na conta ${ext}</h2><div class="card rate">
     <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div></div></div>
-    ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${R(a.cents)}</b></div>`).join("")}</div>`:""}
+    ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${R(accBalOf(a))}</b></div>`).join("")}</div>`:""}
     ${fl.late?`<div class="cmp"><div><span>Atrasado de meses anteriores</span><b class="neg">${R(fl.late)}</b></div></div>`:""}
     ${after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:""}
     ${old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:""}</div></section>`;
@@ -3937,6 +3958,8 @@ function renderMe(){
   h+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${CATS.desp.map(c=>`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}${CAT_LOCK.includes(c.k)?"":`<button data-catdel="${c.k}" aria-label="Apagar ${esc(c.n)}">×</button>`}</span>`).join("")}</div>
     <div class="catadd"><input type="text" id="catAddIn" maxlength="24" placeholder="Nova categoria (ex.: Celular)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtn">Criar</button></div>
     <div class="hint expl">Ao apagar, os lançamentos dela vão para Outros. Faturas de cartão, Câmbio e Outros ficam fixas.</div></div></section>`;
+  h+=`<section id="catRecSec"><h2>Categorias de receita</h2><div class="card rate"><div class="catlist">${CATS.rec.map(c=>`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}${c.k.startsWith("ur_")?`<button data-catdel="${c.k}" aria-label="Apagar ${esc(c.n)}">×</button>`:""}</span>`).join("")}</div>
+    <div class="catadd"><input type="text" id="catAddInR" maxlength="24" placeholder="Nova categoria (ex.: Freelance)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtnR">Criar</button></div></div></section>`;
   h+=`<section><h2>Backup e exportação</h2><div class="card rate"><div class="${daysSince(cfg.lastBackup)>=7?"warn":"pos"}" style="font-size:.88rem;font-weight:600">${cfg.lastBackup?(daysSince(cfg.lastBackup)===0?"Último backup: hoje ✓":`Último backup: há ${daysSince(cfg.lastBackup)} ${daysSince(cfg.lastBackup)===1?"dia":"dias"}`):"Você ainda não fez nenhum backup"}</div><div class="hint">Backup: arquivo com todos os lançamentos, compras de euro, limites e previstos; guarde no iCloud Drive. Excel: lançamentos de ${shortMonth(curYM())} até ${shortMonth(shiftYM(curYM(),11))}, para abrir numa planilha.</div>
     <div class="row" style="margin:0;flex-wrap:wrap">${downloads?`<button class="btn soft" id="bkExport">Exportar backup</button><button class="btn soft" id="csvBtn">Excel (.csv) · 12 meses</button>`:""}${PWA?`<label class="btn soft" style="text-align:center;cursor:pointer">Importar backup<input type="file" id="bkImport" accept=".json,application/json" hidden></label>`:""}</div></div></section>`;
   h+=`<section><h2>Importar planilha</h2><div class="card rate"><div class="hint expl">Traga os gastos de uma planilha (Excel, CSV, Google Planilhas baixada, Numbers exportada). Serve lista com data e valor ou planilha com os meses nas colunas; você confere antes de lançar.</div>
@@ -4578,6 +4601,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="acCancel"){acDraft=null;rr();return}
   if(t.id==="acSave"){saveAccts();return}
   const cd=t.closest("[data-catdel]"); if(cd){delCat(cd.dataset.catdel);return}
+  if(t.id==="catAddBtnR"){const v=$("catAddInR").value;if(await addCat(v,"rec")){toast("Categoria criada",true);render();setTimeout(()=>$("catRecSec")?.scrollIntoView({block:"start"}),30)}return}
   if(t.id==="catAddBtn"){const v=$("catAddIn").value;if(await addCat(v)){toast("Categoria criada",true);render();setTimeout(()=>$("catSec")?.scrollIntoView({block:"start"}),30)}return}
   if(t.id==="homeEditBtn"){homeEdit=true;renderHome();updateFab();window.scrollTo(0,0);return}
   if(t.id==="homeDone"){homeEdit=false;renderHome();updateFab();toast("Ordem salva");return}
@@ -4834,7 +4858,12 @@ function chips(){
   if($("catPickDot")) $("catPickDot").style.background=curCat.c||"var(--accent)";
   if($("catPickName")) $("catPickName").textContent=curCat.n||"Escolher categoria";
   $("catChips").innerHTML=CATS[form.type].map(c=>`<button type="button" class="catitem-btn" data-cat="${c.k}" aria-pressed="${form.cat===c.k}"><i class="dot" style="background:${c.c}"></i><span>${esc(c.n)}</span></button>`).join("")+
-    (form.type==="desp"?(catNewOpen?`<div class="catnew" style="grid-column:1/-1;display:flex;gap:8px;padding:4px 0"><input type="text" id="catNewIn" maxlength="24" placeholder="Nova categoria" enterkeyhint="done" autocomplete="off" style="flex:1"><button type="button" class="btn primary" id="catNewOk" style="flex:none;padding:10px 18px">Criar</button></div>`:`<button type="button" class="catitem-btn add" id="catNewBtn" style="grid-column:1/-1;justify-content:center;border-style:dashed;color:var(--muted)">+ Nova categoria</button>`):"");
+    (true?(catNewOpen?`<div class="catnew" style="grid-column:1/-1;display:flex;gap:8px;padding:4px 0"><input type="text" id="catNewIn" maxlength="24" placeholder="Nova categoria" enterkeyhint="done" autocomplete="off" style="flex:1"><button type="button" class="btn primary" id="catNewOk" style="flex:none;padding:10px 18px">Criar</button></div>`:`<button type="button" class="catitem-btn add" id="catNewBtn" style="grid-column:1/-1;justify-content:center;border-style:dashed;color:var(--muted)">+ Nova categoria</button>`):"");
+  {const A=accts(), ben=form.type==="desp"&&benOf({pay:form.pay});
+    $("acctField").hidden=A.length<2||ben;
+    $("acctLbl").textContent=form.type==="rec"?"Entra na conta":"Sai da conta";
+    const cur=A.some(a=>a.name===form.acct)?form.acct:(A[0]||{}).name;
+    $("acctChips").innerHTML=A.map(a=>`<button type="button" class="chip" data-acct="${esc(a.name)}" aria-pressed="${a.name===cur}">${esc(a.name)}</button>`).join("")}
   const PY=[...PAYS,...bens().map(b=>b.name)];
   $("payChips").innerHTML=PY.map(p=>`<button type="button" class="chip" data-pay="${esc(p)}" aria-pressed="${form.pay===p}">${esc(p)}</button>`).join("");
   $("statusField").classList.toggle("dim",!!benOf({pay:form.pay}));
@@ -4882,7 +4911,7 @@ function openSheet(x){
   closeSheets(true);
   editing=x||null;dupAck=null;mergeInto=null;
   const t=x?typeOf(x):form.type;
-  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||""}:{type:t,cents:0,cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
+  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||""}:{type:t,cents:0,acct:form.acct||"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
   $("desc").value=x?x.desc||"":"";
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
@@ -4909,12 +4938,13 @@ $("date").addEventListener("change",()=>{dateTouched=true;dateHint();if(!editing
 $("desc").addEventListener("input",()=>applyRule());
 $("catChips").addEventListener("click",async e=>{
   if(e.target.closest("#catNewBtn")){catNewOpen=true;chips();$("catNewIn")?.focus();return}
-  if(e.target.closest("#catNewOk")){const k=await addCat($("catNewIn").value);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}return}
+  if(e.target.closest("#catNewOk")){const k=await addCat($("catNewIn").value,form.type);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}return}
   const b=e.target.closest("[data-cat]");if(b){form.cat=b.dataset.cat;chips();applyRule();$("catSheet").hidden=true}});
-$("catChips").addEventListener("keydown",async e=>{if(e.target.id==="catNewIn"&&e.key==="Enter"){e.preventDefault();const k=await addCat(e.target.value);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}}});
+$("catChips").addEventListener("keydown",async e=>{if(e.target.id==="catNewIn"&&e.key==="Enter"){e.preventDefault();const k=await addCat(e.target.value,form.type);if(k){form.cat=k;catNewOpen=false;chips();$("catSheet").hidden=true}}});
 document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target&&e.target.id==="canBuy"){e.preventDefault();canBuySheet()}});
 $("catPickBtn").addEventListener("click",()=>{catNewOpen=false;chips();$("catSheet").hidden=false});
 $("catSheetClose").addEventListener("click",()=>{$("catSheet").hidden=true});
+$("acctChips").addEventListener("click",e=>{const b=e.target.closest("[data-acct]");if(b){form.acct=b.dataset.acct;chips()}});
 $("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false}else if(!editing)form.paid=($("date").value||today())<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
 function splitHint(){const h=$("splitHint");if(!h)return;const v=digits($("splitVal")?.value);h.textContent=v&&form.cents?(v<form.cents?`${form.pay}: ${R(form.cents-v)}`:"maior que o total"):""}
 $("splitField").addEventListener("click",e=>{
@@ -4931,6 +4961,7 @@ $("sheet").addEventListener("submit",async e=>{
   if($("date").value<MIN_YM+"-01"){err("err","O app começa em setembro/2026.");return}
   const isD=form.type==="desp";
   const base={type:form.type,cents:form.cents,desc:$("desc").value.trim(),cat:form.cat,pay:isD?form.pay:"",date:$("date").value,card:isD&&form.pay==="Crédito"&&form.card&&form.card!=="Outro"?form.card:""};
+  {const A=accts();if(A.length>1&&!(isD&&benOf(base))) base.acct=A.some(a=>a.name===form.acct)?form.acct:A[0].name;else if(editing&&editing.acct) base.acct=""}
   if(isD) base.paid=benOf(base)?true:form.paid;
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}
   if(!editing&&isD&&base.card){const b=billDate(base.card,base.date);if(b!==base.date){base.buy=base.date;base.date=b}}
