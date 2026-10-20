@@ -634,3 +634,6 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   `setAcctBal` agora devolve a cada outra conta o que mexeu nela (antes jogava tudo na 1ª).
 - **Categoria de receita criável**: "+ Nova categoria" aparece também em Receita (`addCat(nome,"rec")`) e a tela Você tem "Categorias de receita". Criadas em `cfg.catsRec=[{k:"ur_…",n,c}]` (chave `ur_`; `applyCats()` põe antes de "Outras receitas"); apagar move para `rout`. As padrão de receita não se apagam.
 - **Hoje no PC, bloco "Dinheiro guardado"** (`k==="guard"` no `renderHome`): total também sem converter (R$ + € + US$ cada um no seu valor, `kR`/`kE`/`kU`). `svTotal()` (convertido) não é mais usado em tela.
+
+## Adicionar cartão fácil (20/10/2026, pedido dele: "tinha que ter um botão fácil pra adicionar cartão")
+- Lista "Seus cartões" (`renderCards`) tem **"+ Novo cartão"** no título (`#cardNew`) e um quadro tracejado **"Adicionar cartão"** (`.foladd`, `#cardNew2`) no fim da grade; sem cartão, botão grande no aviso vazio. Os dois abrem `openCardSheet()` (clique delegado no documento).
