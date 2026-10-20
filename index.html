@@ -3176,7 +3176,7 @@ function timeline(ym,arr){
   E.forEach(e=>{
     const rec=e.k==="rec";
     if(hasBal&&!rec&&!e.paid&&!e.rolled){bal-=e.cents;e.after=bal<0?`<span class="tlafter neg">falta ${R(-bal)}</span>`:""}
-    else if(hasBal&&rec&&recDay(e.x)>now){bal+=e.cents;e.after=bal<0?`<span class="tlafter neg">falta ${R(-bal)}</span>`:""}
+    else if(hasBal&&rec&&recDay(e.x)>now){bal+=e.cents;e.after=""}
     else e.after="";
   });
   E.sort((a,b)=>b.date.localeCompare(a.date)||(b.k==="rec"?1:a.k==="rec"?-1:0));
