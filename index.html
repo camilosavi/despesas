@@ -421,6 +421,22 @@ section.fold:not(.open){margin-bottom:6px}
 .hlrow b{font-variant-numeric:tabular-nums;white-space:nowrap}
 .hlrow b.neg{color:var(--neg,#c0392b)}
 .hlrow.tot{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;font-weight:600}
+.holchart{display:flex;align-items:flex-end;gap:6px;height:116px}
+.hvbar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
+.hvbar i{display:block;width:100%;max-width:36px;border-radius:6px 6px 3px 3px;background:var(--accent);opacity:.5}
+.hvbar.last i{opacity:1}.hvbar.off i{background:repeating-linear-gradient(45deg,var(--muted) 0 3px,transparent 3px 6px);opacity:.5}
+.hvbar b{font-size:.68rem;font-weight:600;font-variant-numeric:tabular-nums}.hvbar small{font-size:.7rem;color:var(--muted)}
+.hlcmp{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:baseline;font-size:.85rem;padding:4px 0}
+.hlcmp b,.hlcmp i{font-variant-numeric:tabular-nums;white-space:nowrap}.hlcmp i{font-style:normal;font-size:.78rem;min-width:86px;text-align:right;color:var(--muted)}
+.hlcmp i.pos{color:var(--pos)}.hlcmp i.neg{color:var(--neg)}
+.hlitem,.hlimp{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 2px;color:inherit;font:inherit}
+.hlitem{cursor:pointer}.hlitem i{font-style:normal;color:var(--muted)}
+.hlitem .hn,.hlimp .hn{display:grid;gap:1px;min-width:0}.hlitem .hn b,.hlimp .hn b{font-size:.92rem}
+.hlitem .hn small,.hlimp .hn small{color:var(--muted);font-size:.78rem;line-height:1.3;white-space:normal}
+.hlitem .hv,.hlimp .hv{font-variant-numeric:tabular-nums;white-space:nowrap}
+.hllist .hlitem:first-child,.hllist .hlimp:first-child{border-top:0}
+@media(max-width:400px){.hlimp{grid-template-columns:1fr auto}.hlimp .tbtn{grid-column:1/-1;justify-self:stretch;text-align:center}}
+
 .irow{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:10px 0}
 .irow+.irow{border-top:1px solid var(--line)}
 .irow input{width:22px;height:22px;accent-color:var(--accent);grid-row:1/3}
@@ -3944,7 +3960,7 @@ function renderAno(){
     <div class="toolbar"><button class="tbtn" id="exAdd">Adicionar previsto</button></div></section>`;
 
     h += `<div class="ano-grid ano-fixos-grid">
-      <div class="ano-col-main">${salSection()}${subSection()}</div>
+      <div class="ano-col-main">${salSection()}${holSection()}${subSection()}</div>
       <div class="ano-col-side">${recurSection()}${prevSec}${feeYear(year)}</div>
     </div>`;
   }
@@ -4615,7 +4631,7 @@ document.addEventListener("click",async e=>{
     if(gt.dataset.gotab==="pMes")view=curYM();
     if(gt.dataset.gotab==="pAno"){
       if(gt.dataset.scroll==="saveSec") anoSubTab="metas";
-      else if(gt.dataset.scroll==="salSec") anoSubTab="fixos";
+      else if(gt.dataset.scroll==="salSec"||gt.dataset.scroll==="holSec") anoSubTab="fixos";
       else if(gt.dataset.scroll==="projSec") anoSubTab="ano";
       lsSet("despesas.anoTab",anoSubTab);
     }
@@ -4653,6 +4669,15 @@ document.addEventListener("click",async e=>{
   if(t.id==="loAll"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para apagar todos";return}
     const LO=cardItems(selCard,view).filter(x=>!genFat(x)&&!x.imp);t.disabled=true;try{for(const x of LO) await dropWithSeries(x);toast(`${LO.length} apagados`);render()}catch(e){toast("Parou no meio. Confira e tente de novo.")}return}
   const ndb=t.closest("[data-notdup]"); if(ndb){try{await saveCfg({notDup:[...notDup(),ndb.dataset.notdup]});render()}catch(x){}return}
+  {const hv=t.closest("[data-holv]");if(hv){holView(hv.dataset.holv);return}}
+  {const ho=t.closest("[data-holopen]");if(ho){const r=(cfg.hol||{})[ho.dataset.holopen];if(r)openHolerite(holFromRec(r));return}}
+  {const h2=t.closest("[data-holopen2]");if(h2){const h=holBatch[+h2.dataset.holopen2];if(h)openHolerite(h);return}}
+  {const h1=t.closest("[data-holone]");if(h1){const h=holBatch[+h1.dataset.holone];if(h){h1.disabled=true;holLaunch([h])}return}}
+  if(t.id==="holAll"){t.disabled=true;holLaunch(holBatch);return}
+  if(t.id==="holMore"){holAll=!holAll;render();return}
+  {const hx=t.closest("[data-holx]");if(hx){const id=hx.dataset.holx;try{await holPatch(id,r=>{if(r.x)delete r.x;else r.x=1;return r});const on=!!(cfg.hol[id]||{}).x;toast(on?"Fora do salário previsto":"Volta a entrar no salário previsto",true);holView(id);render()}catch(e){toast("Não deu para salvar.")}return}}
+  {const hd=t.closest("[data-holdel]");if(hd){if(!hd.classList.contains("sure")){hd.classList.add("sure");hd.textContent="Toque de novo para apagar";return}
+    try{await holPatch(hd.dataset.holdel,()=>null);closeSheets();toast("Holerite apagado dos lidos");render()}catch(e){toast("Não deu para apagar.")}return}}
   if(t.id==="limEdit"){limEditing=true;fatEditing=false;renderCards();setTimeout(()=>$("limTot")?.focus(),30);return}
   if(t.id==="fatEdit"){fatEditing=true;limEditing=false;renderCards();setTimeout(()=>$("fatVal")?.focus(),30);return}
   if(t.id==="fatCancel"){fatEditing=false;renderCards();return}
@@ -5321,16 +5346,18 @@ async function pdfPagesOf(file){
     pages.push({h:vp.height,w:vp.width,items:tc.items.map(i=>({s:i.str,x:i.transform[4],w:i.width,t:vp.height-i.transform[5]}))})}
   return pages;
 }
-/* vários PDFs de uma vez (pensado para holerites): cada um aprende para o salário previsto; depois abre o mais novo
-   que ainda não está lançado (a partir de MIN_YM) para lançar, ou só avisa */
+/* vários PDFs de uma vez (pensado para holerites): cada um aprende para o salário previsto e entra no histórico; depois mostra
+   um resumo (novo / já estava / já lançado), com "Lançar" em cada um e "Lançar os que faltam" (out/2026) */
 async function readMany(files){
-  toast(`Lendo ${files.length} PDFs…`);const H=[];let other=0;
-  for(const f of files){try{const h=parseHolerite(await pdfPagesOf(f));if(h){holLearn(h);H.push(h)}else other++}catch(e){other++}}
-  if(!H.length){toast("Nenhum desses PDFs é holerite. Para faturas, importe um de cada vez.");return}
-  const open=H.filter(h=>h.date>=MIN_YM+"-01"&&!holDup(h)).sort((a,b)=>b.date.localeCompare(a.date)||(holKey(b.kind)==="sal")-(holKey(a.kind)==="sal"))[0];
-  const msg=`${H.length} ${H.length>1?"holerites lidos":"holerite lido"} para o salário previsto${other?` · ${other} ${other>1?"outros PDFs ignorados":"outro PDF ignorado"}`:""}`;
-  if(open){openHolerite(open);setTimeout(()=>toast(msg,true),300)}
-  else{anoSubTab="fixos";lsSet("despesas.anoTab","fixos");go("pAno");setTimeout(()=>{$("salSec")?.scrollIntoView({block:"start"});toast(msg,true)},250)}
+  toast(`Lendo ${files.length} PDFs…`);const R0=[],other=[],dupF=[],seen=new Set();
+  for(const f of files){try{const h=parseHolerite(await pdfPagesOf(f));
+    if(!h){other.push(f.name);continue}
+    const kk=`${h.ref}|${h.kind}`;if(seen.has(kk)){dupF.push(f.name);continue}seen.add(kk);
+    const had=(cfg.hol||{})[`${h.ref}|${holKey2(h.kind)}`], tag=!had?"novo":had.liq===h.cents&&had.date===h.date?"já estava":"atualizado";
+    holLearn(h);R0.push({h,tag})}catch(e){other.push(f.name)}}
+  if(!R0.length){toast("Nenhum desses PDFs é holerite. Para faturas, importe um de cada vez.");return}
+  anoSubTab="fixos";lsSet("despesas.anoTab","fixos");
+  holImportSheet(R0,other,dupF);
 }
 async function readInvoice(file,auto){
   try{const head=new TextDecoder("latin1").decode(new Uint8Array(await file.slice(0,600).arrayBuffer()));
@@ -5623,16 +5650,20 @@ let hol=null;
    folha que cai no fim do mês anterior (conta no 1º do mês, como salShift). Some quando há o lançamento real do mês.
    Entram em accFlow/endBal (saldos encadeados) e na linha do tempo. cfg.salPrev = "off" desliga; "base" usa só o fixo. */
 const holKey=k=>/adiant/i.test(k)?"adv":/^sal/i.test(fold(k))?"sal":"";
+/* chave de guardar no histórico: além de folha (sal) e adiantamento (adv), guarda 13º (d131/d132) e férias (fer); só sal entra no previsto */
+const holKey2=k=>holKey(k)||(/13/.test(k)?"d13"+(/2\s*[ªa]/i.test(k)?"2":"1"):/ferias/i.test(fold(k))?"fer":"");
 function holLearn(h){
-  const k=holKey(h.kind);if(!k||!h.ref) return;
+  const k=holKey2(h.kind);if(!k||!h.ref) return;
   const H={...(cfg.hol||{})}, id=`${h.ref}|${k}`, ev=(h.ev||[]).map(e=>({d:e.desc,c:e.cents,s:e.side}));
-  const rec={ref:h.ref,k,date:h.date,liq:h.cents,tp:h.tp||0,ev};
-  if(H[id]&&stab(H[id])===stab(rec)) return;
-  H[id]=rec;const keep=Object.keys(H).sort().slice(-24);saveCfg({hol:Object.fromEntries(keep.map(x=>[x,H[x]]))}).catch(()=>{});
+  const rec={ref:h.ref,k,date:h.date,liq:h.cents,tp:h.tp||0,ev,kind:h.kind,...(h.td?{td:h.td}:{}),...(h.emp?{emp:h.emp}:{}),
+    ...(h.conv?{conv:{c:h.conv.cents,n:h.conv.n||0,by:(h.conv.by||[]).map(b=>({k:b.k,c:b.cents,n:b.n}))}}:{})};
+  const old=H[id];if(old&&old.x)rec.x=1; /* "não usar no previsto" escolhido por ele continua */
+  if(old&&stab(old)===stab(rec)) return;
+  H[id]=rec;const keep=Object.keys(H).sort().slice(-60);saveCfg({hol:Object.fromEntries(keep.map(x=>[x,H[x]]))}).catch(()=>{});
 }
 const evKey=d=>fold(d).toUpperCase().replace(/[^A-Z0-9% ]/g,"").replace(/\s+/g," ").trim();
 function salPlan(){
-  const F=Object.values(cfg.hol||{}).filter(h=>h.k==="sal"&&h.ev&&h.ev.length).sort((a,b)=>a.ref.localeCompare(b.ref)).slice(-6);
+  const F=Object.values(cfg.hol||{}).filter(h=>h.k==="sal"&&h.ev&&h.ev.length&&!h.x).sort((a,b)=>a.ref.localeCompare(b.ref)).slice(-6);
   if(F.length<2) return null;
   const n=F.length, med=a=>{const b=a.slice().sort((x,y)=>x-y);return b.length%2?b[(b.length-1)/2]:(b[b.length/2-1]+b[b.length/2])/2};
   const G={};F.forEach((h,i)=>h.ev.forEach(e=>{const k=e.s+"|"+evKey(e.d);if(/ARRED/.test(k))return;(G[k]=G[k]||{s:e.s,d:e.d,v:Array(n).fill(0),seen:0}).v[i]+=e.c;G[k].d=e.d}));
@@ -5766,17 +5797,22 @@ function holDup(h){
   const x=items.find(x=>typeOf(x)==="rec"&&x.date.slice(0,7)===ym&&(fold(cleanDesc(x)).toLowerCase()===n||closeC(x.cents,h.cents)&&(x.cat==="sal"||nameSim(x.desc,h.kind)>=.5)));
   return x?{x,same:false}:null;
 }
+/* blocos de um holerite (convênio, aviso de conta que não bate, proventos e descontos): usado ao importar e ao rever os lidos */
+function holBlocks(h){
+  const P=h.ev.filter(e=>e.side==="p"), D=h.ev.filter(e=>e.side==="d");
+  const evl=(a,neg)=>a.map(e=>`<div class="hlrow"><span>${esc(hlName(e.desc))}</span><b${neg?' class="neg"':""}>${neg?"− ":""}${R(e.cents)}</b></div>`).join("");
+  return `${h.conv?`<div class="hlconv"><span>Convênio no mês</span><b>${R(h.conv.cents)}</b><small>${h.conv.n?`${h.conv.n} ${h.conv.n===1?"atendimento":"atendimentos"}${h.conv.from?` de ${fmtDM(h.conv.from)} a ${fmtDM(h.conv.to)}`:""} · `:""}já descontado do holerite</small>${(h.conv.by||[]).map(b=>`<div class="hlrow"><span>${esc(b.k)} <small>${b.n}×</small></span><b>${R(b.cents)}</b></div>`).join("")}</div>`:""}
+  ${h.check===false?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 10px">Proventos − descontos não bateu com o líquido. Confira o valor.</p>`:""}
+  ${h.ev.length?`<details class="hldet"><summary>Ver proventos e descontos</summary>${evl(P)}${P.length&&h.tp!=null?`<div class="hlrow tot"><span>Total de proventos</span><b>${R(h.tp)}</b></div>`:""}${evl(D,true)}${D.length&&h.td!=null?`<div class="hlrow tot"><span>Total de descontos</span><b class="neg">− ${R(h.td)}</b></div>`:""}<div class="hlrow tot"><span>Líquido</span><b>${R(h.cents)}</b></div><p class="hint" style="margin:8px 0 0">Os descontos já saíram do líquido; não precisa lançar como despesa.</p></details>`:""}`;
+}
 function openHolerite(h){
   hol=h;holLearn(h);closeSheets(true);$("toast").hidden=true;
-  const old=h.date<MIN_YM+"-01", dup=holDup(h), P=h.ev.filter(e=>e.side==="p"), D=h.ev.filter(e=>e.side==="d");
-  const evl=(a,neg)=>a.map(e=>`<div class="hlrow"><span>${esc(hlName(e.desc))}</span><b${neg?' class="neg"':""}>${neg?"− ":""}${R(e.cents)}</b></div>`).join("");
+  const old=h.date<MIN_YM+"-01", dup=holDup(h);
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Holerite · ${esc(monthLabel(h.ref).toLowerCase())}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   <div class="imphead"><b>${R(h.cents)}</b><span class="hint">líquido · cai em ${fmtDM(h.date)}/${h.date.slice(0,4)}${salShift("sal",h.date)?` · conta em ${monthLabel(salShift("sal",h.date).date.slice(0,7)).split(" ")[0].toLowerCase()}`:""}${h.emp?` · ${esc(h.emp)}`:""}</span></div>
-  ${h.conv?`<div class="hlconv"><span>Convênio no mês</span><b>${R(h.conv.cents)}</b><small>${h.conv.n?`${h.conv.n} ${h.conv.n===1?"atendimento":"atendimentos"}${h.conv.from?` de ${fmtDM(h.conv.from)} a ${fmtDM(h.conv.to)}`:""} · `:""}já descontado do holerite</small>${(h.conv.by||[]).map(b=>`<div class="hlrow"><span>${esc(b.k)} <small>${b.n}×</small></span><b>${R(b.cents)}</b></div>`).join("")}</div>`:""}
-  ${h.check===false?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 10px">Proventos − descontos não bateu com o líquido. Confira o valor.</p>`:""}
   ${old?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 10px">Antes de ${monthLabel(MIN_YM).toLowerCase()}: só informativo, não entra no app.</p>`:""}
   ${dup&&!old?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 10px">${dup.same?"Esse holerite já foi importado":"Parece já lançado"}: “${esc(cleanDesc(dup.x))}”, ${R(dup.x.cents)} em ${fmtDM(dup.x.date)}.</p>`:""}
-  ${h.ev.length?`<details class="hldet"><summary>Ver proventos e descontos</summary>${evl(P)}${P.length&&h.tp!=null?`<div class="hlrow tot"><span>Total de proventos</span><b>${R(h.tp)}</b></div>`:""}${evl(D,true)}${D.length&&h.td!=null?`<div class="hlrow tot"><span>Total de descontos</span><b class="neg">− ${R(h.td)}</b></div>`:""}<div class="hlrow tot"><span>Líquido</span><b>${R(h.cents)}</b></div><p class="hint" style="margin:8px 0 0">Os descontos já saíram do líquido; não precisa lançar como despesa.</p></details>`:""}
+  ${holBlocks(h)}
   <div class="field"><label for="hlDesc">Descrição</label><input type="text" id="hlDesc" value="${esc(h.kind)}" maxlength="80"></div>
   <div class="field"><label for="hlDate">Data</label><input type="date" id="hlDate" value="${h.date}" min="${MIN_YM}-01"></div>
   <div class="row" style="margin-top:14px">${old?`<button type="button" class="btn primary" disabled>Só informativo</button>`:
@@ -5784,14 +5820,112 @@ function openHolerite(h){
     `<button type="button" class="btn primary" id="hlAdd">Lançar receita</button>`}</div>`;
   $("scrim").hidden=$("diagSheet").hidden=false;
 }
+/* a receita que o holerite vira (a mesma ao lançar um, vários de uma vez ou trocar) */
+function holData(h,desc,date){
+  const sh=salShift("sal",date);
+  return {type:"rec",desc,cat:"sal",cents:h.cents,date:sh?sh.date:date,...(sh?{fell:sh.fell}:{}),pay:"",card:"",imp:`holerite-${h.ref}-${h.kind}`,...(h.conv?{conv:h.conv.cents,...(h.conv.by&&h.conv.by.length?{convBy:h.conv.by.map(b=>({k:b.k,cents:b.cents,n:b.n}))}:{})}:{})};
+}
 async function addHolerite(swapId){
   const h=hol;if(!h) return;
   const desc=($("hlDesc").value||h.kind).trim(), date=$("hlDate").value||h.date;
   if(date<MIN_YM+"-01"){toast("O app começa em "+monthLabel(MIN_YM).toLowerCase()+".");return}
-  const sh=salShift("sal",date);
-  const data={type:"rec",desc,cat:"sal",cents:h.cents,date:sh?sh.date:date,...(sh?{fell:sh.fell}:{}),pay:"",card:"",imp:`holerite-${h.ref}-${h.kind}`,...(h.conv?{conv:h.conv.cents,...(h.conv.by&&h.conv.by.length?{convBy:h.conv.by.map(b=>({k:b.k,cents:b.cents,n:b.n}))}:{})}:{})};
+  const data=holData(h,desc,date);
   try{if(swapId) await store.items.update(swapId,data);else await store.items.add({...data,createdAt:Date.now()});
     hol=null;closeSheets();view=data.date.slice(0,7);go("pMes");toast(swapId?`${desc} atualizado`:`${desc} lançado`,true)}catch(e){toast("Não deu para lançar. Tente de novo.")}
+}
+/* ---------- holerites lidos: histórico, evolução e importação em lote (out/2026, pedido dele: "trate melhor os holerites") ----------
+   cfg.hol guarda cada holerite lido (folha, adiantamento, 13º, férias) com eventos, totais e convênio. Aqui: lista no Ano,
+   tela de cada um (lançar, não usar no previsto, apagar), gráfico do líquido e comparação com o mês anterior. */
+const holKind=r=>r.kind||({adv:"Adiantamento",sal:"Salário",fer:"Férias",d131:"13º salário (1ª parcela)",d132:"13º salário (2ª parcela)"}[r.k]||r.k);
+const holShort=r=>({adv:"Adiantamento",sal:"Folha",fer:"Férias",d131:"13º (1ª parcela)",d132:"13º (2ª parcela)"}[r.k]||holKind(r));
+const holRecs=()=>Object.entries(cfg.hol||{}).filter(([k,r])=>r&&r.ref&&r.liq).map(([id,r])=>({...r,id})).sort((a,b)=>b.date.localeCompare(a.date)||b.k.localeCompare(a.k));
+function holFromRec(r){
+  const ev=(r.ev||[]).map(e=>({desc:e.d,cents:e.c,side:e.s})), tp=r.tp||null, td=r.td||null;
+  return {kind:holKind(r),cents:r.liq,date:r.date,ref:r.ref,emp:r.emp||"",tp,td,ev,
+    conv:r.conv?{cents:r.conv.c,n:r.conv.n||0,from:"",to:"",by:(r.conv.by||[]).map(b=>({k:b.k,cents:b.c,n:b.n}))}:null,check:tp&&td?tp-td===r.liq:null};
+}
+function holState(h){
+  if(h.date<MIN_YM+"-01") return {s:"old"};
+  const d=holDup(h);return d?{s:d.same?"same":"dup",dup:d}:{s:"new"};
+}
+const holStTxt=(st,h)=>st.s==="old"?`antes de ${monthLabel(MIN_YM).toLowerCase()}, só informativo`:st.s==="same"?"lançado no app ✓":st.s==="dup"?`parece já lançado (“${esc(cleanDesc(st.dup.x))}”)`:"ainda não lançado";
+const evSum=(r,side,re)=>(r.ev||[]).filter(e=>e.s===side&&re.test(evKey(e.d))).reduce((a,e)=>a+e.c,0);
+/* [nome, valor do holerite, 1 = subir é bom / −1 = subir é ruim] */
+const HOL_ROWS=[
+  ["Líquido",r=>r.liq,1],["Proventos",r=>r.tp||0,1],["Descontos",r=>r.td||(r.tp?r.tp-r.liq:0),-1],
+  ["Hora extra (com DSR)",r=>evSum(r,"p",/HORAS? EXTRAS?/),1],["Sobreaviso",r=>evSum(r,"p",/SOBREAVISO/),1],
+  ["Convênio",r=>r.conv?r.conv.c:evSum(r,"d",/COPARTICIPA|CONVENIO/),-1],["INSS",r=>evSum(r,"d",/INSS/),-1],
+  ["Imposto de renda",r=>evSum(r,"d",/IRRF|IMPOSTO DE RENDA/),-1],["Faltas e atrasos",r=>evSum(r,"d",/FALTA|ATRASO|DSR PERD/),-1]];
+const holMon=ref=>MES[+ref.slice(5,7)-1].toLowerCase();
+let holAll=false;
+function holSection(){
+  const A=holRecs();if(!A.length) return "";
+  const F=A.filter(r=>r.k==="sal"), ch=F.slice(0,8).reverse();
+  let chart="";
+  if(ch.length>=2){
+    const mx=Math.max(...ch.map(r=>r.liq)), k=c=>Math.round(c/100).toLocaleString("pt-BR"), avg=Math.round(ch.reduce((a,r)=>a+r.liq,0)/ch.length);
+    const hi=ch.reduce((a,r)=>r.liq>a.liq?r:a), lo=ch.reduce((a,r)=>r.liq<a.liq?r:a);
+    chart=`<div class="hint" style="margin:0 0 6px"><b>Líquido da folha</b>, mês a mês</div>
+      <div class="holchart" role="img" aria-label="Líquido da folha por mês">${ch.map((r,i)=>`<div class="hvbar${i===ch.length-1?" last":""}${r.x?" off":""}"><b>${k(r.liq)}</b><i style="height:${Math.max(6,Math.round(r.liq/mx*64))}px"></i><small>${holMon(r.ref)}</small></div>`).join("")}</div>
+      <div class="src">Média ${R(avg)} · maior ${holMon(hi.ref)} ${R(hi.liq)} · menor ${holMon(lo.ref)} ${R(lo.liq)}</div>`;
+  }
+  let cmp="";
+  if(F.length>=2){
+    const c=F[0], p=F[1];
+    const rows=HOL_ROWS.map(([n,f,dir])=>[n,f(c),f(p),dir]).filter(([n,a,b])=>a||b).map(([n,a,b,dir])=>{
+      const d=a-b, cls=!d?"":(d*dir>0?"pos":"neg");
+      return `<div class="hlcmp"><span>${n}</span><b>${R(a)}</b><i class="${cls}">${d?`${d>0?"▲":"▼"} ${R(Math.abs(d))}`:"igual"}</i></div>`}).join("");
+    cmp=`<details class="hldet"><summary>Comparar ${holMon(c.ref)} com ${holMon(p.ref)}</summary><div class="hint" style="margin:0 0 6px">Folha de ${shortMonth(c.ref)} contra a de ${shortMonth(p.ref)}. Verde: melhor para você.</div>${rows}</details>`;
+  }
+  /* meses sem holerite entre o primeiro e o último lido */
+  let miss="";
+  if(F.length>=2){const have=new Set(F.map(r=>r.ref)), lo=F[F.length-1].ref, hi=F[0].ref, L=[];
+    for(let m=lo;m<hi;m=shiftYM(m,1)) if(!have.has(m)) L.push(m);
+    if(L.length) miss=`<div class="hint" style="margin:0">Faltam holerites de ${L.slice(0,5).map(shortMonth).join(", ")}${L.length>5?` e mais ${L.length-5}`:""}. Importar deixa o salário previsto mais certo.</div>`}
+  const show=holAll?A:A.slice(0,6);
+  const list=show.map(r=>{const h=holFromRec(r), st=holState(h);
+    return `<button type="button" class="hlitem" data-holv="${esc(r.id)}"><span class="hn"><b>${esc(holShort(r))} · ${shortMonth(r.ref)}</b><small>${holStTxt(st,h)}${r.x?" · fora do previsto":""}</small></span><b class="hv">${R(r.liq)}</b><i>›</i></button>`}).join("");
+  return `<section id="holSec"><h2>Holerites lidos <small>${A.length}</small></h2><div class="card rate">
+    ${chart}${cmp}${miss}
+    <div class="hllist">${list}</div>
+    ${A.length>6?`<div class="toolbar" style="margin:0"><button class="tbtn" id="holMore">${holAll?"Ver menos":`Ver todos (${A.length})`}</button></div>`:""}
+    <div class="hint expl" style="margin:0">Toque em um para ver os valores, lançar como receita, tirar do salário previsto ou apagar. Importar o mesmo PDF de novo atualiza o que está aqui.</div></div></section>`;
+}
+function holView(id){
+  const r=(cfg.hol||{})[id];if(!r) return;
+  const h=holFromRec(r), st=holState(h);
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>${esc(holShort(r))} · ${esc(monthLabel(r.ref).toLowerCase())}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <div class="imphead"><b>${R(h.cents)}</b><span class="hint">líquido · cai em ${fmtDM(h.date)}/${h.date.slice(0,4)}${h.emp?` · ${esc(h.emp)}`:""}</span></div>
+  <p class="hint" style="margin:0 0 10px">${holStTxt(st,h)}${r.x?" · não entra no salário previsto":""}</p>
+  ${holBlocks(h)}
+  ${st.s==="new"||st.s==="dup"?`<button type="button" class="btn primary" data-holopen="${esc(id)}" style="width:100%;margin-top:4px">${st.s==="dup"?"Abrir para lançar ou trocar":"Lançar como receita"}</button>`:""}
+  ${r.k==="sal"?`<button type="button" class="btn soft" data-holx="${esc(id)}" style="width:100%;margin-top:8px">${r.x?"Voltar a usar no salário previsto":"Não usar no salário previsto"}</button><p class="hint" style="margin:6px 0 0">Útil quando aquele mês teve algo fora do normal (atrasos, faltas, hora extra enorme).</p>`:""}
+  <button type="button" class="btn soft" data-holdel="${esc(id)}" style="width:100%;margin-top:8px">Apagar dos lidos</button>
+  <p class="hint" style="margin:6px 0 0">Só tira daqui e do cálculo do previsto; a receita lançada no app não muda.</p>`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
+async function holPatch(id,fn){const H={...(cfg.hol||{})};if(!H[id]) return;const r=fn({...H[id]});if(r==null)delete H[id];else H[id]=r;await saveCfg({hol:H})}
+/* importação em lote: mostra o que foi lido (novo / já estava), o que já está lançado e deixa lançar os que faltam */
+let holBatch=[];
+function holImportSheet(R0,other,dupF){
+  holBatch=R0.map(x=>x.h).sort((a,b)=>b.date.localeCompare(a.date));
+  const rows=R0.slice().sort((a,b)=>b.h.date.localeCompare(a.h.date)).map(({h,tag})=>{const i=holBatch.indexOf(h), st=holState(h);
+    return `<div class="hlimp"><span class="hn"><b>${esc(holShort({k:holKey2(h.kind),kind:h.kind}))} · ${shortMonth(h.ref)}</b><small>${tag} · ${holStTxt(st,h)}</small></span><b class="hv">${R(h.cents)}</b>${st.s==="new"?`<button type="button" class="tbtn go" data-holone="${i}">Lançar</button>`:st.s==="dup"?`<button type="button" class="tbtn" data-holopen2="${i}">Abrir</button>`:`<span></span>`}</div>`}).join("");
+  const todo=holBatch.filter(h=>holState(h).s==="new"), nNew=R0.filter(x=>x.tag==="novo").length;
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Holerites lidos</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <p class="hint" style="margin:0 0 10px">${R0.length} ${R0.length===1?"holerite lido":"holerites lidos"}${nNew?` · ${nNew} ${nNew===1?"novo":"novos"}`:""}${other.length?` · ${other.length} ${other.length===1?"PDF ignorado":"PDFs ignorados"} (não ${other.length===1?"é":"são"} holerite)`:""}${dupF.length?` · ${dupF.length} repetido${dupF.length>1?"s":""} no lote`:""}. Todos já alimentam o salário previsto.</p>
+  <div class="hllist" style="margin:0 0 12px">${rows}</div>
+  ${other.length?`<p class="hint" style="margin:0 0 10px">Ignorados: ${other.slice(0,4).map(esc).join(", ")}${other.length>4?` e mais ${other.length-4}`:""}. Fatura, extrato ou conta vão pelo botão de importar de um por vez.</p>`:""}
+  ${todo.length>1?`<button type="button" class="btn primary" id="holAll" style="width:100%">Lançar os ${todo.length} que faltam</button>`:""}
+  <button type="button" class="btn soft" data-gotab="pAno" data-scroll="holSec" style="width:100%;margin-top:8px">Ver no histórico</button>`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
+async function holLaunch(L){
+  const todo=L.filter(h=>holState(h).s==="new");if(!todo.length){toast("Nada novo para lançar.");return}
+  let n=0,last=null;
+  try{for(const h of todo){const d=holData(h,h.kind,h.date);await store.items.add({...d,createdAt:Date.now()+n});n++;last=d.date}
+    hol=null;closeSheets();if(last)view=last.slice(0,7);go("pMes");toast(`${n} ${n===1?"receita lançada":"receitas lançadas"}`,true)}
+  catch(e){toast(`Parou no meio (${n} lançadas). Confira e tente de novo.`)}
 }
 let conta=null;
 function openConta(c){

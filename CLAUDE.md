@@ -209,6 +209,16 @@ card?, parc?:"i/n", group?, createdAt}`
   (sem saldo), linha do tempo (linha em itálico → Ano) e coluna Entra do Ano (com `*`). Seção `salSection()` no Ano:
   "Não usar / Só o fixo / Com a média" → `cfg.salPrev` ("off"/"base"/padrão média). Precisa de ≥ 2 folhas. Os quadros mostram
   o **total do mês** = adiantamento + folha (pedido dele: "o fixo teria que ser a soma com o adiantamento").
+- **Holerites lidos** (out/2026, pedido dele: "trate melhor os holerites"): `holLearn` agora guarda no `cfg.hol` todo holerite lido,
+  não só folha/adiantamento: também 13º (`d131`/`d132`) e férias (`fer`), com `kind`, `td`, `emp` e `conv` (até 60). `salPlan` só usa
+  `k==="sal"` e ignora os com `x:1`. Seção `holSection()` no Ano (aba Fixos, depois de Salário previsto, id `holSec`): gráfico do
+  líquido das últimas 8 folhas (`.hvbar`; `.hbar` já existia no topo), comparação com o mês anterior (`HOL_ROWS`: líquido, proventos,
+  descontos, hora extra, sobreaviso, convênio, INSS, IR, faltas; verde = melhor para ele), aviso de meses sem holerite e lista com
+  estado de cada um (`holState`: lançado ✓ / parece já lançado / ainda não lançado / antes de `MIN_YM`). Tocar abre `holView`
+  (`holFromRec` refaz o objeto do `parseHolerite`): lançar receita (`openHolerite`), "Não usar no salário previsto" (`x`),
+  "Apagar dos lidos" (2 toques; não mexe na receita lançada). `readMany` (vários PDFs) abre o resumo `holImportSheet`: novo / já estava /
+  atualizado, ignorados, repetidos no lote, "Lançar" em cada um e "Lançar os N que faltam" (`holLaunch`, usa `holData`, a mesma receita
+  de `addHolerite`). Dados de teste: nada de valores reais no código.
 - **Importar planilha** (out/2026; tela Você → "Importar planilha" e link na tela de boas-vindas, `input.xlsany`): SheetJS
   0.18.5 via cdnjs (`loadXlsx`); CSV lido à mão (`xlCsv`, separador ; , ou tab). Por aba escolhe sozinho: **grade** (`xlGrid`:
   linha com 2+ meses = cabeçalho, bloco até a linha vazia; coluna "pago" ao lado do mês marca pago; ano do 1º mês por
