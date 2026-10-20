@@ -601,7 +601,8 @@ body{background:var(--bg);min-height:100vh;min-height:100dvh}
 .amount input{flex:1;min-width:0;border:0;background:none;font-family:var(--display);font-weight:700;font-size:2.4rem;color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
 .amount input:focus{outline:none}
 .amount.sm input{font-size:1.7rem}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.two .field{grid-template-columns:minmax(0,1fr);min-width:0}.amount{min-width:0}
 .field{display:grid;gap:6px;margin-bottom:14px;min-width:0}
 .field>label,.field>.lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
 .field input[type=text],.field input[type=date],.field select{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);min-height:46px}
@@ -1459,7 +1460,9 @@ header.top{padding:18px 16px!important}
     <div class="field"><label for="fxEur" id="fxEurL">€ recebido</label><div class="amount sm" style="margin:0"><span id="fxEurS">€</span><input id="fxEur" inputmode="numeric" placeholder="0,00"></div></div>
     <div class="field"><label for="fxBrl">R$ pago</label><div class="amount sm" style="margin:0"><span>R$</span><input id="fxBrl" inputmode="numeric" placeholder="0,00"></div></div>
   </div>
-  <p class="hint" id="fxRate" style="margin:4px 0 16px">Cotação: —</p>
+  <div class="field"><label for="fxRt" id="fxRtL">Cotação usada (R$ por €)</label><div class="amount sm" style="margin:0"><span>R$</span><input id="fxRt" inputmode="decimal" placeholder="0,0000"></div></div>
+  <p class="hint" id="fxRate" style="margin:4px 0 16px">Preencha dois dos três: o outro sai sozinho.</p>
+  <div class="toolbar" style="margin:-8px 0 14px"><button type="button" class="tbtn" id="fxRtToday">Usar a cotação de hoje</button></div>
   <div class="two">
     <div class="field"><label for="fxDate">Data</label><input type="date" id="fxDate" min="2026-09-01"></div>
     <div class="field"><label for="fxWhere">Onde</label><input type="text" id="fxWhere" list="fxPlaces" placeholder="Revolut, Wise…" maxlength="40"></div>
@@ -4658,6 +4661,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="loAll"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para apagar todos";return}
     const LO=cardItems(selCard,view).filter(x=>!genFat(x)&&!x.imp);t.disabled=true;try{for(const x of LO) await dropWithSeries(x);toast(`${LO.length} apagados`);render()}catch(e){toast("Parou no meio. Confira e tente de novo.")}return}
   const ndb=t.closest("[data-notdup]"); if(ndb){try{await saveCfg({notDup:[...notDup(),ndb.dataset.notdup]});render()}catch(x){}return}
+  if(t.id==="fxRtToday"){const r=rateNum(fxSheetCur);if(!r){toast("Sem cotação agora. Tente de novo em instantes.");return}$("fxRt").value=rateTxt(r);fxCalc("rt");return}
   {const hv=t.closest("[data-holv]");if(hv){holView(hv.dataset.holv);return}}
   {const ho=t.closest("[data-holopen]");if(ho){const r=(cfg.hol||{})[ho.dataset.holopen];if(r)openHolerite(holFromRec(r));return}}
   {const h2=t.closest("[data-holopen2]");if(h2){const h=holBatch[+h2.dataset.holopen2];if(h)openHolerite(h);return}}
@@ -4806,7 +4810,8 @@ document.addEventListener("input",e=>{
   if(id==="fQ"){F.q=e.target.value;clearTimeout(renderPlan.t);renderPlan.t=setTimeout(()=>{renderPlan();const q=$("fQ");q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)}
   if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
   if(id&&id.startsWith("subPv_")&&$("subMine")){const tot=+($("subSave")?.dataset.subtot||0);let b=0;document.querySelectorAll("[id^=subPv_]").forEach(i=>b+=digits(i.value));$("subMine").textContent=b?`Recebe ${R(b)} · sai ${R(Math.max(0,tot-b))} para você`:"—"}
-  if(id==="fxEur"||id==="fxBrl") fxRateHint();
+  if(id==="fxRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
+  if(id==="fxEur"||id==="fxBrl"||id==="fxRt") fxCalc(id==="fxEur"?"eur":id==="fxBrl"?"brl":"rt");
   if(id==="fxWhere") fxPlaceChips();
   if(id==="themeFree"){lsSet("despesas.themeColor",e.target.value);lsSet("despesas.theme","livre");applyTheme()}
 });
@@ -6459,14 +6464,28 @@ let fxSheetCur="EUR";
 function fxPlaceChips(){const w=fxPlaceBank($("fxWhere").value);
   $("fxPlaceChips").innerHTML=FX_PICK.map(n=>`<button type="button" class="chip" data-fxplace="${esc(n)}" aria-pressed="${w===n}">${cardBadge(n)}${esc(n)}</button>`).join("")}
 function fxSheetSet(cur){fxSheetCur=cur;const F=FXC[cur];
-  $("fxEurL").textContent=`${F.sym} recebido`;$("fxEurS").textContent=F.sym;
+  $("fxEurL").textContent=`${F.sym} recebido`;$("fxRtL").textContent=`Cotação usada (R$ por ${F.sym})`;$("fxEurS").textContent=F.sym;
   $("fxTitle").textContent=fxEditing?`Editar compra de ${F.n}`:`Nova compra de ${F.n}`;
   document.querySelectorAll("[data-fxsheet]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.fxsheet===cur)));fxRateHint()}
-function fxRateHint(){const e=digits($("fxEur").value),b=digits($("fxBrl").value);$("fxRate").textContent=e&&b?`Cotação: R$ ${rate4(b,e)} por ${FXC[fxSheetCur].n}`:"Cotação: preencha os dois valores"}
+/* cotação da compra (out/2026, pedido dele: "ao informar uma compra, qual cotação utilizada"): valor em moeda, R$ pago e cotação
+   se amarram — dois dos três (os 2 últimos que ele mexeu) mandam e o terceiro sai sozinho */
+let fxTouch=[];
+const rateTxt=r=>r.toFixed(4).replace(".",",");
+const rateIn=()=>{const v=Number(($("fxRt").value||"").replace(/\./g,"").replace(",","."));return isFinite(v)&&v>0?v:0};
+function fxCalc(src){
+  if(src){const v={eur:$("fxEur"),brl:$("fxBrl"),rt:$("fxRt")}[src].value;fxTouch=fxTouch.filter(k=>k!==src);if(v)fxTouch.push(src);fxTouch=fxTouch.slice(-2)} /* campo apagado deixa de mandar */
+  let e=digits($("fxEur").value), b=digits($("fxBrl").value), r=rateIn();
+  const third=fxTouch.length===2?["eur","brl","rt"].find(k=>!fxTouch.includes(k)):null;
+  if(third==="rt"&&e&&b){$("fxRt").value=rateTxt(b/e)}
+  else if(third==="brl"&&e&&r){b=Math.round(e*r);$("fxBrl").value=brl(b)}
+  else if(third==="eur"&&b&&r){e=Math.round(b/r);$("fxEur").value=brl(e)}
+  const n=FXC[fxSheetCur].n, now=rateNum(fxSheetCur), used=e&&b?b/e:r;
+  $("fxRate").textContent=used?`Cotação usada: R$ ${rateTxt(used)} por ${n}${now?` · hoje R$ ${rateTxt(now)} (${used>=now?"+":"−"}${(Math.abs(used/now-1)*100).toFixed(1).replace(".",",")}%)`:""}`:"Preencha dois dos três: o outro sai sozinho."}
+const fxRateHint=()=>fxCalc();
 function openFx(x){
   closeSheets(true);
   fxEditing=x||null;
-  $("fxEur").value=x?brl(fxAmt(x)):"";$("fxBrl").value=x?brl(x.brl):"";
+  $("fxEur").value=x?brl(fxAmt(x)):"";$("fxBrl").value=x?brl(x.brl):"";$("fxRt").value=x&&fxAmt(x)?rateTxt(x.brl/fxAmt(x)):"";fxTouch=x?["eur","brl"]:[];
   $("fxCurSeg").hidden=!!x;fxSheetSet(x?fxCurOf(x):fxCur);
   $("fxDate").value=x?x.date:today();$("fxWhere").value=x?x.where||"":"";fxPlaceChips();$("fxObs").value=x?x.obs||"":"";
   $("fxLinkRow").hidden=!!x;$("fxLink").checked=true;
