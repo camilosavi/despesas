@@ -5444,7 +5444,9 @@ async function salOvSet(id,v){const O={...(cfg.salOv||{})};if(v==null)delete O[i
 function salVirt(ym){
   if(ym<curYM()||!salPrevOn()) return [];
   const P=salPlanC(), now=today(), out=[], R0=items.filter(x=>typeOf(x)==="rec"&&x.cat==="sal"&&(x.date||"").startsWith(ym));
-  const hasAdv=R0.some(x=>/adiant/i.test(x.desc||"")), hasSal=R0.some(x=>!/adiant|13|f[ée]rias/i.test(fold(x.desc||"")));
+  /* adiantamento real = nome com adiant/adto/vale ou receita de salário caída entre os dias 10 e 20 (qualquer nome) */
+  const isAdv=x=>/adiant|adto|\bvale\b/i.test(fold(x.desc||""))||(!/13|f[ée]rias/i.test(fold(x.desc||""))&&+(x.date||"").slice(8)>=10&&+(x.date||"").slice(8)<=20);
+  const hasAdv=R0.some(isAdv), hasSal=R0.some(x=>!isAdv(x)&&!/13|f[ée]rias/i.test(fold(x.desc||"")));
   const A=salAdj(P,ym), B=salAdj(P,shiftYM(ym,-1));
   if(P.adv&&!hasAdv){const d=`${ym}-15`;if(d>=now)out.push({id:"_sp_adv_"+ym,virt:1,type:"rec",cat:"sal",desc:A.up?"Adiantamento (previsto, com aumento)":"Adiantamento (previsto)",cents:A.adv,date:d})}
   if(ym.endsWith("-12")&&!R0.some(x=>/\b13/.test(x.desc||""))){const d=`${ym}-20`, v=sal13(P,ym.slice(0,4));if(d>=now&&v>0)out.push({id:"_sp_13_"+ym,virt:1,type:"rec",cat:"sal",desc:"13º salário, 2ª parcela (previsto)",cents:v,date:d})}
