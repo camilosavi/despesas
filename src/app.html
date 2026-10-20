@@ -1979,7 +1979,7 @@ function header(){
     $("s1l").textContent="Vale hoje";$("s1").textContent=rr?R(Math.round(s.amt*rr.rate)):"—";
     $("s2l").textContent="Você pagou";$("s2").textContent=R(s.paid);
     $("hProg").hidden=!s.c.goal;$("hProg").firstElementChild.style.width=Math.min(100,s.pct*100)+"%";
-    const parts=s.c.goal?[`meta ${esc(s.c.dest)}: ${M(s.c.goal,s.cur)}`,`falta ${M(s.left,s.cur)}`]:[];
+    const parts=s.c.goal?[`meta ${M(s.c.goal,s.cur)}`,`falta ${M(s.left,s.cur)}`]:[];
     $("hFoot").textContent=parts.join(" · ");
     return;
   }
@@ -2293,7 +2293,7 @@ function homeBlock(k){
   if(k==="euro"){
     const s=fxStats("EUR"), r=currentRate();
     if(!s.eur&&!s.c.goal) return ""; /* sem euro comprado nem meta: não ocupa o Início (a cotação fica na aba Moedas) */
-    return `<section><h2>Euro${s.c.dest?` · ${esc(s.c.dest)}`:""}</h2><button class="hcard" data-gotab="pFx">
+    return `<section><h2>Euro</h2><button class="hcard" data-gotab="pFx">
       <div class="hhead"><b>${r?`R$ ${r4(r.rate)}`:"Cotação —"}</b><span>${r?`€ ${whenTxt(r)}`:""}${sharedUsd&&sharedUsd.rate?` · US$ ${r4(+sharedUsd.rate)}`:""}</span></div>
       ${s.c.goal?`<div class="mini"><i style="width:${Math.min(100,s.pct*100)}%"></i></div>`:""}
       <span class="hint">${!s.c.goal?`${E(s.eur)} comprados`:`${E(s.have)} de ${E(s.c.goal)} · falta ${E(s.left)}`}${s.c.goal&&s.left&&s.months>0?` · ~${E(Math.ceil(s.left/s.months))}/mês até ${shortMonth(s.c.target)}`:""}</span>
