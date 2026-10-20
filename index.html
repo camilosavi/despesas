@@ -2057,12 +2057,13 @@ function header(){
     return;
   }
   if(wal){
-    const cash=hasAcc()?accBal():0, kept=svTotal(), tot=cash+kept;
+    const cash=hasAcc()?accBal():0, B=saves(), kR=B.reduce((x,b)=>x+svBrl(b),0), kE=B.reduce((x,b)=>x+svEur(b),0), kU=B.reduce((x,b)=>x+svUsd(b),0);
+    const fo=[kE?E(kE):"",kU?M(kU,"USD"):""].filter(Boolean).join(" + ")||"—";
     $("ptitle").textContent="Carteira";
-    $("bigLabel").textContent=hasAcc()?"Na conta e guardado":"Guardado";
-    setBig("R$",tot);
-    $("s1l").textContent="Nas contas";$("s1").textContent=hasAcc()?R(cash):"—";
-    $("s2l").textContent="Guardado";$("s2").textContent=R(kept);
+    $("bigLabel").textContent=hasAcc()?"Nas contas":"Guardado em real";
+    setBig("R$",hasAcc()?cash:kR);
+    $("s1l").textContent=hasAcc()?"Guardado em real":"Em euro/dólar";$("s1").textContent=hasAcc()?R(kR):fo;
+    $("s2l").textContent=hasAcc()?"Em euro/dólar":"";$("s2").textContent=hasAcc()?fo:"";
     $("hProg").hidden=true;$("hFoot").textContent="";
     return;
   }
