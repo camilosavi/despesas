@@ -633,3 +633,4 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Sem `acct` (ou conta que não existe mais) = 1ª conta (`accOf`). `accMoves(nome)` e `accBalOf(a)` dão o saldo de cada conta (saldo informado + receitas que entraram − despesas pagas depois, só do que é dessa conta); a soma das contas continua `accBal()`.
   `setAcctBal` agora devolve a cada outra conta o que mexeu nela (antes jogava tudo na 1ª).
 - **Categoria de receita criável**: "+ Nova categoria" aparece também em Receita (`addCat(nome,"rec")`) e a tela Você tem "Categorias de receita". Criadas em `cfg.catsRec=[{k:"ur_…",n,c}]` (chave `ur_`; `applyCats()` põe antes de "Outras receitas"); apagar move para `rout`. As padrão de receita não se apagam.
+- **Hoje no PC, bloco "Dinheiro guardado"** (`k==="guard"` no `renderHome`): total também sem converter (R$ + € + US$ cada um no seu valor, `kR`/`kE`/`kU`). `svTotal()` (convertido) não é mais usado em tela.

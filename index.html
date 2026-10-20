@@ -2426,9 +2426,11 @@ function homeBlock(k){
     </div><p class="hint expl" style="margin-top:8px">${hasAcc()?"Parte do saldo na conta de hoje. ":""}Conta só as receitas que você já lançou.</p></section>`;
   }
   if(k==="guard"){
-    const B=saves(), tot=svTotal();
+    const B=saves(), kR=B.reduce((x,b)=>x+svBrl(b),0), kE=B.reduce((x,b)=>x+svEur(b),0), kU=B.reduce((x,b)=>x+svUsd(b),0);
+    /* sem converter: real, euro e dólar aparecem cada um no seu valor */
+    const tot=[kR||(!kE&&!kU)?R(kR):"",kE?E(kE):"",kU?M(kU,"USD"):""].filter(Boolean).join(" + ");
     return `<section><h2>Dinheiro guardado</h2><button class="hcard" data-gotab="pAno" data-scroll="saveSec">
-      <div class="hhead"><b>${B.length?R(tot):"Criar uma caixinha"}</b><span>${B.length?`${B.length} ${B.length===1?"caixinha":"caixinhas"}`:"›"}</span></div>
+      <div class="hhead"><b>${B.length?tot:"Criar uma caixinha"}</b><span>${B.length?`${B.length} ${B.length===1?"caixinha":"caixinhas"}`:"›"}</span></div>
       <span class="hint pcno">${B.length?B.slice(0,3).map(b=>{
         const isFx=b.goalCur&&b.goalCur!=="BRL";
         const val=isFx?svMoney(svHave(b),b.goalCur):R(svBal(b));
