@@ -319,6 +319,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Guardar R$ → vira € pela cotação digitada (`svMove`); guardar € → calcula o R$ pago. O movimento fica na moeda da caixinha com
   `brl` (R$) e `rate`, então o valor em € **não oscila** com a cotação do dia; a lista mostra "R$ 1.000,00 a R$ 5,6387". Editar o valor
   de um movimento com `rate` recalcula `brl`; trocar a moeda tira `rate`/`brl`. Sem cotação preenchida = comportamento antigo.
+- **Cotação invertida** (20/10/2026): se a cotação usada fica < 0,6× ou > 1,6× a de hoje, `fxCalc` avisa em vermelho; se é o inverso (€ e R$ digitados trocados), aparece o botão `#fxSwap` "Trocar € e R$ de lugar".
 - Caixinhas aceitam meta e movimentos em R$, € ou US$ (`svAmt(b,cur)`, `rateNum(cur)`). `fxAll` soma as compras da moeda
   da caixinha (`boxFx`: meta em US$ → dólar; € ou R$ → euro, como antes); uma caixinha por moeda.
 - Caixinha com meta e mês-alvo mostra quanto a sobra prevista do mês cobre do que precisa guardar (`svNeedTxt`).

@@ -1473,7 +1473,7 @@ header.top{padding:18px 16px!important}
   </div>
   <div class="field"><label for="fxRt" id="fxRtL">Cotação usada (R$ por €)</label><div class="amount sm" style="margin:0"><span>R$</span><input id="fxRt" inputmode="decimal" placeholder="0,0000"></div></div>
   <p class="hint" id="fxRate" style="margin:4px 0 16px">Preencha dois dos três: o outro sai sozinho.</p>
-  <div class="toolbar" style="margin:-8px 0 14px"><button type="button" class="tbtn" id="fxRtToday">Usar a cotação de hoje</button></div>
+  <div class="toolbar" style="margin:-8px 0 14px"><button type="button" class="tbtn" id="fxRtToday">Usar a cotação de hoje</button><button type="button" class="tbtn" id="fxSwap" hidden>Trocar € e R$ de lugar</button></div>
   <div class="two">
     <div class="field"><label for="fxDate">Data</label><input type="date" id="fxDate" min="2026-09-01"></div>
     <div class="field"><label for="fxWhere">Onde</label><input type="text" id="fxWhere" list="fxPlaces" placeholder="Revolut, Wise…" maxlength="40"></div>
@@ -4694,6 +4694,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="loAll"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para apagar todos";return}
     const LO=cardItems(selCard,view).filter(x=>!genFat(x)&&!x.imp);t.disabled=true;try{for(const x of LO) await dropWithSeries(x);toast(`${LO.length} apagados`);render()}catch(e){toast("Parou no meio. Confira e tente de novo.")}return}
   const ndb=t.closest("[data-notdup]"); if(ndb){try{await saveCfg({notDup:[...notDup(),ndb.dataset.notdup]});render()}catch(x){}return}
+  if(t.id==="fxSwap"){const e=$("fxEur").value;$("fxEur").value=$("fxBrl").value;$("fxBrl").value=e;fxTouch=["eur","brl"];fxCalc();return}
   if(t.id==="fxRtToday"){const r=rateNum(fxSheetCur);if(!r){toast("Sem cotação agora. Tente de novo em instantes.");return}$("fxRt").value=rateTxt(r);fxCalc("rt");return}
   {const hv=t.closest("[data-holv]");if(hv){holView(hv.dataset.holv);return}}
   {const ho=t.closest("[data-holopen]");if(ho){const r=(cfg.hol||{})[ho.dataset.holopen];if(r)openHolerite(holFromRec(r));return}}
@@ -6516,7 +6517,13 @@ function fxCalc(src){
   else if(third==="brl"&&e&&r){b=Math.round(e*r);$("fxBrl").value=brl(b)}
   else if(third==="eur"&&b&&r){e=Math.round(b/r);$("fxEur").value=brl(e)}
   const n=FXC[fxSheetCur].n, now=rateNum(fxSheetCur), used=e&&b?b/e:r;
-  $("fxRate").textContent=used?`Cotação usada: R$ ${rateTxt(used)} por ${n}${now?` · hoje R$ ${rateTxt(now)} (${used>=now?"+":"−"}${(Math.abs(used/now-1)*100).toFixed(1).replace(".",",")}%)`:""}`:"Preencha dois dos três: o outro sai sozinho."}
+  /* cotação longe da de hoje: avisa (e, se for o inverso, parece € e R$ trocados) */
+  const far=used&&now&&(used/now<.6||used/now>1.6), inv=far&&Math.abs(1/used/now-1)<.3;
+  $("fxRate").textContent=inv?`Cotação R$ ${rateTxt(used)} é o inverso da de hoje (R$ ${rateTxt(now)}): parece que o valor em ${FXC[fxSheetCur].sym} e o R$ pago estão trocados.`
+    :far?`Cotação R$ ${rateTxt(used)} está muito longe da de hoje (R$ ${rateTxt(now)}). Confira os valores.`
+    :used?`Cotação usada: R$ ${rateTxt(used)} por ${n}${now?` · hoje R$ ${rateTxt(now)} (${used>=now?"+":"−"}${(Math.abs(used/now-1)*100).toFixed(1).replace(".",",")}%)`:""}`:"Preencha dois dos três: o outro sai sozinho.";
+  $("fxRate").style.color=far?"var(--neg)":"";$("fxRate").style.fontWeight=far?"600":"";
+  $("fxSwap").hidden=!inv}
 const fxRateHint=()=>fxCalc();
 function openFx(x){
   closeSheets(true);
