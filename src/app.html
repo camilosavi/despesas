@@ -869,7 +869,7 @@ nav.tabs.onme::before{opacity:0}
 @media (prefers-reduced-motion:reduce){nav.tabs::before{transition:none}}
 
 /* ---------- computador (tela larga): abas na lateral esquerda, conteúdo em duas colunas, janelas no centro ---------- */
-.cdwrap,.cdmain,.cdmain2,.cdside{display:contents}
+.cdwrap,.cdhero,.cdmain,.cdmain2,.cdside{display:contents}
 @media (min-width:980px){
   #pCards:has(>.cdwrap){column-count:1!important}
   #mBody:has(>.mes-split){column-count:1!important}
@@ -1234,6 +1234,31 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 
 .mfp{flex:none;border:0!important;background:var(--surface)!important;color:var(--ink)!important;border-radius:999px!important;padding:0 18px!important;height:38px!important;font:inherit;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;box-shadow:inset 0 0 0 1px var(--line)}
 .mfp.on{background:var(--ink)!important;color:var(--bg)!important;box-shadow:none}
+
+/* PC (19-20/10/2026): mesma linguagem do celular (híbrido Papel + Blocos) */
+@media (min-width:980px){
+ header.top{background:linear-gradient(180deg,color-mix(in srgb,var(--head) 62%,#000) 0%,var(--head) 55%,color-mix(in srgb,var(--head) 92%,#fff) 100%)!important;box-shadow:none!important;border-radius:30px!important}
+ .big{font-family:var(--serif)!important;font-weight:400!important;letter-spacing:-.025em!important}
+ .big small{font-family:var(--body);font-size:.34em!important;font-weight:500;margin-right:8px}
+ h2{font-family:var(--serif)!important;font-weight:400!important;font-size:1.35rem!important;letter-spacing:-.01em!important}
+ h2 small,h2 .h2act,h2 .lk,h2 button,h2 span{font-family:var(--body)!important}
+ .wrap section>.card,.wrap section>.card.list{background:var(--surface)!important;border:0!important;border-radius:26px!important;box-shadow:none!important}
+ .bline{background:var(--surface)!important;border:0!important;border-radius:22px!important;margin-top:14px;column-span:all}
+ .dchip b,.acone .v{font-family:var(--serif)!important;font-weight:400!important}
+ .htile{border-radius:22px!important}
+ /* Mês: busca, cartões e pílulas na largura toda */
+ .msearch{max-width:none!important}
+ .mfbar{margin:14px 0 6px;padding:0}
+ .mftiles{margin:0!important;padding:2px 0 4px!important}
+ .mft{flex:0 0 220px!important}
+ /* tela do cartão: cartão e limite à esquerda (420 px), fatura e itens à direita */
+ .cdwrap{grid-template-columns:minmax(0,420px) minmax(0,1fr)!important;grid-template-rows:min-content 1fr!important;column-gap:28px!important}
+ .cdwrap .cdhero{display:block;grid-column:1;grid-row:1;min-width:0}
+ .cdwrap .cdmain2{grid-column:1!important;grid-row:2!important;margin-top:14px!important;column-count:1!important}
+ .cdwrap .cdmain{grid-column:2!important;grid-row:1!important;column-count:1!important}
+ .cdwrap .cdside{grid-column:2!important;grid-row:2!important}
+}
+}
 </style>
 
 <div class="wrap">
@@ -2055,7 +2080,7 @@ function backupBanner(){
   if(daysSince(cfg.lastBackup)<7||daysSince(cfg.backupSnooze)<2) return "";
   const nd=daysSince(cfg.lastBackup);
   /* novo app (out/2026): no celular o lembrete é uma linha só */
-  if(!IS_WIDE.matches) return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Nenhum backup ainda":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
+  return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Nenhum backup ainda":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
   return `<section><div class="card banner"><strong>Hora do backup</strong><p>${nd===Infinity?"Você ainda não fez nenhum backup.":`Seu último backup foi há ${nd} dias.`} Os dados ficam só neste iPhone; salve o arquivo no iCloud Drive para não perder nada.</p><div class="row"><button class="btn soft" id="bkLater">Depois</button><button class="btn primary" id="bkExport">Fazer backup</button></div></div></section>`;
 }
 
@@ -2502,9 +2527,10 @@ function renderMes(){
   }
   const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0);
   if(IS_WIDE.matches){
-    const leftCol=`<div class="mes-main">${cardStrip(view)}${timeline(view,arr)}${feeSection(view)}<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div></div>`;
+    const FW=mesApply(arr);
+    const leftCol=`<div class="mes-main">${timeline(view,FW)}${feeSection(view)}<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div></div>`;
     const rightCol=`<aside class="mes-side">${catsBlockHtml(arr,dA,tot,byC)}</aside>`;
-    $("mBody").innerHTML=`<div class="mes-split">${leftCol}${rightCol}</div>`;
+    $("mBody").innerHTML=mesFilterBar()+`<div class="mes-split">${leftCol}${rightCol}</div>`;
     return;
   }
   if(MESV()==="1"||MESV()==="2"){
@@ -3291,7 +3317,8 @@ function renderCards(){
   h+=`<section><h2>Importar e limpar</h2><div class="card rate"><div class="hint expl">Baixe a fatura em PDF no app do banco e importe aqui. O app lê no próprio aparelho, mostra as compras para você conferir e só adiciona as que você marcar.</div>
     <label class="btn soft" style="text-align:center;cursor:pointer;display:block">Importar fatura do ${esc(c)} (PDF)<input type="file" id="impFile" accept="application/pdf,.pdf" hidden></label>
     ${all.length?`<button class="tbtn" id="zeroMonth" style="margin-top:10px">Zerar ${mn}</button>`:""}</div></section>`;
-  h=side?`<div class="cdwrap"><div class="cdmain">${mainA}</div><aside class="cdside">${side}</aside><div class="cdmain2">${h}</div></div>`:mainA+h;
+  {const mainRest=mainA.startsWith(cardHero)?mainA.slice(cardHero.length):mainA, heroH=mainA.startsWith(cardHero)?cardHero:"";
+  h=`<div class="cdwrap"><div class="cdhero">${heroH}</div><div class="cdmain">${mainRest}</div>${side?`<aside class="cdside">${side}</aside>`:""}<div class="cdmain2">${h}</div></div>`}
   $("pCards").innerHTML=h;
 }
 
@@ -4235,7 +4262,8 @@ function go(t){
   [...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).forEach((b,i)=>{
     const isPcardTab = b.dataset.tab === "pCards";
     const cur = t==="pOrc"?"pMes":t==="pFx"?"pAno":t;
-    const match = b.dataset.tab === cur || (t === "pCards" && (isPcardTab || b.dataset.tab === "pMes"));
+    const hasCardTab=[...document.querySelectorAll(".tab")].some(x=>x.dataset.tab==="pCards"&&x.offsetParent);
+    const match = b.dataset.tab === cur || (t === "pCards" && (isPcardTab || (!hasCardTab && b.dataset.tab === "pMes")));
     if(match){
       b.setAttribute("aria-current","page");
       if(!isPcardTab) document.querySelector("nav.tabs").style.setProperty("--ti",i);
