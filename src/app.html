@@ -3683,8 +3683,8 @@ function saveSection(){
       if(svOpen===b.id){
         const allMv=[...(b.moves||[])].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=svAllMv?allMv:allMv.slice(0,5);
         const pc=svPace(b), need=[pc&&pc.late?`Pela linha reta até ${shortMonth(b.target)}, era para ter ${svMoney(pc.exp,pc.cur)} agora. Para recuperar, guarde ~${svMoney(pc.per,pc.cur)} por mês daqui em diante.`:"",svNeedTxt(b)].filter(Boolean).join(" ");
-        row+=`<div class="svedit">${need?`<p class="hint" style="margin:0 0 10px">${esc(need)}</p>`:""}<div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div><div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
-          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
+        row+=`<div class="svedit">${need?`<p class="hint" style="margin:0 0 10px">${esc(need)}</p>`:""}<div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
+          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
           `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
@@ -3707,10 +3707,32 @@ async function svCreate(){
   const nid="s"+Date.now();svForm=null;svOpen=nid;
   await svSave([...saves(),{id:nid,...data,moves:[]}],"Caixinha criada");
 }
+const svRateIn=()=>{const v=Number((($("svRt")||{}).value||"").replace(/\./g,"").replace(",","."));return isFinite(v)&&v>0?v:0};
+function svEqHint(){
+  const el=$("svEq");if(!el) return;const b=saves().find(x=>x.id===svOpen);if(!b) return;
+  const gc=b.goalCur, c=digits($("svVal")?.value), cv=$("svCur")?.value, rt=svRateIn(), now=rateNum(gc), sym=FXC[gc].sym;
+  let t="Digite o valor: a conta com a cotação aparece aqui.";
+  if(c&&rt){
+    if(cv==="BRL") t=`R$ ${brl(c)} ÷ ${rateTxt(rt)} = ${M(Math.round(c/rt),gc)}`;
+    else if(cv===gc) t=`${M(c,gc)} × ${rateTxt(rt)} = R$ ${brl(Math.round(c*rt))}`;
+    else t=`Cotação só vale para R$ ou ${sym}.`;
+    if(now&&(cv==="BRL"||cv===gc)) t+=` · hoje R$ ${rateTxt(now)}`;
+  }else if(c&&!rt) t="Informe a cotação (R$ por "+sym+"), ou deixe como está sem converter.";
+  el.textContent=t;
+}
 async function svMove(sign){
   const cents=digits($("svVal")?.value), cv=$("svCur")?.value, cur=cv==="EUR"||cv==="USD"?cv:"BRL";if(!cents){toast("Informe o valor.");return}
-  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:[...(b.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign*cents,...(cur!=="BRL"?{cur}:{})}]});
-  await svSave(list,`${sign>0?"Guardado":"Retirado"} ${svMoney(cents,cur)}`);
+  /* cotação usada (20/10/2026, pedido dele): numa caixinha em € ou US$, o valor em R$ ou na moeda dela vira o equivalente
+     pela cotação digitada; o movimento fica na moeda da caixinha e guarda `brl` (R$) e `rate` (R$ por moeda) */
+  const box=saves().find(x=>x.id===svOpen), gc=box&&(box.goalCur==="EUR"||box.goalCur==="USD")?box.goalCur:"", rt=gc?svRateIn():0;
+  let mv={cents,cur};
+  if(gc&&rt){
+    if(cur==="BRL") mv={cents:Math.round(cents/rt),cur:gc,brl:cents,rate:rt};
+    else if(cur===gc) mv={cents,cur:gc,brl:Math.round(cents*rt),rate:rt};
+  }
+  if(!mv.cents){toast("Valor pequeno demais para essa cotação.");return}
+  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:[...(b.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign*mv.cents,...(mv.cur!=="BRL"?{cur:mv.cur}:{}),...(mv.rate?{brl:mv.brl,rate:mv.rate}:{})}]});
+  await svSave(list,`${sign>0?"Guardado":"Retirado"} ${svMoney(mv.cents,mv.cur)}${mv.rate?` (R$ ${rateTxt(mv.rate)} por ${FXC[mv.cur].sym})`:""}`);
 }
 function svMvForm(m){
   return `<div class="svmvf"><div class="svrow2"><select id="mvSign" aria-label="Tipo"><option value="1">Guardou</option><option value="-1" ${m.cents<0?"selected":""}>Tirou</option></select><input id="mvDate" type="date" value="${esc(m.date)}" min="${MIN_YM}-01" aria-label="Data"></div>
@@ -3723,7 +3745,7 @@ async function svMvSave(){
   if(!cents){toast("Informe o valor.");return}
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast("Escolha a data.");return}
   const id=svMvEdit;svMvEdit=null;
-  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:(b.moves||[]).map(m=>{if(m.id!==id)return m;const{cur:_c,...r}=m;return {...r,date,cents:sign*cents,...(cur!=="BRL"?{cur}:{})}})});
+  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:(b.moves||[]).map(m=>{if(m.id!==id)return m;const{cur:_c,...r}=m;const o={...r,date,cents:sign*cents,...(cur!=="BRL"?{cur}:{})};if(o.rate){if(cur===m.cur)o.brl=Math.round(cents*o.rate);else{delete o.rate;delete o.brl}}return o})});
   await svSave(list,"Movimento atualizado");
 }
 async function svMvDel(btn){
@@ -4785,6 +4807,7 @@ document.addEventListener("click",async e=>{
   }
 });
 document.addEventListener("change",e=>{
+  if(e.target.id==="svCur")svEqHint();
   if(e.target.dataset&&e.target.dataset.ext!=null&&ext){const p=ext.plan[+e.target.dataset.ext];if(p){p.on=e.target.checked;extRender()}return}
   if(e.target.id==="exBal"&&ext){ext.setBal=e.target.checked;return}
   if(/^acn_\d+$/.test(e.target.id)&&e.target.tagName==="SELECT"){const i=+e.target.id.slice(4);acReadDraft();e.target.blur();
@@ -4811,6 +4834,8 @@ document.addEventListener("input",e=>{
   if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
   if(id&&id.startsWith("subPv_")&&$("subMine")){const tot=+($("subSave")?.dataset.subtot||0);let b=0;document.querySelectorAll("[id^=subPv_]").forEach(i=>b+=digits(i.value));$("subMine").textContent=b?`Recebe ${R(b)} · sai ${R(Math.max(0,tot-b))} para você`:"—"}
   if(id==="fxRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
+  if(id==="svRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
+  if(id==="svVal"||id==="svRt") svEqHint();
   if(id==="fxEur"||id==="fxBrl"||id==="fxRt") fxCalc(id==="fxEur"?"eur":id==="fxBrl"?"brl":"rt");
   if(id==="fxWhere") fxPlaceChips();
   if(id==="themeFree"){lsSet("despesas.themeColor",e.target.value);lsSet("despesas.theme","livre");applyTheme()}

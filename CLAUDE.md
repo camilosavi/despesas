@@ -314,6 +314,11 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   "Cotação usada (R$ por €/US$)" (`#fxRt`) ligado a "recebido" e "R$ pago" (`fxCalc`): os 2 últimos campos mexidos mandam e o 3º sai
   sozinho (campo apagado deixa de mandar; editar abre com eur+brl mandando). Mostra "hoje R$ X (±%)" e o botão "Usar a cotação de hoje"
   (`rateNum`). Nada muda no que é salvo (`eur`/`usd` + `brl`); a cotação é sempre brl ÷ valor.
+- **Cotação no "Guardar" da caixinha** (20/10/2026, pedido dele: "cadê os campos que eu pedi?", print da caixinha Dublin): em caixinha com meta em €/US$ o
+  formulário de movimento tem "Cotação usada (R$ por €)" (`#svRt`, já vem com a de hoje) e a conta ao vivo (`svEqHint`, `#svEq`).
+  Guardar R$ → vira € pela cotação digitada (`svMove`); guardar € → calcula o R$ pago. O movimento fica na moeda da caixinha com
+  `brl` (R$) e `rate`, então o valor em € **não oscila** com a cotação do dia; a lista mostra "R$ 1.000,00 a R$ 5,6387". Editar o valor
+  de um movimento com `rate` recalcula `brl`; trocar a moeda tira `rate`/`brl`. Sem cotação preenchida = comportamento antigo.
 - Caixinhas aceitam meta e movimentos em R$, € ou US$ (`svAmt(b,cur)`, `rateNum(cur)`). `fxAll` soma as compras da moeda
   da caixinha (`boxFx`: meta em US$ → dólar; € ou R$ → euro, como antes); uma caixinha por moeda.
 - Caixinha com meta e mês-alvo mostra quanto a sobra prevista do mês cobre do que precisa guardar (`svNeedTxt`).
