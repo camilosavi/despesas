@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../lib/createStore";
 import { ledger } from "../lib/store";
+import { drive, finishDrive, returningFromDrive } from "../lib/driveImport";
 import { ofAuto } from "../lib/openfinance";
 import { finishGoogle, returningFromGoogle, session } from "../lib/sync";
 import { Actions } from "./Actions";
@@ -11,13 +12,16 @@ import { PdfSection } from "./PdfSection";
 import { SheetHost } from "./Sheet";
 import { Toast } from "./Toast";
 import { Top } from "./Top";
-import { toast, ui } from "./uiStore";
+import { openSheet, toast, ui } from "./uiStore";
 
 export function App() {
   const ses = useStore(session, s => s.ses);
   const openId = useStore(ui, s => s.openId);
   const hasOpen = useStore(ledger, s => (openId ? s.accts.some(a => a.id === openId) : false));
   const [finishing, setFinishing] = useState(returningFromGoogle());
+  const back = useStore(drive, s => s.back);
+  useEffect(() => { if (returningFromDrive()) { const m = finishDrive(); if (m) toast(m); } }, []); // volta do Google (Drive): só guarda o token
+  useEffect(() => { if (ses && back) { drive.set({ back: false }); openSheet({ kind: "me" }); } }, [ses, back]); // e abre "Sua conta" para pedir a senha
 
   useEffect(() => { if (finishing) void finishGoogle().finally(() => setFinishing(false)); }, [finishing]);
   useEffect(() => { if (openId && !hasOpen) ui.set({ openId: null }); }, [openId, hasOpen]); // conta apagada ou que sumiu na sincronização

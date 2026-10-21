@@ -3,6 +3,7 @@ import { brl, R, signR, fmtD, digits, moneyMask, fold, textOn, lastDay, shiftYM 
 import { accBal, totBal, matchEntry, sg, descHints, catForDesc, groupByCat } from "./ledger";
 import { ctKey, hlKey, ftKey, ftTotal, faturaRows } from "./imports";
 import { addMonths, launchEntries, repCount } from "./launch";
+import { decryptSync, ofFromSync } from "./driveImport";
 import { bankEntries, cardEntries, ofBankName, ofDay } from "./openfinance";
 import type { Account, Entry } from "./types";
 
@@ -374,5 +375,26 @@ describe("Open Finance (formato da Pluggy)", () => {
   it("nome do banco e dia local", () => {
     expect(ofBankName("Banco Inter S.A.")).toBe("Inter"); expect(ofBankName("NU PAGAMENTOS")).toBe("Nu Pagamentos");
     expect(ofDay("2026-10-08T15:00:00.000Z")).toBe("2026-10-08");
+  });
+});
+
+describe("importar Open Finance do Drive (arquivo do app antigo)", () => {
+  const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
+  async function enc(obj: unknown, pass: string) { // mesmo formato do app antigo: PBKDF2 250000 + AES-GCM
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    const k = await crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" }, await crypto.subtle.importKey("raw", new TextEncoder().encode(pass), "PBKDF2", false, ["deriveKey"]), { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, k, new TextEncoder().encode(JSON.stringify(obj))));
+    return JSON.stringify({ app: "minhas-despesas-sync", v: 1, salt: b64(salt), iv: b64(iv), ct: b64(ct) });
+  }
+  const of = { url: "https://x.workers.dev", key: "k12345678", items: [{ id: "i1", name: "Meu Pluggy", at: "2026-10-09" }] };
+  it("abre com a senha certa e tira só o Open Finance", async () => {
+    const d = await decryptSync(await enc({ items: {}, prefs: { "despesas.of": JSON.stringify(of), "despesas.theme": "dark" } }, "senha-teste"), "senha-teste");
+    expect(ofFromSync(d)).toEqual(of);
+  });
+  it("senha errada, formato errado e arquivo sem Open Finance", async () => {
+    const f = await enc({ prefs: {} }, "certa");
+    await expect(decryptSync(f, "errada")).rejects.toThrow("senha");
+    await expect(decryptSync('{"app":"outro"}', "x")).rejects.toThrow("formato");
+    expect(ofFromSync(await decryptSync(f, "certa"))).toBeNull();
   });
 });

@@ -202,7 +202,7 @@ export async function signUp(email: string, password: string): Promise<"entrou" 
 const G_REDIR = () => location.origin + location.pathname.replace(/index\.html$/, "");
 /** vai para o Google (pelo Supabase) e volta com o token no endereço (#access_token=…) */
 export function googleStart() { location.href = SB_URL + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(G_REDIR()); }
-export const returningFromGoogle = () => /access_token=|error_description=/.test(location.hash + location.search);
+export const returningFromGoogle = () => /access_token=|error_description=/.test(location.hash + location.search) && !new URLSearchParams(location.hash.slice(1)).get("state")?.startsWith("drv."); // "drv." = volta do Drive (driveImport.ts)
 export async function finishGoogle() {
   const p = new URLSearchParams(location.hash.slice(1)), q = new URLSearchParams(location.search);
   history.replaceState(null, "", location.pathname);

@@ -97,6 +97,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
    - **Open Finance** (21/10/2026, `lib/openfinance.ts`, `ui/OfSection.tsx`, Worker `tools/pluggy-worker.js`): Inter (conta + cartão) pelo Meu Pluggy. No aparelho (`despesas.zero.of`): endereço do Worker, chave e conexões (nunca no repositório).
      Roda sozinho ao abrir/voltar (máx. a cada 30 min) e em "Atualizar do banco" dentro da conta. Chaves `imp:"of-<idTx>"` (sem duplicar); pagamento de fatura = `pagfatura-of-…`; Pix para si e "Crédito liberado" = `xfer`.
      1ª importação ajusta o saldo inicial para bater com o do banco; cartão só compras da fatura em aberto, preenche limite/fechamento/vencimento. Testado com Worker simulado.
+   - **Trazer o Open Finance do app antigo** (`lib/driveImport.ts`, botão em Open Finance quando falta servidor): o app antigo guardava `despesas.of` criptografado (PBKDF2 250000 + AES-GCM, senha de sincronização) no `appDataFolder` do Drive (`despesas-sync.json`).
+     Login Google por redirecionamento (cliente OAuth do app antigo, escopo `drive.appdata`, `state` começa com `drv.` para não colidir com o login do Supabase), pede a senha, lê só `prefs["despesas.of"]` e grava no aparelho. Senha e token não ficam guardados (token em `sessionStorage`).
+     Precisa de `https://camilosavi.github.io/despesas/` nos redirecionamentos autorizados do cliente e do escopo `drive.appdata` no consentimento. Testado com Google simulado.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

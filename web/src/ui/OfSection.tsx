@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../lib/createStore";
+import { drive, driveGo, driveImport } from "../lib/driveImport";
 import { ofCfg, ofConnect, ofRun, ofSetCfg, ofState, ofWhenText } from "../lib/openfinance";
 import { toast } from "./uiStore";
 
@@ -7,6 +8,7 @@ import { toast } from "./uiStore";
 export function OfSection() {
   useStore(ofState, s => s);
   const busy = useStore(ofState, s => s.busy), err = useStore(ofState, s => s.err);
+  const tok = useStore(drive, s => s.tok), [pw, setPw] = useState(""), [imp, setImp] = useState(false);
   const c = ofCfg(), [edit, setEdit] = useState(false), [url, setUrl] = useState(c.url || ""), [key, setKey] = useState(c.key || "");
   const ready = !!(c.url && c.key) && !edit;
   function save() {
@@ -16,9 +18,13 @@ export function OfSection() {
     ofSetCfg({ url: u.replace(/\/+$/, ""), key: key.trim() }); setEdit(false); toast("Servidor salvo");
   }
   async function connect() { try { toast(await ofConnect(matchMedia("(prefers-color-scheme: dark)").matches)); } catch (e) { toast("Não deu: " + (e instanceof Error ? e.message : e)); } }
+  async function fromDrive() { setImp(true); const m = await driveImport(pw); setImp(false); toast(m); if (m.includes("✓")) { setPw(""); setEdit(false); } }
   async function now() { const m = await ofRun(true); if (m) toast(m); }
   return (<>
     <h4 className="ofh">Open Finance</h4>
+    {!ready && !tok && <button type="button" className="btn soft wide" id="ofDrive" onClick={driveGo}>Trazer do app antigo (Google Drive)</button>}
+    {!ready && tok && <div className="field"><label htmlFor="ofPw">Senha de sincronização do app antigo</label><input type="password" id="ofPw" autoComplete="off" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && pw) void fromDrive(); }} />
+      <button type="button" className="btn primary wide" id="ofImp" disabled={!pw || imp} onClick={() => void fromDrive()}>{imp ? "Abrindo…" : "Trazer do Drive"}</button></div>}
     {!ready ? (<>
       <div className="field"><label htmlFor="ofUrl">Endereço do servidor</label><input type="url" id="ofUrl" placeholder="…workers.dev" autoComplete="off" autoCapitalize="off" spellCheck={false} value={url} onChange={e => setUrl(e.target.value)} /></div>
       <div className="field"><label htmlFor="ofKey">Chave do servidor</label><input type="password" id="ofKey" autoComplete="off" value={key} onChange={e => setKey(e.target.value)} /></div>
