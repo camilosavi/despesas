@@ -107,25 +107,51 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(90vw,420px);padding:12px 18px;border-radius:16px;background:var(--ink);color:var(--bg);font-weight:600;font-size:.92rem;z-index:30;text-align:center}
 .toast[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- base de banco ---------- */
+.trow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;min-height:0}
+.tb{border:0;border-radius:999px;padding:6px 12px;font-size:.8rem;font-weight:600;color:inherit;background:color-mix(in srgb,currentColor 18%,transparent)}
+.tb[hidden]{display:none}
+.trow:not(:has(.tb:not([hidden]))){display:none}
+.acrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;border:0;border-radius:18px;background:var(--surface);padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 0 var(--line)}
+.acrow .fi{width:40px;height:40px;border-radius:12px}
+.acrow .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acrow b{font-family:var(--display);font-size:1.05rem;white-space:nowrap}
+.acrow.add{background:none;box-shadow:none;border:1.5px dashed var(--line);color:var(--muted)}
+.acrow.add .fi{background:var(--chip);color:var(--ink);font-size:1.3rem}
+.dayh{margin:16px 0 4px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ex{display:grid;grid-template-columns:34px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:10px 0;border-bottom:1px solid var(--line)}
+.ex i{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:700;background:var(--chip)}
+.ex i.rec{color:var(--pos)}
+.ex .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ex b{white-space:nowrap;font-weight:600}.ex b.cr{color:var(--pos)}
+.hl{padding:6px 0 14px}.hl .lbl{display:block;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:4px 0 6px}
+.mcard{position:relative;overflow:hidden;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;min-height:96px;margin-bottom:16px;padding:14px 16px;border-radius:18px;color:var(--tci);
+  background:linear-gradient(135deg,var(--hc) 0%,color-mix(in srgb,var(--hc) 58%,#000) 100%);box-shadow:0 8px 20px -6px rgba(0,0,0,.35)}
+.mcard .mchip{position:absolute;left:16px;top:14px;width:28px;height:21px;border-radius:5px;background:linear-gradient(135deg,#e6c875 0%,#b59132 100%)}
+.mcard b{font-family:var(--display);font-size:1.15rem}
+.mcard .fi{width:30px;height:30px;border-radius:9px}
+.swatch.custom{position:relative;display:block;background:conic-gradient(#e33,#ea3,#3c6,#39e,#93e,#e33);overflow:hidden}
+.swatch.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.swatch.custom:has(input:focus-visible){border-color:var(--ink)}
+.sec .acrow+.acrow{margin-top:0}
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="tcard" id="tcard">
-      <h1 id="ptitle">Minhas Despesas</h1>
-      <div class="bigrow"><div><p class="label" id="bigLabel">Cartões</p><div class="big" id="big">Sem cartões</div></div></div>
-      <div class="split" id="split" hidden><span id="s1l">Vence</span><b id="s1">—</b></div>
+      <div class="trow"><button type="button" class="tb" id="back" hidden>‹ Contas</button><button type="button" class="tb" id="editCard" hidden>Personalizar</button></div>
+      <h1 id="ptitle">Minhas contas</h1>
+      <div class="bigrow"><div><p class="label" id="bigLabel">Comece por aqui</p><div class="big" id="big">Sem contas</div></div></div>
+      <div class="split" id="split" hidden><span id="s1l">Entrou</span><b id="s1">—</b></div>
     </div>
   </header>
 
-  <section class="sec">
-    <h2>Seus cartões</h2>
-    <div class="cards" id="cards"></div>
-  </section>
+  <main id="view"></main>
 
-  <section class="sec">
+  <section class="sec" id="secPdf">
     <h2>Ler um PDF</h2>
-    <label class="btn primary wide" id="pdfBtn"><span>Escolher PDF (fatura, boleto ou holerite)</span><input type="file" id="pdfIn" accept="application/pdf,.pdf" multiple hidden></label>
+    <label class="btn primary wide" id="pdfBtn"><span>Escolher PDF (holerite, fatura ou conta)</span><input type="file" id="pdfIn" accept="application/pdf,.pdf" multiple hidden></label>
     <div class="reads" id="reads"></div>
   </section>
 </div>
@@ -450,79 +476,163 @@ function diagText(){
   return out.join("\n");
 }
 
-/* ---------- cartões ---------- */
+/* ---------- contas (base de banco) ----------
+   accts:   [{id,name,color,label?,start (centavos)}]   despesas.zero.accts
+   entries: [{id,acct,type:"rec"|"desp",cents (positivo),date,desc,imp?,at}]   despesas.zero.entries
+   Saldo da conta = saldo inicial + entradas − saídas já ocorridas (data ≤ hoje). Lançamento com data futura fica em "Agendado". */
 let PDFJS=null;
 const hexRgb=h=>{h=(h||"").replace("#","");if(h.length===3)h=h.replace(/./g,"$&$&");const n=parseInt(h,16);return isNaN(n)?[107,122,117]:[n>>16&255,n>>8&255,n&255]};
 const mixHex=(h,t,k)=>{const a=hexRgb(h),b=hexRgb(t);return "#"+a.map((v,i)=>Math.round(v+(b[i]-v)*k).toString(16).padStart(2,"0")).join("")};
 const lumHex=h=>{const[r,g,b]=hexRgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};
-let cards={}, sel=null;
-try{cards=JSON.parse(lsGet("despesas.zero.cards")||"{}")||{}}catch(e){cards={}}
-sel=lsGet("despesas.zero.sel");if(!cards[sel])sel=null;
-const saveCards=()=>{lsSet("despesas.zero.cards",JSON.stringify(cards));lsSet("despesas.zero.sel",sel)};
-const cardColor=c=>(cards[c]||{}).color||(bankOf(c)||{}).c||"#6B7A75";
-const cardNames=()=>Object.keys(cards);
+const digits=v=>Number(String(v||"").replace(/\D/g,"").slice(0,10)||0);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const signR=c=>(c<0?"−":"")+R(Math.abs(c));
+const MESN=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const cardColor=c=>(bankOf(c)||{}).c||"#6B7A75";
+function acctBadge(a){
+  const col=a.color, l=a.label||cardLabel(a.name), dark=lumHex(col)>.5, fs=l.length<=2?1:l.length===3?.88:l.length===4?.76:.66;
+  return `<span class="fi" style="background:${col};color:${dark?"#1A1A1A":"#fff"};--k:${fs}">${esc(l)}</span>`;
+}
+let accts=null, entries=[], openId=null;
+try{accts=JSON.parse(lsGet("despesas.zero.accts")||"null")}catch(e){accts=null}
+try{entries=JSON.parse(lsGet("despesas.zero.entries")||"[]")||[]}catch(e){entries=[]}
+const saveAll=()=>{lsSet("despesas.zero.accts",JSON.stringify(accts));lsSet("despesas.zero.entries",JSON.stringify(entries))};
+if(!Array.isArray(accts)){ /* a versão anterior guardava só cartões (nome e cor): viram contas com saldo zero */
+  accts=[];try{const old=JSON.parse(lsGet("despesas.zero.cards")||"{}")||{};
+    accts=Object.keys(old).map(n=>({id:uid(),name:n,color:old[n].color||cardColor(n),start:0}))}catch(e){}
+  saveAll();
+}
+const accOf=id=>accts.find(a=>a.id===id);
+const sg=e=>e.type==="rec"?e.cents:-e.cents;
+const isFut=e=>e.date>today();
+const accBal=a=>(a.start||0)+entries.filter(e=>e.acct===a.id&&!isFut(e)).reduce((s,e)=>s+sg(e),0);
+const totBal=()=>accts.reduce((s,a)=>s+accBal(a),0);
+const monIn=id=>{const ym=today().slice(0,7);return entries.filter(e=>(!id||e.acct===id)&&e.type==="rec"&&!isFut(e)&&e.date.slice(0,7)===ym).reduce((s,e)=>s+e.cents,0)};
+const ymd=d=>{const t=new Date();t.setDate(t.getDate()+d);return t.getFullYear()+"-"+pad(t.getMonth()+1)+"-"+pad(t.getDate())};
+const dayLbl=d=>d===today()?"Hoje":d===ymd(-1)?"Ontem":`${+d.slice(8)} de ${MESN[+d.slice(5,7)-1]}`+(d.slice(0,4)!==today().slice(0,4)?" "+d.slice(0,4):"");
 
-/* o topo é o cartão: usa a cor do cartão aberto (ou a do tema) e escolhe texto claro ou escuro pelo contraste */
+/* o topo é o cartão: cor da conta aberta (ou do tema); texto claro ou escuro pelo contraste */
 function paintTop(){
-  const st=document.documentElement.style, tc=$("tcard");
-  if(!sel){st.removeProperty("--hc");st.removeProperty("--tci");$("ptitle").textContent="Minhas Despesas";$("bigLabel").textContent="Cartões";
-    $("big").textContent=cardNames().length?cardNames().length+(cardNames().length===1?" cartão":" cartões"):"Sem cartões";return}
-  const col=cardColor(sel);st.setProperty("--hc",col);st.setProperty("--tci",lumHex(col)>.45?"#1A1A1A":"#FFFFFF");
-  $("ptitle").textContent="Cartão";$("bigLabel").textContent="Banco";$("big").textContent=sel;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content",col);
+  const st=document.documentElement.style, a=openId&&accOf(openId), col=a?a.color:null;
+  if(col){st.setProperty("--hc",col);st.setProperty("--tci",lumHex(col)>.45?"#1A1A1A":"#FFFFFF")}else{st.removeProperty("--hc");st.removeProperty("--tci")}
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content",col||"#0E3B35");
+  $("back").hidden=$("editCard").hidden=!a;
+  $("ptitle").textContent=a?a.name:"Minhas contas";
+  if(!accts.length){$("bigLabel").textContent="Comece por aqui";$("big").textContent="Sem contas";$("split").hidden=true;return}
+  const v=a?accBal(a):totBal();
+  $("bigLabel").textContent=a?"Saldo":"Saldo total";
+  $("big").innerHTML=`<small>R$</small>${v<0?"−":""}${brl(Math.abs(v))}`;
+  $("split").hidden=false;$("s1l").textContent="Entrou em "+MESN[+today().slice(5,7)-1];$("s1").textContent=R(monIn(a?a.id:null));
 }
-function renderCards(){
-  $("cards").innerHTML=cardNames().map(c=>`<button type="button" class="cpill" data-sel="${esc(c)}" aria-pressed="${sel===c}">${cardBadge(c)}<span>${esc(c)}</span></button>`).join("")+
-    `<button type="button" class="cpill add" id="cardNew"><span class="fi">+</span><span>Adicionar cartão</span></button>`;
-  const del=$("cardDelRow");if(del)del.remove();
-  if(sel)$("cards").insertAdjacentHTML("afterend",`<div id="cardDelRow"><button type="button" class="btn" id="cardDel">Apagar o cartão ${esc(sel)}</button></div>`);
-  paintTop();
+function renderHome(){
+  $("view").innerHTML=`<section class="sec"><h2>Contas</h2>
+    ${accts.map(a=>{const b=accBal(a);return `<button type="button" class="acrow" data-open="${a.id}">${acctBadge(a)}<span class="nm">${esc(a.name)}</span><b class="${b<0?"bad":""}">${signR(b)}</b></button>`}).join("")}
+    <button type="button" class="acrow add" id="acctNew"><span class="fi">+</span><span class="nm">Adicionar conta</span></button></section>`;
 }
-document.addEventListener("click",e=>{
-  const p=e.target.closest("[data-sel]");if(p){sel=sel===p.dataset.sel?null:p.dataset.sel;saveCards();renderCards();return}
-  if(e.target.closest("#cardNew")){openCardSheet();return}
-  const d=e.target.closest("#cardDel");if(d){if(!d.dataset.arm){d.dataset.arm=1;d.textContent="Toque de novo para apagar";setTimeout(()=>{if(d.isConnected){delete d.dataset.arm;d.textContent="Apagar o cartão "+sel}},3000);return}
-    delete cards[sel];sel=null;saveCards();renderCards();toast("Cartão apagado");return}
-});
+function renderAcct(){
+  const a=accOf(openId);if(!a){openId=null;renderHome();return}
+  const L=entries.filter(e=>e.acct===a.id).sort((x,y)=>y.date.localeCompare(x.date)||(y.at||0)-(x.at||0));
+  const row=e=>`<button type="button" class="ex" data-ex="${e.id}"><i class="${e.type}">${e.type==="rec"?"↓":"↑"}</i><span class="nm">${esc(e.desc)}</span><b class="${e.type==="rec"?"cr":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b></button>`;
+  const fut=L.filter(isFut), past=L.filter(e=>!isFut(e)), days=[...new Set(past.map(e=>e.date))];
+  $("view").innerHTML=`<section class="sec"><h2>Extrato</h2>
+    ${fut.length?`<div class="dayh">Agendado</div>`+fut.map(row).join(""):""}
+    ${days.map(d=>`<div class="dayh">${dayLbl(d)}</div>`+past.filter(e=>e.date===d).map(row).join("")).join("")}
+    ${L.length?"":`<p class="hint">Nenhum movimento ainda.</p>`}</section>
+    <section class="sec"><button type="button" class="btn" id="acctDel">Apagar a conta ${esc(a.name)}</button></section>`;
+}
+function renderAll(){if(openId&&!accOf(openId))openId=null;paintTop();$("secPdf").hidden=!!openId;openId?renderAcct():renderHome()}
 
 /* ---------- janelas ---------- */
 function openSheet(html){$("sheet").innerHTML=html;$("scrim").hidden=$("sheet").hidden=false;$("sheet").scrollTop=0}
 function closeSheet(){$("scrim").hidden=$("sheet").hidden=true;$("sheet").innerHTML=""}
 $("scrim").addEventListener("click",closeSheet);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("sheet").hidden)closeSheet()});
-document.addEventListener("click",e=>{if(e.target.closest("[data-close]"))closeSheet()});
 function toast(t,ok){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>{el.hidden=true},3200)}
+const sheetHead=t=>`<div class="grip"></div><h3><span>${t}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>`;
+/* campo de valor: digita só números e vai formatando (centavos) */
+document.addEventListener("input",e=>{const m=e.target.closest&&e.target.closest("input.money");if(m){const v=digits(m.value);m.value=v?brl(v):""}});
+const armed=(btn,txt,fn)=>{if(!btn.dataset.arm){btn.dataset.arm=1;const o=btn.textContent;btn.textContent=txt;setTimeout(()=>{if(btn.isConnected){delete btn.dataset.arm;btn.textContent=o}},3000);return}fn()};
 
-/* novo cartão: grade com os bancos (nome e cor já vêm), contas de câmbio, vale-refeição e "Outro" */
-let cdPicked=null, cdColor=CARD_PALETTE[0], cdName="";
-function cardSheetHtml(){
-  const have=new Set(cardNames().map(c=>c.toLowerCase()));
+/* nova conta: grade com os bancos (nome e cor já vêm), contas de câmbio, vale-refeição e "Outro"; saldo de hoje */
+let cdPicked=null, cdColor=CARD_PALETTE[0], cdName="", cdBal="";
+function keepAdd(){const n=$("cdName"),b=$("cdBal");if(n)cdName=n.value;if(b)cdBal=b.value}
+function addSheetHtml(){
+  const have=new Set(accts.map(c=>c.name.toLowerCase()));
   const btn=n=>`<button type="button" data-bpick="${esc(n)}" aria-pressed="${cdPicked===n}" ${have.has(n.toLowerCase())?'disabled aria-label="'+esc(n)+' (já existe)"':""}>${cardBadge(n)}<span>${esc(n)}</span></button>`;
   const pal=CARD_PALETTE.includes(cdColor)?CARD_PALETTE:[cdColor,...CARD_PALETTE.slice(0,-1)];
-  return `<div class="grip"></div><h3><span>Novo cartão</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="field"><span class="lbl">Banco ou loja</span><div class="bpick">${BANK_PICK.map(btn).join("")}<span class="bsub">Contas de câmbio</span>${FX_PICK.map(btn).join("")}<span class="bsub">Vale-refeição e alimentação</span>${BEN_PICK.map(btn).join("")}
+  return sheetHead("Nova conta")+`<div class="field"><span class="lbl">Banco ou loja</span><div class="bpick">${BANK_PICK.map(btn).join("")}<span class="bsub">Contas de câmbio</span>${FX_PICK.map(btn).join("")}<span class="bsub">Vale-refeição e alimentação</span>${BEN_PICK.map(btn).join("")}
     <button type="button" data-bpick="" aria-pressed="${cdPicked===""}"><span class="fi" style="background:var(--chip);color:var(--ink)">+</span><span>Outro</span></button></div></div>
-  <div class="field" ${cdPicked===""?"":"hidden"}><label for="cdName">Nome do cartão</label><input type="text" id="cdName" placeholder="Ex.: Nubank, C6, Itaú" maxlength="20" value="${esc(cdName)}"></div>
+  <div class="field" ${cdPicked===""?"":"hidden"}><label for="cdName">Nome da conta</label><input type="text" id="cdName" placeholder="Ex.: Nubank, C6, Itaú" maxlength="20" value="${esc(cdName)}"></div>
+  <div class="field"><label for="cdBal">Saldo agora (R$)</label><input type="text" id="cdBal" class="money" inputmode="numeric" placeholder="0,00" value="${esc(cdBal)}"></div>
   <div class="field"><span class="lbl">Cor</span><div class="swatches">${pal.map(c=>`<button type="button" class="swatch" data-color="${c}" style="background:${c}" aria-label="Cor ${c}" aria-pressed="${c===cdColor}"></button>`).join("")}</div></div>
-  <p class="err" id="cdErr"></p>
-  <button type="button" class="btn primary wide" id="cdSave">Criar cartão</button>`;
+  <p class="err" id="cdErr"></p><button type="button" class="btn primary wide" id="cdSave">Criar conta</button>`;
 }
-function openCardSheet(){
-  const used=new Set(cardNames().map(cardColor));cdColor=CARD_PALETTE.find(c=>!used.has(c))||CARD_PALETTE[0];cdPicked=null;cdName="";
-  openSheet(cardSheetHtml());
+function openAddSheet(){
+  const used=new Set(accts.map(a=>a.color));cdColor=CARD_PALETTE.find(c=>!used.has(c))||CARD_PALETTE[0];cdPicked=null;cdName="";cdBal="";
+  openSheet(addSheetHtml());
 }
+/* personalizar o cartão da conta: nome, letra, cor e saldo inicial, com prévia do cartão */
+let ed=null;
+function mcardCss(){return `--hc:${ed.color};--tci:${lumHex(ed.color)>.45?"#1A1A1A":"#FFFFFF"}`}
+function editSheetHtml(a){
+  const pal=CARD_PALETTE.includes(ed.color)?CARD_PALETTE:[ed.color,...CARD_PALETTE.slice(0,-1)];
+  return sheetHead("Personalizar cartão")+`<div class="mcard" id="mc" style="${mcardCss()}"><span class="mchip"></span><b id="mcn">${esc(ed.name||"Nome")}</b><span id="mcb"></span></div>
+  <div class="field"><label for="edName">Nome</label><input type="text" id="edName" maxlength="20" value="${esc(ed.name)}"></div>
+  <div class="field"><label for="edLab">Letra no ícone (até 4)</label><input type="text" id="edLab" maxlength="4" placeholder="${esc(cardLabel(ed.name))}" value="${esc(ed.label)}"></div>
+  <div class="field"><label for="edBal">Saldo inicial (R$)</label><input type="text" id="edBal" class="money" inputmode="numeric" placeholder="0,00" value="${ed.start?brl(ed.start):""}"></div>
+  <div class="field"><span class="lbl">Cor</span><div class="swatches" id="edSw">${pal.map(c=>`<button type="button" class="swatch" data-edcolor="${c}" style="background:${c}" aria-label="Cor ${c}" aria-pressed="${c===ed.color}"></button>`).join("")}
+    <label class="swatch custom" aria-label="Outra cor"><input type="color" id="edCol" value="${ed.color.length===7?ed.color:"#6B7A75"}"></label></div></div>
+  <p class="err" id="edErr"></p><button type="button" class="btn primary wide" id="edSave">Salvar</button>`;
+}
+function edPrev(){
+  const mc=$("mc");if(!mc)return;mc.style.cssText=mcardCss();$("mcn").textContent=ed.name||"Nome";
+  $("mcb").innerHTML=acctBadge({name:ed.name,color:ed.color,label:ed.label});
+  document.querySelectorAll("[data-edcolor]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.edcolor===ed.color));
+}
+function openEditSheet(){const a=accOf(openId);if(!a)return;ed={name:a.name,label:a.label||"",color:a.color,start:a.start||0};openSheet(editSheetHtml(a));edPrev()}
+document.addEventListener("input",e=>{
+  if(!ed||!$("sheet").querySelector("#edSave"))return;
+  if(e.target.id==="edName")ed.name=e.target.value;else if(e.target.id==="edLab")ed.label=e.target.value.trim().slice(0,4);else if(e.target.id==="edCol")ed.color=e.target.value;else return;
+  edPrev()});
+
+/* movimento: ver e apagar */
+function openEntrySheet(id){
+  const e=entries.find(x=>x.id===id);if(!e)return;const a=accOf(e.acct);
+  openSheet(sheetHead(e.type==="rec"?"Entrada":"Saída")+`<div class="kv"><span>Descrição</span><b>${esc(e.desc)}</b><span>Valor</span><b class="${e.type==="rec"?"ok":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b><span>Data</span><b>${fmtD(e.date)}${isFut(e)?" (agendado)":""}</b><span>Conta</span><b>${esc(a?a.name:"—")}</b></div>
+  <button type="button" class="btn wide" id="exDel" data-id="${e.id}">Apagar este lançamento</button>`);
+}
+
 document.addEventListener("click",e=>{
-  if(!$("sheet").querySelector("#cdSave"))return;
-  const b=e.target.closest("[data-bpick]");
-  if(b&&!b.disabled){cdPicked=b.dataset.bpick;if(cdPicked){cdName=cdPicked;const k=bankOf(cdPicked);if(k)cdColor=k.c}else cdName="";
-    openSheet(cardSheetHtml());if(cdPicked==="")setTimeout(()=>$("cdName")?.focus(),60);return}
-  const s=e.target.closest("[data-color]");if(s){cdColor=s.dataset.color;const nm=$("cdName");if(nm)cdName=nm.value;openSheet(cardSheetHtml());return}
-  if(e.target.closest("#cdSave")){
-    const nm=$("cdName"),name=(cdPicked===""?(nm?nm.value:""):cdName).trim().replace(/\s+/g," ");
-    if(cdPicked===null){$("cdErr").textContent="Escolha o banco ou toque em Outro.";return}
-    if(!name){$("cdErr").textContent="Dê um nome ao cartão.";return}
-    if(name.toLowerCase()==="outro"||cardNames().some(c=>c.toLowerCase()===name.toLowerCase())){$("cdErr").textContent="Já existe um cartão com esse nome.";return}
-    cards[name]={color:cdColor};sel=name;saveCards();closeSheet();renderCards();toast("Cartão "+name+" criado");
+  const t=e.target;
+  if(t.closest("[data-close]")){closeSheet();return}
+  const o=t.closest("[data-open]");if(o){openId=o.dataset.open;renderAll();scrollTo(0,0);return}
+  if(t.closest("#back")){openId=null;renderAll();scrollTo(0,0);return}
+  if(t.closest("#acctNew")){openAddSheet();return}
+  if(t.closest("#editCard")){openEditSheet();return}
+  const x=t.closest("[data-ex]");if(x){openEntrySheet(x.dataset.ex);return}
+  const dx=t.closest("#exDel");if(dx){armed(dx,"Toque de novo para apagar",()=>{entries=entries.filter(y=>y.id!==dx.dataset.id);saveAll();closeSheet();renderAll();toast("Lançamento apagado")});return}
+  const da=t.closest("#acctDel");if(da){armed(da,"Toque de novo: apaga a conta e o extrato",()=>{const id=openId;accts=accts.filter(a=>a.id!==id);entries=entries.filter(y=>y.acct!==id);saveAll();openId=null;renderAll();toast("Conta apagada")});return}
+  /* nova conta */
+  if($("sheet").querySelector("#cdSave")){
+    const b=t.closest("[data-bpick]");
+    if(b&&!b.disabled){keepAdd();cdPicked=b.dataset.bpick;if(cdPicked){cdName=cdPicked;const k=bankOf(cdPicked);if(k)cdColor=k.c}else cdName="";
+      openSheet(addSheetHtml());if(cdPicked==="")setTimeout(()=>$("cdName")?.focus(),60);return}
+    const s=t.closest("[data-color]");if(s){keepAdd();cdColor=s.dataset.color;openSheet(addSheetHtml());return}
+    if(t.closest("#cdSave")){
+      const nm=$("cdName"),name=(cdPicked===""?(nm?nm.value:""):cdName).trim().replace(/\s+/g," ");
+      if(cdPicked===null){$("cdErr").textContent="Escolha o banco ou toque em Outro.";return}
+      if(!name){$("cdErr").textContent="Dê um nome à conta.";return}
+      if(name.toLowerCase()==="outro"||accts.some(c=>c.name.toLowerCase()===name.toLowerCase())){$("cdErr").textContent="Já existe uma conta com esse nome.";return}
+      const a={id:uid(),name,color:cdColor,start:digits($("cdBal").value)};accts.push(a);saveAll();closeSheet();openId=a.id;renderAll();scrollTo(0,0);toast("Conta "+name+" criada");return}
+  }
+  /* personalizar */
+  if($("sheet").querySelector("#edSave")){
+    const s=t.closest("[data-edcolor]");if(s){ed.color=s.dataset.edcolor;edPrev();return}
+    if(t.closest("#edSave")){
+      const name=ed.name.trim().replace(/\s+/g," ");
+      if(!name){$("edErr").textContent="Dê um nome à conta.";return}
+      if(accts.some(c=>c.id!==openId&&c.name.toLowerCase()===name.toLowerCase())){$("edErr").textContent="Já existe uma conta com esse nome.";return}
+      const a=accOf(openId);a.name=name;a.label=ed.label;a.color=ed.color;a.start=digits($("edBal").value);saveAll();closeSheet();renderAll();toast("Cartão atualizado");return}
   }
 });
 
@@ -575,7 +685,7 @@ function viewConta(x){const c=x.c;
     <div class="kv"><span>Empresa</span><b>${esc(c.name)}</b><span>Vencimento</span><b>${fmtD(c.due)}</b><span>Valor</span><b>${R(c.cents)}</b><span>Débito automático</span><b>${c.auto?"sim":"não"}</b></div></details>`}
 /* nome do evento do holerite: siglas (PLR, I.N.S.S.) ficam em maiúsculas */
 const hlName=d=>d.split(/(\s+)/).map(w=>/^(?:\p{L}\.)+\p{L}?\.?$|^\p{Lu}{2,3}$/u.test(w)&&!/^(DE|DO|DA|E)$/.test(w)?w:titleCase(w)).join("");
-function viewHolerite(x){const h=x.h;
+function viewHolerite(x,i){const h=x.h;
   const P=h.ev.filter(e=>e.side==="p"), D=h.ev.filter(e=>e.side==="d");
   return `<details class="rd" open><summary><span>Holerite · ${esc(h.kind)} <small>${esc(x.name)}</small></span></summary>
     <div class="kv"><span>Líquido</span><b>${R(h.cents)}</b><span>Crédito em</span><b>${fmtD(h.date)}</b><span>Referência</span><b>${h.ref.slice(5)}/${h.ref.slice(0,4)}</b>${h.emp?`<span>Empresa</span><b>${esc(h.emp)}</b>`:""}
@@ -584,13 +694,33 @@ function viewHolerite(x){const h=x.h;
       ${h.conv?`<span>Convênio</span><b>${R(h.conv.cents)}${h.conv.n?` · ${h.conv.n} atend.`:""}</b>`:""}</div>
     ${h.conv&&h.conv.by&&h.conv.by.length?h.conv.by.map(b=>`<div class="ln h2"><span>${esc(b.k)} · ${b.n}</span><b>${R(b.cents)}</b></div>`).join(""):""}
     ${P.length?`<div class="ln sub">Proventos</div>`+P.map(e=>`<div class="ln h2"><span class="dsc" style="color:var(--ink);font-size:.92rem">${esc(hlName(e.desc))}</span><b>${R(e.cents)}</b></div>`).join(""):""}
-    ${D.length?`<div class="ln sub">Descontos</div>`+D.map(e=>`<div class="ln h2"><span class="dsc" style="color:var(--ink);font-size:.92rem">${esc(hlName(e.desc))}</span><b>${R(e.cents)}</b></div>`).join(""):""}</details>`}
+    ${D.length?`<div class="ln sub">Descontos</div>`+D.map(e=>`<div class="ln h2"><span class="dsc" style="color:var(--ink);font-size:.92rem">${esc(hlName(e.desc))}</span><b>${R(e.cents)}</b></div>`).join(""):""}${hlBlock(x,i)}</details>`}
+/* lançar o holerite: vira uma receita (líquido, na data do crédito) na conta escolhida; avisa se já foi lançado */
+const hlKey=h=>`holerite-${h.ref}-${h.kind}`;
+function hlBlock(x,i){
+  const h=x.h, done=entries.find(e=>e.imp===hlKey(h));
+  if(done){const a=accOf(done.acct);return `<div class="hl" data-hl="${i}"><p class="ok" style="margin:0;font-weight:600">Já lançado em ${esc(a?a.name:"uma conta apagada")} ✓</p></div>`}
+  if(!accts.length)return `<div class="hl" data-hl="${i}"><button type="button" class="btn wide" data-hlnew>Crie uma conta para lançar</button></div>`;
+  if(!x.acct||!accOf(x.acct))x.acct=openId&&accOf(openId)?openId:accts[0].id;
+  const a=accOf(x.acct);
+  return `<div class="hl" data-hl="${i}"><span class="lbl">Entra em</span><div class="cards">${accts.map(c=>`<button type="button" class="cpill" data-hlacct="${i}|${c.id}" aria-pressed="${c.id===x.acct}">${acctBadge(c)}<span>${esc(c.name)}</span></button>`).join("")}</div>
+    <button type="button" class="btn primary wide" data-hlgo="${i}">Lançar ${R(h.cents)} em ${esc(a.name)}${h.date>today()?` · cai em ${fmtDM(h.date)}`:""}</button></div>`;
+}
+const hlRedraw=i=>{const el=document.querySelector(`.hl[data-hl="${i}"]`);if(el)el.outerHTML=hlBlock(results[i],i)};
+document.addEventListener("click",e=>{
+  const c=e.target.closest("[data-hlacct]");if(c){const[i,id]=c.dataset.hlacct.split("|");results[+i].acct=id;hlRedraw(+i);return}
+  if(e.target.closest("[data-hlnew]")){closeSheet();openAddSheet();return}
+  const g=e.target.closest("[data-hlgo]");if(g){const i=+g.dataset.hlgo,x=results[i],h=x.h;
+    if(entries.some(y=>y.imp===hlKey(h))){hlRedraw(i);return}
+    entries.push({id:uid(),acct:x.acct,type:"rec",cents:h.cents,date:h.date,desc:h.kind+(h.emp?" · "+h.emp:""),imp:hlKey(h),at:Date.now()});
+    saveAll();renderAll();hlRedraw(i);toast("Holerite lançado ✓",true)}
+});
 function viewErro(x,i){
   return `<details class="rd" open><summary><span>${esc(x.name)}</span></summary><p class="err" style="display:block">${esc(x.msg)}</p>${x.pdf?`<button type="button" class="btn" data-diag="${i}" style="margin-bottom:12px">Ver diagnóstico</button>`:""}</details>`}
 let results=[];
 function showResults(){
   openSheet(`<div class="grip"></div><h3><span>O que o app leu</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>`+
-    results.map((x,i)=>x.kind==="fatura"?viewFatura(x):x.kind==="conta"?viewConta(x):x.kind==="holerite"?viewHolerite(x):viewErro(x,i)).join(""));
+    results.map((x,i)=>x.kind==="fatura"?viewFatura(x):x.kind==="conta"?viewConta(x):x.kind==="holerite"?viewHolerite(x,i):viewErro(x,i)).join(""));
 }
 document.addEventListener("click",e=>{
   const d=e.target.closest("[data-diag]");if(d){lastPdf=results[+d.dataset.diag].pdf;
@@ -608,7 +738,7 @@ $("pdfIn").addEventListener("change",async e=>{
   $("toast").hidden=true;showResults();
 });
 
-renderCards();
+renderAll();
 if(PWA&&"serviceWorker" in navigator&&(location.protocol==="https:"||/^(localhost|127\.0\.0\.1)$/.test(location.hostname))) navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{r.update();document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")r.update()})}).catch(()=>{});
 /* iOS: no app da tela de início o touch-action às vezes é ignorado. O 2º toque rápido no mesmo lugar vira um clique normal (sem zoom); campos de texto ficam de fora. Também bloqueia a pinça. */
 (()=>{let last=0,lx=0,ly=0;

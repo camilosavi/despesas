@@ -11,7 +11,8 @@ caixinhas, dívidas, moedas, sincronização, avisos, Open Finance…) foi remov
 `68e3b9b`** (`git show 68e3b9b:src/app.html`): serve de consulta quando ele pedir uma função de volta, mas não copiar
 em bloco — cada função volta sozinha, quando ele pedir, do jeito que ele pedir.
 
-Ficou só:
+Ficou o que está abaixo; o resto volta função por função, conversando tela por tela (não construir tela antes de ele aprovar o desenho).
+
 1. **Visual do cartão no topo** (`.tcard`: chip, brilho, degradê na cor do cartão; moldura `header.top` com 22% da cor).
    Sem cartão aberto usa a cor do tema (`--head`); com cartão aberto, `--hc` = cor do cartão e o texto fica claro ou escuro
    pelo contraste (`lumHex`, p.ex. Banco do Brasil amarelo → texto escuro).
@@ -22,6 +23,14 @@ Ficou só:
    fatura (`parseInvoice` → Inter, Pan, PicPay, Renner/Realize), conta/boleto (`parseConta`, `CONTAS`) e holerite
    (`parseHolerite`, com extrato do convênio). Código copiado do app antigo sem mexer na lógica.
    Extrato da conta, OFX, planilha e Open Finance **não** ficaram (ele não listou).
+4. **Base de banco** (21/10/2026, 1ª função; ele quer um app "como a tela de um banco", com vários bancos e todas as despesas):
+   - **Contas** (`accts`): uma por banco, com cor, letra do ícone e saldo inicial personalizáveis ("Personalizar" no cartão da conta,
+     com prévia). Home = cartão com **Saldo total** + lista de contas (toque abre a conta, cartão na cor dela, "‹ Contas" volta).
+   - **Extrato** (`entries`) por conta, por dia, "Agendado" para data futura. **Saldo = saldo inicial + entradas − saídas com data ≤ hoje.**
+     Nada de saldo digitado por cima (ele disse que vai lançar os holerites); ajuste/conferência com o saldo real do banco fica para depois.
+   - **Holerite → receita**: ao ler um holerite aparece "Entra em <conta>" e "Lançar R$ X em <conta>" (líquido, na data do crédito,
+     `imp:"holerite-AAAA-MM-tipo"`; avisa "Já lançado"). Fatura e conta continuam só leitura.
+   - Ainda **não** tem: lançar despesa/receita à mão, transferência entre contas, cartões de crédito/faturas ligados às contas.
 
 ## Como editar (sempre assim)
 
@@ -45,8 +54,10 @@ O histórico foi recomeçado em 09/10/2026 (tirar valores pessoais): clone antig
 
 ## Dados no aparelho
 
-`localStorage`: `despesas.zero.cards` (`{nome:{color}}`) e `despesas.zero.sel` (cartão aberto). Nada vai para a nuvem.
-As chaves antigas (`despesas.v3`, `despesas.cfg3`, `despesas.fx3`…) continuam no iPhone dele, intactas, mas o app novo não lê.
+`localStorage`: `despesas.zero.accts` (`[{id,name,color,label?,start}]`) e `despesas.zero.entries`
+(`[{id,acct,type:"rec"|"desp",cents,date,desc,imp?,at}]`). Nada vai para a nuvem. A versão de 21/10 de manhã guardava
+`despesas.zero.cards` (só nome e cor): vira conta com saldo zero na primeira abertura (idempotente).
+As chaves do app antigo (`despesas.v3`, `despesas.cfg3`, `despesas.fx3`…) continuam no iPhone dele, intactas, mas o app não lê.
 Se ele pedir os lançamentos de volta, dá para importar dali (ou do backup JSON `{app:"minhas-despesas", v:1, items, fx, cfg}`).
 
 ## Leitores: o que já foi calibrado (não perder)
