@@ -5,6 +5,7 @@ import { ctKey, hlKey, ftKey, ftTotal, faturaRows } from "./imports";
 import { addMonths, launchEntries, repCount } from "./launch";
 import { decryptSync, ofFromSync } from "./driveImport";
 import { eRow, uniform } from "./sync";
+import { actions, ledger } from "./store";
 import { bankEntries, cardEntries, ofBankName, ofDay } from "./openfinance";
 import type { Account, Entry } from "./types";
 
@@ -406,5 +407,15 @@ describe("sincronizar: lote com chaves iguais (PostgREST)", () => {
     const ks = rows.map(r => Object.keys(r).sort().join());
     expect(new Set(ks).size).toBe(1);
     expect(rows[0].open ?? null).toBeNull(); expect(rows[1].cat).toBeNull(); expect(rows[1].open).toBe(true);
+  });
+});
+
+describe("juntar contas", () => {
+  it("lançamentos vão para a conta de destino; limite e dias vêm da outra se faltarem", () => {
+    ledger.set({ ...ledger.get(), accts: [{ id: "x1", name: "Gold", color: "#111", start: 0, kind: "cartao", limit: 341000, closeDay: 25, dueDay: 2 }, { id: "x2", name: "Cartão Inter", color: "#222", start: 0, kind: "cartao" }], entries: [e({ id: "m1", acct: "x1", cents: 100 }), e({ id: "m2", acct: "x2", cents: 200 })] });
+    actions.mergeAccount("x1", "x2");
+    const s = ledger.get();
+    expect(s.accts.map(a => a.id)).toEqual(["x2"]); expect(s.entries.every(x => x.acct === "x2")).toBe(true); expect(s.entries).toHaveLength(2);
+    expect(s.accts[0]).toMatchObject({ name: "Cartão Inter", limit: 341000, closeDay: 25, dueDay: 2 });
   });
 });

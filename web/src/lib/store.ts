@@ -69,6 +69,12 @@ export const actions = {
     const s = ledger.get();
     commit({ ...s, accts: s.accts.map(a => (a.id === id ? { ...a, ...patch } : a)) });
   },
+  /** junta duas contas do mesmo tipo: os lançamentos de `from` passam para `into` (que mantém saldo inicial e nome; limite e dias da fatura vêm de `from` se faltarem) e `from` some */
+  mergeAccount(from: string, into: string) {
+    const s = ledger.get(), a = s.accts.find(x => x.id === from), b = s.accts.find(x => x.id === into); if (!a || !b || from === into) return;
+    const fill: Partial<Account> = {}; for (const k of ["limit", "closeDay", "dueDay"] as const) if (!b[k] && a[k]) fill[k] = a[k];
+    commit({ ...s, accts: s.accts.filter(x => x.id !== from).map(x => (x.id === into ? { ...x, ...fill } : x)), entries: s.entries.map(e => (e.acct === from ? { ...e, acct: into } : e)) });
+  },
   deleteAccount(id: string) { const s = ledger.get(); commit({ ...s, accts: s.accts.filter(a => a.id !== id), entries: s.entries.filter(e => e.acct !== id) }); },
   addEntries(...es: Entry[]) { const s = ledger.get(); commit({ ...s, entries: [...s.entries, ...es] }); },
   updateEntry(id: string, next: Entry) { const s = ledger.get(); commit({ ...s, entries: s.entries.map(e => (e.id === id ? next : e)) }); },

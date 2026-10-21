@@ -102,6 +102,7 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      Precisa de `https://camilosavi.github.io/despesas/` nos redirecionamentos autorizados do cliente e do escopo `drive.appdata` no consentimento. Testado com Google simulado.
    - **Cartões enxutos** (21/10/2026, "essa aba do cartão parece mto confusa", opção "faixa na home + cartão enxuto"): na home, faixa lateral "Cartões" (`.cstrip`/`.ctile`: cor do cartão, "vence dd/mm", "Fatura de <mês>", valor, barra do limite) e "Contas" só com contas de banco.
      `openFatura(a, entries)` = fatura em aberto da vez (mais antiga que vence neste mês ou depois; só atrasadas → a mais nova). Cartão aberto: topo mostra essa fatura + "Limite disponível"; seção "Fatura" com chips dos meses de vencimento (uma fatura por vez), cartão da fatura (total, vence, "Em aberto"/"Paga ✓", **Pagar**) e barra de limite; abaixo "Compras da fatura" já filtradas pelo mês escolhido (sem chips de mês).
+   - **Juntar contas** (`actions.mergeAccount`, "Juntar … em outro(a)" no Personalizar; só entre contas do mesmo tipo, confirma com 2 toques): lançamentos passam para a conta de destino, que mantém nome, cor e saldo inicial (limite e dias da fatura vêm da outra se faltarem). O Open Finance acha a conta pelo banco no nome (`bankOf`): a que fica deve ter "Inter" no nome.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

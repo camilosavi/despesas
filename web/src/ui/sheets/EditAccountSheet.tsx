@@ -7,7 +7,8 @@ import { actions, ledger } from "../../lib/store";
 import { Badge } from "../Badge";
 import { MoneyInput } from "../MoneyInput";
 import { SheetHead } from "../Sheet";
-import { closeSheet, toast, ui } from "../uiStore";
+import { useArmed } from "../hooks";
+import { closeSheet, openAccount, toast, ui } from "../uiStore";
 
 /** personalizar o cartão da conta: nome, letra, cor e saldo inicial, com prévia do cartão */
 export function EditAccountSheet() {
@@ -16,6 +17,9 @@ export function EditAccountSheet() {
   const [name, setName] = useState(a?.name ?? ""), [label, setLabel] = useState(a?.label ?? ""), [color, setColor] = useState(a?.color ?? CARD_PALETTE[0]);
   const [bal, setBal] = useState(a?.start ? brl(a.start) : ""), [err, setErr] = useState("");
   const [card, setCard] = useState(a?.kind === "cartao"), [lim, setLim] = useState(a?.limit ? brl(a.limit) : ""), [closeD, setCloseD] = useState(a?.closeDay ? String(a.closeDay) : ""), [dueD, setDueD] = useState(a?.dueDay ? String(a.dueDay) : "");
+  const [into, setInto] = useState("");
+  const mates = accts.filter(x => a && x.id !== a.id && (x.kind === "cartao") === (a.kind === "cartao")), target = mates.find(x => x.id === into);
+  const merge = useArmed("Toque de novo para juntar", target ? `Juntar em ${target.name}` : "Juntar", () => { if (!a || !target) return; actions.mergeAccount(a.id, target.id); closeSheet(); openAccount(target.id); toast(`Juntado em ${target.name} ✓`); });
   if (!a) return null;
   const pal = CARD_PALETTE.includes(color) ? CARD_PALETTE : [color, ...CARD_PALETTE.slice(0, -1)];
 
@@ -50,6 +54,13 @@ export function EditAccountSheet() {
         <label className="swatch custom" aria-label="Outra cor"><input type="color" id="edCol" value={color.length === 7 ? color : "#6B7A75"} onChange={e => setColor(e.target.value)} /></label>
       </div>
     </div>
+    {mates.length > 0 && (
+      <div className="field" id="edMerge"><label htmlFor="edInto">Juntar {card ? "este cartão" : "esta conta"} em outro(a)</label>
+        <select id="edInto" value={into} onChange={e => setInto(e.target.value)}><option value="">Escolher…</option>{mates.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+        {target && <><p className="hint">Os lançamentos de <b>{a.name}</b> vão para <b>{target.name}</b> e {a.name} some. Fica o nome, a cor e o saldo inicial de {target.name}.</p>
+          <button type="button" className="btn wide" id="edMergeGo" onClick={merge.onClick}>{merge.text}</button></>}
+      </div>
+    )}
     <p className="err" id="edErr">{err}</p>
     <button type="button" className="btn primary wide" id="edSave" onClick={save}>Salvar</button>
   </>);
