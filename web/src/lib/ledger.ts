@@ -65,6 +65,24 @@ export const monIn = (entries: Entry[], acctId: string | null, t = today()) =>
   entries.filter(e => (!acctId || e.acct === acctId) && e.type === "rec" && !e.xfer && !isAdj(e) && !isFut(e, t) && e.date.slice(0, 7) === t.slice(0, 7))
     .reduce((s, e) => s + e.cents, 0);
 
+/** descrições já usadas (mais recentes primeiro) para sugerir ao digitar; ignora transferências, importações e os nomes padrão */
+export const descHints = (entries: Entry[], type: Entry["type"], limit = 40) => {
+  const seen = new Set(["entrada", "saida", "compra"]), out: string[] = [];
+  for (const e of [...entries].sort((x, y) => (y.at || 0) - (x.at || 0))) {
+    if (e.type !== type || e.xfer || e.imp) continue;
+    const k = fold(e.desc.trim()); if (!k || seen.has(k)) continue;
+    seen.add(k); out.push(e.desc.trim()); if (out.length >= limit) break;
+  }
+  return out;
+};
+/** categoria do último lançamento com essa mesma descrição ("" se não houver) */
+export const catForDesc = (entries: Entry[], type: Entry["type"], desc: string) => {
+  const k = fold(desc.trim()); if (!k) return "";
+  let best: Entry | undefined;
+  for (const e of entries) if (e.type === type && !e.xfer && e.cat && fold(e.desc.trim()) === k && (!best || (e.at || 0) > (best.at || 0))) best = e;
+  return best?.cat ?? "";
+};
+
 /** extrato de uma conta, do mais novo para o mais antigo */
 export const acctEntries = (entries: Entry[], acctId: string) =>
   entries.filter(e => e.acct === acctId).sort((x, y) => y.date.localeCompare(x.date) || (y.at || 0) - (x.at || 0));

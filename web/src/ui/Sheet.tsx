@@ -39,7 +39,7 @@ export function SheetHost() {
       {sheet.kind === "add" && <AddAccountSheet />}
       {sheet.kind === "edit" && <EditAccountSheet />}
       {sheet.kind === "entry" && <EntrySheet id={sheet.id} />}
-      {sheet.kind === "lanc" && <LancSheet editId={sheet.editId} />}
+      {sheet.kind === "lanc" && <LancSheet editId={sheet.editId} copyId={sheet.copyId} />}
       {sheet.kind === "tran" && <TranSheet />}
       {sheet.kind === "me" && <MeSheet />}
       {sheet.kind === "results" && <ResultsSheet />}

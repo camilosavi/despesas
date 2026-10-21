@@ -79,6 +79,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      Fora do resumo: transferências, ajustes (`imp:"ajuste-…"`) e o pagamento de fatura (`pagfatura-…`, as compras do cartão já são os gastos). Fatura de PDF sem cartão cadastrado entra como "Cartão".
    - **Conferir saldo** (botão na conta, `ConferSheet`): digita o saldo do app do banco; mostra a diferença e "Lançar ajuste" (entrada/saída "Ajuste de saldo", `imp:"ajuste-<id>"`, não conta em "Entrou" nem no resumo).
    - **Caixinhas no topo**: na home, linha "Nas caixinhas R$ … · € …" sob o saldo total (por moeda; não entra no saldo).
+   - **Qualidade de vida** (21/10/2026): *Desfazer* no aviso ao apagar lançamento, transferência ou conta (6 s; `toast(texto, undo)`); *Duplicar* no lançamento (`{kind:"lanc", copyId}`, só sem `tr`/`imp`);
+     sugestão de descrição já usada (`descHints`, `<datalist>`) que preenche a categoria da última igual (`catForDesc`, só se ele ainda não tocou nas categorias); atalhos **Hoje/Ontem** (`DateField`, também em Transferir);
+     **Enter** salva em Lançar/Transferir; Lançar abre na última conta usada (`despesas.zero.lastAcct`, só no aparelho).
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

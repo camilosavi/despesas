@@ -4,6 +4,7 @@ import { digits, moneyMask, today, uid } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
 import { bankAccts } from "../../lib/ledger";
 import { Badge } from "../Badge";
+import { DateField } from "../DateField";
 import { MoneyInput } from "../MoneyInput";
 import { SheetHead } from "../Sheet";
 import { closeSheet, toast, ui } from "../uiStore";
@@ -39,10 +40,10 @@ export function TranSheet() {
   }
   return (<>
     <SheetHead title="Transferir" />
-    <div className="bigamt"><span>R$</span><MoneyInput id="tfAmt" aria-label="Valor" autoFocus value={amt} onChange={v => setAmt(moneyMask(v))} /></div>
+    <div className="bigamt"><span>R$</span><MoneyInput id="tfAmt" aria-label="Valor" autoFocus value={amt} onChange={v => setAmt(moneyMask(v))} onKeyDown={e => { if (e.key === "Enter") save(); }} /></div>
     <div className="field"><span className="lbl">De</span><div className="cards" id="tfFrom">{accts.map(a => chip(a, from, () => pickFrom(a.id)))}</div></div>
     <div className="field"><span className="lbl">Para</span><div className="cards" id="tfTo">{accts.filter(a => a.id !== from).map(a => chip(a, to, () => setTo(a.id)))}</div></div>
-    <div className="field"><label htmlFor="tfDate">Data</label><input type="date" id="tfDate" value={date} onChange={e => setDate(e.target.value)} /></div>
+    <DateField id="tfDate" value={date} onChange={setDate} />
     <p className="err" id="tfErr">{err}</p>
     <button type="button" className="btn primary wide" id="tfSave" onClick={save}>Transferir</button>
   </>);

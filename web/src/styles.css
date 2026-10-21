@@ -121,6 +121,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .diagtxt{width:100%;font:12px/1.35 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(90vw,420px);padding:12px 18px;border-radius:16px;background:var(--ink);color:var(--bg);font-weight:600;font-size:.92rem;z-index:30;text-align:center}
 .toast[hidden]{display:none}
+.toast button{margin-left:14px;padding:4px 2px;border:0;background:none;color:inherit;font-weight:700;text-decoration:underline}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* celular: uma coluna na ordem cartão, botões, contas, PDF */

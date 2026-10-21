@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { brl, R, signR, fmtD, digits, moneyMask, fold, textOn, lastDay, shiftYM } from "./format";
-import { accBal, totBal, matchEntry, sg } from "./ledger";
+import { accBal, totBal, matchEntry, sg, descHints, catForDesc } from "./ledger";
 import { ctKey, hlKey, ftKey, ftTotal } from "./imports";
 import type { Account, Entry } from "./types";
 
@@ -252,5 +252,22 @@ describe("resumo por categoria", () => {
     expect(catsOf("rec", es)).toEqual(["Salário", "Rendimento", "Reembolso", "Outros"]);
     expect(catsOf("rec", [], "Freela")).toContain("Freela");
     expect(isFixedCat("Mercado")).toBe(true); expect(isFixedCat("Pets")).toBe(false);
+  });
+});
+
+describe("sugestões de descrição", () => {
+  const es = [
+    e({ id: "1", desc: "Mercado Dia", cat: "Mercado", at: 1 }), e({ id: "2", desc: "mercado dia", cat: "Lazer", at: 3 }),
+    e({ id: "3", desc: "Saída", at: 4 }), e({ id: "4", desc: "Padaria", at: 2 }), e({ id: "5", desc: "Fatura Inter", imp: "fatura-x", at: 5 }),
+    e({ id: "6", desc: "Transferência para X", xfer: 1, at: 6 }), e({ id: "7", type: "rec", desc: "Pix amigo", at: 7 }),
+  ];
+  it("lista únicas, recentes primeiro, sem padrão/importação/transferência", () => {
+    expect(descHints(es, "desp")).toEqual(["mercado dia", "Padaria"]);
+    expect(descHints(es, "rec")).toEqual(["Pix amigo"]);
+  });
+  it("categoria vem do último lançamento com a mesma descrição (sem acento e caixa)", () => {
+    expect(catForDesc(es, "desp", " MERCADO dia ")).toBe("Lazer");
+    expect(catForDesc(es, "desp", "Padaria")).toBe("");
+    expect(catForDesc(es, "desp", "")).toBe("");
   });
 });

@@ -20,7 +20,7 @@ export function AccountView({ id }: { id: string }) {
   const { accts, entries } = useStore(ledger, s => s);
   const a = accts.find(x => x.id === id);
   const [q, setQ] = useState(""), [catSel, setCat] = useState(""), [monSel, setMon] = useState("");
-  const del = useArmed("Toque de novo: apaga a conta e o extrato", `Apagar a conta ${a?.name ?? ""}`, () => { actions.deleteAccount(id); backHome(); toast("Conta apagada"); });
+  const del = useArmed("Toque de novo: apaga a conta e o extrato", `Apagar a conta ${a?.name ?? ""}`, () => { const acc = a, gone = entries.filter(e => e.acct === id); actions.deleteAccount(id); backHome(); toast("Conta apagada", () => { if (acc) { actions.addAccount(acc); actions.addEntries(...gone); } }); });
   if (!a) return null;
 
   const all = acctEntries(entries, id);

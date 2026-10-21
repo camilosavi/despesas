@@ -10,7 +10,7 @@ import { closeSheet, openSheet, toast } from "../uiStore";
 export function EntrySheet({ id }: { id: string }) {
   const { accts, entries } = useStore(ledger, s => s);
   const e = entries.find(x => x.id === id);
-  const del = useArmed("Toque de novo para apagar", e?.tr ? "Apagar a transferência" : "Apagar este lançamento", () => { actions.deleteEntry(id); closeSheet(); toast("Lançamento apagado"); });
+  const del = useArmed("Toque de novo para apagar", e?.tr ? "Apagar a transferência" : "Apagar este lançamento", () => { const gone = entries.filter(x => x.id === id || (e?.tr && x.tr === e.tr)); actions.deleteEntry(id); closeSheet(); toast("Lançamento apagado", () => actions.addEntries(...gone)); });
   if (!e) return null;
   const a = accts.find(x => x.id === e.acct);
   return (<>
@@ -27,6 +27,7 @@ export function EntrySheet({ id }: { id: string }) {
       {e.items.map((y, i) => <div className="ln" key={i}><span>{fmtDM(y.date)}</span><span className="dsc">{y.desc}</span><b className={y.cents < 0 ? "cr" : ""}>{R(y.cents)}</b></div>)}
     </>}
     {!e.tr && <button type="button" className="btn primary wide" id="exEdit" onClick={() => openSheet({ kind: "lanc", editId: e.id })}>Editar</button>}
+    {!e.tr && !e.imp && <button type="button" className="btn wide" id="exDup" onClick={() => openSheet({ kind: "lanc", copyId: e.id })}>Duplicar</button>}
     <button type="button" className="btn wide" id="exDel" onClick={del.onClick}>{del.text}</button>
   </>);
 }
