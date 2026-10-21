@@ -66,6 +66,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
    - **Cartão puro** (21/10/2026, `kind:"cartao"` na conta; Renner, etc.): sem saldo; mesma lista da home, depois das contas, com "Cartão · gasto em <mês>" e fora do Saldo total.
      Aberto: topo mostra "Gasto em <mês>"; "Lançar" vira só compra; fora de Transferir e de "Paga pela conta" do PDF (fatura lida continua virando despesa na conta que paga).
      Coluna `kind text` em `accts`: **rodar a última linha de `supabase/schema.sql`** (o app só manda `kind` quando é cartão). Falta: "Pagar fatura" ligada ao cartão, limite.
+   - **Mês pelo vencimento da fatura** (21/10/2026): cartão tem `closeDay` e `dueDay` (Personalizar; o leitor de fatura preenche sozinho se faltar). `entMonth(a, data)` = mês do vencimento da fatura em que a compra cai
+     (fecha 25, vence 2: compra de 20/09 = outubro; de 26/09 = novembro). Vale no "Fatura de <mês>" do cartão e no filtro de mês do extrato (chips "out/26"). A fatura lida vira despesa na data do vencimento (já era o mês certo).
+     Colunas `close_day`, `due_day` em `accts`: **rodar as 2 últimas linhas de `supabase/schema.sql`**.
    - Ainda **não** tem: categorias próprias (criar/renomear), resumo por categoria, limite/cartão como item próprio, conferência com o saldo real.
 
 ## Cores e logo (21/10/2026)

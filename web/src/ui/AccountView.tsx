@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../lib/createStore";
-import { acctEntries, isFut, matchEntry } from "../lib/ledger";
-import { R, dayLbl } from "../lib/format";
+import { acctEntries, entMonth, isFut, matchEntry } from "../lib/ledger";
+import { MESN, R, dayLbl } from "../lib/format";
 import { actions, ledger } from "../lib/store";
 import type { Entry } from "../lib/types";
 import { useArmed } from "./hooks";
@@ -19,16 +19,18 @@ const ExRow = ({ e }: { e: Entry }) => (
 export function AccountView({ id }: { id: string }) {
   const { accts, entries } = useStore(ledger, s => s);
   const a = accts.find(x => x.id === id);
-  const [q, setQ] = useState(""), [catSel, setCat] = useState("");
+  const [q, setQ] = useState(""), [catSel, setCat] = useState(""), [monSel, setMon] = useState("");
   const del = useArmed("Toque de novo: apaga a conta e o extrato", `Apagar a conta ${a?.name ?? ""}`, () => { actions.deleteAccount(id); backHome(); toast("Conta apagada"); });
   if (!a) return null;
 
   const all = acctEntries(entries, id);
   const used = [...new Set(all.filter(e => e.cat).map(e => e.cat as string))];
   const cat = used.includes(catSel) ? catSel : "";
-  const L = all.filter(e => matchEntry(e, q, cat));
+  const months = [...new Set(all.map(e => entMonth(a, e.date)))].sort().reverse(); // cartão: mês do vencimento da fatura
+  const mon = months.includes(monSel) ? monSel : "";
+  const L = all.filter(e => matchEntry(e, q, cat) && (!mon || entMonth(a, e.date) === mon));
   const fut = L.filter(e => isFut(e)), past = L.filter(e => !isFut(e)), days = [...new Set(past.map(e => e.date))];
-  const filtering = !!(q || cat);
+  const filtering = !!(q || cat || mon);
   const sumIn = L.filter(e => e.type === "rec").reduce((s, e) => s + e.cents, 0), sumOut = L.filter(e => e.type === "desp").reduce((s, e) => s + e.cents, 0);
 
   return (<>
@@ -37,6 +39,12 @@ export function AccountView({ id }: { id: string }) {
       {all.length > 0 && (
         <div className="exbar">
           <input type="search" className="exq" id="exQ" placeholder="Buscar no extrato" value={q} onChange={e => setQ(e.target.value)} autoComplete="off" enterKeyHint="search" />
+          {months.length > 1 && (
+            <div className="cards" id="exMons">
+              <button type="button" className="cpill txt" aria-pressed={!mon} onClick={() => setMon("")}>Todos os meses</button>
+              {months.map(m => <button type="button" key={m} className="cpill txt" data-xmon={m} aria-pressed={m === mon} onClick={() => setMon(m === mon ? "" : m)}>{MESN[+m.slice(5) - 1]}/{m.slice(2, 4)}</button>)}
+            </div>
+          )}
           <div className="cards" id="exCats">
             {used.length > 0 && <>
               <button type="button" className="cpill txt" aria-pressed={!cat} onClick={() => setCat("")}>Todas</button>

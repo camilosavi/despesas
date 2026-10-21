@@ -15,7 +15,7 @@ export function EditAccountSheet() {
   const a = accts.find(x => x.id === openId);
   const [name, setName] = useState(a?.name ?? ""), [label, setLabel] = useState(a?.label ?? ""), [color, setColor] = useState(a?.color ?? CARD_PALETTE[0]);
   const [bal, setBal] = useState(a?.start ? brl(a.start) : ""), [err, setErr] = useState("");
-  const [card, setCard] = useState(a?.kind === "cartao");
+  const [card, setCard] = useState(a?.kind === "cartao"), [closeD, setCloseD] = useState(a?.closeDay ? String(a.closeDay) : ""), [dueD, setDueD] = useState(a?.dueDay ? String(a.dueDay) : "");
   if (!a) return null;
   const pal = CARD_PALETTE.includes(color) ? CARD_PALETTE : [color, ...CARD_PALETTE.slice(0, -1)];
 
@@ -23,7 +23,7 @@ export function EditAccountSheet() {
     const nm = name.trim().replace(/\s+/g, " ");
     if (!nm) { setErr("Dê um nome à conta."); return; }
     if (accts.some(c => c.id !== a!.id && c.name.toLowerCase() === nm.toLowerCase())) { setErr("Já existe uma conta com esse nome."); return; }
-    actions.updateAccount(a!.id, { name: nm, label, color, start: card ? 0 : digits(bal), kind: card ? "cartao" : undefined }); closeSheet(); toast("Cartão atualizado");
+    actions.updateAccount(a!.id, { name: nm, label, color, start: card ? 0 : digits(bal), kind: card ? "cartao" : undefined, closeDay: card ? (+closeD >= 1 && +closeD <= 31 ? +closeD : undefined) : undefined, dueDay: card ? (+dueD >= 1 && +dueD <= 31 ? +dueD : undefined) : undefined }); closeSheet(); toast("Cartão atualizado");
   }
   return (<>
     <SheetHead title="Personalizar cartão" />
@@ -35,6 +35,12 @@ export function EditAccountSheet() {
     <div className="seg" id="edKind">
       <button type="button" aria-pressed={!card} onClick={() => setCard(false)}>Conta com saldo</button>
       <button type="button" aria-pressed={card} onClick={() => setCard(true)}>Só cartão</button>
+    </div>
+        <div className="field" hidden={!card}><span className="lbl">Fatura (dia do mês)</span>
+      <div className="fx-calc-row">
+        <label className="fx-f">Fecha dia<input type="text" inputMode="numeric" className="fld" id="edClose" aria-label="Fecha dia" placeholder="25" maxLength={2} value={closeD} onChange={e => setCloseD(e.target.value.replace(/\D/g, ""))} /></label>
+        <label className="fx-f">Vence dia<input type="text" inputMode="numeric" className="fld" id="edDue" aria-label="Vence dia" placeholder="2" maxLength={2} value={dueD} onChange={e => setDueD(e.target.value.replace(/\D/g, ""))} /></label>
+      </div>
     </div>
     <div className="field" hidden={card}><label htmlFor="edBal">Saldo inicial (R$)</label><MoneyInput id="edBal" value={bal} onChange={v => setBal(moneyMask(v))} /></div>
     <div className="field"><span className="lbl">Cor</span>

@@ -19,6 +19,13 @@ export const itemName = (y: { shop?: string; desc?: string }) => {
 export const hlName = (d: string) =>
   d.split(/(\s+)/).map(w => (/^(?:\p{L}\.)+\p{L}?\.?$|^\p{Lu}{2,3}$/u.test(w) && !/^(DE|DO|DA|E)$/.test(w) ? w : titleCase(w))).join("");
 
+/** dias de fechamento e vencimento lidos da fatura (para o cartão do mesmo banco) */
+export const faturaDays = (r: Fatura, due: string) => {
+  const c = String(r.close ?? ""), m = c.match(/^\d{4}-\d\d-(\d\d)$/) || c.match(/^(\d{1,2})(?:\/\d{1,2})?(?:\/\d{2,4})?$/);
+  const day = (v: string | undefined) => (v && +v >= 1 && +v <= 31 ? +v : undefined);
+  return { closeDay: day(m?.[1]), dueDay: day(due.slice(8, 10)) };
+};
+
 export const contaEntry = (acct: string, c: ContaPdf): Entry =>
   ({ id: uid(), acct, type: "desp", cents: c.cents, date: c.due, desc: "Conta " + c.name, cat: "Contas", imp: ctKey(c), at: Date.now() });
 export const holeriteEntry = (acct: string, h: HoleritePdf): Entry =>

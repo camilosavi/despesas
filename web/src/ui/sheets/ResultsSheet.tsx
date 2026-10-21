@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useStore } from "../../lib/createStore";
 import { bankOf } from "../../lib/banks";
 import { R, fmtD, fmtDM, today } from "../../lib/format";
-import { contaEntry, faturaEntry, ftKey, ftTotal, hlKey, hlName, holeriteEntry, itemName, ctKey } from "../../lib/imports";
+import { contaEntry, faturaDays, faturaEntry, ftKey, ftTotal, hlKey, hlName, holeriteEntry, itemName, ctKey } from "../../lib/imports";
 import type { ContaPdf, Fatura, HoleritePdf, ReadResult } from "../../lib/pdf/read";
 import { actions, ledger } from "../../lib/store";
 import { bankAccts } from "../../lib/ledger";
@@ -50,6 +50,9 @@ function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: n
     if (!d) { toast("Informe o vencimento da fatura."); return; }
     if (entries.some(y => y.imp === ftKey(r, d))) return;
     actions.addEntries(faturaEntry(acct, r, d)); toast("Fatura lançada ✓");
+    // o cartão do mesmo banco aprende os dias de fechamento e vencimento (só se ainda não tiver)
+    const bk = bankOf(r.bank || ""), card = bk && ledger.get().accts.find(a => a.kind === "cartao" && bankOf(a.name) === bk && !(a.closeDay && a.dueDay));
+    if (card) { const dd = faturaDays(r, d); if (dd.closeDay && dd.dueDay) actions.updateAccount(card.id, dd); }
   }
   return (
     <details className="rd" open>

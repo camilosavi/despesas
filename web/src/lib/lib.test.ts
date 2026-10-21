@@ -167,3 +167,29 @@ describe("cartão puro", () => {
     expect(aFrom({ id: "x", name: "N", start_cents: 5, kind: null }).kind).toBeUndefined();
   });
 });
+
+import { entMonth, cardMonthLbl } from "./ledger";
+import { faturaDays } from "./imports";
+describe("mês pela fatura (vencimento)", () => {
+  const c = (closeDay?: number, dueDay?: number): Account => ({ id: "c", name: "Inter", color: "#f70", start: 0, kind: "cartao", closeDay, dueDay });
+  it("fecha 25, vence 2: compra de setembro cai em outubro", () => {
+    expect(entMonth(c(25, 2), "2026-09-20")).toBe("2026-10"); // antes do fechamento: vence 02/10
+    expect(entMonth(c(25, 2), "2026-09-26")).toBe("2026-11"); // depois do fechamento: próxima fatura, vence 02/11
+    expect(entMonth(c(25, 2), "2026-12-30")).toBe("2027-02");
+  });
+  it("vence no mesmo mês do fechamento", () => {
+    expect(entMonth(c(5, 15), "2026-10-03")).toBe("2026-10");
+    expect(entMonth(c(5, 15), "2026-10-06")).toBe("2026-11");
+  });
+  it("sem os dias, ou conta comum: mês da data", () => {
+    expect(entMonth(c(), "2026-09-20")).toBe("2026-09");
+    expect(entMonth(acct, "2026-09-20")).toBe("2026-09");
+    expect(cardMonthLbl(c(25, 2), "out")).toBe("Fatura de out");
+    expect(cardMonthLbl(c(), "out")).toBe("Gasto em out");
+  });
+  it("dias vindos da fatura lida", () => {
+    expect(faturaDays({ close: "2026-09-25" } as never, "2026-10-02")).toEqual({ closeDay: 25, dueDay: 2 });
+    expect(faturaDays({ close: 25 } as never, "2026-10-02")).toEqual({ closeDay: 25, dueDay: 2 });
+    expect(faturaDays({} as never, "2026-10-02")).toEqual({ closeDay: undefined, dueDay: 2 });
+  });
+});
