@@ -70,17 +70,20 @@ Base visual decidida por ele: **azul-marinho `#14203A`, dourado (`#C9A25A` claro
 `tostao-logo.png` (login, fundo transparente) e nos ícones `tostao-180/192/512.png` + `tostao-maskable-512.png` (links com `?v=4`). Recusados antes:
 cruz em círculo simples ("app de igreja"), "T" verde e moeda vetorial minha. Não usar a foto da moeda do site de numismática (direitos).
 
-## Como editar (sempre assim)
+## Como editar (sempre assim) — base React + TypeScript (21/10/2026)
 
-1. Edite **só `src/app.html`** (fonte única). Nunca edite `index.html` à mão.
-2. Rode `python3 build_pwa.py` → gera `index.html` e `sw.js` (versão do cache muda sozinha).
-3. Teste em 440 px de largura, claro e escuro, e confira que não há erro de console. Se mexer em layout, teste também em
-   1440 px (computador) e em 375 px.
-4. Antes de começar, `git pull` (outras conversas podem ter publicado).
-5. Commit e push direto na `main` (ele liberou); depois mostre o que mudou. O Pages publica em ~1 min.
+O app foi migrado de um HTML único para **Vite + React 18 + TypeScript estrito** em `web/` (mesma tela, mesmos dados, mesmo CSS em `web/src/styles.css`).
+`src/app.html` e `build_pwa.py` foram removidos (estão no histórico: `git show 68e3b9b:src/app.html`).
+
+1. Edite só em `web/src` (`lib/` = regras sem tela: ledger, sync, imports, parsers de PDF; `ui/` = telas e janelas). Nunca edite `index.html`, `assets/`, `sw.js` da raiz: são gerados.
+2. `cd web && npm ci` (1ª vez), `npm test` (vitest) e `npm run publish:pages` (typecheck + build + copia para a raiz; versão do cache do `sw.js` muda sozinha; `.published.json` lista o que o script gerencia).
+3. Teste em 440 px claro e escuro, console sem erro; se mexer em layout, também 1440 e 375 (Playwright: semear `despesas.zero.ses/accts/entries` no localStorage e bloquear `supabase.co`).
+4. Antes de começar, `git pull`. Commit e push direto na `main` (ele liberou); depois mostre o que mudou. O Pages publica em ~1 min.
+5. Parsers de PDF (`lib/pdf/parsers.ts`, `@ts-nocheck`) são calibrados: não mexer sem PDF de exemplo.
+6. Instalar no iPhone: PWA pelo Safari (Compartilhar > Adicionar à Tela de Início); grátis e sem expirar. App nativo (Capacitor) só se ele pagar a conta Apple.
 
 Várias conversas ao mesmo tempo: antes do push `git fetch origin main && git rebase origin/main`; nunca `push --force`.
-Conflito em `src/app.html`: juntar à mão. Conflito em `index.html`/`sw.js`: aceitar qualquer lado e rodar o build de novo.
+Conflito em `web/src`: juntar à mão. Conflito em `index.html`/`assets`/`sw.js` da raiz: aceitar qualquer lado e rodar `npm run publish:pages` de novo.
 O histórico foi recomeçado em 09/10/2026 (tirar valores pessoais): clone antigo não serve, clonar de novo.
 
 ## Regras que valem sempre

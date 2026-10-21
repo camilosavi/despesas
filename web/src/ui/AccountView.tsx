@@ -1,0 +1,59 @@
+import { useState } from "react";
+import { useStore } from "../lib/createStore";
+import { acctEntries, isFut, matchEntry } from "../lib/ledger";
+import { R, dayLbl } from "../lib/format";
+import { actions, ledger } from "../lib/store";
+import type { Entry } from "../lib/types";
+import { useArmed } from "./hooks";
+import { backHome, openSheet, toast } from "./uiStore";
+
+const ExRow = ({ e }: { e: Entry }) => (
+  <button type="button" className="ex" data-ex={e.id} onClick={() => openSheet({ kind: "entry", id: e.id })}>
+    <i className={e.type}>{e.xfer ? "⇄" : e.type === "rec" ? "↓" : "↑"}</i>
+    <span className="nm">{e.desc}{e.cat ? <small>{e.cat}</small> : null}</span>
+    <b className={e.type === "rec" ? "cr" : ""}>{e.type === "rec" ? "+" : "−"}{R(e.cents)}</b>
+  </button>
+);
+
+/** extrato da conta aberta, com busca e filtro por categoria (o estado do filtro some ao trocar de conta: key={id}) */
+export function AccountView({ id }: { id: string }) {
+  const { accts, entries } = useStore(ledger, s => s);
+  const a = accts.find(x => x.id === id);
+  const [q, setQ] = useState(""), [catSel, setCat] = useState("");
+  const del = useArmed("Toque de novo: apaga a conta e o extrato", `Apagar a conta ${a?.name ?? ""}`, () => { actions.deleteAccount(id); backHome(); toast("Conta apagada"); });
+  if (!a) return null;
+
+  const all = acctEntries(entries, id);
+  const used = [...new Set(all.filter(e => e.cat).map(e => e.cat as string))];
+  const cat = used.includes(catSel) ? catSel : "";
+  const L = all.filter(e => matchEntry(e, q, cat));
+  const fut = L.filter(e => isFut(e)), past = L.filter(e => !isFut(e)), days = [...new Set(past.map(e => e.date))];
+  const filtering = !!(q || cat);
+  const sumIn = L.filter(e => e.type === "rec").reduce((s, e) => s + e.cents, 0), sumOut = L.filter(e => e.type === "desp").reduce((s, e) => s + e.cents, 0);
+
+  return (<>
+    <section className="sec">
+      <h2>Extrato</h2>
+      {all.length > 0 && (
+        <div className="exbar">
+          <input type="search" className="exq" id="exQ" placeholder="Buscar no extrato" value={q} onChange={e => setQ(e.target.value)} autoComplete="off" enterKeyHint="search" />
+          <div className="cards" id="exCats">
+            {used.length > 0 && <>
+              <button type="button" className="cpill txt" aria-pressed={!cat} onClick={() => setCat("")}>Todas</button>
+              {used.map(c => <button type="button" key={c} className="cpill txt" data-xcat={c} aria-pressed={c === cat} onClick={() => setCat(c === cat ? "" : c)}>{c}</button>)}
+            </>}
+          </div>
+        </div>
+      )}
+      <div id="exList">
+        {filtering && L.length > 0 && (
+          <p className="exsum">{L.length} lançamento{L.length > 1 ? "s" : ""}{sumIn ? ` · Entradas ${R(sumIn)}` : ""}{sumOut ? ` · Saídas ${R(sumOut)}` : ""}</p>
+        )}
+        {fut.length > 0 && <><div className="dayh">Agendado</div>{fut.map(e => <ExRow key={e.id} e={e} />)}</>}
+        {days.map(d => <div key={d}><div className="dayh">{dayLbl(d)}</div>{past.filter(e => e.date === d).map(e => <ExRow key={e.id} e={e} />)}</div>)}
+        {!L.length && <p className="hint">{all.length ? "Nada encontrado." : "Nenhum movimento ainda."}</p>}
+      </div>
+    </section>
+    <section className="sec"><button type="button" className="btn" id="acctDel" onClick={del.onClick}>{del.text}</button></section>
+  </>);
+}
