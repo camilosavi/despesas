@@ -81,25 +81,24 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;max-height:88vh;overflow:auto;background:var(--surface);border-radius:28px 28px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));z-index:21;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
 @media (min-width:700px){.sheet{bottom:auto;top:50%;transform:translateY(-50%);border-radius:28px;max-height:84vh}}
 .sheet[hidden],.scrim[hidden]{display:none}
-.auth{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;text-align:center;
-  --gold:#D9B66F;--gold2:#B8924D;--navy:#1C2A46;--cream:#F6EFE0;--soft:#A9B3C7;
-  background:radial-gradient(120% 70% at 50% 0%,#2A3F69 0%,#1C2A46 52%,#121C32 100%);color:var(--cream);color-scheme:dark}
+.auth{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;
+  --mint:#34D399;--mint2:#10B981;--ink2:#F2F5FA;--soft:#8A94A8;--fld:#121826;--bd:#222B3D;
+  background:#0A0E17;color:var(--ink2);color-scheme:dark}
 .auth[hidden]{display:none}
 .noauth .wrap{display:none}
 .authbox{width:100%;max-width:380px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
-.alogo{display:block;width:104px;height:104px;margin:0 auto 18px;border-radius:24px;box-shadow:0 0 0 1.5px rgba(217,182,111,.45),0 18px 40px -8px rgba(0,0,0,.6),0 0 48px -6px rgba(217,182,111,.35)}
-.authbox h1{margin:0 0 26px;font-family:var(--display);font-size:2.4rem;letter-spacing:-.02em;color:var(--cream)}
-.authbox p{margin:0 0 24px;color:var(--soft)}
-.authbox .field{text-align:left}
-.authbox .field>label{color:var(--gold)}
-.auth .field input[type=email],.auth .field input[type=password]{width:100%;min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid rgba(217,182,111,.32);background:rgba(255,255,255,.06);color:var(--cream)}
-.auth .field input:focus{outline:0;border-color:var(--gold);box-shadow:0 0 0 3px rgba(217,182,111,.2)}
-.authbox .btn{background:transparent;border:1.5px solid rgba(217,182,111,.55);color:var(--gold)}
-.authbox .btn.primary{background:linear-gradient(180deg,#E6C987,#C9A25A);border-color:transparent;color:#1C2A46}
+.abrand{display:flex;align-items:center;gap:12px;margin:0 0 44px}
+.alogo{display:block;flex:none;width:52px;height:52px}
+.abrand h1{margin:0;font-family:var(--display);font-size:1.7rem;letter-spacing:-.02em;color:var(--ink2)}
+.authbox .field{text-align:left;margin-bottom:14px}
+.authbox .field>label{color:var(--soft);font-size:.85rem;font-weight:500}
+.auth .field input[type=email],.auth .field input[type=password]{width:100%;min-height:54px;padding:0 16px;border-radius:16px;border:1.5px solid var(--bd);background:var(--fld);color:var(--ink2)}
+.auth .field input:focus{outline:0;border-color:var(--mint)}
+.authbox .btn{min-height:54px;border-radius:16px;background:var(--fld);border:1.5px solid var(--bd);color:var(--ink2)}
+.authbox .btn.primary{background:var(--mint);border-color:transparent;color:#05261A}
 .authbox .btn:disabled{opacity:.6}
 .authbox .btn+.btn{margin-top:10px}
-.or{display:flex;align-items:center;gap:12px;margin:16px 0 6px;color:var(--soft);font-size:.85rem}.or::before,.or::after{content:"";flex:1;height:1px;background:rgba(217,182,111,.28)}
-#auGoogle{color:var(--cream)}
+.or{display:flex;align-items:center;gap:12px;margin:18px 0 8px;color:var(--soft);font-size:.85rem}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--bd)}
 #auGoogle svg{flex:none}
 #authMsg{min-height:1.3em;margin:0 0 12px;color:#FF9C8A;font-size:.92rem}
 #meBtn{margin-left:auto}
@@ -187,7 +186,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 
 <div class="auth" id="auth" hidden>
   <form class="authbox" id="authForm" novalidate>
-    <img class="alogo" src="icon-512.png?v=2" alt="" width="104" height="104"><h1>Tostão</h1>
+    <div class="abrand"><svg class="alogo" viewBox="0 0 52 52" aria-hidden="true"><rect width="52" height="52" rx="16" fill="#34D399"/><path d="M14 17h24v7h-10v13h-7V24H14z" fill="#05261A"/><circle cx="39" cy="38" r="4" fill="#05261A"/></svg><h1>Tostão</h1></div>
     <div class="field"><label for="auEmail">E-mail</label><input type="email" id="auEmail" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false"></div>
     <div class="field"><label for="auPass">Senha</label><input type="password" id="auPass" autocomplete="current-password"></div>
     <div id="authMsg" role="alert"></div>
