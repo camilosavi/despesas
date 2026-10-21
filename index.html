@@ -1031,6 +1031,7 @@ document.addEventListener("click",async e=>{const t=e.target;if(!t.closest)retur
   const o=t.closest("#meOut");if(o)armed(o,"Toque de novo para sair",async()=>{
     await syncNow();
     if(pending()||SY.off||SY.err){toast("Há mudanças que ainda não subiram. Conecte e tente de novo.");return}
+    try{await fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+ses.at}})}catch(x){}   /* invalida a sessão no Supabase também */
     accts=[];entries=[];saveRaw();lsSet(BASE_K,null);sesSave(null);openId=null;renderAll();showAuth("")})});
 if(!ses&&!G_BACK)showAuth("");
 
