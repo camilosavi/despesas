@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { brl, R, signR, fmtD, digits, moneyMask, fold, textOn, lastDay, shiftYM } from "./format";
 import { accBal, totBal, matchEntry, sg, descHints, catForDesc, groupByCat } from "./ledger";
 import { ctKey, hlKey, ftKey, ftTotal, faturaRows } from "./imports";
+import { bankEntries, cardEntries, ofBankName, ofDay } from "./openfinance";
 import type { Account, Entry } from "./types";
 
 const acct: Account = { id: "a", name: "Inter", color: "#FF7A00", start: 100000 };
@@ -306,5 +307,40 @@ describe("categoria nos itens da fatura e extrato por categoria", () => {
   it("agrupa o extrato por categoria com total com sinal", () => {
     const g = groupByCat([e({ id: "1", cat: "Mercado", cents: 1000 }), e({ id: "2", cat: "Mercado", cents: 500 }), e({ id: "3", type: "rec", cat: "Salário", cents: 9000 }), e({ id: "4", xfer: 1, cents: 100 })]);
     expect(g.map(x => [x.cat, x.cents])).toEqual([["Salário", 9000], ["Mercado", -1500], ["Transferências", -100]]);
+  });
+});
+
+describe("Open Finance (formato da Pluggy)", () => {
+  const none = () => "";
+  const tx = (p: object) => ({ id: "t", date: "2026-10-08T15:00:00.000Z", amount: -10, ...p }) as never;
+  it("conta: Pix, compra no débito, fatura, Pix para si e crédito liberado", () => {
+    const es = bankEntries([
+      tx({ id: "1", description: "Pix recebido - FULANO DE TAL", amount: 8.99 }),
+      tx({ id: "2", description: "Compra no débito - MERCADO SAO VICENTE ITU      BRA", amount: -45.5 }),
+      tx({ id: "3", description: "Pagamento de fatura - Inter", amount: -1150.86, category: "Credit card payment" }),
+      tx({ id: "4", description: "Pix enviado - Camilo Guarnieri Savi", amount: -524, category: "Same person transfer" }),
+      tx({ id: "5", description: "Crédito liberado - Pix No Crédito", amount: 45 }),
+      tx({ id: "6", description: "Pix enviado - X", amount: -5, status: "PENDING" }),
+    ], "a", (_t, d) => (d === "Mercado Sao Vicente It" ? "Mercado" : ""));
+    expect(es.map(x => [x.imp, x.type, x.cents, x.desc, x.cat ?? "", !!x.xfer])).toEqual([
+      ["of-1", "rec", 899, "Pix recebido · Fulano De Tal", "", false],
+      ["of-2", "desp", 4550, "Mercado Sao Vicente It", "Mercado", false],
+      ["pagfatura-of-3", "desp", 115086, "Pagamento de fatura", "Cartão", false],
+      ["of-4", "desp", 52400, "Transferência enviada para mim", "", true],
+      ["of-5", "rec", 4500, "Crédito liberado (Pix no crédito)", "", true],
+    ]);
+  });
+  it("cartão: só a fatura em aberto, sem pagamento nem crédito, com parcela", () => {
+    const es = cardEntries([
+      tx({ id: "a", description: "UDEMY ONLINE COURSES", amount: 27.9 }),
+      tx({ id: "b", description: "LOJA XYZ", amount: 100, creditCardMetadata: { installmentNumber: 2, totalInstallments: 4 } }),
+      tx({ id: "c", description: "FATURA PAGA", amount: 90, creditCardMetadata: { billId: "x" } }),
+      tx({ id: "d", description: "PAGAMENTO RECEBIDO", amount: -500 }),
+    ], "c", none);
+    expect(es.map(x => [x.imp, x.cents, x.desc, x.type])).toEqual([["of-a", 2790, "Udemy Online Courses", "desp"], ["of-b", 10000, "Loja Xyz 2/4", "desp"]]);
+  });
+  it("nome do banco e dia local", () => {
+    expect(ofBankName("Banco Inter S.A.")).toBe("Inter"); expect(ofBankName("NU PAGAMENTOS")).toBe("Nu Pagamentos");
+    expect(ofDay("2026-10-08T15:00:00.000Z")).toBe("2026-10-08");
   });
 });

@@ -82,6 +82,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 #auGoogle svg{flex:none}
 #authMsg{min-height:1.3em;margin:0 0 12px;color:#FF9C8A;font-size:.92rem}
 .mekv{margin:0 0 16px;color:var(--muted)}
+.ofh{margin:22px 0 10px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
 .mekv b{color:var(--ink)}
 .sheet .btn+.btn{margin-top:10px}
 .grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}

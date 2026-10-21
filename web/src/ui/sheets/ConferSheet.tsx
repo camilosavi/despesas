@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../../lib/createStore";
-import { digits, moneyMask, signR, today, uid } from "../../lib/format";
+import { brl, digits, moneyMask, signR, today, uid } from "../../lib/format";
+import { ofBalance } from "../../lib/openfinance";
 import { accBal } from "../../lib/ledger";
 import { actions, ledger } from "../../lib/store";
 import { MoneyInput } from "../MoneyInput";
@@ -11,7 +12,8 @@ import { closeSheet, toast } from "../uiStore";
 export function ConferSheet({ id }: { id: string }) {
   const { accts, entries } = useStore(ledger, s => s);
   const a = accts.find(x => x.id === id);
-  const [real, setReal] = useState(""), [neg, setNeg] = useState(false);
+  const ob = a ? ofBalance(a) : undefined; // saldo que o banco informou pelo Open Finance já vem preenchido
+  const [real, setReal] = useState(ob ? brl(Math.abs(ob.cents)) : ""), [neg, setNeg] = useState(!!ob && ob.cents < 0);
   if (!a) return null;
   const app = accBal(a, entries), typed = real !== "", bank = (neg ? -1 : 1) * digits(real), diff = bank - app;
   function adjust() {
@@ -22,6 +24,7 @@ export function ConferSheet({ id }: { id: string }) {
   return (<>
     <SheetHead title={"Conferir saldo " + a.name} />
     <p className="smtot"><small>Saldo no app (hoje)</small><b>{signR(app)}</b></p>
+    {ob && <p className="hint" style={{ color: "var(--muted)", margin: "0 0 8px" }}>Saldo informado pelo banco (Open Finance) em {new Date(ob.ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}.</p>}
     <div className="field"><label htmlFor="cfAmt">Saldo no app do banco (R$)</label>
       <div className="fx-calc-row"><MoneyInput id="cfAmt" autoFocus value={real} onChange={v => setReal(moneyMask(v))} />
         <button type="button" className="btn soft" aria-pressed={neg} onClick={() => setNeg(!neg)}>{neg ? "Negativo" : "Positivo"}</button></div>
