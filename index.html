@@ -1380,14 +1380,14 @@ header.top{padding:18px 16px!important}
    (home em círculo, aba ativa com nome). PC continua como estava (.hcard vira display:contents). ---------- */
 .hcard{display:contents}.htl{display:none!important}
 @media (max-width:979px){
-  :root{--tla:color-mix(in srgb,var(--head) 55%,#fff)}
-  :root[data-theme="light"]{--tla:var(--head)}
-  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--tla:var(--head)}}
+  :root{--tla:color-mix(in srgb,var(--hc,var(--head)) 55%,#fff)}
+  :root[data-theme="light"]{--tla:var(--hc,var(--head))}
+  @media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--tla:var(--hc,var(--head))}}
   header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0!important;padding:14px!important;border-radius:32px!important;box-shadow:none!important;
-    background:color-mix(in srgb,var(--head) 22%,var(--bg))!important;color:var(--ink)}
+    background:color-mix(in srgb,var(--hc,var(--head)) 22%,var(--bg))!important;color:var(--ink)}
   body::before{display:none!important}
   .hcard{display:block;position:relative;overflow:hidden;border-radius:22px;padding:18px 20px;color:var(--head-ink);
-    background:linear-gradient(135deg,var(--head) 0%,color-mix(in srgb,var(--head) 58%,#000) 100%);box-shadow:0 12px 28px -4px rgba(0,0,0,.35)}
+    background:linear-gradient(135deg,var(--hc,var(--head)) 0%,color-mix(in srgb,var(--hc,var(--head)) 58%,#000) 100%);box-shadow:0 12px 28px -4px rgba(0,0,0,.35)}
   .hcard::after{content:"";position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22) 0%,transparent 70%);pointer-events:none}
   .hcard::before{content:"";display:block;width:32px;height:24px;border-radius:6px;margin-bottom:12px;background:linear-gradient(135deg,#e6c875 0%,#b59132 100%);box-shadow:inset 0 1px 1px rgba(255,255,255,.5)}
   .hcard>*{position:relative;z-index:1}
@@ -1396,7 +1396,7 @@ header.top{padding:18px 16px!important}
   .hcard .monthpill{margin:0 0 8px -8px;background:none!important;border:0!important;padding:0;gap:0;backdrop-filter:none;-webkit-backdrop-filter:none}
   .hcard .monthpill span{font-size:.95rem;min-width:0;padding:0 6px}
   header.top .hcard .bigrow{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px}
-  header.top .hcard .label{margin:0;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;opacity:.82;font-weight:600}
+  header.top .hcard .label{color:var(--head-ink)!important;margin:0;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;opacity:.82;font-weight:600}
   header.top .hcard .big{font-family:var(--display)!important;font-weight:700;font-size:1.65rem!important;line-height:1.15;letter-spacing:-.02em}
   header.top .hcard .big small{font-size:.62em;margin-right:3px;opacity:.85}
   header.top .hcard .split{position:absolute;right:20px;bottom:18px;margin:0!important;padding:0!important;border:0!important;display:block!important;text-align:right}
@@ -1406,6 +1406,8 @@ header.top{padding:18px 16px!important}
   @media (max-width:410px){header.top .hcard .big,header.top .hcard .split b{font-size:1.3rem!important}}
   header.top .hcard .split b{font-family:var(--display)!important;font-size:1.65rem!important;line-height:1.15;letter-spacing:-.02em}
   header.top .hcard .hbar,header.top .hcard .prog,header.top .hcard .foot{display:none!important}
+  .hcard .backbtn{position:absolute;top:14px;right:14px;z-index:2;background:rgba(255,255,255,.18);color:var(--head-ink);padding:6px 12px 6px 8px;font-size:.8rem}
+  .cdhero .phys-card,.cdhero .card-cycle{display:none}
   .hcard .mehead .nm{font-size:1.4rem}
   .htl:not([hidden]){display:block!important;margin-top:12px;padding:12px 14px 12px;border-radius:18px;background:color-mix(in srgb,var(--ink) 5%,transparent);border:1px solid color-mix(in srgb,var(--ink) 14%,transparent)}
   .htlin{position:relative;display:flex;justify-content:space-between;padding-bottom:1px}
@@ -1979,11 +1981,11 @@ const mixHex=(h,t,k)=>{const a=hexRgb(h),b=hexRgb(t);return "#"+a.map((v,i)=>Mat
 const lumHex=h=>{const[r,g,b]=hexRgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};
 const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches};
 function cardTheme(c){
-  const st=document.documentElement.style, K=["--accent","--accent-ink","--head","--head-muted","--btn","--btn-ink","--bg","--surface","--zebra","--line","--chip"];
+  const st=document.documentElement.style, K=["--hc","--accent","--accent-ink","--head","--head-muted","--btn","--btn-ink","--bg","--surface","--zebra","--line","--chip"];
   if(!c){K.forEach(k=>st.removeProperty(k));return}
   let col=cardColor(c);const dk=isDark();
   if(dk){for(let i=0;i<6&&lumHex(col)<.22;i++)col=mixHex(col,"#ffffff",.25)}else{for(let i=0;i<6&&lumHex(col)>.32;i++)col=mixHex(col,"#000000",.2)}
-  st.setProperty("--accent",col);st.setProperty("--accent-ink",lumHex(col)>.4?"#13201D":"#FFFFFF");st.setProperty("--btn","var(--accent)");st.setProperty("--btn-ink","var(--accent-ink)");
+  st.setProperty("--hc",cardColor(c));st.setProperty("--accent",col);st.setProperty("--accent-ink",lumHex(col)>.4?"#13201D":"#FFFFFF");st.setProperty("--btn","var(--accent)");st.setProperty("--btn-ink","var(--accent-ink)");
   const hd=mixHex(cardColor(c),"#000000",dk?.7:.55);st.setProperty("--head",hd);st.setProperty("--head-muted",mixHex(hd,"#ffffff",.6));
   /* tela inteira na cor do cartão (fundo, blocos e linhas puxados para a cor) */
   ["--bg","--surface","--zebra","--line","--chip"].forEach(k=>st.removeProperty(k));
@@ -2160,7 +2162,7 @@ function header0(){
   $("ptitle").textContent=tab==="pHome"&&accts().length&&accts()[0].name?accts()[0].name:titles[tab]||"";
   const sub=tab==="pCards"||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
-  if(sub) $("backLbl").textContent=tab==="pFx"?"Contas":tab==="pCards"&&!selCard?"Contas":backTo==="pMes"?"Mês":backTo==="pHome"?"Hoje":"Cartões";
+  if(sub) $("backLbl").textContent=tab==="pFx"?"Contas":tab==="pCards"&&!selCard?"Contas":backTo==="pMes"?"Mês":backTo==="pHome"?"Hoje":"Contas";
   $("hProg").hidden=!isFx;$("hRing").hidden=true;
   if(isMe){
     $("meHead").innerHTML=`<span class="av">${avInner()}</span><div><p class="label">Seu perfil</p><div class="nm">${esc(myName()||"Você")}</div></div>`;
@@ -2218,7 +2220,7 @@ function header0(){
   if(tab==="pCards"){
     $("period").textContent=monthLabel(view);
     $("next").disabled=view>=shiftYM(curYM(),24);$("prev").disabled=view<=MIN_YM;
-    $("s1").parentElement.hidden=!!selCard&&!isBen(selCard); /* o vencimento já está no cartão (pedido dele) */
+    $("s1").parentElement.hidden=!!selCard&&!isBen(selCard)&&IS_WIDE.matches; /* o vencimento já está no cartão (pedido dele) */
     if(selCard&&isBen(selCard)){const b=bens().find(x=>x.name===selCard), sp=items.filter(x=>x.pay===selCard&&typeOf(x)==="desp"&&x.date.startsWith(view)).reduce((t,x)=>t+x.cents,0), nx=benNext(b);
       $("bigLabel").textContent=`Saldo ${selCard}`;setBig("R$",benBal(b));
       $("s1l").textContent="Gasto no mês";$("s1").textContent=R(sp);$("s2l").textContent=b.daily?"Por dia útil":"Crédito por mês";$("s2").textContent=b.daily?R(b.daily):b.credit?R(b.credit):"—";
