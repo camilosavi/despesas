@@ -28,13 +28,13 @@ export function Top() {
     <header className="top">
       <div className={"tcard" + (boxParts.length ? " hasbox" : "")} id="tcard">
         <div className="trow">
-          <button type="button" className="tb" id="meBtn" hidden={!!a || !ses} onClick={() => openSheet({ kind: "me" })}>☁ {syncText() || "Conta"}</button>
           <button type="button" className="tb" id="back" hidden={!a} onClick={backHome}>‹ Contas</button>
           <div className="trr">
             <button type="button" className="tb" id="editCard" hidden={!a} onClick={() => openSheet({ kind: "edit" })}>Personalizar</button>
             <button type="button" className="tb eye" id="eyeBtn" aria-label={hide ? "Mostrar valores" : "Esconder valores"} aria-pressed={hide} onClick={toggleHide}>
               <svg viewBox="0 0 24 24">{hide ? <><path d="M3 3l18 18M10.6 6.2A9.6 9.6 0 0112 6c5 0 8.5 4.2 9.5 6a14 14 0 01-3 3.5M6.5 7.5A14 14 0 002.5 12c1 1.8 4.5 6 9.5 6 1.3 0 2.5-.3 3.5-.8" /><path d="M9.9 10a3 3 0 004.1 4.1" /></> : <><path d="M2.5 12C3.5 10.2 7 6 12 6s8.5 4.2 9.5 6c-1 1.8-4.5 6-9.5 6S3.5 13.8 2.5 12z" /><circle cx="12" cy="12" r="3" /></>}</svg>
             </button>
+            <button type="button" className="tb" id="meBtn" hidden={!!a || !ses} onClick={() => openSheet({ kind: "me" })}>☁ {syncText() || "Conta"}</button>
           </div>
         </div>
         <h1 id="ptitle">{a ? a.name : "Minhas contas"}</h1>
