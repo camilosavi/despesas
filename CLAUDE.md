@@ -94,6 +94,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      **rodar a última linha de `supabase/schema.sql`**; o sync manda `open`/`cat` vazios quando tirados); "Mais opções": **Parcelar** (valor = total, sobra na 1ª, desc "X 2/4"), **Todo mês** (N meses ou até um mês, máx. 60), **Dividir com N pessoas**
      (sai tudo; partes "A receber: …" cat Reembolso) e **Pagar com duas formas** (parte sai de outra conta). Cartão: só parcelar/repetir (cada parcela cai na fatura do mês).
    - **Categorias com cor** (`lib/catcolor.ts`, `despesas.zero.cats` só no aparelho): bolinha (`ui/Dot.tsx`) em pílulas, extrato, grupos e Resumo; `CatsSheet` ("Cores e categorias" no Resumo): cor de cada uma, esconder padrão (some do Lançar, nunca "Outros"), renomear/apagar as próprias.
+   - **Open Finance** (21/10/2026, `lib/openfinance.ts`, `ui/OfSection.tsx`, Worker `tools/pluggy-worker.js`): Inter (conta + cartão) pelo Meu Pluggy. No aparelho (`despesas.zero.of`): endereço do Worker, chave e conexões (nunca no repositório).
+     Roda sozinho ao abrir/voltar (máx. a cada 30 min) e em "Atualizar do banco" dentro da conta. Chaves `imp:"of-<idTx>"` (sem duplicar); pagamento de fatura = `pagfatura-of-…`; Pix para si e "Crédito liberado" = `xfer`.
+     1ª importação ajusta o saldo inicial para bater com o do banco; cartão só compras da fatura em aberto, preenche limite/fechamento/vencimento. Testado com Worker simulado.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

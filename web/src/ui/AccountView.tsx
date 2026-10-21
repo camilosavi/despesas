@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../lib/createStore";
+import { ofHasBank, ofRun, ofState, ofWhenText } from "../lib/openfinance";
 import { acctEntries, entMonth, cardUsed, faturaPaid, faturas, groupByCat, isCard, isFut, matchEntry } from "../lib/ledger";
 import { MESN, R, dayLbl, fmtD, fmtDM, signR } from "../lib/format";
 import { actions, ledger } from "../lib/store";
@@ -21,6 +22,8 @@ export function AccountView({ id }: { id: string }) {
   const { accts, entries } = useStore(ledger, s => s);
   const a = accts.find(x => x.id === id);
   const [q, setQ] = useState(""), [catSel, setCat] = useState(""), [monSel, setMon] = useState(""), [by, setBy] = useState<"dia" | "cat">("dia");
+  const ofBusy = useStore(ofState, s => s.busy);
+  useStore(ofState, s => s.n);
   const del = useArmed("Toque de novo: apaga a conta e o extrato", `Apagar a conta ${a?.name ?? ""}`, () => { const acc = a, gone = entries.filter(e => e.acct === id); actions.deleteAccount(id); backHome(); toast("Conta apagada", () => { if (acc) { actions.addAccount(acc); actions.addEntries(...gone); } }); });
   if (!a) return null;
 
@@ -60,7 +63,15 @@ export function AccountView({ id }: { id: string }) {
         })}
       </section>
     )}
-    {!isCard(a) && <section className="sec"><button type="button" className="btn soft wide" id="confBtn" onClick={() => openSheet({ kind: "conf", id })}>Conferir saldo com o banco</button></section>}
+    {(!isCard(a) || ofHasBank(a)) && (
+      <section className="sec">
+        {!isCard(a) && <button type="button" className="btn soft wide" id="confBtn" onClick={() => openSheet({ kind: "conf", id })}>Conferir saldo com o banco</button>}
+        {ofHasBank(a) && <>
+          <button type="button" className="btn soft wide" id="ofBtn" style={isCard(a) ? undefined : { marginTop: 10 }} disabled={ofBusy} onClick={() => void ofRun(true).then(m => m && toast(m))}>{ofBusy ? "Buscando…" : "Atualizar do banco"}</button>
+          {ofWhenText() && <p className="hint" style={{ margin: "8px 0 0", color: "var(--muted)" }}>{ofWhenText()}</p>}
+        </>}
+      </section>
+    )}
     <section className="sec">
       <h2>Extrato</h2>
       {all.length > 0 && (
