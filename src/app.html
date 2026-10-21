@@ -132,6 +132,21 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .toast[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
+/* celular: uma coluna na ordem cartão, botões, contas, PDF */
+.wrap{display:flex;flex-direction:column}
+.colL{display:contents}
+header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
+/* ---------- computador: usa a tela toda (cartão e botões à esquerda, contas e extrato à direita) ---------- */
+@media (min-width:900px){
+  .wrap{max-width:none;padding:0 clamp(24px,3vw,48px) 60px;display:grid;grid-template-columns:minmax(340px,400px) minmax(0,1fr);gap:0 clamp(28px,3vw,48px);align-items:start}
+  .colL{display:block;position:sticky;top:0;max-height:100vh;overflow:auto;scrollbar-width:none;padding-bottom:24px}
+  .colL::-webkit-scrollbar{display:none}
+  #view>.sec:first-child{margin-top:20px}
+  .sec.ctas{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+  .sec.ctas>h2{grid-column:1/-1;margin-bottom:0}
+  .sec.ctas .acrow,.sec.ctas .acrow+.acrow{margin:0}
+}
+
 /* ---------- base de banco ---------- */
 .trow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;min-height:0}
 .tb{border:0;border-radius:999px;padding:6px 12px;font-size:.8rem;font-weight:600;color:inherit;background:color-mix(in srgb,currentColor 18%,transparent)}
@@ -187,6 +202,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 </div>
 
 <div class="wrap">
+  <div class="colL">
   <header class="top">
     <div class="tcard" id="tcard">
       <div class="trow"><button type="button" class="tb" id="meBtn" hidden>☁</button><button type="button" class="tb" id="back" hidden>‹ Contas</button><button type="button" class="tb" id="editCard" hidden>Personalizar</button></div>
@@ -195,14 +211,16 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
       <div class="split" id="split" hidden><span id="s1l">Entrou</span><b id="s1">—</b></div>
     </div>
   </header>
-
-  <main id="view"></main>
+  <div id="acts"></div>
 
   <section class="sec" id="secPdf">
     <h2>Ler um PDF</h2>
     <label class="btn primary wide" id="pdfBtn"><span>Escolher PDF (holerite, fatura ou conta)</span><input type="file" id="pdfIn" accept="application/pdf,.pdf" multiple hidden></label>
     <div class="reads" id="reads"></div>
   </section>
+  </div>
+
+  <main id="view"></main>
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
@@ -577,7 +595,7 @@ function paintTop(){
 const ICO={plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',swap:'<svg viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>',doc:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg>'};
 const actsHtml=()=>`<div class="acts"><button type="button" data-act="lanc"><i>${ICO.plus}</i><span>Lançar</span></button><button type="button" data-act="tran"><i>${ICO.swap}</i><span>Transferir</span></button><button type="button" data-act="pdf"><i>${ICO.doc}</i><span>Importar PDF</span></button></div>`;
 function renderHome(){
-  $("view").innerHTML=actsHtml()+`<section class="sec"><h2>Contas</h2>
+  $("acts").innerHTML=actsHtml();$("view").innerHTML=`<section class="sec ctas"><h2>Contas</h2>
     ${accts.map(a=>{const b=accBal(a);return `<button type="button" class="acrow" data-open="${a.id}">${acctBadge(a)}<span class="nm">${esc(a.name)}</span><b class="${b<0?"bad":""}">${signR(b)}</b></button>`}).join("")}
     <button type="button" class="acrow add" id="acctNew"><span class="fi">+</span><span class="nm">Adicionar conta</span></button></section>`;
 }
@@ -586,7 +604,7 @@ function renderAcct(){
   const L=entries.filter(e=>e.acct===a.id).sort((x,y)=>y.date.localeCompare(x.date)||(y.at||0)-(x.at||0));
   const row=e=>`<button type="button" class="ex" data-ex="${e.id}"><i class="${e.type}">${e.xfer?"⇄":e.type==="rec"?"↓":"↑"}</i><span class="nm">${esc(e.desc)}</span><b class="${e.type==="rec"?"cr":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b></button>`;
   const fut=L.filter(isFut), past=L.filter(e=>!isFut(e)), days=[...new Set(past.map(e=>e.date))];
-  $("view").innerHTML=actsHtml()+`<section class="sec"><h2>Extrato</h2>
+  $("acts").innerHTML=actsHtml();$("view").innerHTML=`<section class="sec"><h2>Extrato</h2>
     ${fut.length?`<div class="dayh">Agendado</div>`+fut.map(row).join(""):""}
     ${days.map(d=>`<div class="dayh">${dayLbl(d)}</div>`+past.filter(e=>e.date===d).map(row).join("")).join("")}
     ${L.length?"":`<p class="hint">Nenhum movimento ainda.</p>`}</section>
