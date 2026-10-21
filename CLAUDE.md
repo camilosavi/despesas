@@ -35,7 +35,11 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      banco (`r.total`, senão a soma), `imp:"fatura-<banco>-<vencimento>"` (avisa "Já lançada") e os itens guardados em `items`
      (aparecem ao tocar no lançamento). Fica "Agendado" até o vencimento e só então tira do saldo. PDF sem vencimento pede a data.
      Compra no cartão **não** mexe no saldo da conta; só a fatura paga mexe. Sem limite do cartão por enquanto.
-   - Ainda **não** tem: lançar despesa/receita à mão, transferência entre contas, limite/cartão como item próprio, conta/boleto lançando.
+   - **Padrão de app de banco** (21/10/2026, "pode seguir com o padrão de um app de banco, as principais funcionalidades; decisões de layout
+     me pergunte"): linha de ações redonda sob o cartão (**Lançar**, **Transferir**, **Importar PDF**). *Lançar* = saída/entrada com valor grande,
+     descrição, conta e data. *Transferir* = de/para/valor/data: cria **duas** entradas ligadas por `tr` (`xfer:1`), não conta como "Entrou" e
+     apagar uma apaga o par. *Conta/boleto* lido vira despesa no vencimento (`imp:"conta-<empresa>-<venc>"`).
+   - Ainda **não** tem: categorias, editar lançamento, limite/cartão como item próprio, conferência com o saldo real, busca/filtro no extrato.
 
 ## Como editar (sempre assim)
 

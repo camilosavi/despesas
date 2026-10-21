@@ -133,6 +133,16 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .mcard .fi{width:30px;height:30px;border-radius:9px}
 .field input[type=date]{width:100%;min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg)}
 #exDel{margin-top:14px}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 4px 0}
+.acts button{display:grid;justify-items:center;gap:7px;border:0;background:none;font-size:.8rem;font-weight:600}
+.acts i{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--surface);box-shadow:0 1px 0 var(--line),0 6px 16px -8px rgba(0,0,0,.25)}
+.acts svg{width:24px;height:24px;fill:none;stroke:var(--ink);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:16px;background:var(--chip);margin-bottom:6px}
+.seg button{min-height:42px;border:0;border-radius:12px;background:none;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.bigamt{display:flex;align-items:center;gap:8px;margin:14px 0 12px}
+.bigamt span{font-family:var(--display);font-size:1.3rem;opacity:.6}
+.bigamt input{flex:1;min-width:0;border:0;background:transparent;outline:0;font-family:var(--display);font-weight:700;font-size:2.6rem;letter-spacing:-.03em;padding:0}
 .swatch.custom{position:relative;display:block;background:conic-gradient(#e33,#ea3,#3c6,#39e,#93e,#e33);overflow:hidden}
 .swatch.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .swatch.custom:has(input:focus-visible){border-color:var(--ink)}
@@ -509,7 +519,7 @@ const sg=e=>e.type==="rec"?e.cents:-e.cents;
 const isFut=e=>e.date>today();
 const accBal=a=>(a.start||0)+entries.filter(e=>e.acct===a.id&&!isFut(e)).reduce((s,e)=>s+sg(e),0);
 const totBal=()=>accts.reduce((s,a)=>s+accBal(a),0);
-const monIn=id=>{const ym=today().slice(0,7);return entries.filter(e=>(!id||e.acct===id)&&e.type==="rec"&&!isFut(e)&&e.date.slice(0,7)===ym).reduce((s,e)=>s+e.cents,0)};
+const monIn=id=>{const ym=today().slice(0,7);return entries.filter(e=>(!id||e.acct===id)&&e.type==="rec"&&!e.xfer&&!isFut(e)&&e.date.slice(0,7)===ym).reduce((s,e)=>s+e.cents,0)};
 const ymd=d=>{const t=new Date();t.setDate(t.getDate()+d);return t.getFullYear()+"-"+pad(t.getMonth()+1)+"-"+pad(t.getDate())};
 const dayLbl=d=>d===today()?"Hoje":d===ymd(-1)?"Ontem":`${+d.slice(8)} de ${MESN[+d.slice(5,7)-1]}`+(d.slice(0,4)!==today().slice(0,4)?" "+d.slice(0,4):"");
 
@@ -526,17 +536,19 @@ function paintTop(){
   $("big").innerHTML=`<small>R$</small>${v<0?"−":""}${brl(Math.abs(v))}`;
   $("split").hidden=false;$("s1l").textContent="Entrou em "+MESN[+today().slice(5,7)-1];$("s1").textContent=R(monIn(a?a.id:null));
 }
+const ICO={plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',swap:'<svg viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>',doc:'<svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/></svg>'};
+const actsHtml=()=>`<div class="acts"><button type="button" data-act="lanc"><i>${ICO.plus}</i><span>Lançar</span></button><button type="button" data-act="tran"><i>${ICO.swap}</i><span>Transferir</span></button><button type="button" data-act="pdf"><i>${ICO.doc}</i><span>Importar PDF</span></button></div>`;
 function renderHome(){
-  $("view").innerHTML=`<section class="sec"><h2>Contas</h2>
+  $("view").innerHTML=actsHtml()+`<section class="sec"><h2>Contas</h2>
     ${accts.map(a=>{const b=accBal(a);return `<button type="button" class="acrow" data-open="${a.id}">${acctBadge(a)}<span class="nm">${esc(a.name)}</span><b class="${b<0?"bad":""}">${signR(b)}</b></button>`}).join("")}
     <button type="button" class="acrow add" id="acctNew"><span class="fi">+</span><span class="nm">Adicionar conta</span></button></section>`;
 }
 function renderAcct(){
   const a=accOf(openId);if(!a){openId=null;renderHome();return}
   const L=entries.filter(e=>e.acct===a.id).sort((x,y)=>y.date.localeCompare(x.date)||(y.at||0)-(x.at||0));
-  const row=e=>`<button type="button" class="ex" data-ex="${e.id}"><i class="${e.type}">${e.type==="rec"?"↓":"↑"}</i><span class="nm">${esc(e.desc)}</span><b class="${e.type==="rec"?"cr":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b></button>`;
+  const row=e=>`<button type="button" class="ex" data-ex="${e.id}"><i class="${e.type}">${e.xfer?"⇄":e.type==="rec"?"↓":"↑"}</i><span class="nm">${esc(e.desc)}</span><b class="${e.type==="rec"?"cr":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b></button>`;
   const fut=L.filter(isFut), past=L.filter(e=>!isFut(e)), days=[...new Set(past.map(e=>e.date))];
-  $("view").innerHTML=`<section class="sec"><h2>Extrato</h2>
+  $("view").innerHTML=actsHtml()+`<section class="sec"><h2>Extrato</h2>
     ${fut.length?`<div class="dayh">Agendado</div>`+fut.map(row).join(""):""}
     ${days.map(d=>`<div class="dayh">${dayLbl(d)}</div>`+past.filter(e=>e.date===d).map(row).join("")).join("")}
     ${L.length?"":`<p class="hint">Nenhum movimento ainda.</p>`}</section>
@@ -602,7 +614,7 @@ function openEntrySheet(id){
   const e=entries.find(x=>x.id===id);if(!e)return;const a=accOf(e.acct);
   openSheet(sheetHead(e.type==="rec"?"Entrada":"Saída")+`<div class="kv"><span>Descrição</span><b>${esc(e.desc)}</b><span>Valor</span><b class="${e.type==="rec"?"ok":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b><span>Data</span><b>${fmtD(e.date)}${isFut(e)?" (agendado)":""}</b><span>Conta</span><b>${esc(a?a.name:"—")}</b></div>
   ${e.items&&e.items.length?`<div class="ln sub">Itens da fatura · ${e.items.length}</div>`+e.items.map(y=>`<div class="ln"><span>${fmtDM(y.date)}</span><span class="dsc">${esc(y.desc)}</span><b class="${y.cents<0?"cr":""}">${R(y.cents)}</b></div>`).join(""):""}
-  <button type="button" class="btn wide" id="exDel" data-id="${e.id}">Apagar este lançamento</button>`);
+  <button type="button" class="btn wide" id="exDel" data-id="${e.id}">${e.tr?"Apagar a transferência":"Apagar este lançamento"}</button>`);
 }
 
 document.addEventListener("click",e=>{
@@ -613,7 +625,7 @@ document.addEventListener("click",e=>{
   if(t.closest("#acctNew")){openAddSheet();return}
   if(t.closest("#editCard")){openEditSheet();return}
   const x=t.closest("[data-ex]");if(x){openEntrySheet(x.dataset.ex);return}
-  const dx=t.closest("#exDel");if(dx){armed(dx,"Toque de novo para apagar",()=>{entries=entries.filter(y=>y.id!==dx.dataset.id);saveAll();closeSheet();renderAll();toast("Lançamento apagado")});return}
+  const dx=t.closest("#exDel");if(dx){armed(dx,"Toque de novo para apagar",()=>{{const ee=entries.find(y=>y.id===dx.dataset.id);entries=entries.filter(y=>y.id!==dx.dataset.id&&!(ee&&ee.tr&&y.tr===ee.tr))};saveAll();closeSheet();renderAll();toast("Lançamento apagado")});return}
   const da=t.closest("#acctDel");if(da){armed(da,"Toque de novo: apaga a conta e o extrato",()=>{const id=openId;accts=accts.filter(a=>a.id!==id);entries=entries.filter(y=>y.acct!==id);saveAll();openId=null;renderAll();toast("Conta apagada")});return}
   /* nova conta */
   if($("sheet").querySelector("#cdSave")){
@@ -683,9 +695,9 @@ function viewFatura(x,i){
     ${chk?`<div class="kv" style="padding-top:0"><span>Conferência</span><b>${chk}</b></div>`:""}
     ${r.rows.map(y=>`<div class="ln"><span>${fmtDM(y.date)}</span><span class="dsc">${esc(nm(y))}</span><b class="${y.cents<0?"cr":""}">${R(y.cents)}</b></div>`).join("")}${ftBlock(x,i)}</details>`;
 }
-function viewConta(x){const c=x.c;
+function viewConta(x,i){const c=x.c;
   return `<details class="rd" open><summary><span>Conta ${esc(c.name)} <small>${esc(x.name)}</small></span></summary>
-    <div class="kv"><span>Empresa</span><b>${esc(c.name)}</b><span>Vencimento</span><b>${fmtD(c.due)}</b><span>Valor</span><b>${R(c.cents)}</b><span>Débito automático</span><b>${c.auto?"sim":"não"}</b></div></details>`}
+    <div class="kv"><span>Empresa</span><b>${esc(c.name)}</b><span>Vencimento</span><b>${fmtD(c.due)}</b><span>Valor</span><b>${R(c.cents)}</b><span>Débito automático</span><b>${c.auto?"sim":"não"}</b></div>${ctBlock(x,i)}</details>`}
 /* nome do evento do holerite: siglas (PLR, I.N.S.S.) ficam em maiúsculas */
 const hlName=d=>d.split(/(\s+)/).map(w=>/^(?:\p{L}\.)+\p{L}?\.?$|^\p{Lu}{2,3}$/u.test(w)&&!/^(DE|DO|DA|E)$/.test(w)?w:titleCase(w)).join("");
 function viewHolerite(x,i){const h=x.h;
@@ -698,6 +710,75 @@ function viewHolerite(x,i){const h=x.h;
     ${h.conv&&h.conv.by&&h.conv.by.length?h.conv.by.map(b=>`<div class="ln h2"><span>${esc(b.k)} · ${b.n}</span><b>${R(b.cents)}</b></div>`).join(""):""}
     ${P.length?`<div class="ln sub">Proventos</div>`+P.map(e=>`<div class="ln h2"><span class="dsc" style="color:var(--ink);font-size:.92rem">${esc(hlName(e.desc))}</span><b>${R(e.cents)}</b></div>`).join(""):""}
     ${D.length?`<div class="ln sub">Descontos</div>`+D.map(e=>`<div class="ln h2"><span class="dsc" style="color:var(--ink);font-size:.92rem">${esc(hlName(e.desc))}</span><b>${R(e.cents)}</b></div>`).join(""):""}${hlBlock(x,i)}</details>`}
+
+/* ---------- lançar à mão e transferir ---------- */
+let lc=null, tf=null;
+const chipsOf=(attr,sel,skip)=>accts.filter(a=>a.id!==skip).map(a=>`<button type="button" class="cpill" ${attr}="${a.id}" aria-pressed="${a.id===sel}">${acctBadge(a)}<span>${esc(a.name)}</span></button>`).join("");
+const needAcct=(n)=>sheetHead(n)+`<p class="hint" style="color:var(--muted)">Crie ${n==="Transferir"?"duas contas":"uma conta"} primeiro.</p><button type="button" class="btn primary wide" data-hlnew>Adicionar conta</button>`;
+function openLanc(){
+  if(!accts.length){openSheet(needAcct("Lançar"));return}
+  lc={type:"desp",acct:openId&&accOf(openId)?openId:accts[0].id,date:today()};
+  openSheet(sheetHead("Lançar")+`<div class="seg" id="lcSeg"><button type="button" data-lctype="desp" aria-pressed="true">Saída</button><button type="button" data-lctype="rec" aria-pressed="false">Entrada</button></div>
+  <div class="bigamt"><span>R$</span><input type="text" id="lcAmt" class="money" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
+  <div class="field"><label for="lcDesc">Descrição</label><input type="text" id="lcDesc" maxlength="60" placeholder="Ex.: mercado, Pix, salário"></div>
+  <div class="field"><span class="lbl" id="lcAcctL">Sai da conta</span><div class="cards" id="lcAccts">${chipsOf("data-lcacct",lc.acct)}</div></div>
+  <div class="field"><label for="lcDate">Data</label><input type="date" id="lcDate" value="${lc.date}"></div>
+  <p class="err" id="lcErr"></p><button type="button" class="btn primary wide" id="lcSave">Salvar</button>`);
+  setTimeout(()=>$("lcAmt")?.focus(),80);
+}
+function openTran(){
+  if(accts.length<2){openSheet(needAcct("Transferir"));return}
+  const from=openId&&accOf(openId)?openId:accts[0].id, to=(accts.find(a=>a.id!==from)||{}).id;
+  tf={from,to,date:today()};
+  openSheet(sheetHead("Transferir")+`<div class="bigamt"><span>R$</span><input type="text" id="tfAmt" class="money" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
+  <div class="field"><span class="lbl">De</span><div class="cards" id="tfFrom">${chipsOf("data-tffrom",tf.from)}</div></div>
+  <div class="field"><span class="lbl">Para</span><div class="cards" id="tfTo">${chipsOf("data-tfto",tf.to,tf.from)}</div></div>
+  <div class="field"><label for="tfDate">Data</label><input type="date" id="tfDate" value="${tf.date}"></div>
+  <p class="err" id="tfErr"></p><button type="button" class="btn primary wide" id="tfSave">Transferir</button>`);
+  setTimeout(()=>$("tfAmt")?.focus(),80);
+}
+document.addEventListener("click",e=>{
+  const t=e.target, a=t.closest("[data-act]");
+  if(a){const k=a.dataset.act;k==="lanc"?openLanc():k==="tran"?openTran():$("pdfIn").click();return}
+  if(lc&&$("sheet").querySelector("#lcSave")){
+    const ty=t.closest("[data-lctype]");if(ty){lc.type=ty.dataset.lctype;document.querySelectorAll("[data-lctype]").forEach(b=>b.setAttribute("aria-pressed",b===ty));$("lcAcctL").textContent=lc.type==="rec"?"Entra na conta":"Sai da conta";return}
+    const c=t.closest("[data-lcacct]");if(c){lc.acct=c.dataset.lcacct;document.querySelectorAll("[data-lcacct]").forEach(b=>b.setAttribute("aria-pressed",b===c));return}
+    if(t.closest("#lcSave")){const v=digits($("lcAmt").value),d=$("lcDate").value;
+      if(!v){$("lcErr").textContent="Informe o valor.";return}if(!d){$("lcErr").textContent="Informe a data.";return}
+      entries.push({id:uid(),acct:lc.acct,type:lc.type,cents:v,date:d,desc:$("lcDesc").value.trim()||(lc.type==="rec"?"Entrada":"Saída"),at:Date.now()});
+      saveAll();closeSheet();renderAll();toast(lc.type==="rec"?"Entrada lançada ✓":"Saída lançada ✓",true);return}
+  }
+  if(tf&&$("sheet").querySelector("#tfSave")){
+    const f=t.closest("[data-tffrom]");if(f){tf.from=f.dataset.tffrom;if(tf.to===tf.from)tf.to=(accts.find(a=>a.id!==tf.from)||{}).id;
+      $("tfFrom").innerHTML=chipsOf("data-tffrom",tf.from);$("tfTo").innerHTML=chipsOf("data-tfto",tf.to,tf.from);return}
+    const o=t.closest("[data-tfto]");if(o){tf.to=o.dataset.tfto;$("tfTo").innerHTML=chipsOf("data-tfto",tf.to,tf.from);return}
+    if(t.closest("#tfSave")){const v=digits($("tfAmt").value),d=$("tfDate").value;
+      if(!v){$("tfErr").textContent="Informe o valor.";return}if(!d){$("tfErr").textContent="Informe a data.";return}
+      const A=accOf(tf.from),B=accOf(tf.to),id=uid(),at=Date.now();
+      entries.push({id:uid(),acct:A.id,type:"desp",cents:v,date:d,desc:"Transferência para "+B.name,xfer:1,tr:id,at},{id:uid(),acct:B.id,type:"rec",cents:v,date:d,desc:"Transferência de "+A.name,xfer:1,tr:id,at});
+      saveAll();closeSheet();renderAll();toast("Transferência feita ✓",true);return}
+  }
+});
+
+/* conta/boleto (Claro, luz, água…): vira uma despesa no vencimento, na conta que paga */
+const ctKey=c=>`conta-${c.name}-${c.due}`;
+function ctBlock(x,i){
+  const c=x.c, done=entries.find(e=>e.imp===ctKey(c));
+  if(done){const a=accOf(done.acct);return `<div class="hl" data-hl="${i}"><p class="ok" style="margin:0;font-weight:600">Já lançada em ${esc(a?a.name:"uma conta apagada")} ✓</p></div>`}
+  if(!accts.length)return `<div class="hl" data-hl="${i}"><button type="button" class="btn wide" data-hlnew>Crie uma conta para lançar</button></div>`;
+  if(!x.acct||!accOf(x.acct))x.acct=openId&&accOf(openId)?openId:accts[0].id;
+  const a=accOf(x.acct);
+  return `<div class="hl" data-hl="${i}"><span class="lbl">Paga pela conta</span><div class="cards">${accts.map(k=>`<button type="button" class="cpill" data-hlacct="${i}|${k.id}" aria-pressed="${k.id===x.acct}">${acctBadge(k)}<span>${esc(k.name)}</span></button>`).join("")}</div>
+    <button type="button" class="btn primary wide" data-ctgo="${i}">Lançar conta de ${R(c.cents)} em ${esc(a.name)} · vence ${fmtDM(c.due)}</button></div>`;
+}
+document.addEventListener("click",e=>{
+  const g=e.target.closest("[data-ctgo]");if(!g)return;
+  const i=+g.dataset.ctgo,x=results[i],c=x.c;
+  if(entries.some(y=>y.imp===ctKey(c))){hlRedraw(i);return}
+  entries.push({id:uid(),acct:x.acct,type:"desp",cents:c.cents,date:c.due,desc:"Conta "+c.name,imp:ctKey(c),at:Date.now()});
+  saveAll();renderAll();hlRedraw(i);toast("Conta lançada ✓",true)
+});
+
 /* lançar o holerite: vira uma receita (líquido, na data do crédito) na conta escolhida; avisa se já foi lançado */
 const hlKey=h=>`holerite-${h.ref}-${h.kind}`;
 function hlBlock(x,i){
@@ -722,7 +803,7 @@ function ftBlock(x,i){
     <span class="lbl">Paga pela conta</span><div class="cards">${accts.map(k=>`<button type="button" class="cpill" data-hlacct="${i}|${k.id}" aria-pressed="${k.id===x.acct}">${acctBadge(k)}<span>${esc(k.name)}</span></button>`).join("")}</div>
     <button type="button" class="btn primary wide" data-ftgo="${i}">Lançar fatura de ${R(c)} em ${esc(a.name)}${d?` · vence ${fmtDM(d)}`:""}</button></div>`;
 }
-const blockFor=(x,i)=>x.kind==="fatura"?ftBlock(x,i):hlBlock(x,i);
+const blockFor=(x,i)=>x.kind==="fatura"?ftBlock(x,i):x.kind==="conta"?ctBlock(x,i):hlBlock(x,i);
 const hlRedraw=i=>{const el=document.querySelector(`.hl[data-hl="${i}"]`);if(el)el.outerHTML=blockFor(results[i],i)};
 document.addEventListener("input",e=>{const d=e.target.closest&&e.target.closest("[data-ftdate]");if(d){results[+d.dataset.ftdate].date=d.value;hlRedraw(+d.dataset.ftdate);const n=$("ftd"+d.dataset.ftdate);if(n)n.focus()}});
 document.addEventListener("click",e=>{
@@ -748,7 +829,7 @@ function viewErro(x,i){
 let results=[];
 function showResults(){
   openSheet(`<div class="grip"></div><h3><span>O que o app leu</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>`+
-    results.map((x,i)=>x.kind==="fatura"?viewFatura(x,i):x.kind==="conta"?viewConta(x):x.kind==="holerite"?viewHolerite(x,i):viewErro(x,i)).join(""));
+    results.map((x,i)=>x.kind==="fatura"?viewFatura(x,i):x.kind==="conta"?viewConta(x,i):x.kind==="holerite"?viewHolerite(x,i):viewErro(x,i)).join(""));
 }
 document.addEventListener("click",e=>{
   const d=e.target.closest("[data-diag]");if(d){lastPdf=results[+d.dataset.diag].pdf;
