@@ -135,6 +135,7 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
   #view>.sec:first-child{margin-top:20px}
   .sec.ctas{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
   .sec.ctas>h2{grid-column:1/-1;margin-bottom:0}
+  .sec.ctas>.sec-head-row{grid-column:1/-1;margin-bottom:0}
   .sec.ctas .acrow,.sec.ctas .acrow+.acrow{margin:0}
 }
 
