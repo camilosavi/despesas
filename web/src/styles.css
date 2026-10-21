@@ -274,3 +274,10 @@ html.hide :is(.big,.split b,.boxline b,.acrow b,.boxrow-vals,.ex b,.exsum,.limbo
 .fatcard small{display:block;color:var(--muted);font-size:12px}.fatcard b{display:block;font-size:26px}
 .fatcard .cardtag.ok{color:var(--pos)}
 html.hide :is(.ctv,.fatcard b){filter:blur(9px);user-select:none}
+
+.tbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 2px 12px;color:var(--ink)}
+.tbar .tb{background:var(--chip)}
+.tcard.acc{display:flex;flex-direction:column;min-height:168px}
+.tcard.acc::before{order:1;margin:auto 0 14px}
+.tcard.acc h1{order:0;margin:0}
+.tcard.acc .bigrow{order:2;margin-top:0}

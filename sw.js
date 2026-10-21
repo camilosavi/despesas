@@ -1,4 +1,4 @@
-// Service worker do Tostão. 475b7454 é trocado a cada publicação (scripts/publish.mjs).
+// Service worker do Tostão. 5aca8492 é trocado a cada publicação (scripts/publish.mjs).
 const C = "despesas-__VERSION__", RT = "despesas-runtime";
 const ASSETS = ["./", "index.html", "manifest.webmanifest", "tostao-180.png", "tostao-192.png", "tostao-512.png", "tostao-maskable-512.png", "tostao-logo.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(C).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
