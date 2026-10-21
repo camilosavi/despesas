@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "../lib/createStore";
-import { accBal, monIn, totBal } from "../lib/ledger";
+import { accBal, cardSpent, isCard, monIn, totBal } from "../lib/ledger";
 import { MESN, R, brl, textOn, today } from "../lib/format";
 import { ledger } from "../lib/store";
 import { session, syncState, syncText } from "../lib/sync";
@@ -20,7 +20,7 @@ export function Top() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", col || "#14203A");
   }, [col]);
 
-  const none = !accts.length, v = a ? accBal(a, entries) : totBal(accts, entries);
+  const none = !accts.length, card = !!a && isCard(a), v = a ? (card ? cardSpent(a, entries) : accBal(a, entries)) : totBal(accts, entries);
   return (
     <header className="top">
       <div className="tcard" id="tcard">
@@ -31,10 +31,10 @@ export function Top() {
         </div>
         <h1 id="ptitle">{a ? a.name : "Minhas contas"}</h1>
         <div className="bigrow"><div>
-          <p className="label" id="bigLabel">{none ? "Comece por aqui" : a ? "Saldo" : "Saldo total"}</p>
+          <p className="label" id="bigLabel">{none ? "Comece por aqui" : card ? "Gasto em " + MESN[+today().slice(5, 7) - 1] : a ? "Saldo" : "Saldo total"}</p>
           <div className="big" id="big">{none ? "Sem contas" : <><small>R$</small>{v < 0 ? "−" : ""}{brl(Math.abs(v))}</>}</div>
         </div></div>
-        <div className="split" id="split" hidden={none}>
+        <div className="split" id="split" hidden={none || card}>
           <span id="s1l">Entrou em {MESN[+today().slice(5, 7) - 1]}</span><b id="s1">{R(monIn(entries, a ? a.id : null))}</b>
         </div>
       </div>

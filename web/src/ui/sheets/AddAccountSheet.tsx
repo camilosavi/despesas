@@ -14,7 +14,7 @@ export function AddAccountSheet() {
   const have = new Set(accts.map(c => c.name.toLowerCase()));
   const [picked, setPicked] = useState<string | null>(null);
   const [color, setColor] = useState(() => CARD_PALETTE.find(c => !accts.some(a => a.color === c)) || CARD_PALETTE[0]);
-  const [name, setName] = useState(""), [bal, setBal] = useState(""), [err, setErr] = useState("");
+  const [name, setName] = useState(""), [bal, setBal] = useState(""), [err, setErr] = useState(""), [card, setCard] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (picked === "") nameRef.current?.focus(); }, [picked]);
 
@@ -34,11 +34,15 @@ export function AddAccountSheet() {
     if (picked === null) { setErr("Escolha o banco ou toque em Outro."); return; }
     if (!nm) { setErr("Dê um nome à conta."); return; }
     if (nm.toLowerCase() === "outro" || accts.some(c => c.name.toLowerCase() === nm.toLowerCase())) { setErr("Já existe uma conta com esse nome."); return; }
-    const a = { id: uid(), name: nm, color, start: digits(bal) };
-    actions.addAccount(a); closeSheet(); openAccount(a.id); toast("Conta " + nm + " criada");
+    const a = { id: uid(), name: nm, color, start: card ? 0 : digits(bal), ...(card ? { kind: "cartao" as const } : {}) };
+    actions.addAccount(a); closeSheet(); openAccount(a.id); toast((card ? "Cartão " : "Conta ") + nm + " criado" + (card ? "" : "a"));
   }
   return (<>
-    <SheetHead title="Nova conta" />
+    <SheetHead title={card ? "Novo cartão" : "Nova conta"} />
+    <div className="seg" id="cdKind">
+      <button type="button" aria-pressed={!card} onClick={() => setCard(false)}>Conta com saldo</button>
+      <button type="button" aria-pressed={card} onClick={() => setCard(true)}>Só cartão</button>
+    </div>
     <div className="field"><span className="lbl">Banco ou loja</span>
       <div className="bpick">
         {BANK_PICK.map(btn)}
@@ -48,11 +52,11 @@ export function AddAccountSheet() {
       </div>
     </div>
     <div className="field" hidden={picked !== ""}><label htmlFor="cdName">Nome da conta</label><input type="text" id="cdName" ref={nameRef} placeholder="Ex.: Nubank, C6, Itaú" maxLength={20} value={name} onChange={e => setName(e.target.value)} /></div>
-    <div className="field"><label htmlFor="cdBal">Saldo agora (R$)</label><MoneyInput id="cdBal" value={bal} onChange={v => setBal(moneyMask(v))} /></div>
+    <div className="field" hidden={card}><label htmlFor="cdBal">Saldo agora (R$)</label><MoneyInput id="cdBal" value={bal} onChange={v => setBal(moneyMask(v))} /></div>
     <div className="field"><span className="lbl">Cor</span>
       <div className="swatches">{pal.map(c => <button type="button" key={c} className="swatch" style={{ background: c }} aria-label={`Cor ${c}`} aria-pressed={c === color} onClick={() => setColor(c)} />)}</div>
     </div>
     <p className="err" id="cdErr">{err}</p>
-    <button type="button" className="btn primary wide" id="cdSave" onClick={save}>Criar conta</button>
+    <button type="button" className="btn primary wide" id="cdSave" onClick={save}>{card ? "Criar cartão" : "Criar conta"}</button>
   </>);
 }

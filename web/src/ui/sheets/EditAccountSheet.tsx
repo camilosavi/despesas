@@ -15,6 +15,7 @@ export function EditAccountSheet() {
   const a = accts.find(x => x.id === openId);
   const [name, setName] = useState(a?.name ?? ""), [label, setLabel] = useState(a?.label ?? ""), [color, setColor] = useState(a?.color ?? CARD_PALETTE[0]);
   const [bal, setBal] = useState(a?.start ? brl(a.start) : ""), [err, setErr] = useState("");
+  const [card, setCard] = useState(a?.kind === "cartao");
   if (!a) return null;
   const pal = CARD_PALETTE.includes(color) ? CARD_PALETTE : [color, ...CARD_PALETTE.slice(0, -1)];
 
@@ -22,7 +23,7 @@ export function EditAccountSheet() {
     const nm = name.trim().replace(/\s+/g, " ");
     if (!nm) { setErr("Dê um nome à conta."); return; }
     if (accts.some(c => c.id !== a!.id && c.name.toLowerCase() === nm.toLowerCase())) { setErr("Já existe uma conta com esse nome."); return; }
-    actions.updateAccount(a!.id, { name: nm, label, color, start: digits(bal) }); closeSheet(); toast("Cartão atualizado");
+    actions.updateAccount(a!.id, { name: nm, label, color, start: card ? 0 : digits(bal), kind: card ? "cartao" : undefined }); closeSheet(); toast("Cartão atualizado");
   }
   return (<>
     <SheetHead title="Personalizar cartão" />
@@ -31,7 +32,11 @@ export function EditAccountSheet() {
     </div>
     <div className="field"><label htmlFor="edName">Nome</label><input type="text" id="edName" maxLength={20} value={name} onChange={e => setName(e.target.value)} /></div>
     <div className="field"><label htmlFor="edLab">Letra no ícone (até 4)</label><input type="text" id="edLab" maxLength={4} placeholder={cardLabel(name)} value={label} onChange={e => setLabel(e.target.value.trim().slice(0, 4))} /></div>
-    <div className="field"><label htmlFor="edBal">Saldo inicial (R$)</label><MoneyInput id="edBal" value={bal} onChange={v => setBal(moneyMask(v))} /></div>
+    <div className="seg" id="edKind">
+      <button type="button" aria-pressed={!card} onClick={() => setCard(false)}>Conta com saldo</button>
+      <button type="button" aria-pressed={card} onClick={() => setCard(true)}>Só cartão</button>
+    </div>
+    <div className="field" hidden={card}><label htmlFor="edBal">Saldo inicial (R$)</label><MoneyInput id="edBal" value={bal} onChange={v => setBal(moneyMask(v))} /></div>
     <div className="field"><span className="lbl">Cor</span>
       <div className="swatches" id="edSw">
         {pal.map(c => <button type="button" key={c} className="swatch" style={{ background: c }} aria-label={`Cor ${c}`} aria-pressed={c === color} onClick={() => setColor(c)} />)}

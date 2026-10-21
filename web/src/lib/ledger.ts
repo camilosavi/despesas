@@ -6,9 +6,14 @@ import type { Account, Entry } from "./types";
 export const sg = (e: Entry) => (e.type === "rec" ? e.cents : -e.cents);
 /** lançamento com data futura fica "Agendado" e ainda não mexe no saldo */
 export const isFut = (e: Entry, t = today()) => e.date > t;
+export const isCard = (a: Account) => a.kind === "cartao";
+export const bankAccts = (accts: Account[]) => accts.filter(a => !isCard(a));
+/** gasto do mês atual no cartão (compras lançadas nele) */
+export const cardSpent = (a: Account, entries: Entry[], t = today()) =>
+  entries.filter(e => e.acct === a.id && e.type === "desp" && e.date.slice(0, 7) === t.slice(0, 7)).reduce((s, e) => s + e.cents, 0);
 export const accBal = (a: Account, entries: Entry[], t = today()) =>
   (a.start || 0) + entries.filter(e => e.acct === a.id && !isFut(e, t)).reduce((s, e) => s + sg(e), 0);
-export const totBal = (accts: Account[], entries: Entry[], t = today()) => accts.reduce((s, a) => s + accBal(a, entries, t), 0);
+export const totBal = (accts: Account[], entries: Entry[], t = today()) => accts.reduce((s, a) => s + (isCard(a) ? 0 : accBal(a, entries, t)), 0);
 /** entradas do mês atual (sem transferências); acctId null = todas as contas */
 export const monIn = (entries: Entry[], acctId: string | null, t = today()) =>
   entries.filter(e => (!acctId || e.acct === acctId) && e.type === "rec" && !e.xfer && !isFut(e, t) && e.date.slice(0, 7) === t.slice(0, 7))

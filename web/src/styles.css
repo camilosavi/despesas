@@ -224,3 +224,5 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
 .x.sm{width:26px;height:26px;font-size:.8rem}
 
 .boxrow-vals{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.boxrow-vals small{color:var(--mut,inherit);font-size:.78rem}
+
+.cardtag{display:block;font-size:.76rem;font-weight:600;color:var(--muted);margin-top:1px}

@@ -5,6 +5,7 @@ import { R, fmtD, fmtDM, today } from "../../lib/format";
 import { contaEntry, faturaEntry, ftKey, ftTotal, hlKey, hlName, holeriteEntry, itemName, ctKey } from "../../lib/imports";
 import type { ContaPdf, Fatura, HoleritePdf, ReadResult } from "../../lib/pdf/read";
 import { actions, ledger } from "../../lib/store";
+import { bankAccts } from "../../lib/ledger";
 import { Badge, BankBadge } from "../Badge";
 import { SheetHead } from "../Sheet";
 import { closeSheet, openSheet, patchResult, pdfResults, toast, ui } from "../uiStore";
@@ -22,10 +23,11 @@ export function ResultsSheet() {
 function Block({ i, x, imp, doneText, label, preferred, children, button, onGo }: {
   i: number; x: ReadResult; imp: string | false; doneText: string; label: string; preferred?: string; children?: ReactNode; button: string; onGo: (acct: string) => void;
 }) {
-  const { accts, entries } = useStore(ledger, s => s);
+  const { accts: all, entries } = useStore(ledger, s => s);
+  const accts = bankAccts(all); // quem paga é conta com saldo, não cartão
   const openId = useStore(ui, s => s.openId);
   const done = imp ? entries.find(e => e.imp === imp) : undefined;
-  if (done) { const a = accts.find(k => k.id === done.acct); return <div className="hl"><p className="ok" style={{ margin: 0, fontWeight: 600 }}>{doneText} {a ? a.name : "uma conta apagada"} ✓</p></div>; }
+  if (done) { const a = all.find(k => k.id === done.acct); return <div className="hl"><p className="ok" style={{ margin: 0, fontWeight: 600 }}>{doneText} {a ? a.name : "uma conta apagada"} ✓</p></div>; }
   if (!accts.length) return <div className="hl"><button type="button" className="btn wide" onClick={() => { closeSheet(); openSheet({ kind: "add" }); }}>Crie uma conta para lançar</button></div>;
   const acct = x.acct && accts.some(a => a.id === x.acct) ? x.acct : preferred && accts.some(a => a.id === preferred) ? preferred : openId && accts.some(a => a.id === openId) ? openId : accts[0].id;
   const a = accts.find(k => k.id === acct)!;
@@ -42,7 +44,7 @@ function Block({ i, x, imp, doneText, label, preferred, children, button, onGo }
 function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: number }) {
   const r: Fatura = x.r, entries = useStore(ledger, s => s.entries);
   const sum = r.rows.reduce((s, y) => s + y.cents, 0), d = r.due || x.date || "";
-  const bankAcct = useStore(ledger, s => { const m = bankOf(r.bank || ""); return (m && s.accts.find(a => bankOf(a.name) === m)?.id) || undefined; });
+  const bankAcct = useStore(ledger, s => { const m = bankOf(r.bank || ""); return (m && bankAccts(s.accts).find(a => bankOf(a.name) === m)?.id) || undefined; });
   const chk = r.total == null ? null : Math.abs(sum - r.total) <= 1 ? <span className="ok">bate com o total do banco ✓</span> : <span className="bad">banco diz {R(r.total)}</span>;
   function go(acct: string) {
     if (!d) { toast("Informe o vencimento da fatura."); return; }

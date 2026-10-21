@@ -25,22 +25,24 @@ export function LancSheet({ editId }: { editId?: string }) {
     <button type="button" className="btn primary wide" onClick={() => { closeSheet(); ui.set({ sheet: { kind: "add" } }); }}>Adicionar conta</button>
   </>);
 
+  const onCard = accts.find(a => a.id === acct)?.kind === "cartao"; // compra no cartão: só saída
+  const typ: EntryType = onCard ? "desp" : type;
   const changeType = (t: EntryType) => { setType(t); if (!catsOf(t).includes(cat)) setCat(""); };
   function save() {
     const v = digits(amt);
     if (!v) { setErr("Informe o valor."); return; }
     if (!date) { setErr("Informe a data."); return; }
-    const ds = desc.trim() || (type === "rec" ? "Entrada" : "Saída");
+    const type = typ, ds = desc.trim() || (type === "rec" ? "Entrada" : onCard ? "Compra" : "Saída");
     if (old) {
       const next: Entry = { ...old, acct, type, cents: v, date, desc: ds }; if (cat) next.cat = cat; else delete next.cat;
       actions.updateEntry(old.id, next); closeSheet(); toast("Lançamento atualizado ✓"); return;
     }
     actions.addEntries({ id: uid(), acct, type, cents: v, date, desc: ds, ...(cat ? { cat } : {}), at: Date.now() });
-    closeSheet(); toast(type === "rec" ? "Entrada lançada ✓" : "Saída lançada ✓");
+    closeSheet(); toast(type === "rec" ? "Entrada lançada ✓" : onCard ? "Compra lançada ✓" : "Saída lançada ✓");
   }
   return (<>
     <SheetHead title={old ? "Editar" : "Lançar"} />
-    <div className="seg" id="lcSeg">
+    <div className="seg" id="lcSeg" hidden={onCard}>
       <button type="button" aria-pressed={type === "desp"} onClick={() => changeType("desp")}>Saída</button>
       <button type="button" aria-pressed={type === "rec"} onClick={() => changeType("rec")}>Entrada</button>
     </div>
@@ -49,7 +51,7 @@ export function LancSheet({ editId }: { editId?: string }) {
     <div className="field"><span className="lbl">Categoria</span>
       <div className="cards" id="lcCats">{catsOf(type).map(c => <button type="button" key={c} className="cpill txt" aria-pressed={c === cat} onClick={() => setCat(c === cat ? "" : c)}>{c}</button>)}</div>
     </div>
-    <div className="field"><span className="lbl" id="lcAcctL">{type === "rec" ? "Entra na conta" : "Sai da conta"}</span>
+    <div className="field"><span className="lbl" id="lcAcctL">{typ === "rec" ? "Entra na conta" : onCard ? "Compra no cartão" : "Sai da conta"}</span>
       <div className="cards" id="lcAccts">{accts.map(a => <button type="button" key={a.id} className="cpill" aria-pressed={a.id === acct} onClick={() => setAcct(a.id)}><Badge name={a.name} color={a.color} label={a.label} /><span>{a.name}</span></button>)}</div>
     </div>
     <div className="field"><label htmlFor="lcDate">Data</label><input type="date" id="lcDate" value={date} onChange={e => setDate(e.target.value)} /></div>

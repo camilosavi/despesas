@@ -1,6 +1,6 @@
 import { useStore } from "../lib/createStore";
-import { accBal } from "../lib/ledger";
-import { signR } from "../lib/format";
+import { accBal, bankAccts, cardSpent, isCard } from "../lib/ledger";
+import { MESN, R, signR, today } from "../lib/format";
 import { ledger } from "../lib/store";
 import { Badge } from "./Badge";
 import { openAccount, openSheet } from "./uiStore";
@@ -16,7 +16,15 @@ export function Home() {
     <>
       <section className="sec ctas">
         <h2>Contas</h2>
-        {accts.map(a => {
+        {[...bankAccts(accts), ...accts.filter(isCard)].map(a => {
+          if (isCard(a)) {
+            const g = cardSpent(a, entries);
+            return (
+              <button type="button" key={a.id} className="acrow" data-open={a.id} onClick={() => openAccount(a.id)}>
+                <Badge name={a.name} color={a.color} label={a.label} /><span className="nm">{a.name}<small className="cardtag">Cartão · gasto em {MESN[+today().slice(5, 7) - 1]}</small></span><b>{R(g)}</b>
+              </button>
+            );
+          }
           const b = accBal(a, entries);
           return (
             <button type="button" key={a.id} className="acrow" data-open={a.id} onClick={() => openAccount(a.id)}>

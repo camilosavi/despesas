@@ -63,6 +63,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      filtro ativo mostra "N lançamentos · Entradas · Saídas". Só a lista é redesenhada (o campo mantém o foco); some ao trocar de conta.
    - **Caixinhas** (21/10/2026, `lib/boxes.ts`, `despesas.zero.boxes`): metas em BRL/EUR/USD com movimentos (guardar/resgatar, cotação). Sincronizam como 1 linha por caixinha na tabela `boxes`
      (movimentos em `moves jsonb`; **rodar o bloco `boxes` de `supabase/schema.sql`**). Sem a tabela, contas e lançamentos seguem sincronizando e as caixinhas ficam no aparelho (mostra "Erro ao sincronizar" e não deixa sair).
+   - **Cartão puro** (21/10/2026, `kind:"cartao"` na conta; Renner, etc.): sem saldo; mesma lista da home, depois das contas, com "Cartão · gasto em <mês>" e fora do Saldo total.
+     Aberto: topo mostra "Gasto em <mês>"; "Lançar" vira só compra; fora de Transferir e de "Paga pela conta" do PDF (fatura lida continua virando despesa na conta que paga).
+     Coluna `kind text` em `accts`: **rodar a última linha de `supabase/schema.sql`** (o app só manda `kind` quando é cartão). Falta: "Pagar fatura" ligada ao cartão, limite.
    - Ainda **não** tem: categorias próprias (criar/renomear), resumo por categoria, limite/cartão como item próprio, conferência com o saldo real.
 
 ## Cores e logo (21/10/2026)

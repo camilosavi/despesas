@@ -58,3 +58,6 @@ alter table boxes enable row level security;
 drop policy if exists own_boxes on boxes;
 create policy own_boxes on boxes for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 grant select, insert, update, delete on boxes to authenticated;
+
+-- Cartão puro (21/10/2026): contas com kind = 'cartao' não têm saldo. Quem já rodou o esquema acima roda só esta linha.
+alter table accts add column if not exists kind text;

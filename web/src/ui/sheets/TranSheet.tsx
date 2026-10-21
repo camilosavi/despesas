@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../../lib/createStore";
 import { digits, moneyMask, today, uid } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
+import { bankAccts } from "../../lib/ledger";
 import { Badge } from "../Badge";
 import { MoneyInput } from "../MoneyInput";
 import { SheetHead } from "../Sheet";
@@ -9,7 +10,7 @@ import { closeSheet, toast, ui } from "../uiStore";
 
 /** transferir entre contas: cria duas entradas ligadas por `tr` (neutra no total) */
 export function TranSheet() {
-  const accts = useStore(ledger, s => s.accts), openId = useStore(ui, s => s.openId);
+  const allAccts = useStore(ledger, s => s.accts), accts = bankAccts(allAccts), openId = useStore(ui, s => s.openId); // cartão não tem saldo: fica de fora
   const [from, setFrom] = useState(() => (openId && accts.some(a => a.id === openId) ? openId : accts[0]?.id ?? ""));
   const [to, setTo] = useState(() => accts.find(a => a.id !== from)?.id ?? "");
   const [amt, setAmt] = useState(""), [date, setDate] = useState(today()), [err, setErr] = useState("");

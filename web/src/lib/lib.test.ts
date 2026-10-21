@@ -149,3 +149,21 @@ describe("onde está o dinheiro da caixinha", () => {
     expect(boxByBank(b)).toEqual([{ bank: "Nomad", cur: "EUR", cents: 50000 }]);
   });
 });
+
+import { cardSpent, isCard, bankAccts } from "./ledger";
+import { aRow, aFrom } from "./sync";
+describe("cartão puro", () => {
+  const card: Account = { id: "c", name: "Renner", color: "#E4002B", start: 0, kind: "cartao" };
+  it("fica fora do saldo total e soma o gasto do mês", () => {
+    const es = [e({ acct: "c", cents: 8000, date: "2026-10-05" }), e({ acct: "c", cents: 2000, date: "2026-09-30" }), e({ acct: "c", type: "rec", cents: 999 })];
+    expect(isCard(card)).toBe(true);
+    expect(cardSpent(card, es, "2026-10-21")).toBe(8000);
+    expect(totBal([acct, card], es, "2026-10-21")).toBe(100000);
+    expect(bankAccts([acct, card])).toEqual([acct]);
+  });
+  it("kind só vai ao banco quando é cartão", () => {
+    expect("kind" in aRow(acct)).toBe(false);
+    expect(aFrom(JSON.parse(JSON.stringify(aRow(card)))).kind).toBe("cartao");
+    expect(aFrom({ id: "x", name: "N", start_cents: 5, kind: null }).kind).toBeUndefined();
+  });
+});
