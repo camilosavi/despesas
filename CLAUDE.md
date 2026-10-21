@@ -67,7 +67,7 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
 
 Base visual decidida por ele: **azul-marinho `#14203A`, dourado (`#C9A25A` claro / `#D9B66F` escuro) e branco**, nas telas de login e do app
 (`--head`, `--accent`, `--bg`, `--surface`). Verde/vermelho ficam só para entrada/saída (`--pos`/`--neg`). Logo = **a imagem "UM TOSTÃO" que ele mandou** (moeda marinho e dourado: cruz, quatro flores, texto em arco, pontilhado), em
-`logo.png` (login, fundo transparente) e nos ícones `icon-180/192/512.png` + `icon-maskable-512.png` (links com `?v=3`). Recusados antes:
+`logo.png` (login, fundo transparente) e nos ícones `icon-180/192/512.png` + `icon-maskable-512.png` (links com `?v=4`). Recusados antes:
 cruz em círculo simples ("app de igreja"), "T" verde e moeda vetorial minha. Não usar a foto da moeda do site de numismática (direitos).
 
 ## Como editar (sempre assim)
