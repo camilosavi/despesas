@@ -1,5 +1,6 @@
 // Contas e lançamentos: saldo, "entrou no mês" e busca. Funções puras (recebem os dados e a data de hoje).
-import { brl, fmtD, fold, shiftYM, today } from "./format";
+import { bankOf } from "./banks";
+import { brl, fmtD, fold, lastDay, shiftYM, today } from "./format";
 import type { Account, Entry } from "./types";
 
 /** valor com sinal: entrada positiva, saída negativa */
@@ -19,6 +20,23 @@ export const entMonth = (a: Account | undefined, date: string) => {
 /** gasto da fatura do mês atual no cartão (compras lançadas nele, pelo mês do vencimento) */
 export const cardSpent = (a: Account, entries: Entry[], t = today()) =>
   entries.filter(e => e.acct === a.id && e.type === "desp" && entMonth(a, e.date) === t.slice(0, 7)).reduce((s, e) => s + e.cents, 0);
+/** faturas do cartão por mês de vencimento: total e compras de cada uma, da mais nova para a mais antiga */
+export const faturas = (a: Account, entries: Entry[]) => {
+  const m = new Map<string, { ym: string; cents: number; items: { date: string; desc: string; cents: number }[] }>();
+  for (const e of entries) {
+    if (e.acct !== a.id || e.type !== "desp") continue;
+    const ym = entMonth(a, e.date), f = m.get(ym) || { ym, cents: 0, items: [] };
+    f.cents += e.cents; f.items.push({ date: e.date, desc: e.desc, cents: e.cents }); m.set(ym, f);
+  }
+  return [...m.values()].sort((x, y) => y.ym.localeCompare(x.ym));
+};
+/** pagamento da fatura do mês: o lançamento "pagfatura" feito aqui, ou a fatura do mesmo banco lida do PDF (vence nesse mês) */
+export const faturaPaid = (a: Account, ym: string, entries: Entry[]) => {
+  const bk = bankOf(a.name);
+  return entries.find(e => e.imp === `pagfatura-${a.id}-${ym}` || (!!bk && !!e.imp && e.imp.startsWith("fatura-") && e.imp.slice(-10, -3) === ym && bankOf(e.imp.slice(7, -11)) === bk));
+};
+/** data de vencimento da fatura do mês (dia do cartão, ou hoje se ele não tem os dias) */
+export const faturaDue = (a: Account, ym: string) => (a.dueDay ? ym + "-" + String(Math.min(a.dueDay, lastDay(ym))).padStart(2, "0") : today());
 /** "Fatura de out" quando o cartão tem os dias; senão "Gasto em out" */
 export const cardMonthLbl = (a: Account, mon: string) => (a.closeDay && a.dueDay ? "Fatura de " : "Gasto em ") + mon;
 export const accBal = (a: Account, entries: Entry[], t = today()) =>

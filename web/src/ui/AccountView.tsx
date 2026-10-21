@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../lib/createStore";
-import { acctEntries, entMonth, isFut, matchEntry } from "../lib/ledger";
-import { MESN, R, dayLbl } from "../lib/format";
+import { acctEntries, entMonth, faturaPaid, faturas, isCard, isFut, matchEntry } from "../lib/ledger";
+import { MESN, R, dayLbl, fmtD } from "../lib/format";
 import { actions, ledger } from "../lib/store";
 import type { Entry } from "../lib/types";
 import { useArmed } from "./hooks";
@@ -33,7 +33,23 @@ export function AccountView({ id }: { id: string }) {
   const filtering = !!(q || cat || mon);
   const sumIn = L.filter(e => e.type === "rec").reduce((s, e) => s + e.cents, 0), sumOut = L.filter(e => e.type === "desp").reduce((s, e) => s + e.cents, 0);
 
+  const fats = isCard(a) ? faturas(a, entries) : [];
   return (<>
+    {fats.length > 0 && (
+      <section className="sec" id="faturas">
+        <h2>Faturas</h2>
+        {fats.map(f => {
+          const paid = faturaPaid(a, f.ym, entries);
+          return (
+            <div key={f.ym} className="acrow fatrow" data-fat={f.ym}>
+              <span className="nm">{MESN[+f.ym.slice(5) - 1]}/{f.ym.slice(2, 4)}<small className="cardtag">{paid ? "Paga ✓ em " + fmtD(paid.date) : "Em aberto"}</small></span>
+              <b>{R(f.cents)}</b>
+              {!paid && <button type="button" className="btn soft" data-pay={f.ym} onClick={() => openSheet({ kind: "pay", id, ym: f.ym })}>Pagar</button>}
+            </div>
+          );
+        })}
+      </section>
+    )}
     <section className="sec">
       <h2>Extrato</h2>
       {all.length > 0 && (

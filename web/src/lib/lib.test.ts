@@ -193,3 +193,23 @@ describe("mês pela fatura (vencimento)", () => {
     expect(faturaDays({} as never, "2026-10-02")).toEqual({ closeDay: undefined, dueDay: 2 });
   });
 });
+
+import { faturas, faturaPaid, faturaDue } from "./ledger";
+describe("pagar fatura do cartão", () => {
+  const card: Account = { id: "c", name: "Inter", color: "#f70", start: 0, kind: "cartao", closeDay: 25, dueDay: 2 };
+  const es = [e({ acct: "c", cents: 10000, date: "2026-09-20", desc: "A" }), e({ acct: "c", cents: 5000, date: "2026-09-10", desc: "B" }), e({ acct: "c", cents: 3000, date: "2026-09-26", desc: "C" })];
+  it("agrupa por mês de vencimento", () => {
+    expect(faturas(card, es).map(f => [f.ym, f.cents, f.items.length])).toEqual([["2026-11", 3000, 1], ["2026-10", 15000, 2]]);
+    expect(faturaDue(card, "2026-10")).toBe("2026-10-02");
+  });
+  it("paga: pelo lançamento do cartão ou pela fatura do mesmo banco lida do PDF", () => {
+    expect(faturaPaid(card, "2026-10", es)).toBeUndefined();
+    const pay = e({ id: "p", imp: "pagfatura-c-2026-10" });
+    expect(faturaPaid(card, "2026-10", [...es, pay])).toBe(pay);
+    expect(faturaPaid(card, "2026-11", [...es, pay])).toBeUndefined();
+    const pdf = e({ id: "q", imp: "fatura-Inter-2026-10-02" });
+    expect(faturaPaid(card, "2026-10", [...es, pdf])).toBe(pdf);
+    expect(faturaPaid(card, "2026-11", [...es, pdf])).toBeUndefined();
+    expect(faturaPaid(card, "2026-10", [...es, e({ imp: "fatura-Pan-2026-10-02" })])).toBeUndefined();
+  });
+});
