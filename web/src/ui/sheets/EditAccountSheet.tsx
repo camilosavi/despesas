@@ -8,7 +8,7 @@ import { Badge } from "../Badge";
 import { MoneyInput } from "../MoneyInput";
 import { SheetHead } from "../Sheet";
 import { useArmed } from "../hooks";
-import { closeSheet, openAccount, toast, ui } from "../uiStore";
+import { backHome, closeSheet, openAccount, toast, ui } from "../uiStore";
 
 /** personalizar o cartão da conta: nome, letra, cor e saldo inicial, com prévia do cartão */
 export function EditAccountSheet() {
@@ -20,6 +20,10 @@ export function EditAccountSheet() {
   const [into, setInto] = useState("");
   const mates = accts.filter(x => a && x.id !== a.id && (x.kind === "cartao") === (a.kind === "cartao")), target = mates.find(x => x.id === into);
   const merge = useArmed("Toque de novo para juntar", target ? `Juntar em ${target.name}` : "Juntar", () => { if (!a || !target) return; actions.mergeAccount(a.id, target.id); closeSheet(); openAccount(target.id); toast(`Juntado em ${target.name} ✓`); });
+  const del = useArmed("Toque de novo: apaga e leva os lançamentos", a?.kind === "cartao" ? "Apagar este cartão" : "Apagar esta conta", () => {
+    if (!a) return; const acc = a, gone = ledger.get().entries.filter(e => e.acct === a.id), cardLbl = a.kind === "cartao" ? "Cartão apagado" : "Conta apagada";
+    actions.deleteAccount(a.id); closeSheet(); backHome(); toast(cardLbl, () => { actions.addAccount(acc); actions.addEntries(...gone); });
+  });
   if (!a) return null;
   const pal = CARD_PALETTE.includes(color) ? CARD_PALETTE : [color, ...CARD_PALETTE.slice(0, -1)];
 
@@ -63,5 +67,6 @@ export function EditAccountSheet() {
     )}
     <p className="err" id="edErr">{err}</p>
     <button type="button" className="btn primary wide" id="edSave" onClick={save}>Salvar</button>
+    <button type="button" className="btn wide bad-txt" id="edDel" onClick={del.onClick}>{del.text}</button>
   </>);
 }

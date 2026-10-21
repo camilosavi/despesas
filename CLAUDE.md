@@ -105,6 +105,7 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
    - **Categorias do app antigo** (21/10/2026, "puxe as categorias do outro app, estavam boas"; `lib/categories.ts`, `catcolor.ts`, `catIcons.ts`): saídas Alimentação, Mercado, Transporte, Casa e contas, Lazer, Esporte, Saúde, Compras, Educação, Assinaturas, Faturas de cartão, Outros;
      entradas Salário, Rendimentos, Divisões, Saldo anterior, Outras receitas. Cores e ícones do app antigo (`Dot` agora desenha o ícone). **Categorias pessoais dele (Intercâmbio, Cidadania, Câmbio, Aulas/bicos) NÃO entram no código público**: ele cria com "+ Nova".
      `actions.migrateCats` troca os nomes da manhã de 21/10 (Moradia/Contas→Casa e contas, Cartão→Faturas de cartão, Rendimento→Rendimentos, Reembolso→Divisões, Outros de entrada→Outras receitas) nos lançamentos e itens; roda a cada mudança dos lançamentos, idempotente.
+   - **Apagar cartão/conta também no Personalizar** (botão no fim da janela; confirma com 2 toques e tem Desfazer; leva os lançamentos junto). Continua no fim da tela da conta.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)
