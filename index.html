@@ -9,8 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="Tostão">
 <meta name="theme-color" content="#0E3B35">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png?v=2">
-<link rel="icon" href="icon-192.png?v=2">
+<link rel="apple-touch-icon" href="icon-180.png?v=3">
+<link rel="icon" href="icon-192.png?v=3">
 <style>:root{color-scheme:light;padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif;background:#F3F5F2}img{max-width:100%}[hidden]{display:none!important}*{-webkit-touch-callout:none}input,textarea{-webkit-touch-callout:default}</style>
 </head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,9 +87,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .auth[hidden]{display:none}
 .noauth .wrap{display:none}
 .authbox{width:100%;max-width:380px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
-.abrand{display:flex;align-items:center;gap:14px;margin:0 0 44px}
-.alogo{display:block;flex:none;width:56px;height:56px}
-.abrand h1{margin:0;font-family:var(--display);font-size:1.9rem;letter-spacing:-.02em;color:var(--ink2)}
+.alogo{display:block;width:150px;height:150px;margin:0 auto 36px;border-radius:50%}
 .authbox .field{text-align:left;margin-bottom:14px}
 .authbox .field>label{color:var(--gold);font-size:.85rem;font-weight:500}
 .auth .field input[type=email],.auth .field input[type=password]{width:100%;min-height:54px;padding:0 16px;border-radius:16px;border:1.5px solid var(--bd);background:var(--fld);color:var(--ink2)}
@@ -209,7 +207,7 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
 
 <div class="auth" id="auth" hidden>
   <form class="authbox" id="authForm" novalidate>
-    <div class="abrand"><svg class="alogo" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="49" fill="#D9B66F"/><g fill="#14203A"><circle cx="50" cy="50" r="42.5" fill="none" stroke="#14203A" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 6.68"/><rect x="46" y="20" width="8" height="60" rx="1.5"/><rect x="20" y="46" width="60" height="8" rx="1.5"/><circle cx="33" cy="28.7" r="4.4"/><circle cx="33" cy="37.3" r="4.4"/><circle cx="28.7" cy="33" r="4.4"/><circle cx="37.3" cy="33" r="4.4"/><circle cx="33" cy="33" r="3" fill="#D9B66F"/><circle cx="67" cy="28.7" r="4.4"/><circle cx="67" cy="37.3" r="4.4"/><circle cx="62.7" cy="33" r="4.4"/><circle cx="71.3" cy="33" r="4.4"/><circle cx="67" cy="33" r="3" fill="#D9B66F"/><circle cx="33" cy="62.7" r="4.4"/><circle cx="33" cy="71.3" r="4.4"/><circle cx="28.7" cy="67" r="4.4"/><circle cx="37.3" cy="67" r="4.4"/><circle cx="33" cy="67" r="3" fill="#D9B66F"/><circle cx="67" cy="62.7" r="4.4"/><circle cx="67" cy="71.3" r="4.4"/><circle cx="62.7" cy="67" r="4.4"/><circle cx="71.3" cy="67" r="4.4"/><circle cx="67" cy="67" r="3" fill="#D9B66F"/></g></svg><h1>Tostão</h1></div>
+    <img class="alogo" src="logo.png?v=3" alt="Um Tostão" width="150" height="150">
     <div class="field"><label for="auEmail">E-mail</label><input type="email" id="auEmail" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false"></div>
     <div class="field"><label for="auPass">Senha</label><input type="password" id="auPass" autocomplete="current-password"></div>
     <div id="authMsg" role="alert"></div>
