@@ -30,7 +30,12 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      Nada de saldo digitado por cima (ele disse que vai lançar os holerites); ajuste/conferência com o saldo real do banco fica para depois.
    - **Holerite → receita**: ao ler um holerite aparece "Entra em <conta>" e "Lançar R$ X em <conta>" (líquido, na data do crédito,
      `imp:"holerite-AAAA-MM-tipo"`; avisa "Já lançado"). Fatura e conta continuam só leitura.
-   - Ainda **não** tem: lançar despesa/receita à mão, transferência entre contas, cartões de crédito/faturas ligados às contas.
+   - **Fatura → despesa** (21/10/2026, "pode ligar as faturas"): ao ler uma fatura aparece "Paga pela conta" (já vem a conta do mesmo
+     banco, se existir) e "Lançar fatura de R$ X em <conta>": **uma despesa** `Fatura <banco>` na data do vencimento, com o total do
+     banco (`r.total`, senão a soma), `imp:"fatura-<banco>-<vencimento>"` (avisa "Já lançada") e os itens guardados em `items`
+     (aparecem ao tocar no lançamento). Fica "Agendado" até o vencimento e só então tira do saldo. PDF sem vencimento pede a data.
+     Compra no cartão **não** mexe no saldo da conta; só a fatura paga mexe. Sem limite do cartão por enquanto.
+   - Ainda **não** tem: lançar despesa/receita à mão, transferência entre contas, limite/cartão como item próprio, conta/boleto lançando.
 
 ## Como editar (sempre assim)
 

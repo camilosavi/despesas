@@ -131,6 +131,8 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .mcard .mchip{position:absolute;left:16px;top:14px;width:28px;height:21px;border-radius:5px;background:linear-gradient(135deg,#e6c875 0%,#b59132 100%)}
 .mcard b{font-family:var(--display);font-size:1.15rem}
 .mcard .fi{width:30px;height:30px;border-radius:9px}
+.field input[type=date]{width:100%;min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg)}
+#exDel{margin-top:14px}
 .swatch.custom{position:relative;display:block;background:conic-gradient(#e33,#ea3,#3c6,#39e,#93e,#e33);overflow:hidden}
 .swatch.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .swatch.custom:has(input:focus-visible){border-color:var(--ink)}
@@ -599,6 +601,7 @@ document.addEventListener("input",e=>{
 function openEntrySheet(id){
   const e=entries.find(x=>x.id===id);if(!e)return;const a=accOf(e.acct);
   openSheet(sheetHead(e.type==="rec"?"Entrada":"Saída")+`<div class="kv"><span>Descrição</span><b>${esc(e.desc)}</b><span>Valor</span><b class="${e.type==="rec"?"ok":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b><span>Data</span><b>${fmtD(e.date)}${isFut(e)?" (agendado)":""}</b><span>Conta</span><b>${esc(a?a.name:"—")}</b></div>
+  ${e.items&&e.items.length?`<div class="ln sub">Itens da fatura · ${e.items.length}</div>`+e.items.map(y=>`<div class="ln"><span>${fmtDM(y.date)}</span><span class="dsc">${esc(y.desc)}</span><b class="${y.cents<0?"cr":""}">${R(y.cents)}</b></div>`).join(""):""}
   <button type="button" class="btn wide" id="exDel" data-id="${e.id}">Apagar este lançamento</button>`);
 }
 
@@ -671,14 +674,14 @@ async function readOne(file){
     return out}
 }
 const fmtDM=d=>d?d.slice(8)+"/"+d.slice(5,7):"";
-function viewFatura(x){
+function viewFatura(x,i){
   const r=x.r, sum=r.rows.reduce((s,y)=>s+y.cents,0), b=bankOf(r.bank||"");
   const chk=r.total==null?"":Math.abs(sum-r.total)<=1?`<span class="ok">bate com o total do banco ✓</span>`:`<span class="bad">banco diz ${R(r.total)}</span>`;
   const nm=y=>{let n=(y.shop||y.desc||"").trim();if(n&&n===n.toUpperCase()&&/[A-Z]{3}/.test(n))n=titleCase(n);return n};
   return `<details class="rd" open><summary><span>${r.bank?cardBadge(r.bank)+" ":""}Fatura ${esc(r.bank||"")} <small>${esc(x.name)}</small></span></summary>
     <div class="kv"><span>Vencimento</span><b>${r.due?fmtD(r.due):"não achei"}</b>${r.close?`<span>Fecha dia</span><b>${r.close}</b>`:""}<span>Lançamentos</span><b>${r.rows.length}</b><span>Soma lida</span><b>${R(sum)}</b>${r.total!=null?`<span>Total do banco</span><b>${R(r.total)}</b>`:""}</div>
     ${chk?`<div class="kv" style="padding-top:0"><span>Conferência</span><b>${chk}</b></div>`:""}
-    ${r.rows.map(y=>`<div class="ln"><span>${fmtDM(y.date)}</span><span class="dsc">${esc(nm(y))}</span><b class="${y.cents<0?"cr":""}">${R(y.cents)}</b></div>`).join("")}</details>`;
+    ${r.rows.map(y=>`<div class="ln"><span>${fmtDM(y.date)}</span><span class="dsc">${esc(nm(y))}</span><b class="${y.cents<0?"cr":""}">${R(y.cents)}</b></div>`).join("")}${ftBlock(x,i)}</details>`;
 }
 function viewConta(x){const c=x.c;
   return `<details class="rd" open><summary><span>Conta ${esc(c.name)} <small>${esc(x.name)}</small></span></summary>
@@ -706,7 +709,32 @@ function hlBlock(x,i){
   return `<div class="hl" data-hl="${i}"><span class="lbl">Entra em</span><div class="cards">${accts.map(c=>`<button type="button" class="cpill" data-hlacct="${i}|${c.id}" aria-pressed="${c.id===x.acct}">${acctBadge(c)}<span>${esc(c.name)}</span></button>`).join("")}</div>
     <button type="button" class="btn primary wide" data-hlgo="${i}">Lançar ${R(h.cents)} em ${esc(a.name)}${h.date>today()?` · cai em ${fmtDM(h.date)}`:""}</button></div>`;
 }
-const hlRedraw=i=>{const el=document.querySelector(`.hl[data-hl="${i}"]`);if(el)el.outerHTML=hlBlock(results[i],i)};
+/* fatura: vira UMA despesa na conta que paga, na data do vencimento (agendada até lá; some do saldo no dia). Os itens ficam dentro do lançamento. */
+const ftTotal=r=>r.total!=null?r.total:r.rows.reduce((s,y)=>s+y.cents,0);
+const ftKey=(r,d)=>`fatura-${r.bank||"cartao"}-${d}`;
+function ftBlock(x,i){
+  const r=x.r, d=r.due||x.date||"", done=d&&entries.find(e=>e.imp===ftKey(r,d));
+  if(done){const a=accOf(done.acct);return `<div class="hl" data-hl="${i}"><p class="ok" style="margin:0;font-weight:600">Já lançada em ${esc(a?a.name:"uma conta apagada")} ✓</p></div>`}
+  if(!accts.length)return `<div class="hl" data-hl="${i}"><button type="button" class="btn wide" data-hlnew>Crie uma conta para lançar</button></div>`;
+  if(!x.acct||!accOf(x.acct)){const m=bankOf(r.bank||"");x.acct=(m&&(accts.find(a=>bankOf(a.name)===m)||{}).id)||(openId&&accOf(openId)?openId:accts[0].id)}
+  const a=accOf(x.acct), c=ftTotal(r);
+  return `<div class="hl" data-hl="${i}">${r.due?"":`<div class="field"><label for="ftd${i}">Vencimento (não achei no PDF)</label><input type="date" id="ftd${i}" data-ftdate="${i}" value="${esc(x.date||"")}"></div>`}
+    <span class="lbl">Paga pela conta</span><div class="cards">${accts.map(k=>`<button type="button" class="cpill" data-hlacct="${i}|${k.id}" aria-pressed="${k.id===x.acct}">${acctBadge(k)}<span>${esc(k.name)}</span></button>`).join("")}</div>
+    <button type="button" class="btn primary wide" data-ftgo="${i}">Lançar fatura de ${R(c)} em ${esc(a.name)}${d?` · vence ${fmtDM(d)}`:""}</button></div>`;
+}
+const blockFor=(x,i)=>x.kind==="fatura"?ftBlock(x,i):hlBlock(x,i);
+const hlRedraw=i=>{const el=document.querySelector(`.hl[data-hl="${i}"]`);if(el)el.outerHTML=blockFor(results[i],i)};
+document.addEventListener("input",e=>{const d=e.target.closest&&e.target.closest("[data-ftdate]");if(d){results[+d.dataset.ftdate].date=d.value;hlRedraw(+d.dataset.ftdate);const n=$("ftd"+d.dataset.ftdate);if(n)n.focus()}});
+document.addEventListener("click",e=>{
+  const g=e.target.closest("[data-ftgo]");if(!g)return;
+  const i=+g.dataset.ftgo,x=results[i],r=x.r,d=r.due||x.date;
+  if(!d){toast("Informe o vencimento da fatura.");return}
+  if(entries.some(y=>y.imp===ftKey(r,d))){hlRedraw(i);return}
+  const nm=y=>{let n=(y.shop||y.desc||"").trim();if(n&&n===n.toUpperCase()&&/[A-Z]{3}/.test(n))n=titleCase(n);return n};
+  entries.push({id:uid(),acct:x.acct,type:"desp",cents:ftTotal(r),date:d,desc:"Fatura "+(r.bank||"cartão"),imp:ftKey(r,d),at:Date.now(),
+    items:r.rows.map(y=>({date:y.date,desc:nm(y),cents:y.cents}))});
+  saveAll();renderAll();hlRedraw(i);toast("Fatura lançada ✓",true)
+});
 document.addEventListener("click",e=>{
   const c=e.target.closest("[data-hlacct]");if(c){const[i,id]=c.dataset.hlacct.split("|");results[+i].acct=id;hlRedraw(+i);return}
   if(e.target.closest("[data-hlnew]")){closeSheet();openAddSheet();return}
@@ -720,7 +748,7 @@ function viewErro(x,i){
 let results=[];
 function showResults(){
   openSheet(`<div class="grip"></div><h3><span>O que o app leu</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>`+
-    results.map((x,i)=>x.kind==="fatura"?viewFatura(x):x.kind==="conta"?viewConta(x):x.kind==="holerite"?viewHolerite(x,i):viewErro(x,i)).join(""));
+    results.map((x,i)=>x.kind==="fatura"?viewFatura(x,i):x.kind==="conta"?viewConta(x):x.kind==="holerite"?viewHolerite(x,i):viewErro(x,i)).join(""));
 }
 document.addEventListener("click",e=>{
   const d=e.target.closest("[data-diag]");if(d){lastPdf=results[+d.dataset.diag].pdf;
