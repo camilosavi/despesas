@@ -81,7 +81,6 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .or{display:flex;align-items:center;gap:12px;margin:18px 0 8px;color:var(--soft);font-size:.85rem}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--bd)}
 #auGoogle svg{flex:none}
 #authMsg{min-height:1.3em;margin:0 0 12px;color:#FF9C8A;font-size:.92rem}
-#meBtn{margin-left:auto}
 .mekv{margin:0 0 16px;color:var(--muted)}
 .mekv b{color:var(--ink)}
 .sheet .btn+.btn{margin-top:10px}
@@ -118,6 +117,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .ln b{font-weight:600;white-space:nowrap}
 .ln .cr{color:var(--pos)}
 .ln .dsc{overflow-wrap:anywhere}
+.icat{display:block;margin-top:4px;max-width:100%;padding:3px 8px;border-radius:999px;border:1px solid var(--line);background:var(--chip);color:var(--muted);font:inherit;font-size:.78rem}
 .ln.sub{border-top:0;padding-top:12px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;grid-template-columns:1fr}
 .diagtxt{width:100%;font:12px/1.35 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);color:var(--ink)}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:min(90vw,420px);padding:12px 18px;border-radius:16px;background:var(--ink);color:var(--bg);font-weight:600;font-size:.92rem;z-index:30;text-align:center}

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { brl, R, signR, fmtD, digits, moneyMask, fold, textOn, lastDay, shiftYM } from "./format";
-import { accBal, totBal, matchEntry, sg, descHints, catForDesc } from "./ledger";
+import { accBal, totBal, matchEntry, sg, descHints, catForDesc, groupByCat } from "./ledger";
 import { ctKey, hlKey, ftKey, ftTotal, faturaRows } from "./imports";
 import type { Account, Entry } from "./types";
 
@@ -284,5 +284,27 @@ describe("fatura: pagamento fora da soma e ordem por data", () => {
   it("total sem o pagamento (com total do banco, vale o do banco)", () => {
     expect(ftTotal(r as never)).toBe(13230);
     expect(ftTotal({ ...r, total: 99 } as never)).toBe(99);
+  });
+});
+
+describe("categoria nos itens da fatura e extrato por categoria", () => {
+  const card: Account = { id: "c", name: "Renner", color: "#C8102E", start: 0 };
+  const fat = e({ id: "f", acct: "a", cents: 10000, date: "2026-10-15", desc: "Fatura Renner", cat: "Cartão", imp: "fatura-Renner-2026-10-15",
+    items: [{ date: "2026-09-01", desc: "Caedu", cents: 4000, cat: "Educação" }, { date: "2026-09-02", desc: "Posto", cents: 5000 }] });
+  it("resumo divide a fatura pelos itens; sem categoria e diferença ficam em Cartão", () => {
+    const { rows, total } = summary([acct, card], [fat], "2026-10", "desp");
+    expect(total).toBe(10000);
+    expect(Object.fromEntries(rows.map(r => [r.cat, r.cents]))).toEqual({ Educação: 4000, Cartão: 6000 });
+  });
+  it("fatura sem categoria nos itens continua uma linha", () => {
+    const { rows } = summary([acct], [{ ...fat, items: fat.items!.map(i => ({ desc: i.desc, date: i.date, cents: i.cents })) }], "2026-10", "desp");
+    expect(rows).toHaveLength(1);
+  });
+  it("categoria sugerida também vem de item de fatura já categorizado", () => {
+    expect(catForDesc([fat], "desp", "caedu")).toBe("Educação");
+  });
+  it("agrupa o extrato por categoria com total com sinal", () => {
+    const g = groupByCat([e({ id: "1", cat: "Mercado", cents: 1000 }), e({ id: "2", cat: "Mercado", cents: 500 }), e({ id: "3", type: "rec", cat: "Salário", cents: 9000 }), e({ id: "4", xfer: 1, cents: 100 })]);
+    expect(g.map(x => [x.cat, x.cents])).toEqual([["Salário", 9000], ["Mercado", -1500], ["Transferências", -100]]);
   });
 });

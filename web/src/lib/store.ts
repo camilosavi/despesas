@@ -80,7 +80,8 @@ export const actions = {
   /** troca o nome de uma categoria em todos os lançamentos (nome vazio = tira a categoria) */
   renameCat(from: string, to: string) {
     const s = ledger.get(), nm = to.trim();
-    commit({ ...s, entries: s.entries.map(e => { if (e.cat !== from) return e; const n = { ...e }; if (nm) n.cat = nm; else delete n.cat; return n; }) });
+    const ren = <T extends { cat?: string }>(x: T): T => { if (x.cat !== from) return x; const n = { ...x }; if (nm) n.cat = nm; else delete n.cat; return n; };
+    commit({ ...s, entries: s.entries.map(e => { const n = ren(e); return n.items ? { ...n, items: n.items.map(ren) } : n; }) });
   },
   addBox(b: SaveBox) { const s = ledger.get(); commit({ ...s, boxes: [...s.boxes, b] }); },
   updateBox(id: string, patch: Partial<SaveBox>) {

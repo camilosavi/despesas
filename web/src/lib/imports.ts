@@ -37,6 +37,6 @@ export const contaEntry = (acct: string, c: ContaPdf): Entry =>
 export const holeriteEntry = (acct: string, h: HoleritePdf): Entry =>
   ({ id: uid(), acct, type: "rec", cents: h.cents, date: h.date, desc: h.kind + (h.emp ? " · " + h.emp : ""), cat: "Salário", imp: hlKey(h), at: Date.now() });
 /** uma despesa "Fatura <banco>" no vencimento, com o total do banco e os itens guardados dentro */
-export const faturaEntry = (acct: string, r: Fatura, d: string): Entry =>
+export const faturaEntry = (acct: string, r: Fatura, d: string, cats: string[] = []): Entry =>
   ({ id: uid(), acct, type: "desp", cents: ftTotal(r), date: d, desc: "Fatura " + (r.bank || "cartão"), cat: "Cartão", imp: ftKey(r, d), at: Date.now(),
-     items: faturaRows(r).buys.map(y => ({ date: y.date, desc: itemName(y), cents: y.cents })) });
+     items: faturaRows(r).buys.map((y, k) => ({ date: y.date, desc: itemName(y), cents: y.cents, ...(cats[k] ? { cat: cats[k] } : {}) })) });

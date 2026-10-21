@@ -47,13 +47,22 @@ export const totBal = (accts: Account[], entries: Entry[], t = today()) => accts
 /** lançamentos que não são receita nem gasto de verdade: ajuste de saldo e o pagamento da fatura (as compras do cartão já são os gastos) */
 export const isAdj = (e: Entry) => !!e.imp && e.imp.startsWith("ajuste-");
 export const countsInSummary = (e: Entry) => !e.xfer && !isAdj(e) && !(e.imp && e.imp.startsWith("pagfatura-"));
+/** fatura lida com categoria nos itens: no resumo cada item conta na sua categoria (sem categoria = a da fatura, "Cartão"); a diferença para o total do banco fica na categoria da fatura */
+export const expandItems = (e: Entry): Entry[] => {
+  if (!e.items || !e.items.some(i => i.cat)) return [e];
+  const parts = e.items.map((i, k): Entry => ({ ...e, id: e.id + "#" + k, cents: i.cents, date: i.date || e.date, desc: i.desc, cat: i.cat || e.cat, items: undefined }));
+  const rest = e.cents - e.items.reduce((s, i) => s + i.cents, 0);
+  return rest ? [...parts, { ...e, id: e.id + "#r", cents: rest, items: undefined }] : parts;
+};
 /** resumo por categoria de um mês (todas as contas; cartão pelo mês do vencimento da fatura) */
 export const summary = (accts: Account[], entries: Entry[], ym: string, type: Entry["type"]) => {
   const by = new Map<string, { cat: string; cents: number; list: Entry[] }>();
-  for (const e of entries) {
-    if (e.type !== type || !countsInSummary(e) || entMonth(accts.find(a => a.id === e.acct), e.date) !== ym) continue;
-    const k = e.cat || "", g = by.get(k) || { cat: k, cents: 0, list: [] };
-    g.cents += e.cents; g.list.push(e); by.set(k, g);
+  for (const e0 of entries) {
+    if (e0.type !== type || !countsInSummary(e0) || entMonth(accts.find(a => a.id === e0.acct), e0.date) !== ym) continue;
+    for (const e of expandItems(e0)) {
+      const k = e.cat || "", g = by.get(k) || { cat: k, cents: 0, list: [] };
+      g.cents += e.cents; g.list.push(e); by.set(k, g);
+    }
   }
   const rows = [...by.values()].sort((x, y) => y.cents - x.cents);
   return { rows, total: rows.reduce((s, r) => s + r.cents, 0) };
@@ -80,7 +89,15 @@ export const catForDesc = (entries: Entry[], type: Entry["type"], desc: string) 
   const k = fold(desc.trim()); if (!k) return "";
   let best: Entry | undefined;
   for (const e of entries) if (e.type === type && !e.xfer && e.cat && fold(e.desc.trim()) === k && (!best || (e.at || 0) > (best.at || 0))) best = e;
+  if (best && best.cat !== "Cartão") return best.cat!;
+  if (type === "desp") for (const e of entries) for (const i of e.items || []) if (i.cat && fold(i.desc.trim()) === k) return i.cat; // compra igual numa fatura já categorizada
   return best?.cat ?? "";
+};
+/** extrato agrupado por categoria, da maior para a menor (total com sinal: entrada +, saída −) */
+export const groupByCat = (L: Entry[]) => {
+  const m = new Map<string, { cat: string; cents: number; list: Entry[] }>();
+  for (const e of L) { const k = e.xfer ? "Transferências" : e.cat || "Sem categoria", g = m.get(k) || { cat: k, cents: 0, list: [] }; g.cents += sg(e); g.list.push(e); m.set(k, g); }
+  return [...m.values()].sort((a, b) => Math.abs(b.cents) - Math.abs(a.cents));
 };
 
 /** extrato de uma conta, do mais novo para o mais antigo */

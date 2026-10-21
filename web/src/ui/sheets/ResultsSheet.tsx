@@ -1,12 +1,13 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useStore } from "../../lib/createStore";
 import { bankOf } from "../../lib/banks";
 import { R, fmtD, fmtDM, signR, today } from "../../lib/format";
 import { contaEntry, faturaDays, faturaEntry, faturaRows, ftKey, ftTotal, hlKey, hlName, holeriteEntry, itemName, ctKey } from "../../lib/imports";
 import type { ContaPdf, Fatura, HoleritePdf, ReadResult } from "../../lib/pdf/read";
 import { actions, ledger } from "../../lib/store";
-import { bankAccts, faturaPaid } from "../../lib/ledger";
+import { bankAccts, catForDesc, faturaPaid } from "../../lib/ledger";
 import { Badge, BankBadge } from "../Badge";
+import { CatSelect } from "../CatSelect";
 import { SheetHead } from "../Sheet";
 import { closeSheet, openSheet, patchResult, pdfResults, toast, ui } from "../uiStore";
 
@@ -43,7 +44,7 @@ function Block({ i, x, imp, doneText, label, preferred, children, button, onGo }
 
 function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: number }) {
   const r: Fatura = x.r, entries = useStore(ledger, s => s.entries);
-  const { buys, pays } = faturaRows(r), sum = buys.reduce((s, y) => s + y.cents, 0), d = r.due || x.date || "";
+  const { buys, pays } = faturaRows(r), [cats, setCats] = useState<string[]>(() => buys.map(y => catForDesc(entries, "desp", itemName(y)))), sum = buys.reduce((s, y) => s + y.cents, 0), d = r.due || x.date || "";
   const bankAcct = useStore(ledger, s => { const m = bankOf(r.bank || ""); return (m && bankAccts(s.accts).find(a => bankOf(a.name) === m)?.id) || undefined; });
   const chk = r.total == null ? null : Math.abs(sum - r.total) <= 1 ? <span className="ok">bate com o total do banco ✓</span> : <span className="bad">banco diz {R(r.total)}</span>;
   function go(acct: string) {
@@ -51,7 +52,7 @@ function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: n
     if (entries.some(y => y.imp === ftKey(r, d))) return;
     const pk = bankOf(r.bank || ""), mine = pk && ledger.get().accts.find(a => a.kind === "cartao" && bankOf(a.name) === pk && faturaPaid(a, d.slice(0, 7), entries));
     if (mine) { toast("Essa fatura já foi paga pelo cartão " + mine.name + "."); return; }
-    actions.addEntries(faturaEntry(acct, r, d)); toast("Fatura lançada ✓");
+    actions.addEntries(faturaEntry(acct, r, d, cats)); toast("Fatura lançada ✓");
     // o cartão do mesmo banco aprende os dias de fechamento e vencimento (só se ainda não tiver)
     const bk = bankOf(r.bank || ""), card = bk && ledger.get().accts.find(a => a.kind === "cartao" && bankOf(a.name) === bk && !(a.closeDay && a.dueDay));
     if (card) { const dd = faturaDays(r, d); if (dd.closeDay && dd.dueDay) actions.updateAccount(card.id, dd); }
@@ -66,7 +67,7 @@ function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: n
         {r.total != null ? <><span>Total do banco</span><b>{R(r.total)}</b></> : null}
       </div>
       {chk && <div className="kv" style={{ paddingTop: 0 }}><span>Conferência</span><b>{chk}</b></div>}
-      {buys.map((y, k) => <div className="ln" key={k}><span>{fmtDM(y.date)}</span><span className="dsc">{itemName(y)}</span><b className={y.cents < 0 ? "cr" : ""}>{signR(y.cents)}</b></div>)}
+      {buys.map((y, k) => <div className="ln" key={k}><span>{fmtDM(y.date)}</span><span className="dsc">{itemName(y)}<CatSelect value={cats[k] || ""} onChange={c => setCats(cs => cs.map((x, j) => (j === k ? c : x)))} /></span><b className={y.cents < 0 ? "cr" : ""}>{signR(y.cents)}</b></div>)}
       {pays.length > 0 && <><div className="ln sub">Pagamento da fatura anterior · fora da soma</div>{pays.map((y, k) => <div className="ln" key={k}><span>{fmtDM(y.date)}</span><span className="dsc">{itemName(y)}</span><b className="cr">{signR(y.cents)}</b></div>)}</>}
       <Block i={i} x={x} imp={d ? ftKey(r, d) : false} doneText="Já lançada em" label="Paga pela conta" preferred={bankAcct} onGo={go}
         button={`Lançar fatura de ${R(ftTotal(r))} em {conta}${d ? ` · vence ${fmtDM(d)}` : ""}`}>

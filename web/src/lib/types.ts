@@ -2,7 +2,7 @@ export type EntryType = "rec" | "desp";
 
 /** kind "cartao" = só cartão (Renner…): sem saldo, compras ficam no cartão e não entram no saldo total */
 export interface Account { id: string; name: string; color: string; label?: string; start: number; kind?: "cartao"; closeDay?: number; dueDay?: number; limit?: number }
-export interface EntryItem { date: string; desc: string; cents: number }
+export interface EntryItem { date: string; desc: string; cents: number; cat?: string }
 export interface Entry {
   id: string; acct: string; type: EntryType; cents: number; date: string; desc: string;
   cat?: string;

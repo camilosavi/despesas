@@ -86,6 +86,10 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
    - **Voltar do celular** (`ui/navHistory.ts`): conta aberta e janela aberta são níveis do histórico; voltar fecha a janela, depois volta às contas, depois sai do app. ✕ e ‹ Contas desfazem as entradas com `history.go` (juntadas num só por microtask).
    - **Arrastar para baixo fecha a janela** (`SheetHost`, só < 700 px): o gesto precisa começar com o conteúdo da janela no topo (rolar até o topo não fecha); passou de ~110 px ou foi rápido, fecha; senão volta.
    - **Fatura lida** (21/10/2026, `faturaRows`/`isPay` em `lib/imports.ts`, sem mexer nos parsers): compras em ordem de data; crédito "Pagamento…" (Renner trazia o Pix da fatura anterior) fica à parte, **fora da soma, do total lançado e dos itens**; créditos aparecem como "−R$".
+   - **Categoria por item da fatura** (21/10/2026): `EntryItem.cat` (dentro do jsonb `items`, sem coluna nova). Na leitura de fatura cada compra tem um seletor (`ui/CatSelect.tsx`) já sugerido por `catForDesc` (lançamentos e itens de faturas anteriores);
+     na fatura lançada o seletor fica nos itens do lançamento. No Resumo, fatura com categorias é dividida pelos itens (`expandItems`; sem categoria e a diferença para o total do banco ficam em "Cartão"); fatura sem categoria continua uma linha. Renomear/apagar categoria também vale nos itens.
+   - **Extrato por categoria** (alternador "Por dia | Por categoria" no extrato da conta, `groupByCat`): grupos do maior para o menor, total com sinal; transferências agrupadas à parte. Respeita busca e filtros.
+   - Topo: o botão da nuvem ("Em dia") fica alinhado à esquerda e o olho à direita (antes o `#meBtn` tinha `margin-left:auto` e ficava no meio).
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)
