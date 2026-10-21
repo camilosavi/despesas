@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useStore } from "../lib/createStore";
+import { boxTotalsByCur, fmtMoneyCur } from "../lib/boxes";
 import { accBal, cardMonthLbl, cardSpent, cardUsed, isCard, monIn, totBal } from "../lib/ledger";
 import { MESN, R, brl, textOn, today } from "../lib/format";
 import { ledger } from "../lib/store";
@@ -8,7 +9,7 @@ import { backHome, openSheet, ui } from "./uiStore";
 
 /** o topo é o cartão: cor da conta aberta (ou do tema); texto claro ou escuro pelo contraste */
 export function Top() {
-  const { accts, entries } = useStore(ledger, s => s);
+  const { accts, entries, boxes } = useStore(ledger, s => s);
   const openId = useStore(ui, s => s.openId);
   const ses = useStore(session, s => s.ses);
   useStore(syncState, s => s); // redesenha o botão ☁ quando o estado da sincronização muda
@@ -20,10 +21,11 @@ export function Top() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", col || "#14203A");
   }, [col]);
 
+  const bt = boxTotalsByCur(boxes), boxParts = a ? [] : (["BRL", "EUR", "USD"] as const).filter(c => bt[c] !== 0).map(c => fmtMoneyCur(bt[c], c));
   const none = !accts.length, card = !!a && isCard(a), v = a ? (card ? cardSpent(a, entries) : accBal(a, entries)) : totBal(accts, entries);
   return (
     <header className="top">
-      <div className="tcard" id="tcard">
+      <div className={"tcard" + (boxParts.length ? " hasbox" : "")} id="tcard">
         <div className="trow">
           <button type="button" className="tb" id="meBtn" hidden={!!a || !ses} onClick={() => openSheet({ kind: "me" })}>☁ {syncText() || "Conta"}</button>
           <button type="button" className="tb" id="back" hidden={!a} onClick={backHome}>‹ Contas</button>
@@ -39,6 +41,7 @@ export function Top() {
             ? <><span id="s1l">Limite disponível</span><b id="s1">{R(a!.limit! - cardUsed(a!, entries))}</b></>
             : <><span id="s1l">Entrou em {MESN[+today().slice(5, 7) - 1]}</span><b id="s1">{R(monIn(entries, a ? a.id : null))}</b></>}
         </div>
+        {boxParts.length > 0 && <div className="boxline" id="boxline"><span>Nas caixinhas</span><b>{boxParts.join(" · ")}</b></div>}
       </div>
     </header>
   );

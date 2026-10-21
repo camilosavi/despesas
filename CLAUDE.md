@@ -74,7 +74,12 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      (`faturaPaid`) e o leitor recusa lançar por cima de uma já paga. Sem coluna nova no banco.
    - **Limite do cartão** (21/10/2026, `limit` na conta cartão; "Limite do cartão" em Novo cartão/Personalizar): usado = faturas em aberto (`cardUsed`, todos os meses); topo do cartão mostra "Limite disponível" e a seção "Faturas" tem a barra
      (vermelha se passar). Pagar a fatura libera o limite. Coluna `limit_cents` em `accts`: **rodar a última linha de `supabase/schema.sql`**.
-   - Ainda **não** tem: categorias próprias (criar/renomear), resumo por categoria, conferência com o saldo real.
+   - **Categorias próprias** (21/10/2026): "+ Nova" no Lançar/Editar; não há lista guardada: `catsOf(tipo, entries)` = fixas + qualquer nome usado nos lançamentos (sem tabela nem sync novo). Renomear/apagar só as próprias, no Resumo (`actions.renameCat`).
+   - **Resumo por categoria** (botão "Resumo" na linha de ações; `SummarySheet`): mês (chips) × Saídas/Entradas, total, % e barra por categoria, toque abre os lançamentos. Todas as contas; cartão pelo mês do vencimento (`entMonth`).
+     Fora do resumo: transferências, ajustes (`imp:"ajuste-…"`) e o pagamento de fatura (`pagfatura-…`, as compras do cartão já são os gastos). Fatura de PDF sem cartão cadastrado entra como "Cartão".
+   - **Conferir saldo** (botão na conta, `ConferSheet`): digita o saldo do app do banco; mostra a diferença e "Lançar ajuste" (entrada/saída "Ajuste de saldo", `imp:"ajuste-<id>"`, não conta em "Entrou" nem no resumo).
+   - **Caixinhas no topo**: na home, linha "Nas caixinhas R$ … · € …" sob o saldo total (por moeda; não entra no saldo).
+   - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)
 

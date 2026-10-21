@@ -15,7 +15,7 @@ export function LancSheet({ editId }: { editId?: string }) {
   const openId = useStore(ui, s => s.openId);
   const old = editId ? entries.find(x => x.id === editId) : undefined;
   const [type, setType] = useState<EntryType>(old?.type ?? "desp");
-  const [amt, setAmt] = useState(old ? brl(old.cents) : ""), [desc, setDesc] = useState(old?.desc ?? ""), [cat, setCat] = useState(old?.cat ?? "");
+  const [amt, setAmt] = useState(old ? brl(old.cents) : ""), [desc, setDesc] = useState(old?.desc ?? ""), [cat, setCat] = useState(old?.cat ?? ""), [newCat, setNewCat] = useState(false);
   const [acct, setAcct] = useState(() => (old && accts.some(a => a.id === old.acct) ? old.acct : openId && accts.some(a => a.id === openId) ? openId : accts[0]?.id ?? ""));
   const [date, setDate] = useState(old?.date ?? today()), [err, setErr] = useState("");
 
@@ -27,7 +27,7 @@ export function LancSheet({ editId }: { editId?: string }) {
 
   const onCard = accts.find(a => a.id === acct)?.kind === "cartao"; // compra no cartão: só saída
   const typ: EntryType = onCard ? "desp" : type;
-  const changeType = (t: EntryType) => { setType(t); if (!catsOf(t).includes(cat)) setCat(""); };
+  const changeType = (t: EntryType) => { setType(t); if (!catsOf(t, entries).includes(cat)) setCat(""); };
   function save() {
     const v = digits(amt);
     if (!v) { setErr("Informe o valor."); return; }
@@ -49,7 +49,9 @@ export function LancSheet({ editId }: { editId?: string }) {
     <div className="bigamt"><span>R$</span><MoneyInput id="lcAmt" aria-label="Valor" autoFocus value={amt} onChange={v => setAmt(moneyMask(v))} /></div>
     <div className="field"><label htmlFor="lcDesc">Descrição</label><input type="text" id="lcDesc" maxLength={60} placeholder="Ex.: mercado, Pix, salário" value={desc} onChange={e => setDesc(e.target.value)} /></div>
     <div className="field"><span className="lbl">Categoria</span>
-      <div className="cards" id="lcCats">{catsOf(type).map(c => <button type="button" key={c} className="cpill txt" aria-pressed={c === cat} onClick={() => setCat(c === cat ? "" : c)}>{c}</button>)}</div>
+      <div className="cards" id="lcCats">{catsOf(type, entries, cat).map(c => <button type="button" key={c} className="cpill txt" aria-pressed={c === cat} onClick={() => { setCat(c === cat ? "" : c); setNewCat(false); }}>{c}</button>)}
+        <button type="button" className="cpill txt add" id="lcCatNew" aria-pressed={newCat} onClick={() => { setNewCat(!newCat); if (!newCat) setCat(""); }}>+ Nova</button></div>
+      {newCat && <input type="text" id="lcCatName" aria-label="Nova categoria" placeholder="Nome da categoria" maxLength={20} autoFocus value={cat} onChange={e => setCat(e.target.value.replace(/^\s+/, "").replace(/^./, m => m.toUpperCase()))} />}
     </div>
     <div className="field"><span className="lbl" id="lcAcctL">{typ === "rec" ? "Entra na conta" : onCard ? "Compra no cartão" : "Sai da conta"}</span>
       <div className="cards" id="lcAccts">{accts.map(a => <button type="button" key={a.id} className="cpill" aria-pressed={a.id === acct} onClick={() => setAcct(a.id)}><Badge name={a.name} color={a.color} label={a.label} /><span>{a.name}</span></button>)}</div>

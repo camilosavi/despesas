@@ -228,3 +228,29 @@ describe("limite do cartão", () => {
     expect(aFrom(JSON.parse(JSON.stringify(aRow(card)))).limit).toBe(100000);
   });
 });
+
+import { summary, summaryMonths, isAdj } from "./ledger";
+import { catsOf, isFixedCat } from "./categories";
+describe("resumo por categoria", () => {
+  const es = [
+    e({ cents: 4000, cat: "Mercado", date: "2026-10-03" }), e({ cents: 6000, cat: "Mercado", date: "2026-10-09" }), e({ cents: 2500, cat: "Pets", date: "2026-10-11" }), e({ cents: 700, date: "2026-10-12" }),
+    e({ cents: 9999, cat: "Cartão", date: "2026-10-12", imp: "pagfatura-c-2026-10" }), e({ cents: 5000, cat: "Mercado", xfer: 1, tr: "t" }),
+    e({ type: "rec", cents: 300000, cat: "Salário", date: "2026-10-05" }), e({ type: "rec", cents: 1234, date: "2026-10-06", imp: "ajuste-1" }), e({ cents: 888, cat: "Mercado", date: "2026-09-30" }),
+  ];
+  it("soma por categoria, ordena e ignora transferência, ajuste e pagamento de fatura", () => {
+    const s = summary([acct], es, "2026-10", "desp");
+    expect(s.rows.map(r => [r.cat, r.cents])).toEqual([["Mercado", 10000], ["Pets", 2500], ["", 700]]);
+    expect(s.total).toBe(13200);
+    expect(summary([acct], es, "2026-10", "rec").total).toBe(300000);
+    expect(isAdj(es[7])).toBe(true);
+  });
+  it("meses disponíveis, do mais novo", () => {
+    expect(summaryMonths([acct], es, "2026-10-21")).toEqual(["2026-10", "2026-09"]);
+  });
+  it("categorias criadas aparecem a partir dos lançamentos, 'Outros' por último", () => {
+    expect(catsOf("desp", es).slice(-3)).toEqual(["Assinaturas", "Pets", "Outros"]);
+    expect(catsOf("rec", es)).toEqual(["Salário", "Rendimento", "Reembolso", "Outros"]);
+    expect(catsOf("rec", [], "Freela")).toContain("Freela");
+    expect(isFixedCat("Mercado")).toBe(true); expect(isFixedCat("Pets")).toBe(false);
+  });
+});

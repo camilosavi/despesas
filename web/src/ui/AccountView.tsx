@@ -59,6 +59,7 @@ export function AccountView({ id }: { id: string }) {
         })}
       </section>
     )}
+    {!isCard(a) && <section className="sec"><button type="button" className="btn soft wide" id="confBtn" onClick={() => openSheet({ kind: "conf", id })}>Conferir saldo com o banco</button></section>}
     <section className="sec">
       <h2>Extrato</h2>
       {all.length > 0 && (

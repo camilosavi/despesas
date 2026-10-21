@@ -44,9 +44,25 @@ export const cardMonthLbl = (a: Account, mon: string) => (a.closeDay && a.dueDay
 export const accBal = (a: Account, entries: Entry[], t = today()) =>
   (a.start || 0) + entries.filter(e => e.acct === a.id && !isFut(e, t)).reduce((s, e) => s + sg(e), 0);
 export const totBal = (accts: Account[], entries: Entry[], t = today()) => accts.reduce((s, a) => s + (isCard(a) ? 0 : accBal(a, entries, t)), 0);
+/** lançamentos que não são receita nem gasto de verdade: ajuste de saldo e o pagamento da fatura (as compras do cartão já são os gastos) */
+export const isAdj = (e: Entry) => !!e.imp && e.imp.startsWith("ajuste-");
+export const countsInSummary = (e: Entry) => !e.xfer && !isAdj(e) && !(e.imp && e.imp.startsWith("pagfatura-"));
+/** resumo por categoria de um mês (todas as contas; cartão pelo mês do vencimento da fatura) */
+export const summary = (accts: Account[], entries: Entry[], ym: string, type: Entry["type"]) => {
+  const by = new Map<string, { cat: string; cents: number; list: Entry[] }>();
+  for (const e of entries) {
+    if (e.type !== type || !countsInSummary(e) || entMonth(accts.find(a => a.id === e.acct), e.date) !== ym) continue;
+    const k = e.cat || "", g = by.get(k) || { cat: k, cents: 0, list: [] };
+    g.cents += e.cents; g.list.push(e); by.set(k, g);
+  }
+  const rows = [...by.values()].sort((x, y) => y.cents - x.cents);
+  return { rows, total: rows.reduce((s, r) => s + r.cents, 0) };
+};
+export const summaryMonths = (accts: Account[], entries: Entry[], t = today()) =>
+  [...new Set([t.slice(0, 7), ...entries.filter(countsInSummary).map(e => entMonth(accts.find(a => a.id === e.acct), e.date))])].sort().reverse();
 /** entradas do mês atual (sem transferências); acctId null = todas as contas */
 export const monIn = (entries: Entry[], acctId: string | null, t = today()) =>
-  entries.filter(e => (!acctId || e.acct === acctId) && e.type === "rec" && !e.xfer && !isFut(e, t) && e.date.slice(0, 7) === t.slice(0, 7))
+  entries.filter(e => (!acctId || e.acct === acctId) && e.type === "rec" && !e.xfer && !isAdj(e) && !isFut(e, t) && e.date.slice(0, 7) === t.slice(0, 7))
     .reduce((s, e) => s + e.cents, 0);
 
 /** extrato de uma conta, do mais novo para o mais antigo */

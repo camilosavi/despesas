@@ -77,6 +77,11 @@ export const actions = {
     const s = ledger.get(), e = s.entries.find(x => x.id === id);
     commit({ ...s, entries: s.entries.filter(x => x.id !== id && !(e && e.tr && x.tr === e.tr)) });
   },
+  /** troca o nome de uma categoria em todos os lançamentos (nome vazio = tira a categoria) */
+  renameCat(from: string, to: string) {
+    const s = ledger.get(), nm = to.trim();
+    commit({ ...s, entries: s.entries.map(e => { if (e.cat !== from) return e; const n = { ...e }; if (nm) n.cat = nm; else delete n.cat; return n; }) });
+  },
   addBox(b: SaveBox) { const s = ledger.get(); commit({ ...s, boxes: [...s.boxes, b] }); },
   updateBox(id: string, patch: Partial<SaveBox>) {
     const s = ledger.get();
