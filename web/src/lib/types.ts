@@ -17,7 +17,7 @@ export interface Session { at: string; rt: string; exp: number; uid: string; ema
 
 export type Currency = "BRL" | "EUR" | "USD";
 export interface SaveMove {
-  id: string; date: string; cents: number; cur?: Currency; rate?: number; brl?: number; note?: string;
+  id: string; date: string; cents: number; cur?: Currency; rate?: number; brl?: number; note?: string; bank?: string;
 }
 export interface SaveBox {
   id: string; name: string; kind?: string; icon?: string; cur: Currency;

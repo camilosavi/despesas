@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { boxBal, boxBrl, boxIcon, boxProgress, fetchLiveRates, fmtMoneyCur } from "../../lib/boxes";
+import { boxBal, boxBrl, boxByBank, boxIcon, boxProgress, fetchLiveRates, fmtMoneyCur } from "../../lib/boxes";
 import { brl, digits, today, uid } from "../../lib/format";
+import { FX_PICK } from "../../lib/banks";
 import { actions, ledger } from "../../lib/store";
 import { useStore } from "../../lib/createStore";
 import { MoneyInput } from "../MoneyInput";
@@ -18,6 +19,10 @@ export function BoxSheet({ id }: { id: string }) {
   // valor na moeda, cotação e valor em R$: ao preencher 2 dos 3, o terceiro é calculado (o mais antigo de ordem de edição)
   const [order, setOrder] = useState<("val" | "rate" | "brl")[]>([]);
   const [note, setNote] = useState("");
+  const allBoxes = useStore(ledger, s => s.boxes), accts = useStore(ledger, s => s.accts);
+  const lastBank = (box?.moves || []).find(m => m.bank)?.bank || ""; // movimentos novos entram no começo da lista
+  const [bank, setBank] = useState(lastBank);
+  const [otherBank, setOtherBank] = useState(false);
 
   useEffect(() => {
     if (box && (box.cur === "EUR" || box.cur === "USD")) {
@@ -33,6 +38,9 @@ export function BoxSheet({ id }: { id: string }) {
   const isFx = box.cur === "EUR" || box.cur === "USD";
   const fxMode = isFx && !inReal; // cotação e conversão só quando o valor é na moeda da caixinha
   const inBrl = boxBrl(box);
+  const used = allBoxes.flatMap(b => (b.moves || []).map(m => m.bank || ""));
+  const banks = [...new Set([...accts.map(a => a.name), ...(isFx ? FX_PICK : []), ...used].filter(Boolean))];
+  const byBank = boxByBank(box);
 
   const rateN = parseFloat(rate.replace(",", ".")) || 0;
   const brlCents = digits(brlV);
@@ -69,6 +77,7 @@ export function BoxSheet({ id }: { id: string }) {
       rate: finalRate,
       brl: brlVal,
       note: note.trim() || undefined,
+      bank: bank.trim() || undefined,
     });
 
     setVal(""); setBrlV(""); setNote(""); setOrder(rateN ? ["rate"] : []); // a cotação fica para o próximo lançamento
@@ -91,6 +100,7 @@ export function BoxSheet({ id }: { id: string }) {
         <div>
           <span className="boxcur-lbl">Saldo guardado ({box.cur})</span>
           <b className={`boxcur-val ${bal < 0 ? "bad" : ""}`}>{fmtMoneyCur(bal, box.cur)}</b>
+          {byBank.length > 0 && <small className="boxmv-note">Está em: {byBank.map(v => `${v.bank} ${fmtMoneyCur(v.cents, v.cur)}`).join(" · ")}</small>}
           {inBrl !== 0 && <small className="boxmv-note">+ {fmtMoneyCur(inBrl, "BRL")} guardados em reais</small>}
           {prog && (
             <div className="boxprog-box">
@@ -134,6 +144,15 @@ export function BoxSheet({ id }: { id: string }) {
         )}
 
         <div className="field">
+          <label className="lbl">{mode === "in" ? "Em que banco fica" : "De que banco sai"}</label>
+          <div className="cards" id="bxBanks">
+            {banks.map(n => <button type="button" key={n} className="cpill txt" aria-pressed={!otherBank && n === bank} onClick={() => { setOtherBank(false); setBank(n === bank ? "" : n); }}>{n}</button>)}
+            <button type="button" className="cpill txt" aria-pressed={otherBank} onClick={() => { setOtherBank(true); setBank(""); }}>Outro…</button>
+          </div>
+          {otherBank && <input type="text" aria-label="Banco" placeholder="Nome do banco" maxLength={30} value={bank} onChange={e => setBank(e.target.value)} />}
+        </div>
+
+        <div className="field">
           <label className="lbl">Data</label>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} />
         </div>
@@ -154,7 +173,7 @@ export function BoxSheet({ id }: { id: string }) {
           {box.moves.map(m => (
             <div key={m.id} className="boxmv-item">
               <div>
-                <span>{m.date} · {m.cents > 0 ? "Guardou" : "Resgatou"}</span>
+                <span>{m.date} · {m.cents > 0 ? "Guardou" : "Resgatou"}{m.bank ? ` · ${m.bank}` : ""}</span>
                 {m.note && <small className="boxmv-note">{m.note}</small>}
                 {m.rate && <small className="boxmv-note">Cotação R$ {m.rate.toFixed(2)}</small>}
               </div>

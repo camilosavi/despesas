@@ -19,6 +19,17 @@ export const boxIcon = (b: SaveBox) => {
   return match ? match.i : "💰";
 };
 
+/** onde está o dinheiro: saldo por banco e moeda (movimentos sem banco ficam de fora) */
+export const boxByBank = (b: SaveBox) => {
+  const m = new Map<string, { bank: string; cur: Currency; cents: number }>();
+  for (const x of b.moves || []) {
+    if (!x.bank) continue;
+    const cur = x.cur || b.cur, k = x.bank + "|" + cur, v = m.get(k) || { bank: x.bank, cur, cents: 0 };
+    v.cents += x.cents; m.set(k, v);
+  }
+  return [...m.values()].filter(v => v.cents !== 0);
+};
+
 /** saldo na moeda da caixinha (movimentos em outra moeda não entram: ver boxBrl) */
 export const boxBal = (b: SaveBox): number =>
   (b.moves || []).reduce((sum, m) => sum + ((m.cur || b.cur) === b.cur ? m.cents : 0), 0);

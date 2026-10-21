@@ -139,3 +139,13 @@ describe("caixinha com dois saldos", () => {
     expect(boxBrl({ ...b, cur: "BRL" })).toBe(0);
   });
 });
+
+import { boxByBank } from "./boxes";
+describe("onde está o dinheiro da caixinha", () => {
+  it("soma por banco e moeda, ignora o que não tem banco", () => {
+    const b: SaveBox = { id: "b", name: "Dublin", cur: "EUR", moves: [
+      { id: "1", date: "2026-10-01", cents: 30000, cur: "EUR", bank: "Nomad" }, { id: "2", date: "2026-10-02", cents: 20000, cur: "EUR", bank: "Nomad" },
+      { id: "3", date: "2026-10-03", cents: 25000, cur: "BRL", bank: "Inter" }, { id: "4", date: "2026-10-04", cents: 9000, cur: "EUR" }, { id: "5", date: "2026-10-05", cents: -25000, cur: "BRL", bank: "Inter" }] };
+    expect(boxByBank(b)).toEqual([{ bank: "Nomad", cur: "EUR", cents: 50000 }]);
+  });
+});
