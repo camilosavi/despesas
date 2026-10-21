@@ -60,7 +60,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 
 /* ---------- janelas ---------- */
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20}
-.sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;max-height:88vh;overflow:auto;background:var(--surface);border-radius:28px 28px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));z-index:21;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.sheet{overscroll-behavior:contain;position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;max-height:88vh;overflow:auto;background:var(--surface);border-radius:28px 28px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));z-index:21;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
 @media (min-width:700px){.sheet{bottom:auto;top:50%;transform:translateY(-50%);border-radius:28px;max-height:84vh}}
 .sheet[hidden],.scrim[hidden]{display:none}
 .auth{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;

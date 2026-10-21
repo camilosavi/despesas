@@ -32,6 +32,26 @@ export function SheetHost() {
     const k = (e: KeyboardEvent) => { if (e.key === "Escape") closeSheet(); };
     document.addEventListener("keydown", k); return () => document.removeEventListener("keydown", k);
   }, [sheet]);
+  const open = !!sheet;
+  useEffect(() => { // arrastar para baixo fecha (só celular; no computador a janela fica no meio da tela)
+    const el = ref.current; if (!open || !el || matchMedia("(min-width:700px)").matches) return;
+    let y0 = 0, dy = 0, t0 = 0, drag = false, top = false;
+    const start = (e: TouchEvent) => { y0 = e.touches[0].clientY; dy = 0; t0 = Date.now(); drag = false; top = el.scrollTop <= 0; };
+    const move = (e: TouchEvent) => {
+      const y = e.touches[0].clientY;
+      if (!drag) { if (!top || el.scrollTop > 0) return; if (y - y0 > 6) drag = true; else return; } // só arrasta se o toque já começou com o conteúdo no topo (rolar até o topo não fecha)
+      dy = Math.max(0, y - y0); e.preventDefault();
+      el.style.transition = "none"; el.style.transform = `translateY(${dy}px)`;
+    };
+    const end = () => {
+      if (!drag) return; drag = false;
+      el.style.transition = "transform .2s ease";
+      if (dy > 110 || dy / Math.max(1, Date.now() - t0) > 0.6) { el.style.transform = "translateY(100%)"; setTimeout(closeSheet, 180); } else el.style.transform = "";
+    };
+    el.addEventListener("touchstart", start, { passive: true }); el.addEventListener("touchmove", move, { passive: false });
+    el.addEventListener("touchend", end); el.addEventListener("touchcancel", end);
+    return () => { el.removeEventListener("touchstart", start); el.removeEventListener("touchmove", move); el.removeEventListener("touchend", end); el.removeEventListener("touchcancel", end); };
+  }, [open]);
   if (!sheet) return null;
   return (<>
     <div className="scrim" onClick={closeSheet} />
