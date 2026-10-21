@@ -1,22 +1,22 @@
 <title>Tostão</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Tostão">
-<meta name="theme-color" content="#0E3B35">
+<meta name="theme-color" content="#14203A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 /* Recomeço (21/10/2026, pedido dele: "apaga tudo e vamos do 0 função por função"). Só ficam: o cartão do topo, os cartões
    disponíveis (cores e letras) e os leitores de PDF (fatura, boleto/conta e holerite). */
 :root{
-  --bg:#F3F5F2; --surface:#FFFFFF; --ink:#13201D; --muted:#5E6E69; --line:#DDE3DF; --chip:#E8EEEB;
-  --head:#0E3B35; --head-ink:#EAF4F0; --accent:#12A57E; --accent-ink:#FFFFFF; --neg:#C2412D; --pos:#0F8F6C; --warn:#B36E0C;
+  --bg:#F6F7FA; --surface:#FFFFFF; --ink:#14203A; --muted:#5F6B86; --line:#E1E5EE; --chip:#ECEFF5;
+  --head:#14203A; --head-ink:#FFFFFF; --accent:#C9A25A; --accent-ink:#14203A; --neg:#C2412D; --pos:#0F8F6C; --warn:#B36E0C;
   --hc:var(--head); --tci:#FFFFFF;
   --display:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root{
-  --bg:#0C1513; --surface:#15211E; --ink:#E6EEEB; --muted:#93A6A0; --line:#24332F; --chip:#1E2C28;
-  --head:#0F2E29; --accent:#2BC496; --accent-ink:#06231B; --neg:#F07462; --pos:#3FD1A3; --warn:#E8A23A; color-scheme:dark}}
+  --bg:#0D1527; --surface:#16213A; --ink:#F2F4F9; --muted:#93A0BB; --line:#26345A; --chip:#1E2B4B;
+  --head:#14203A; --accent:#D9B66F; --accent-ink:#14203A; --neg:#F07462; --pos:#3FD1A3; --warn:#E8A23A; color-scheme:dark}}
 *{box-sizing:border-box;touch-action:manipulation}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 var(--body)}
@@ -59,7 +59,7 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .cpill.add{padding:6px 16px 6px 6px;border-style:dashed;color:var(--muted)}
 .cpill.add .fi{background:var(--chip);color:var(--ink);font-size:1.2rem}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:16px;border:0;background:var(--chip);font-weight:600;text-align:center}
-.btn.primary{background:var(--ink);color:var(--bg)}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
 .btn.wide{width:100%}
 .reads{margin-top:14px;display:grid;gap:8px}
 .reads div{display:flex;flex-direction:column;font-size:.92rem}
@@ -565,7 +565,7 @@ const dayLbl=d=>d===today()?"Hoje":d===ymd(-1)?"Ontem":`${+d.slice(8)} de ${MESN
 function paintTop(){
   const st=document.documentElement.style, a=openId&&accOf(openId), col=a?a.color:null;
   if(col){st.setProperty("--hc",col);st.setProperty("--tci",lumHex(col)>.45?"#1A1A1A":"#FFFFFF")}else{st.removeProperty("--hc");st.removeProperty("--tci")}
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content",col||"#0E3B35");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content",col||"#14203A");
   $("back").hidden=$("editCard").hidden=!a;$("meBtn").hidden=!!a||!ses;if(window.__ps)window.__ps();
   $("ptitle").textContent=a?a.name:"Minhas contas";
   if(!accts.length){$("bigLabel").textContent="Comece por aqui";$("big").textContent="Sem contas";$("split").hidden=true;return}
@@ -969,7 +969,7 @@ setInterval(()=>{if(ses&&!document.hidden)syncNow()},60000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&ses)syncNow()});
 addEventListener("online",()=>{if(ses)syncNow()});
 /* entrar / criar conta */
-function showAuth(msg){document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#1C2A46");document.body.classList.add("noauth");$("auth").hidden=false;$("authMsg").textContent=msg||"";closeSheet()}
+function showAuth(msg){document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#14203A");document.body.classList.add("noauth");$("auth").hidden=false;$("authMsg").textContent=msg||"";closeSheet()}
 function hideAuth(){document.body.classList.remove("noauth");$("auth").hidden=true;$("authMsg").textContent=""}
 function authErr(e){const m=String(e&&e.message||""),c=e&&e.code||"";
   return /invalid_credentials/.test(c)||/invalid login/i.test(m)?"E-mail ou senha incorretos.":

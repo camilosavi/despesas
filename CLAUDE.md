@@ -53,6 +53,13 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      `desc`↔`descr`, `xfer` 1↔true. **Não testado contra o Supabase real** (sandbox sem acesso): só com simulação.
    - Ainda **não** tem: categorias, editar lançamento, limite/cartão como item próprio, conferência com o saldo real, busca/filtro no extrato.
 
+## Cores e logo (21/10/2026)
+
+Base visual decidida por ele: **azul-marinho `#14203A`, dourado (`#C9A25A` claro / `#D9B66F` escuro) e branco**, nas telas de login e do app
+(`--head`, `--accent`, `--bg`, `--surface`). Verde/vermelho ficam só para entrada/saída (`--pos`/`--neg`). Logo = **moeda do tostão desenhada em
+vetor** (cruz, quatro flores, borda pontilhada) em dourado; a primeira versão (cruz em círculo, marinho e dourado) e depois um "T" verde foram
+recusadas ("app de igreja", "péssimo"). Ícone do iPhone (`icon-*.png`) ainda é o antigo. Não usar a foto da moeda (site com direitos).
+
 ## Como editar (sempre assim)
 
 1. Edite **só `src/app.html`** (fonte única). Nunca edite `index.html` à mão.
