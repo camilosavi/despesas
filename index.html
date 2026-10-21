@@ -158,6 +158,14 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
   .sec.ctas .acrow,.sec.ctas .acrow+.acrow{margin:0}
 }
 
+/* ---------- categorias, busca e filtro ---------- */
+.cpill.txt{padding:8px 14px}
+.ex .nm small{display:block;color:var(--muted);font-size:.78rem;margin-top:1px}
+.exbar{margin:0 0 4px}
+.exq{width:100%;min-height:46px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);margin-bottom:8px}
+.exq::-webkit-search-cancel-button{cursor:pointer}
+.exsum{margin:6px 0 0;color:var(--muted);font-size:.88rem}
+
 /* ---------- base de banco ---------- */
 .trow{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;min-height:0}
 .tb{border:0;border-radius:999px;padding:6px 12px;font-size:.8rem;font-weight:600;color:inherit;background:color-mix(in srgb,currentColor 18%,transparent)}
@@ -571,7 +579,11 @@ function acctBadge(a){
   const col=a.color, l=a.label||cardLabel(a.name), dark=lumHex(col)>.5, fs=l.length<=2?1:l.length===3?.88:l.length===4?.76:.66;
   return `<span class="fi" style="background:${col};color:${dark?"#1A1A1A":"#fff"};--k:${fs}">${esc(l)}</span>`;
 }
-let accts=null, entries=[], openId=null;
+const CAT_OUT=["Mercado","Alimentação","Transporte","Moradia","Contas","Cartão","Saúde","Lazer","Educação","Assinaturas","Outros"], CAT_IN=["Salário","Rendimento","Reembolso","Outros"];
+const catsOf=t=>t==="rec"?CAT_IN:CAT_OUT;
+const norm=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+const catChips=(attr,list,sel)=>list.map(c=>`<button type="button" class="cpill txt" ${attr}="${esc(c)}" aria-pressed="${c===sel}">${esc(c)}</button>`).join("");
+let accts=null, entries=[], openId=null, xq="", xc="", xOpen=null;
 try{accts=JSON.parse(lsGet("despesas.zero.accts")||"null")}catch(e){accts=null}
 try{entries=JSON.parse(lsGet("despesas.zero.entries")||"[]")||[]}catch(e){entries=[]}
 const saveRaw=()=>{lsSet("despesas.zero.accts",JSON.stringify(accts));lsSet("despesas.zero.entries",JSON.stringify(entries))};
@@ -610,15 +622,29 @@ function renderHome(){
     ${accts.map(a=>{const b=accBal(a);return `<button type="button" class="acrow" data-open="${a.id}">${acctBadge(a)}<span class="nm">${esc(a.name)}</span><b class="${b<0?"bad":""}">${signR(b)}</b></button>`}).join("")}
     <button type="button" class="acrow add" id="acctNew"><span class="fi">+</span><span class="nm">Adicionar conta</span></button></section>`;
 }
+const exRow=e=>`<button type="button" class="ex" data-ex="${e.id}"><i class="${e.type}">${e.xfer?"⇄":e.type==="rec"?"↓":"↑"}</i><span class="nm">${esc(e.desc)}${e.cat?`<small>${esc(e.cat)}</small>`:""}</span><b class="${e.type==="rec"?"cr":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b></button>`;
+const exMatch=e=>{if(xc&&e.cat!==xc)return false;if(!xq)return true;const q=norm(xq).trim(),h=norm(e.desc+" "+(e.cat||"")+" "+brl(e.cents)+" "+fmtD(e.date));return q.split(/\s+/).every(w=>h.includes(w))};
+function exListHtml(a){
+  const all=entries.filter(e=>e.acct===a.id).sort((x,y)=>y.date.localeCompare(x.date)||(y.at||0)-(x.at||0)), L=all.filter(exMatch);
+  const fut=L.filter(isFut), past=L.filter(e=>!isFut(e)), days=[...new Set(past.map(e=>e.date))];
+  const sum=(xq||xc)&&L.length?`<p class="exsum">${L.length} lançamento${L.length>1?"s":""}${(t=>t?` · Entradas ${R(t)}`:"")(L.filter(e=>e.type==="rec").reduce((s,e)=>s+e.cents,0))}${(t=>t?` · Saídas ${R(t)}`:"")(L.filter(e=>e.type==="desp").reduce((s,e)=>s+e.cents,0))}</p>`:"";
+  return sum+(fut.length?`<div class="dayh">Agendado</div>`+fut.map(exRow).join(""):"")
+    +days.map(d=>`<div class="dayh">${dayLbl(d)}</div>`+past.filter(e=>e.date===d).map(exRow).join("")).join("")
+    +(L.length?"":`<p class="hint">${all.length?"Nada encontrado.":"Nenhum movimento ainda."}</p>`);
+}
+function exCatsHtml(a){
+  const used=[...new Set(entries.filter(e=>e.acct===a.id&&e.cat).map(e=>e.cat))];
+  return used.length?`<button type="button" class="cpill txt" data-xcat="" aria-pressed="${!xc}">Todas</button>`+catChips("data-xcat",used,xc):"";
+}
 function renderAcct(){
   const a=accOf(openId);if(!a){openId=null;renderHome();return}
-  const L=entries.filter(e=>e.acct===a.id).sort((x,y)=>y.date.localeCompare(x.date)||(y.at||0)-(x.at||0));
-  const row=e=>`<button type="button" class="ex" data-ex="${e.id}"><i class="${e.type}">${e.xfer?"⇄":e.type==="rec"?"↓":"↑"}</i><span class="nm">${esc(e.desc)}</span><b class="${e.type==="rec"?"cr":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b></button>`;
-  const fut=L.filter(isFut), past=L.filter(e=>!isFut(e)), days=[...new Set(past.map(e=>e.date))];
-  $("acts").innerHTML=actsHtml();$("view").innerHTML=`<section class="sec"><h2>Extrato</h2>
-    ${fut.length?`<div class="dayh">Agendado</div>`+fut.map(row).join(""):""}
-    ${days.map(d=>`<div class="dayh">${dayLbl(d)}</div>`+past.filter(e=>e.date===d).map(row).join("")).join("")}
-    ${L.length?"":`<p class="hint">Nenhum movimento ainda.</p>`}</section>
+  if(xOpen!==a.id){xOpen=a.id;xq="";xc=""}
+  if(xc&&!entries.some(e=>e.acct===a.id&&e.cat===xc))xc="";
+  const has=entries.some(e=>e.acct===a.id);
+  $("acts").innerHTML=actsHtml();
+  $("view").innerHTML=`<section class="sec"><h2>Extrato</h2>
+    ${has?`<div class="exbar"><input type="search" class="exq" id="exQ" placeholder="Buscar no extrato" value="${esc(xq)}" autocomplete="off" enterkeyhint="search"><div class="cards" id="exCats">${exCatsHtml(a)}</div></div>`:""}
+    <div id="exList">${exListHtml(a)}</div></section>
     <section class="sec"><button type="button" class="btn" id="acctDel">Apagar a conta ${esc(a.name)}</button></section>`;
 }
 function renderAll(){if(openId&&!accOf(openId))openId=null;paintTop();$("secPdf").hidden=!!openId;openId?renderAcct():renderHome()}
@@ -676,10 +702,15 @@ document.addEventListener("input",e=>{
   if(e.target.id==="edName")ed.name=e.target.value;else if(e.target.id==="edLab")ed.label=e.target.value.trim().slice(0,4);else if(e.target.id==="edCol")ed.color=e.target.value;else return;
   edPrev()});
 
+/* busca e filtro do extrato (só a lista é redesenhada, o campo mantém o foco) */
+document.addEventListener("input",e=>{if(e.target.id!=="exQ")return;const a=accOf(openId);if(!a)return;xq=e.target.value;$("exList").innerHTML=exListHtml(a)});
+document.addEventListener("click",e=>{const c=e.target.closest&&e.target.closest("[data-xcat]");if(!c)return;const a=accOf(openId);if(!a)return;
+  xc=c.dataset.xcat===xc?"":c.dataset.xcat;$("exCats").innerHTML=exCatsHtml(a);$("exList").innerHTML=exListHtml(a)});
+
 /* movimento: ver e apagar */
 function openEntrySheet(id){
   const e=entries.find(x=>x.id===id);if(!e)return;const a=accOf(e.acct);
-  openSheet(sheetHead(e.type==="rec"?"Entrada":"Saída")+`<div class="kv"><span>Descrição</span><b>${esc(e.desc)}</b><span>Valor</span><b class="${e.type==="rec"?"ok":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b><span>Data</span><b>${fmtD(e.date)}${isFut(e)?" (agendado)":""}</b><span>Conta</span><b>${esc(a?a.name:"—")}</b></div>
+  openSheet(sheetHead(e.type==="rec"?"Entrada":"Saída")+`<div class="kv"><span>Descrição</span><b>${esc(e.desc)}</b><span>Valor</span><b class="${e.type==="rec"?"ok":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b><span>Data</span><b>${fmtD(e.date)}${isFut(e)?" (agendado)":""}</b><span>Conta</span><b>${esc(a?a.name:"—")}</b>${e.cat?`<span>Categoria</span><b>${esc(e.cat)}</b>`:""}</div>
   ${e.items&&e.items.length?`<div class="ln sub">Itens da fatura · ${e.items.length}</div>`+e.items.map(y=>`<div class="ln"><span>${fmtDM(y.date)}</span><span class="dsc">${esc(y.desc)}</span><b class="${y.cents<0?"cr":""}">${R(y.cents)}</b></div>`).join(""):""}
   ${e.tr?"":`<button type="button" class="btn primary wide" id="exEdit" data-id="${e.id}">Editar</button>`}
   <button type="button" class="btn wide" id="exDel" data-id="${e.id}">${e.tr?"Apagar a transferência":"Apagar este lançamento"}</button>`);
@@ -787,10 +818,11 @@ const needAcct=(n)=>sheetHead(n)+`<p class="hint" style="color:var(--muted)">Cri
 function openLanc(editId){
   if(!accts.length){openSheet(needAcct("Lançar"));return}
   const old=editId?entries.find(x=>x.id===editId):null;
-  lc=old?{type:old.type,acct:accOf(old.acct)?old.acct:accts[0].id,date:old.date,edit:old.id}:{type:"desp",acct:openId&&accOf(openId)?openId:accts[0].id,date:today()};
+  lc=old?{type:old.type,acct:accOf(old.acct)?old.acct:accts[0].id,date:old.date,edit:old.id,cat:old.cat||""}:{type:"desp",acct:openId&&accOf(openId)?openId:accts[0].id,date:today(),cat:""};
   openSheet(sheetHead(old?"Editar":"Lançar")+`<div class="seg" id="lcSeg"><button type="button" data-lctype="desp" aria-pressed="${lc.type==="desp"}">Saída</button><button type="button" data-lctype="rec" aria-pressed="${lc.type==="rec"}">Entrada</button></div>
   <div class="bigamt"><span>R$</span><input type="text" id="lcAmt" class="money" inputmode="numeric" placeholder="0,00" aria-label="Valor" value="${old?brl(old.cents):""}"></div>
   <div class="field"><label for="lcDesc">Descrição</label><input type="text" id="lcDesc" maxlength="60" placeholder="Ex.: mercado, Pix, salário" value="${old?esc(old.desc):""}"></div>
+  <div class="field"><span class="lbl">Categoria</span><div class="cards" id="lcCats">${catChips("data-lccat",catsOf(lc.type),lc.cat)}</div></div>
   <div class="field"><span class="lbl" id="lcAcctL">${lc.type==="rec"?"Entra na conta":"Sai da conta"}</span><div class="cards" id="lcAccts">${chipsOf("data-lcacct",lc.acct)}</div></div>
   <div class="field"><label for="lcDate">Data</label><input type="date" id="lcDate" value="${lc.date}"></div>
   <p class="err" id="lcErr"></p><button type="button" class="btn primary wide" id="lcSave">Salvar</button>`);
@@ -811,13 +843,14 @@ document.addEventListener("click",e=>{
   const t=e.target, a=t.closest("[data-act]");
   if(a){const k=a.dataset.act;k==="lanc"?openLanc():k==="tran"?openTran():$("pdfIn").click();return}
   if(lc&&$("sheet").querySelector("#lcSave")){
-    const ty=t.closest("[data-lctype]");if(ty){lc.type=ty.dataset.lctype;document.querySelectorAll("[data-lctype]").forEach(b=>b.setAttribute("aria-pressed",b===ty));$("lcAcctL").textContent=lc.type==="rec"?"Entra na conta":"Sai da conta";return}
+    const ty=t.closest("[data-lctype]");if(ty){lc.type=ty.dataset.lctype;document.querySelectorAll("[data-lctype]").forEach(b=>b.setAttribute("aria-pressed",b===ty));$("lcAcctL").textContent=lc.type==="rec"?"Entra na conta":"Sai da conta";if(!catsOf(lc.type).includes(lc.cat))lc.cat="";$("lcCats").innerHTML=catChips("data-lccat",catsOf(lc.type),lc.cat);return}
+    const cc=t.closest("[data-lccat]");if(cc){lc.cat=lc.cat===cc.dataset.lccat?"":cc.dataset.lccat;$("lcCats").innerHTML=catChips("data-lccat",catsOf(lc.type),lc.cat);return}
     const c=t.closest("[data-lcacct]");if(c){lc.acct=c.dataset.lcacct;document.querySelectorAll("[data-lcacct]").forEach(b=>b.setAttribute("aria-pressed",b===c));return}
     if(t.closest("#lcSave")){const v=digits($("lcAmt").value),d=$("lcDate").value;
       if(!v){$("lcErr").textContent="Informe o valor.";return}if(!d){$("lcErr").textContent="Informe a data.";return}
       const ds=$("lcDesc").value.trim()||(lc.type==="rec"?"Entrada":"Saída"), old=lc.edit&&entries.find(x=>x.id===lc.edit);
-      if(old){Object.assign(old,{acct:lc.acct,type:lc.type,cents:v,date:d,desc:ds});saveAll();closeSheet();renderAll();toast("Lançamento atualizado ✓",true);return}
-      entries.push({id:uid(),acct:lc.acct,type:lc.type,cents:v,date:d,desc:ds,at:Date.now()});
+      if(old){Object.assign(old,{acct:lc.acct,type:lc.type,cents:v,date:d,desc:ds});if(lc.cat)old.cat=lc.cat;else delete old.cat;saveAll();closeSheet();renderAll();toast("Lançamento atualizado ✓",true);return}
+      entries.push({id:uid(),acct:lc.acct,type:lc.type,cents:v,date:d,desc:ds,...(lc.cat?{cat:lc.cat}:{}),at:Date.now()});
       saveAll();closeSheet();renderAll();toast(lc.type==="rec"?"Entrada lançada ✓":"Saída lançada ✓",true);return}
   }
   if(tf&&$("sheet").querySelector("#tfSave")){
@@ -847,7 +880,7 @@ document.addEventListener("click",e=>{
   const g=e.target.closest("[data-ctgo]");if(!g)return;
   const i=+g.dataset.ctgo,x=results[i],c=x.c;
   if(entries.some(y=>y.imp===ctKey(c))){hlRedraw(i);return}
-  entries.push({id:uid(),acct:x.acct,type:"desp",cents:c.cents,date:c.due,desc:"Conta "+c.name,imp:ctKey(c),at:Date.now()});
+  entries.push({id:uid(),acct:x.acct,type:"desp",cents:c.cents,date:c.due,desc:"Conta "+c.name,cat:"Contas",imp:ctKey(c),at:Date.now()});
   saveAll();renderAll();hlRedraw(i);toast("Conta lançada ✓",true)
 });
 
@@ -884,7 +917,7 @@ document.addEventListener("click",e=>{
   if(!d){toast("Informe o vencimento da fatura.");return}
   if(entries.some(y=>y.imp===ftKey(r,d))){hlRedraw(i);return}
   const nm=y=>{let n=(y.shop||y.desc||"").trim();if(n&&n===n.toUpperCase()&&/[A-Z]{3}/.test(n))n=titleCase(n);return n};
-  entries.push({id:uid(),acct:x.acct,type:"desp",cents:ftTotal(r),date:d,desc:"Fatura "+(r.bank||"cartão"),imp:ftKey(r,d),at:Date.now(),
+  entries.push({id:uid(),acct:x.acct,type:"desp",cents:ftTotal(r),date:d,desc:"Fatura "+(r.bank||"cartão"),cat:"Cartão",imp:ftKey(r,d),at:Date.now(),
     items:r.rows.map(y=>({date:y.date,desc:nm(y),cents:y.cents}))});
   saveAll();renderAll();hlRedraw(i);toast("Fatura lançada ✓",true)
 });
@@ -893,7 +926,7 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-hlnew]")){closeSheet();openAddSheet();return}
   const g=e.target.closest("[data-hlgo]");if(g){const i=+g.dataset.hlgo,x=results[i],h=x.h;
     if(entries.some(y=>y.imp===hlKey(h))){hlRedraw(i);return}
-    entries.push({id:uid(),acct:x.acct,type:"rec",cents:h.cents,date:h.date,desc:h.kind+(h.emp?" · "+h.emp:""),imp:hlKey(h),at:Date.now()});
+    entries.push({id:uid(),acct:x.acct,type:"rec",cents:h.cents,date:h.date,desc:h.kind+(h.emp?" · "+h.emp:""),cat:"Salário",imp:hlKey(h),at:Date.now()});
     saveAll();renderAll();hlRedraw(i);toast("Holerite lançado ✓",true)}
 });
 function viewErro(x,i){
@@ -953,8 +986,8 @@ const idList=a=>"in.("+a.map(i=>'"'+encodeURIComponent(i)+'"').join(",")+")";
 async function delIds(tbl,ids){for(let i=0;i<ids.length;i+=100)await api("DELETE",tbl+"?id="+idList(ids.slice(i,i+100)))}
 const aRow=a=>({id:a.id,name:a.name,color:a.color||null,label:a.label||null,start_cents:a.start||0});
 const aFrom=r=>({id:r.id,name:r.name,color:r.color||CARD_PALETTE[0],...(r.label?{label:r.label}:{}),start:+r.start_cents||0});
-const eRow=e=>({id:e.id,acct:e.acct,type:e.type,cents:e.cents,date:e.date,descr:e.desc||"",imp:e.imp||null,xfer:!!e.xfer,tr:e.tr||null,items:e.items||null,at:e.at||null});
-const eFrom=r=>{const e={id:r.id,acct:r.acct,type:r.type,cents:+r.cents,date:r.date,desc:r.descr||""};if(r.imp)e.imp=r.imp;if(r.xfer)e.xfer=1;if(r.tr)e.tr=r.tr;if(r.items)e.items=r.items;if(r.at!=null)e.at=+r.at;return e};
+const eRow=e=>({id:e.id,acct:e.acct,type:e.type,cents:e.cents,date:e.date,descr:e.desc||"",imp:e.imp||null,xfer:!!e.xfer,tr:e.tr||null,items:e.items||null,at:e.at||null,...(e.cat?{cat:e.cat}:{})});
+const eFrom=r=>{const e={id:r.id,acct:r.acct,type:r.type,cents:+r.cents,date:r.date,desc:r.descr||""};if(r.imp)e.imp=r.imp;if(r.xfer)e.xfer=1;if(r.tr)e.tr=r.tr;if(r.cat)e.cat=r.cat;if(r.items)e.items=r.items;if(r.at!=null)e.at=+r.at;return e};
 const rowsMap=()=>{const m={a:{},e:{}};accts.forEach(a=>{m.a[a.id]=JSON.stringify(aRow(a))});entries.forEach(e=>{m.e[e.id]=JSON.stringify(eRow(e))});return m};
 const baseGet=()=>{try{const b=JSON.parse(lsGet(BASE_K)||"null");return b&&b.a&&b.e?b:{a:{},e:{}}}catch(e){return{a:{},e:{}}}};
 function pending(){const b=baseGet(),m=rowsMap();let n=0;for(const k of["a","e"]){for(const id in m[k])if(b[k][id]!==m[k][id])n++;for(const id in b[k])if(!(id in m[k]))n++}return n}

@@ -55,7 +55,13 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      fixa à esquerda e `#view` (contas em grade ou extrato) à direita. Tudo alinhado na borda da moldura do cartão.
    - **Editar lançamento** (21/10/2026): ao tocar num lançamento aparece **Editar** (reaproveita a janela Lançar, `openLanc(id)`: valor, descrição, conta, data,
      entrada/saída; mantém `imp` e `items`). Transferência não edita (apagar e refazer; apagar leva o par).
-   - Ainda **não** tem: categorias, limite/cartão como item próprio, conferência com o saldo real, busca/filtro no extrato.
+   - **Categorias** (21/10/2026): lista fixa (`CAT_OUT`: Mercado, Alimentação, Transporte, Moradia, Contas, Cartão, Saúde, Lazer, Educação, Assinaturas,
+     Outros; `CAT_IN`: Salário, Rendimento, Reembolso, Outros), escolhida no Lançar/Editar (toque de novo desmarca). Campo `cat` no lançamento
+     (coluna `cat text` em `entries`: **rodar a última linha de `supabase/schema.sql` antes de usar**; o app só manda `cat` quando existe, então
+     quem não usa categoria sincroniza mesmo sem a coluna). Holerite lido → "Salário", fatura → "Cartão", conta/boleto → "Contas".
+   - **Busca e filtro no extrato** (por conta): campo "Buscar no extrato" (descrição, categoria, valor ou data) + chips das categorias em uso;
+     filtro ativo mostra "N lançamentos · Entradas · Saídas". Só a lista é redesenhada (o campo mantém o foco); some ao trocar de conta.
+   - Ainda **não** tem: categorias próprias (criar/renomear), resumo por categoria, limite/cartão como item próprio, conferência com o saldo real.
 
 ## Cores e logo (21/10/2026)
 
@@ -87,7 +93,7 @@ O histórico foi recomeçado em 09/10/2026 (tirar valores pessoais): clone antig
 ## Dados no aparelho
 
 `localStorage` (cópia do banco): `despesas.zero.ses` (sessão), `despesas.zero.base` (já enviado), `despesas.zero.accts` (`[{id,name,color,label?,start}]`) e `despesas.zero.entries`
-(`[{id,acct,type:"rec"|"desp",cents,date,desc,imp?,at}]`). Os dados vão para o Supabase do dono (ver acima). A versão de 21/10 de manhã guardava
+(`[{id,acct,type:"rec"|"desp",cents,date,desc,cat?,imp?,at}]`). Os dados vão para o Supabase do dono (ver acima). A versão de 21/10 de manhã guardava
 `despesas.zero.cards` (só nome e cor): vira conta com saldo zero na primeira abertura (idempotente).
 As chaves do app antigo (`despesas.v3`, `despesas.cfg3`, `despesas.fx3`…) continuam no iPhone dele, intactas, mas o app não lê.
 Se ele pedir os lançamentos de volta, dá para importar dali (ou do backup JSON `{app:"minhas-despesas", v:1, items, fx, cfg}`).

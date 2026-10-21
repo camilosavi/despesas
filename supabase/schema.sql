@@ -37,3 +37,6 @@ create policy own_entries on entries for all using (user_id = auth.uid()) with c
 -- Com "Automatically expose new tables" desligado, libere so o que o app usa (apenas usuario logado).
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on accts, entries to authenticated;
+
+-- Categorias dos lançamentos (21/10/2026). Quem já rodou o esquema acima roda só esta linha.
+alter table entries add column if not exists cat text;
