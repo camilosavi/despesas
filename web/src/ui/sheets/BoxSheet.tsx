@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { boxBal, boxIcon, boxProgress, fetchLiveRates, fmtMoneyCur } from "../../lib/boxes";
-import { digits, today, uid } from "../../lib/format";
+import { brl, digits, today, uid } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
 import { useStore } from "../../lib/createStore";
 import { MoneyInput } from "../MoneyInput";
@@ -12,12 +12,15 @@ export function BoxSheet({ id }: { id: string }) {
   const [mode, setMode] = useState<"in" | "out">("in");
   const [val, setVal] = useState("");
   const [date, setDate] = useState(today());
-  const [rate, setRate] = useState<number | "">("");
+  const [rate, setRate] = useState("");
+  const [brlV, setBrlV] = useState("");
+  // valor na moeda, cotação e valor em R$: ao preencher 2 dos 3, o terceiro é calculado (o mais antigo de ordem de edição)
+  const [order, setOrder] = useState<("val" | "rate" | "brl")[]>([]);
   const [note, setNote] = useState("");
 
   useEffect(() => {
     if (box && (box.cur === "EUR" || box.cur === "USD")) {
-      fetchLiveRates().then(r => setRate(box.cur === "EUR" ? r.EUR : r.USD));
+      fetchLiveRates().then(r => { setRate(String(box.cur === "EUR" ? r.EUR : r.USD).replace(".", ",")); setOrder(o => (o.length ? o : ["rate"])); });
     }
   }, [box?.cur]);
 
@@ -28,12 +31,31 @@ export function BoxSheet({ id }: { id: string }) {
   const cents = digits(val);
   const isFx = box.cur === "EUR" || box.cur === "USD";
 
+  const rateN = parseFloat(rate.replace(",", ".")) || 0;
+  const brlCents = digits(brlV);
+  /** muda um dos 3 campos e recalcula o que ficou de fora dos 2 últimos editados */
+  const edit = (f: "val" | "rate" | "brl", text: string) => {
+    const v = { val: f === "val" ? text : val, rate: f === "rate" ? text : rate, brl: f === "brl" ? text : brlV };
+    const num = { val: digits(v.val), rate: parseFloat(v.rate.replace(",", ".")) || 0, brl: digits(v.brl) };
+    let ord = order.filter(x => x !== f);
+    if (num[f]) ord = [...ord, f];
+    ord = ord.filter(x => num[x]).slice(-2);
+    if (ord.length === 2) {
+      const d = (["val", "rate", "brl"] as const).find(x => !ord.includes(x))!;
+      if (d === "brl") v.brl = num.val && num.rate ? brl(Math.round(num.val * num.rate)) : "";
+      else if (d === "rate") v.rate = num.val && num.brl ? (num.brl / num.val).toFixed(4).replace(".", ",") : "";
+      else v.val = num.rate && num.brl ? brl(Math.round(num.brl / num.rate)) : "";
+    }
+    if (ord.length < 2) for (const x of ["val", "rate", "brl"] as const) if (!ord.includes(x)) v[x] = x === f ? text : ""; // sem 2 campos, nada é calculado: o resto fica vazio
+    setVal(v.val); setRate(v.rate); setBrlV(v.brl); setOrder(ord);
+  };
+
   const onConfirm = () => {
     if (!cents) { toast("Digite um valor"); return; }
     const sign = mode === "out" ? -1 : 1;
     const finalCents = sign * cents;
-    const finalRate = typeof rate === "number" && rate > 0 ? rate : undefined;
-    const brlVal = finalRate ? Math.round(cents * finalRate) : undefined;
+    const finalRate = isFx && rateN > 0 ? rateN : undefined;
+    const brlVal = isFx ? (brlCents || (finalRate ? Math.round(cents * finalRate) : undefined)) : undefined;
 
     actions.addBoxMove(box.id, {
       id: uid(),
@@ -45,8 +67,7 @@ export function BoxSheet({ id }: { id: string }) {
       note: note.trim() || undefined,
     });
 
-    setVal("");
-    setNote("");
+    setVal(""); setBrlV(""); setNote(""); setOrder(rateN ? ["rate"] : []); // a cotação fica para o próximo lançamento
     toast(mode === "in" ? "Guardado com sucesso" : "Resgatado com sucesso");
   };
 
@@ -83,24 +104,19 @@ export function BoxSheet({ id }: { id: string }) {
 
         <div className="bigamt">
           <span>{box.cur === "BRL" ? "R$" : box.cur === "EUR" ? "€" : "US$"}</span>
-          <MoneyInput aria-label="Valor" value={val} onChange={setVal} />
+          <MoneyInput aria-label="Valor" value={val} onChange={v => edit("val", v)} />
         </div>
 
         {isFx && (
           <div className="fx-rate-row">
-            <label className="lbl">Cotação usada (R$ por 1 {box.cur === "EUR" ? "€" : "US$"}):</label>
+            <label className="lbl">Preencha 2 dos 3: o terceiro é calculado</label>
             <div className="fx-calc-row">
-              <input
-                type="number"
-                step="0.01"
-                className="fld"
-                value={rate}
-                onChange={e => setRate(parseFloat(e.target.value) || "")}
-                placeholder="Ex: 6.20"
-              />
-              {cents > 0 && typeof rate === "number" && rate > 0 && (
-                <span className="fx-hint">≈ R$ {((cents * rate) / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              )}
+              <label className="fx-f">Cotação (R$ por {box.cur === "EUR" ? "€" : "US$"})
+                <input type="text" inputMode="decimal" className="fld" aria-label="Cotação" value={rate} placeholder="6,20" onChange={e => edit("rate", e.target.value.replace(/[^\d,.]/g, ""))} />
+              </label>
+              <label className="fx-f">Valor em R$
+                <MoneyInput aria-label="Valor em reais" value={brlV} onChange={v => edit("brl", v)} />
+              </label>
             </div>
           </div>
         )}

@@ -211,7 +211,8 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
 .amount-input-row input{flex:1;border:0;background:transparent;outline:0;font-family:var(--display);font-size:1.2rem;font-weight:600;color:inherit}
 .fx-rate-row{margin:10px 0 14px;background:var(--bg);padding:10px 14px;border-radius:14px}
 .fx-calc-row{display:flex;align-items:center;gap:10px;margin-top:6px}
-.fx-calc-row input{width:110px;min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:inherit}
+.fx-f{display:flex;flex-direction:column;gap:4px;flex:1;font-size:.78rem;font-weight:600;color:var(--mut,inherit)}
+.fx-calc-row input{width:100%;min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:inherit}
 .fx-hint{font-weight:600;color:var(--accent);font-size:.9rem}
 .boxmoves-list{margin-top:18px}
 .boxmv-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
