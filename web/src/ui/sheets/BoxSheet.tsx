@@ -4,6 +4,7 @@ import { brl, digits, today, uid } from "../../lib/format";
 import { FX_PICK } from "../../lib/banks";
 import { actions, ledger } from "../../lib/store";
 import { useStore } from "../../lib/createStore";
+import type { SaveMove } from "../../lib/types";
 import { MoneyInput } from "../MoneyInput";
 import { SheetHead } from "../Sheet";
 import { closeSheet, openSheet, toast } from "../uiStore";
@@ -23,6 +24,7 @@ export function BoxSheet({ id }: { id: string }) {
   const lastBank = (box?.moves || []).find(m => m.bank)?.bank || ""; // movimentos novos entram no começo da lista
   const [bank, setBank] = useState(lastBank);
   const [otherBank, setOtherBank] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null); // movimentação sendo editada (o formulário vira "Salvar alterações")
 
   useEffect(() => {
     if (box && (box.cur === "EUR" || box.cur === "USD")) {
@@ -62,6 +64,18 @@ export function BoxSheet({ id }: { id: string }) {
   };
 
   const pickReal = (r: boolean) => { setInReal(r); setVal(""); setBrlV(""); setOrder(rateN ? ["rate"] : []); };
+  const resetForm = () => {
+    setEditId(null); setVal(""); setBrlV(""); setNote(""); setDate(today()); setInReal(false); setOtherBank(false); setBank(lastBank);
+    setOrder(rateN ? ["rate"] : []); // a cotação fica para o próximo lançamento
+  };
+  const startEdit = (m: SaveMove) => {
+    const real = m.cur === "BRL" && box.cur !== "BRL";
+    setEditId(m.id); setMode(m.cents < 0 ? "out" : "in"); setInReal(real); setVal(brl(Math.abs(m.cents))); setDate(m.date); setNote(m.note || "");
+    setRate(m.rate ? String(m.rate).replace(".", ",") : ""); setBrlV(m.brl ? brl(m.brl) : "");
+    setOrder(real ? [] : m.rate ? ["rate", "val"] : m.brl ? ["brl", "val"] : []);
+    setBank(m.bank || ""); setOtherBank(!!m.bank && !banks.includes(m.bank));
+    document.getElementById("bxForm")?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
   const onConfirm = () => {
     if (!cents) { toast("Digite um valor"); return; }
     const sign = mode === "out" ? -1 : 1;
@@ -69,8 +83,8 @@ export function BoxSheet({ id }: { id: string }) {
     const finalRate = fxMode && rateN > 0 ? rateN : undefined;
     const brlVal = fxMode ? (brlCents || (finalRate ? Math.round(cents * finalRate) : undefined)) : undefined;
 
-    actions.addBoxMove(box.id, {
-      id: uid(),
+    const mv: SaveMove = {
+      id: editId || uid(),
       date: date || today(),
       cents: finalCents,
       cur: inReal ? "BRL" : box.cur,
@@ -78,10 +92,10 @@ export function BoxSheet({ id }: { id: string }) {
       brl: brlVal,
       note: note.trim() || undefined,
       bank: bank.trim() || undefined,
-    });
-
-    setVal(""); setBrlV(""); setNote(""); setOrder(rateN ? ["rate"] : []); // a cotação fica para o próximo lançamento
-    toast(mode === "in" ? "Guardado com sucesso" : "Resgatado com sucesso");
+    };
+    if (editId) actions.updateBoxMove(box.id, editId, mv); else actions.addBoxMove(box.id, mv);
+    resetForm();
+    toast(editId ? "Alterado" : mode === "in" ? "Guardado com sucesso" : "Resgatado com sucesso");
   };
 
   const onDeleteBox = () => {
@@ -111,7 +125,8 @@ export function BoxSheet({ id }: { id: string }) {
         </div>
       </div>
 
-      <div className="boxmove-form">
+      <div className="boxmove-form" id="bxForm">
+        {editId && <div className="dayh">Editando movimentação</div>}
         <div className="seg">
           <button type="button" aria-pressed={mode === "in"} onClick={() => setMode("in")}>+ Guardar</button>
           <button type="button" aria-pressed={mode === "out"} onClick={() => setMode("out")}>− Resgatar</button>
@@ -163,8 +178,9 @@ export function BoxSheet({ id }: { id: string }) {
         </div>
 
         <button type="button" className="btn primary wide" onClick={onConfirm}>
-          {mode === "in" ? "Confirmar depósito" : "Confirmar resgate"}
+          {editId ? "Salvar alterações" : mode === "in" ? "Confirmar depósito" : "Confirmar resgate"}
         </button>
+        {editId && <button type="button" className="btn soft wide" onClick={resetForm}>Cancelar edição</button>}
       </div>
 
       {box.moves && box.moves.length > 0 && (
@@ -179,10 +195,11 @@ export function BoxSheet({ id }: { id: string }) {
               </div>
               <div className="boxmv-right">
                 <b className={m.cents > 0 ? "cr" : "bad"}>{fmtMoneyCur(m.cents, m.cur || box.cur)}</b>
+                <button type="button" className="x sm" onClick={() => startEdit(m)} title="Editar movimentação" aria-label="Editar movimentação">✎</button>
                 <button
                   type="button"
                   className="x sm"
-                  onClick={() => actions.deleteBoxMove(box.id, m.id)}
+                  onClick={() => { if (editId === m.id) resetForm(); actions.deleteBoxMove(box.id, m.id); }}
                   title="Excluir movimentação"
                 >
                   ✕

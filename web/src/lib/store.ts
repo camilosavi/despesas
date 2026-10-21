@@ -87,6 +87,10 @@ export const actions = {
     const s = ledger.get();
     commit({ ...s, boxes: s.boxes.map(b => (b.id === boxId ? { ...b, moves: [m, ...(b.moves || [])] } : b)) });
   },
+  updateBoxMove(boxId: string, moveId: string, m: SaveMove) {
+    const s = ledger.get();
+    commit({ ...s, boxes: s.boxes.map(b => (b.id === boxId ? { ...b, moves: b.moves.map(x => (x.id === moveId ? m : x)) } : b)) });
+  },
   deleteBoxMove(boxId: string, moveId: string) {
     const s = ledger.get();
     commit({ ...s, boxes: s.boxes.map(b => (b.id === boxId ? { ...b, moves: b.moves.filter(m => m.id !== moveId) } : b)) });
