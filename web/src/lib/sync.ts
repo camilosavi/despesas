@@ -5,7 +5,7 @@ import { createStore } from "./createStore";
 import { CARD_PALETTE } from "./banks";
 import { actions, ledger, onLedgerChange } from "./store";
 import { lsGet, lsSet } from "./storage";
-import type { Account, Entry, Session } from "./types";
+import type { Account, Entry, SaveBox, Session } from "./types";
 
 export const SB_URL = "https://ndsiayzschaefigobwag.supabase.co";
 export const SB_KEY = "sb_publishable_W_wX4ECguxH-Ay86y1bHfQ_MAKWhTHz"; // publishable: pública por desenho (a service_role NUNCA vem para cá)
@@ -89,18 +89,25 @@ export const eFrom = (r: Json): Entry => {
   if (r.imp) e.imp = r.imp; if (r.xfer) e.xfer = 1; if (r.tr) e.tr = r.tr; if (r.cat) e.cat = r.cat; if (r.items) e.items = r.items; if (r.at != null) e.at = +r.at;
   return e;
 };
-type RowMap = { a: Record<string, string>; e: Record<string, string> };
+// caixinha = 1 linha; os movimentos vão dentro (jsonb)
+export const bRow = (b: SaveBox) => ({ id: b.id, name: b.name, kind: b.kind || null, icon: b.icon || null, cur: b.cur, goal_cents: b.goal || null, target: b.target || null, moves: b.moves || [] });
+export const bFrom = (r: Json): SaveBox => ({
+  id: r.id, name: r.name, cur: r.cur || "BRL", moves: Array.isArray(r.moves) ? r.moves : [],
+  ...(r.kind ? { kind: r.kind } : {}), ...(r.icon ? { icon: r.icon } : {}), ...(r.goal_cents ? { goal: +r.goal_cents } : {}), ...(r.target ? { target: r.target } : {}),
+});
+type RowMap = { a: Record<string, string>; e: Record<string, string>; b: Record<string, string> };
 export const rowsMap = (): RowMap => {
-  const m: RowMap = { a: {}, e: {} }, { accts, entries } = ledger.get();
+  const m: RowMap = { a: {}, e: {}, b: {} }, { accts, entries, boxes } = ledger.get();
   accts.forEach(a => { m.a[a.id] = JSON.stringify(aRow(a)); });
   entries.forEach(e => { m.e[e.id] = JSON.stringify(eRow(e)); });
+  boxes.forEach(b => { m.b[b.id] = JSON.stringify(bRow(b)); });
   return m;
 };
-const baseGet = (): RowMap => { try { const b = JSON.parse(lsGet(BASE_K) || "null"); return b && b.a && b.e ? b : { a: {}, e: {} }; } catch { return { a: {}, e: {} }; } };
+const baseGet = (): RowMap => { try { const b = JSON.parse(lsGet(BASE_K) || "null"); return b && b.a && b.e ? { b: {}, ...b } : { a: {}, e: {}, b: {} }; } catch { return { a: {}, e: {}, b: {} }; } };
 /** quantas mudanças ainda não subiram */
 export function pending() {
   const b = baseGet(), m = rowsMap(); let n = 0;
-  for (const k of ["a", "e"] as const) {
+  for (const k of ["a", "e", "b"] as const) {
     for (const id in m[k]) if (b[k][id] !== m[k][id]) n++;
     for (const id in b[k]) if (!(id in m[k])) n++;
   }
@@ -115,19 +122,27 @@ export function syncNow(): Promise<void> {
   SY.p = (async () => {
     let off = false, err = "";
     try {
-      const b = baseGet(), m = rowsMap(), { accts, entries } = ledger.get();
+      const b = baseGet(), m = rowsMap(), { accts, entries, boxes } = ledger.get();
       const upA = accts.filter(a => b.a[a.id] !== m.a[a.id]).map(aRow), upE = entries.filter(e => b.e[e.id] !== m.e[e.id]).map(eRow);
       const delA = Object.keys(b.a).filter(id => !(id in m.a)), delE = Object.keys(b.e).filter(id => !(id in m.e));
+      const upB = boxes.filter(x => b.b[x.id] !== m.b[x.id]).map(bRow), delB = Object.keys(b.b).filter(id => !(id in m.b));
       if (delE.length) await delIds("entries", delE);
       if (delA.length) await delIds("accts", delA);
       if (upA.length) await upsert("accts", upA);
       if (upE.length) await upsert("entries", upE);
+      // caixinhas: se a tabela `boxes` ainda não existe no banco, contas e lançamentos seguem sincronizando e as caixinhas ficam só no aparelho
+      let rb: Json[] | null = null;
+      try {
+        if (delB.length) await delIds("boxes", delB);
+        if (upB.length) await upsert("boxes", upB);
+        rb = await getAll("boxes");
+      } catch (e) { if ((e as ApiError).status == null || (e as ApiError).status === 401) throw e; err = "Caixinhas não sincronizam (falta a tabela boxes)"; }
       const ra = await getAll("accts"), re = await getAll("entries");
       if (!ses()) return;
       if (JSON.stringify(rowsMap()) !== JSON.stringify(m)) { SY.again = true; } // mexeram enquanto o banco respondia: não sobrescreve, tenta de novo
       else {
-        actions.replaceFromServer(ra.map(aFrom), re.map(eFrom));
-        lsSet(BASE_K, JSON.stringify(rowsMap()));
+        actions.replaceFromServer(ra.map(aFrom), re.map(eFrom), rb ? rb.map(bFrom) : undefined);
+        const nb = rowsMap(); lsSet(BASE_K, JSON.stringify(rb ? nb : { ...nb, b: b.b }));
       }
     } catch (e) {
       const er = e as ApiError;

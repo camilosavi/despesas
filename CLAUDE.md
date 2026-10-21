@@ -61,6 +61,8 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      quem não usa categoria sincroniza mesmo sem a coluna). Holerite lido → "Salário", fatura → "Cartão", conta/boleto → "Contas".
    - **Busca e filtro no extrato** (por conta): campo "Buscar no extrato" (descrição, categoria, valor ou data) + chips das categorias em uso;
      filtro ativo mostra "N lançamentos · Entradas · Saídas". Só a lista é redesenhada (o campo mantém o foco); some ao trocar de conta.
+   - **Caixinhas** (21/10/2026, `lib/boxes.ts`, `despesas.zero.boxes`): metas em BRL/EUR/USD com movimentos (guardar/resgatar, cotação). Sincronizam como 1 linha por caixinha na tabela `boxes`
+     (movimentos em `moves jsonb`; **rodar o bloco `boxes` de `supabase/schema.sql`**). Sem a tabela, contas e lançamentos seguem sincronizando e as caixinhas ficam no aparelho (mostra "Erro ao sincronizar" e não deixa sair).
    - Ainda **não** tem: categorias próprias (criar/renomear), resumo por categoria, limite/cartão como item próprio, conferência com o saldo real.
 
 ## Cores e logo (21/10/2026)

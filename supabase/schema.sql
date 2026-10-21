@@ -40,3 +40,21 @@ grant select, insert, update, delete on accts, entries to authenticated;
 
 -- Categorias dos lançamentos (21/10/2026). Quem já rodou o esquema acima roda só esta linha.
 alter table entries add column if not exists cat text;
+
+-- Caixinhas (21/10/2026): 1 linha por caixinha, movimentos dentro (jsonb). Quem já rodou o esquema acima roda só este bloco.
+create table if not exists boxes (
+  id text primary key,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  name text not null,
+  kind text,
+  icon text,
+  cur text not null default 'BRL' check (cur in ('BRL','EUR','USD')),
+  goal_cents bigint,
+  target text,
+  moves jsonb not null default '[]',
+  updated_at timestamptz not null default now()
+);
+alter table boxes enable row level security;
+drop policy if exists own_boxes on boxes;
+create policy own_boxes on boxes for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+grant select, insert, update, delete on boxes to authenticated;

@@ -92,6 +92,6 @@ export const actions = {
     commit({ ...s, boxes: s.boxes.map(b => (b.id === boxId ? { ...b, moves: b.moves.filter(m => m.id !== moveId) } : b)) });
   },
   /** o banco mandou o estado verdadeiro: troca tudo sem disparar novo envio */
-  replaceFromServer(accts: Account[], entries: Entry[]) { commit({ ...ledger.get(), accts, entries }, false); },
+  replaceFromServer(accts: Account[], entries: Entry[], boxes?: SaveBox[]) { const s = ledger.get(); commit({ accts, entries, boxes: boxes ?? s.boxes }, false); },
   clear() { commit({ accts: [], entries: [], boxes: [] }, false); },
 };

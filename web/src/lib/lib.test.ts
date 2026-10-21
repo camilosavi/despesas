@@ -118,3 +118,12 @@ describe("caixinhas e moedas", () => {
   });
 });
 
+
+import { bRow, bFrom } from "./sync";
+describe("sync das caixinhas", () => {
+  it("ida e volta mantém a caixinha (movimentos dentro)", () => {
+    const b: SaveBox = { id: "b", name: "Paris", kind: "viagem", icon: "✈️", cur: "EUR", goal: 200000, target: "2027-06", moves: [{ id: "m", date: "2026-10-01", cents: 500, cur: "EUR", rate: 6.2, brl: 3100 }] };
+    expect(bFrom(JSON.parse(JSON.stringify(bRow(b))))).toEqual(b);
+    expect(bFrom({ id: "x", name: "N", cur: null, moves: null })).toEqual({ id: "x", name: "N", cur: "BRL", moves: [] });
+  });
+});
