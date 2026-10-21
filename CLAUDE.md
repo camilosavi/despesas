@@ -40,6 +40,16 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      me pergunte"): linha de ações redonda sob o cartão (**Lançar**, **Transferir**, **Importar PDF**). *Lançar* = saída/entrada com valor grande,
      descrição, conta e data. *Transferir* = de/para/valor/data: cria **duas** entradas ligadas por `tr` (`xfer:1`), não conta como "Entrou" e
      apagar uma apaga o par. *Conta/boleto* lido vira despesa no vencimento (`imp:"conta-<empresa>-<venc>"`).
+   - **Login + banco (Supabase)** (21/10/2026, "quero um app a vera, com bd"): projeto `ndsiayzschaefigobwag.supabase.co`, esquema em
+     `supabase/schema.sql` (tabelas `accts` e `entries` com `user_id` + RLS; Data API ligada, "expor novas tabelas" desligado, grants só
+     para `authenticated`). Tudo por `fetch` (GoTrue e PostgREST), sem biblioteca; a chave *publishable* fica no código (pública por
+     desenho; a senha do banco e a `service_role` **nunca** vão para o repositório nem para a memória). Tela de login (e-mail e senha;
+     "Criar conta"); sem login o app não abre. O aparelho guarda cópia local (funciona sem internet) e `despesas.zero.base` = o que já subiu:
+     a cada mudança envia o diff (apagados, novos, alterados) e depois baixa tudo (banco = verdade; se mexeram durante o envio, não
+     sobrescreve). Sincroniza 1,2 s depois de mexer, a cada 60 s, ao voltar ao app e ao voltar a internet. Botão "☁ Em dia" no cartão da
+     home abre "Sua conta" (sincronizar agora, sair; sair só com tudo enviado e limpa o aparelho). Holerite/fatura/conta repetidos em
+     dois aparelhos: o índice único `(user_id, imp)` recusa o 2º e vale o que já estava no banco. Mapeamento: `start`↔`start_cents`,
+     `desc`↔`descr`, `xfer` 1↔true. **Não testado contra o Supabase real** (sandbox sem acesso): só com simulação.
    - Ainda **não** tem: categorias, editar lançamento, limite/cartão como item próprio, conferência com o saldo real, busca/filtro no extrato.
 
 ## Como editar (sempre assim)
@@ -64,8 +74,8 @@ O histórico foi recomeçado em 09/10/2026 (tirar valores pessoais): clone antig
 
 ## Dados no aparelho
 
-`localStorage`: `despesas.zero.accts` (`[{id,name,color,label?,start}]`) e `despesas.zero.entries`
-(`[{id,acct,type:"rec"|"desp",cents,date,desc,imp?,at}]`). Nada vai para a nuvem. A versão de 21/10 de manhã guardava
+`localStorage` (cópia do banco): `despesas.zero.ses` (sessão), `despesas.zero.base` (já enviado), `despesas.zero.accts` (`[{id,name,color,label?,start}]`) e `despesas.zero.entries`
+(`[{id,acct,type:"rec"|"desp",cents,date,desc,imp?,at}]`). Os dados vão para o Supabase do dono (ver acima). A versão de 21/10 de manhã guardava
 `despesas.zero.cards` (só nome e cor): vira conta com saldo zero na primeira abertura (idempotente).
 As chaves do app antigo (`despesas.v3`, `despesas.cfg3`, `despesas.fx3`…) continuam no iPhone dele, intactas, mas o app não lê.
 Se ele pedir os lançamentos de volta, dá para importar dali (ou do backup JSON `{app:"minhas-despesas", v:1, items, fx, cfg}`).

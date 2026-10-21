@@ -70,6 +70,19 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .sheet{position:fixed;left:0;right:0;bottom:0;max-width:560px;margin:0 auto;max-height:88vh;overflow:auto;background:var(--surface);border-radius:28px 28px 0 0;padding:10px 18px calc(22px + env(safe-area-inset-bottom,0px));z-index:21;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
 @media (min-width:700px){.sheet{bottom:auto;top:50%;transform:translateY(-50%);border-radius:28px;max-height:84vh}}
 .sheet[hidden],.scrim[hidden]{display:none}
+.auth{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.auth[hidden]{display:none}
+.noauth .wrap{display:none}
+.authbox{width:100%;max-width:380px}
+.authbox h1{margin:0 0 4px;font-family:var(--display);font-size:2.4rem;letter-spacing:-.02em}
+.authbox p{margin:0 0 22px;color:var(--muted)}
+.field input[type=email],.field input[type=password]{width:100%;min-height:48px;padding:0 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface)}
+.authbox .btn+.btn{margin-top:10px}
+#authMsg{min-height:1.3em;margin:0 0 12px;color:var(--neg);font-size:.92rem}
+#meBtn{margin-left:auto}
+.mekv{margin:0 0 16px;color:var(--muted)}
+.mekv b{color:var(--ink)}
+.sheet .btn+.btn{margin-top:10px}
 .grip{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
 .sheet h3{display:flex;justify-content:space-between;align-items:center;margin:0 0 14px;font-family:var(--display);font-size:1.25rem}
 .sheet .x{width:36px;height:36px;border-radius:50%;border:0;background:var(--chip)}
@@ -149,10 +162,21 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 .sec .acrow+.acrow{margin-top:0}
 </style>
 
+<div class="auth" id="auth" hidden>
+  <form class="authbox" id="authForm" novalidate>
+    <h1>Tostão</h1><p>Entre para ver as mesmas contas no celular e no computador.</p>
+    <div class="field"><label for="auEmail">E-mail</label><input type="email" id="auEmail" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false"></div>
+    <div class="field"><label for="auPass">Senha</label><input type="password" id="auPass" autocomplete="current-password"></div>
+    <div id="authMsg" role="alert"></div>
+    <button type="submit" class="btn primary wide" id="auIn">Entrar</button>
+    <button type="button" class="btn wide" id="auNew">Criar conta</button>
+  </form>
+</div>
+
 <div class="wrap">
   <header class="top">
     <div class="tcard" id="tcard">
-      <div class="trow"><button type="button" class="tb" id="back" hidden>‹ Contas</button><button type="button" class="tb" id="editCard" hidden>Personalizar</button></div>
+      <div class="trow"><button type="button" class="tb" id="meBtn" hidden>☁</button><button type="button" class="tb" id="back" hidden>‹ Contas</button><button type="button" class="tb" id="editCard" hidden>Personalizar</button></div>
       <h1 id="ptitle">Minhas contas</h1>
       <div class="bigrow"><div><p class="label" id="bigLabel">Comece por aqui</p><div class="big" id="big">Sem contas</div></div></div>
       <div class="split" id="split" hidden><span id="s1l">Entrou</span><b id="s1">—</b></div>
@@ -508,7 +532,8 @@ function acctBadge(a){
 let accts=null, entries=[], openId=null;
 try{accts=JSON.parse(lsGet("despesas.zero.accts")||"null")}catch(e){accts=null}
 try{entries=JSON.parse(lsGet("despesas.zero.entries")||"[]")||[]}catch(e){entries=[]}
-const saveAll=()=>{lsSet("despesas.zero.accts",JSON.stringify(accts));lsSet("despesas.zero.entries",JSON.stringify(entries))};
+const saveRaw=()=>{lsSet("despesas.zero.accts",JSON.stringify(accts));lsSet("despesas.zero.entries",JSON.stringify(entries))};
+const saveAll=()=>{saveRaw();if(window.__sy)window.__sy()};
 if(!Array.isArray(accts)){ /* a versão anterior guardava só cartões (nome e cor): viram contas com saldo zero */
   accts=[];try{const old=JSON.parse(lsGet("despesas.zero.cards")||"{}")||{};
     accts=Object.keys(old).map(n=>({id:uid(),name:n,color:old[n].color||cardColor(n),start:0}))}catch(e){}
@@ -528,7 +553,7 @@ function paintTop(){
   const st=document.documentElement.style, a=openId&&accOf(openId), col=a?a.color:null;
   if(col){st.setProperty("--hc",col);st.setProperty("--tci",lumHex(col)>.45?"#1A1A1A":"#FFFFFF")}else{st.removeProperty("--hc");st.removeProperty("--tci")}
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content",col||"#0E3B35");
-  $("back").hidden=$("editCard").hidden=!a;
+  $("back").hidden=$("editCard").hidden=!a;$("meBtn").hidden=!!a||!ses;if(window.__ps)window.__ps();
   $("ptitle").textContent=a?a.name:"Minhas contas";
   if(!accts.length){$("bigLabel").textContent="Comece por aqui";$("big").textContent="Sem contas";$("split").hidden=true;return}
   const v=a?accBal(a):totBal();
@@ -847,7 +872,131 @@ $("pdfIn").addEventListener("change",async e=>{
   $("toast").hidden=true;showResults();
 });
 
+
+/* ---------- login e banco de dados (Supabase) ----------
+   Login por e-mail e senha (GoTrue) e tabelas accts/entries (supabase/schema.sql), tudo por fetch, sem biblioteca.
+   A chave "publishable" pode ficar no repositório: quem protege os dados é o RLS (cada usuário só vê o que é dele).
+   Os dados continuam no aparelho (funciona sem internet); a cada mudança o app compara com `base` (o que já subiu),
+   envia o que mudou (apagados e novos/alterados) e depois baixa tudo do banco, que é a verdade. */
+const SB_URL="https://ndsiayzschaefigobwag.supabase.co", SB_KEY="sb_publishable_W_wX4ECguxH-Ay86y1bHfQ_MAKWhTHz";
+const SES_K="despesas.zero.ses", BASE_K="despesas.zero.base";
+let ses=null;try{ses=JSON.parse(lsGet(SES_K)||"null")}catch(e){ses=null}
+const sesSave=v=>{ses=v;lsSet(SES_K,v?JSON.stringify(v):null)};
+const SY={p:null,again:false,off:false,err:"",at:0,t:0};
+const sbErr=(r,j)=>Object.assign(new Error((j&&(j.msg||j.error_description||j.message||j.error))||("http "+r.status)),{status:r.status,code:(j&&(j.error_code||j.code))||""});
+async function gt(path,body){const r=await fetch(SB_URL+"/auth/v1/"+path,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw sbErr(r,j);return j}
+const toSes=j=>({at:j.access_token,rt:j.refresh_token,exp:Date.now()+((+j.expires_in||3600)-60)*1e3,uid:(j.user&&j.user.id)||(ses&&ses.uid)||"",email:(j.user&&j.user.email)||(ses&&ses.email)||""});
+async function tok(){if(!ses)throw Object.assign(new Error("sem login"),{status:401});
+  if(Date.now()<ses.exp)return ses.at;
+  try{const j=await gt("token?grant_type=refresh_token",{refresh_token:ses.rt});sesSave(toSes(j));return ses.at}
+  catch(e){if(e.status>=400&&e.status<500){sesSave(null);showAuth("A sessão acabou. Entre de novo.")}throw e}}
+async function api(method,path,body,prefer){const t=await tok();
+  const r=await fetch(SB_URL+"/rest/v1/"+path,{method,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(prefer?{Prefer:prefer}:{})},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){ses.exp=0;throw Object.assign(new Error("401"),{status:401})}
+  if(!r.ok){const j=await r.json().catch(()=>({}));throw sbErr(r,j)}
+  return r.status===204?null:await r.json().catch(()=>null)}
+const MERGE="resolution=merge-duplicates,return=minimal";
+async function getAll(tbl){const out=[];for(let o=0;;o+=1000){const p=await api("GET",`${tbl}?select=*&order=id&limit=1000&offset=${o}`)||[];out.push(...p);if(p.length<1000)return out}}
+async function upsert(tbl,rows){for(let i=0;i<rows.length;i+=200){const part=rows.slice(i,i+200);
+  try{await api("POST",tbl+"?on_conflict=id",part,MERGE)}
+  catch(e){if(e.code!=="23505")throw e; /* mesmo holerite/fatura/conta já lançado em outro aparelho: o banco recusa a repetição e fica o que já estava lá */
+    for(const r of part){try{await api("POST",tbl+"?on_conflict=id",[r],MERGE)}catch(x){if(x.code!=="23505")throw x}}}}}
+const idList=a=>"in.("+a.map(i=>'"'+encodeURIComponent(i)+'"').join(",")+")";
+async function delIds(tbl,ids){for(let i=0;i<ids.length;i+=100)await api("DELETE",tbl+"?id="+idList(ids.slice(i,i+100)))}
+const aRow=a=>({id:a.id,name:a.name,color:a.color||null,label:a.label||null,start_cents:a.start||0});
+const aFrom=r=>({id:r.id,name:r.name,color:r.color||CARD_PALETTE[0],...(r.label?{label:r.label}:{}),start:+r.start_cents||0});
+const eRow=e=>({id:e.id,acct:e.acct,type:e.type,cents:e.cents,date:e.date,descr:e.desc||"",imp:e.imp||null,xfer:!!e.xfer,tr:e.tr||null,items:e.items||null,at:e.at||null});
+const eFrom=r=>{const e={id:r.id,acct:r.acct,type:r.type,cents:+r.cents,date:r.date,desc:r.descr||""};if(r.imp)e.imp=r.imp;if(r.xfer)e.xfer=1;if(r.tr)e.tr=r.tr;if(r.items)e.items=r.items;if(r.at!=null)e.at=+r.at;return e};
+const rowsMap=()=>{const m={a:{},e:{}};accts.forEach(a=>{m.a[a.id]=JSON.stringify(aRow(a))});entries.forEach(e=>{m.e[e.id]=JSON.stringify(eRow(e))});return m};
+const baseGet=()=>{try{const b=JSON.parse(lsGet(BASE_K)||"null");return b&&b.a&&b.e?b:{a:{},e:{}}}catch(e){return{a:{},e:{}}}};
+function pending(){const b=baseGet(),m=rowsMap();let n=0;for(const k of["a","e"]){for(const id in m[k])if(b[k][id]!==m[k][id])n++;for(const id in b[k])if(!(id in m[k]))n++}return n}
+function syncSoon(){if(!ses)return;clearTimeout(SY.t);SY.t=setTimeout(syncNow,1200);window.__ps()}
+window.__sy=syncSoon;
+function syncNow(){
+  if(!ses)return Promise.resolve();
+  if(SY.p){SY.again=true;return SY.p}
+  SY.p=(async()=>{
+    try{
+      const b=baseGet(), m=rowsMap();
+      const upA=accts.filter(a=>b.a[a.id]!==m.a[a.id]).map(aRow), upE=entries.filter(e=>b.e[e.id]!==m.e[e.id]).map(eRow);
+      const delA=Object.keys(b.a).filter(id=>!(id in m.a)), delE=Object.keys(b.e).filter(id=>!(id in m.e));
+      if(delE.length)await delIds("entries",delE);
+      if(delA.length)await delIds("accts",delA);
+      if(upA.length)await upsert("accts",upA);
+      if(upE.length)await upsert("entries",upE);
+      const ra=await getAll("accts"), re=await getAll("entries");
+      if(!ses)return;
+      if(JSON.stringify(rowsMap())!==JSON.stringify(m)){SY.again=true}   /* mexeram enquanto o banco respondia: não sobrescreve, tenta de novo */
+      else{
+        const na=ra.map(aFrom), ne=re.map(eFrom), old=JSON.stringify([accts,entries]);
+        accts=na;entries=ne;
+        const ch=JSON.stringify([accts,entries])!==old;
+        saveRaw();lsSet(BASE_K,JSON.stringify(rowsMap()));
+        if(ch){if(openId&&!accOf(openId))openId=null;renderAll()}
+      }
+      SY.off=false;SY.err="";SY.at=Date.now();
+    }catch(e){
+      if(e&&e.status===401&&!ses){}
+      else if(!e||e.status==null){SY.off=true}   /* fetch sem resposta = sem internet */
+      else{SY.err=(e.message||"erro").slice(0,80)}
+    }
+    SY.p=null;
+    if(SY.again){SY.again=false;syncSoon()}
+    window.__ps();
+  })();
+  window.__ps();
+  return SY.p;
+}
+function syncTxt(){if(!ses)return"";const n=pending();
+  return SY.p?"Sincronizando…":SY.err?"Erro ao sincronizar":SY.off?(n?n+" para enviar · sem internet":"Sem conexão"):n?n+" para enviar":"Em dia"}
+window.__ps=()=>{const b=$("meBtn");if(b){b.textContent="☁ "+(syncTxt()||"Conta");b.hidden=!ses||!!openId}
+  const t=$("meState");if(t)t.textContent=syncTxt()};
+setInterval(()=>{if(ses&&!document.hidden)syncNow()},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&ses)syncNow()});
+addEventListener("online",()=>{if(ses)syncNow()});
+/* entrar / criar conta */
+function showAuth(msg){document.body.classList.add("noauth");$("auth").hidden=false;$("authMsg").textContent=msg||"";closeSheet()}
+function hideAuth(){document.body.classList.remove("noauth");$("auth").hidden=true;$("authMsg").textContent=""}
+function authErr(e){const m=String(e&&e.message||""),c=e&&e.code||"";
+  return /invalid_credentials/.test(c)||/invalid login/i.test(m)?"E-mail ou senha incorretos.":
+    /user_already_exists/.test(c)||/already registered/i.test(m)?"Esse e-mail já tem conta. Toque em Entrar.":
+    /email_not_confirmed/.test(c)?"Confirme o e-mail primeiro (veja a caixa de entrada).":
+    /weak_password/.test(c)?"Senha fraca. Use pelo menos 8 caracteres, com letras e números.":
+    /rate_limit/.test(c)||(e&&e.status===429)?"Muitas tentativas. Espere alguns minutos.":
+    /signup_disabled/.test(c)?"O cadastro está desativado no Supabase.":
+    !e||e.status==null?"Sem conexão. Tente de novo.":m||"Não deu para entrar."}
+async function doAuth(create){
+  const email=$("auEmail").value.trim().toLowerCase(), pw=$("auPass").value, msg=t=>{$("authMsg").textContent=t};
+  if(!/^\S+@\S+\.\S+$/.test(email)){msg("Digite um e-mail válido.");return}
+  if(pw.length<6){msg("A senha precisa de 6 ou mais caracteres.");return}
+  const bs=[$("auIn"),$("auNew")];bs.forEach(x=>x.disabled=true);msg("");
+  try{
+    if(create){const j=await gt("signup",{email,password:pw});
+      if(!j.access_token){msg("Conta criada. Confirme pelo e-mail e depois toque em Entrar.");return}
+      sesSave(toSes(j))}
+    else sesSave(toSes(await gt("token?grant_type=password",{email,password:pw})));
+    $("auPass").value="";hideAuth();renderAll();syncNow()
+  }catch(e){msg(authErr(e))}
+  finally{bs.forEach(x=>x.disabled=false)}
+}
+$("authForm").addEventListener("submit",e=>{e.preventDefault();doAuth(false)});
+$("auNew").addEventListener("click",()=>doAuth(true));
+/* janela "Sua conta" */
+function openMe(){openSheet(sheetHead("Sua conta")+`<p class="mekv">Entrou como <b>${esc(ses.email||"")}</b><br><span id="meState">${esc(syncTxt())}</span></p>
+  <button type="button" class="btn wide" id="meSync">Sincronizar agora</button>
+  <button type="button" class="btn wide" id="meOut">Sair</button>`)}
+document.addEventListener("click",async e=>{const t=e.target;if(!t.closest)return;
+  if(t.closest("#meBtn")){openMe();return}
+  if(t.closest("#meSync")){toast("Sincronizando…");await syncNow();toast(SY.err?"Erro: "+SY.err:SY.off?"Sem conexão":"Tudo em dia ✓",true);return}
+  const o=t.closest("#meOut");if(o)armed(o,"Toque de novo para sair",async()=>{
+    await syncNow();
+    if(pending()||SY.off||SY.err){toast("Há mudanças que ainda não subiram. Conecte e tente de novo.");return}
+    accts=[];entries=[];saveRaw();lsSet(BASE_K,null);sesSave(null);openId=null;renderAll();showAuth("")})});
+if(!ses)showAuth("");
+
 renderAll();
+if(ses)syncNow();
 if(PWA&&"serviceWorker" in navigator&&(location.protocol==="https:"||/^(localhost|127\.0\.0\.1)$/.test(location.hostname))) navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{r.update();document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")r.update()})}).catch(()=>{});
 /* iOS: no app da tela de início o touch-action às vezes é ignorado. O 2º toque rápido no mesmo lugar vira um clique normal (sem zoom); campos de texto ficam de fora. Também bloqueia a pinça. */
 (()=>{let last=0,lx=0,ly=0;
