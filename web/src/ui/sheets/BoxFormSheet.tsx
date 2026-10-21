@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { BOX_KINDS } from "../../lib/boxes";
-import { digits, uid } from "../../lib/format";
+import { brl, digits, uid } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
 import { useStore } from "../../lib/createStore";
 import type { Currency, SaveBox } from "../../lib/types";
+import { MoneyInput } from "../MoneyInput";
 import { SheetHead } from "../Sheet";
 import { closeSheet, toast } from "../uiStore";
 
@@ -13,7 +14,7 @@ export function BoxFormSheet({ editId }: { editId?: string }) {
   const [kind, setKind] = useState(existing?.kind || "viagem");
   const [name, setName] = useState(existing?.name || (BOX_KINDS.find(k => k.k === "viagem")?.n || ""));
   const [cur, setCur] = useState<Currency>(existing?.cur || "BRL");
-  const [goal, setGoal] = useState(existing?.goal ? String(existing.goal / 100) : "");
+  const [goal, setGoal] = useState(existing?.goal ? brl(existing.goal) : "");
   const [target, setTarget] = useState(existing?.target || "");
 
   const onSelectKind = (k: string, n: string) => {
@@ -92,12 +93,7 @@ export function BoxFormSheet({ editId }: { editId?: string }) {
         <label className="lbl">Meta de economia (opcional)</label>
         <div className="amount-input-row">
           <span>{cur === "BRL" ? "R$" : cur === "EUR" ? "€" : "US$"}</span>
-          <input
-            inputMode="numeric"
-            placeholder="0,00"
-            value={goal}
-            onChange={e => setGoal(e.target.value)}
-          />
+          <MoneyInput aria-label="Meta" value={goal} onChange={setGoal} />
         </div>
       </div>
 

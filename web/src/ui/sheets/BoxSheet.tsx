@@ -3,6 +3,7 @@ import { boxBal, boxIcon, boxProgress, fetchLiveRates, fmtMoneyCur } from "../..
 import { digits, today, uid } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
 import { useStore } from "../../lib/createStore";
+import { MoneyInput } from "../MoneyInput";
 import { SheetHead } from "../Sheet";
 import { closeSheet, openSheet, toast } from "../uiStore";
 
@@ -82,12 +83,7 @@ export function BoxSheet({ id }: { id: string }) {
 
         <div className="bigamt">
           <span>{box.cur === "BRL" ? "R$" : box.cur === "EUR" ? "€" : "US$"}</span>
-          <input
-            inputMode="numeric"
-            placeholder="0,00"
-            value={val}
-            onChange={e => setVal(e.target.value)}
-          />
+          <MoneyInput aria-label="Valor" value={val} onChange={setVal} />
         </div>
 
         {isFx && (
