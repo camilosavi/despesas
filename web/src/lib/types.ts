@@ -10,6 +10,8 @@ export interface Entry {
   imp?: string;
   /** transferência: duas entradas ligadas por `tr` */
   xfer?: 1; tr?: string;
+  /** a pagar / a receber: ainda não mexeu no dinheiro, não entra no saldo até ser marcado como pago */
+  open?: 1;
   /** itens da fatura lida */
   items?: EntryItem[];
   at?: number;

@@ -90,6 +90,10 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      na fatura lançada o seletor fica nos itens do lançamento. No Resumo, fatura com categorias é dividida pelos itens (`expandItems`; sem categoria e a diferença para o total do banco ficam em "Cartão"); fatura sem categoria continua uma linha. Renomear/apagar categoria também vale nos itens.
    - **Extrato por categoria** (alternador "Por dia | Por categoria" no extrato da conta, `groupByCat`): grupos do maior para o menor, total com sinal; transferências agrupadas à parte. Respeita busca e filtros.
    - Topo: na home, o olho e o botão da nuvem ("Em dia") ficam juntos no canto direito, nesta ordem (decisão dele: "Em dia" do lado direito do olho); na conta aberta, "‹ Contas" à esquerda e Personalizar + olho à direita.
+   - **Lançar completo** (21/10/2026, "voltar o que funcionava": `lib/launch.ts`, `launchEntries`): *Pago / A pagar* (`open:1`, fora do saldo e do "Entrou" até "Marcar como paga/recebida"; grupo "A pagar" no extrato; coluna `open boolean` em `entries`:
+     **rodar a última linha de `supabase/schema.sql`**; o sync manda `open`/`cat` vazios quando tirados); "Mais opções": **Parcelar** (valor = total, sobra na 1ª, desc "X 2/4"), **Todo mês** (N meses ou até um mês, máx. 60), **Dividir com N pessoas**
+     (sai tudo; partes "A receber: …" cat Reembolso) e **Pagar com duas formas** (parte sai de outra conta). Cartão: só parcelar/repetir (cada parcela cai na fatura do mês).
+   - **Categorias com cor** (`lib/catcolor.ts`, `despesas.zero.cats` só no aparelho): bolinha (`ui/Dot.tsx`) em pílulas, extrato, grupos e Resumo; `CatsSheet` ("Cores e categorias" no Resumo): cor de cada uma, esconder padrão (some do Lançar, nunca "Outros"), renomear/apagar as próprias.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

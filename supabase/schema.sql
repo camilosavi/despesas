@@ -68,3 +68,6 @@ alter table accts add column if not exists due_day int;
 
 -- Limite do cartão (21/10/2026). Quem já rodou o esquema acima roda só esta linha.
 alter table accts add column if not exists limit_cents bigint;
+
+-- A pagar / a receber (21/10/2026): lançamento aberto não entra no saldo. Quem já rodou o esquema acima roda só esta linha.
+alter table entries add column if not exists open boolean;

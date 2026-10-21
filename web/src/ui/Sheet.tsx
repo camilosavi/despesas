@@ -10,6 +10,7 @@ import { MeSheet } from "./sheets/MeSheet";
 import { ResultsSheet } from "./sheets/ResultsSheet";
 import { DiagSheet } from "./sheets/DiagSheet";
 import { SummarySheet } from "./sheets/SummarySheet";
+import { CatsSheet } from "./sheets/CatsSheet";
 import { ConferSheet } from "./sheets/ConferSheet";
 import { PaySheet } from "./sheets/PaySheet";
 import { BoxSheet } from "./sheets/BoxSheet";
@@ -65,6 +66,7 @@ export function SheetHost() {
       {sheet.kind === "results" && <ResultsSheet />}
       {sheet.kind === "diag" && <DiagSheet idx={sheet.idx} />}
       {sheet.kind === "sum" && <SummarySheet />}
+      {sheet.kind === "cats" && <CatsSheet />}
       {sheet.kind === "conf" && <ConferSheet id={sheet.id} />}
       {sheet.kind === "pay" && <PaySheet id={sheet.id} ym={sheet.ym} />}
       {sheet.kind === "box" && <BoxSheet id={sheet.id} />}

@@ -245,3 +245,17 @@ html.hide :is(.big,.split b,.boxline b,.acrow b,.boxrow-vals,.ex b,.exsum,.limbo
 .smrow summary::-webkit-details-marker{display:none}.smn{display:grid;font-weight:600}.smn small{color:var(--muted);font-weight:500;font-size:.78rem}
 .smbar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--chip);overflow:hidden}.smbar i{display:block;height:100%;background:var(--accent)}
 .smedit{display:flex;gap:8px;margin-top:10px}.smedit input{flex:1;min-width:0}
+
+.opn{font-style:normal;font-size:11px;font-weight:700;margin-left:6px;padding:1px 7px;border-radius:99px;background:var(--chip);color:var(--accent)}
+.bigamt.sm{font-size:22px}
+#lcMore{margin-top:4px}
+#lcMoreBox select,#lcMoreBox input[type=number],#lcMoreBox input[type=month]{width:100%;margin-top:6px}
+
+.cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline;flex:none}
+.catrow{border-bottom:1px solid var(--line)}
+.catname{display:flex;align-items:center;gap:2px;width:100%;min-height:46px;background:none;border:0;font-size:16px;color:var(--ink);text-align:left}
+.catname .cdot{width:14px;height:14px;margin-right:10px}
+.catedit{padding:0 0 12px}
+.swatches{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.swatches button{width:32px;height:32px;border-radius:50%;border:2px solid transparent}
+.swatches button[aria-pressed="true"]{border-color:var(--ink)}

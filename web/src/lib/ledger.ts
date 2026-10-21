@@ -42,7 +42,7 @@ export const faturaDue = (a: Account, ym: string) => (a.dueDay ? ym + "-" + Stri
 /** "Fatura de out" quando o cartão tem os dias; senão "Gasto em out" */
 export const cardMonthLbl = (a: Account, mon: string) => (a.closeDay && a.dueDay ? "Fatura de " : "Gasto em ") + mon;
 export const accBal = (a: Account, entries: Entry[], t = today()) =>
-  (a.start || 0) + entries.filter(e => e.acct === a.id && !isFut(e, t)).reduce((s, e) => s + sg(e), 0);
+  (a.start || 0) + entries.filter(e => e.acct === a.id && !isFut(e, t) && !e.open).reduce((s, e) => s + sg(e), 0);
 export const totBal = (accts: Account[], entries: Entry[], t = today()) => accts.reduce((s, a) => s + (isCard(a) ? 0 : accBal(a, entries, t)), 0);
 /** lançamentos que não são receita nem gasto de verdade: ajuste de saldo e o pagamento da fatura (as compras do cartão já são os gastos) */
 export const isAdj = (e: Entry) => !!e.imp && e.imp.startsWith("ajuste-");
@@ -71,7 +71,7 @@ export const summaryMonths = (accts: Account[], entries: Entry[], t = today()) =
   [...new Set([t.slice(0, 7), ...entries.filter(countsInSummary).map(e => entMonth(accts.find(a => a.id === e.acct), e.date))])].sort().reverse();
 /** entradas do mês atual (sem transferências); acctId null = todas as contas */
 export const monIn = (entries: Entry[], acctId: string | null, t = today()) =>
-  entries.filter(e => (!acctId || e.acct === acctId) && e.type === "rec" && !e.xfer && !isAdj(e) && !isFut(e, t) && e.date.slice(0, 7) === t.slice(0, 7))
+  entries.filter(e => (!acctId || e.acct === acctId) && e.type === "rec" && !e.xfer && !e.open && !isAdj(e) && !isFut(e, t) && e.date.slice(0, 7) === t.slice(0, 7))
     .reduce((s, e) => s + e.cents, 0);
 
 /** descrições já usadas (mais recentes primeiro) para sugerir ao digitar; ignora transferências, importações e os nomes padrão */

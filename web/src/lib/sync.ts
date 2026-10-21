@@ -82,11 +82,17 @@ export const aFrom = (r: Json): Account => ({ id: r.id, name: r.name, color: r.c
 // `cat` só vai quando existe: sem a coluna no banco, quem não usa categoria continua sincronizando
 export const eRow = (e: Entry) => ({
   id: e.id, acct: e.acct, type: e.type, cents: e.cents, date: e.date, descr: e.desc || "", imp: e.imp || null,
-  xfer: !!e.xfer, tr: e.tr || null, items: e.items || null, at: e.at || null, ...(e.cat ? { cat: e.cat } : {}),
+  xfer: !!e.xfer, tr: e.tr || null, items: e.items || null, at: e.at || null, ...(e.cat ? { cat: e.cat } : {}), ...(e.open ? { open: true } : {}),
 });
+/** linha para enviar: o que foi tirado do lançamento (categoria, "a pagar") vai como vazio, senão o upsert deixa o valor antigo no banco */
+const eUp = (e: Entry, prev?: string): Json => {
+  const r: Json = eRow(e);
+  if (prev) { if (!e.open && prev.includes('"open":true')) r.open = false; if (!e.cat && prev.includes('"cat":')) r.cat = null; }
+  return r;
+};
 export const eFrom = (r: Json): Entry => {
   const e: Entry = { id: r.id, acct: r.acct, type: r.type, cents: +r.cents, date: r.date, desc: r.descr || "" };
-  if (r.imp) e.imp = r.imp; if (r.xfer) e.xfer = 1; if (r.tr) e.tr = r.tr; if (r.cat) e.cat = r.cat; if (r.items) e.items = r.items; if (r.at != null) e.at = +r.at;
+  if (r.imp) e.imp = r.imp; if (r.xfer) e.xfer = 1; if (r.tr) e.tr = r.tr; if (r.cat) e.cat = r.cat; if (r.open) e.open = 1; if (r.items) e.items = r.items; if (r.at != null) e.at = +r.at;
   return e;
 };
 // caixinha = 1 linha; os movimentos vão dentro (jsonb)
@@ -123,7 +129,7 @@ export function syncNow(): Promise<void> {
     let off = false, err = "";
     try {
       const b = baseGet(), m = rowsMap(), { accts, entries, boxes } = ledger.get();
-      const upA = accts.filter(a => b.a[a.id] !== m.a[a.id]).map(aRow), upE = entries.filter(e => b.e[e.id] !== m.e[e.id]).map(eRow);
+      const upA = accts.filter(a => b.a[a.id] !== m.a[a.id]).map(aRow), upE = entries.filter(e => b.e[e.id] !== m.e[e.id]).map(e => eUp(e, b.e[e.id]));
       const delA = Object.keys(b.a).filter(id => !(id in m.a)), delE = Object.keys(b.e).filter(id => !(id in m.e));
       const upB = boxes.filter(x => b.b[x.id] !== m.b[x.id]).map(bRow), delB = Object.keys(b.b).filter(id => !(id in m.b));
       if (delE.length) await delIds("entries", delE);

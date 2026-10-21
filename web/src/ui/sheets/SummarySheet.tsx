@@ -4,8 +4,10 @@ import { isFixedCat } from "../../lib/categories";
 import { MESN, R, dayLbl } from "../../lib/format";
 import { summary, summaryMonths } from "../../lib/ledger";
 import { actions, ledger } from "../../lib/store";
+import { Dot } from "../Dot";
 import { SheetHead } from "../Sheet";
-import { toast } from "../uiStore";
+import { moveCatColor } from "../../lib/catcolor";
+import { openSheet, toast } from "../uiStore";
 
 const monLbl = (ym: string) => MESN[+ym.slice(5) - 1] + "/" + ym.slice(2, 4);
 
@@ -18,9 +20,10 @@ export function SummarySheet() {
   const { rows, total } = summary(accts, entries, ym, type);
   const other = summary(accts, entries, ym, type === "desp" ? "rec" : "desp").total;
   const label = (c: string) => c || "Sem categoria";
-  const rename = (from: string, to: string) => { actions.renameCat(from, to); setOpen(""); toast(to.trim() ? "Categoria renomeada" : "Categoria apagada (lançamentos ficam sem categoria)"); };
+  const rename = (from: string, to: string) => { actions.renameCat(from, to); moveCatColor(from, to.trim()); setOpen(""); toast(to.trim() ? "Categoria renomeada" : "Categoria apagada (lançamentos ficam sem categoria)"); };
   return (<>
     <SheetHead title="Resumo do mês" />
+    <button type="button" className="btn soft wide" id="smCats" onClick={() => openSheet({ kind: "cats" })}>Cores e categorias</button>
     <div className="cards" id="smMons">{months.map(m => <button type="button" key={m} className="cpill txt" data-sm={m} aria-pressed={m === ym} onClick={() => { setYm(m); setOpen(""); }}>{monLbl(m)}</button>)}</div>
     <div className="seg" id="smSeg">
       <button type="button" aria-pressed={type === "desp"} onClick={() => { setType("desp"); setOpen(""); }}>Saídas</button>
@@ -32,7 +35,7 @@ export function SummarySheet() {
     {rows.map(r => (
       <details className="smrow" key={r.cat} open={open === r.cat} onToggle={e => { if ((e.target as HTMLDetailsElement).open) { setOpen(r.cat); setName(r.cat); } else if (open === r.cat) setOpen(""); }}>
         <summary>
-          <span className="smn">{label(r.cat)}<small>{r.list.length} lançamento{r.list.length > 1 ? "s" : ""} · {Math.round((r.cents / total) * 100)}%</small></span>
+          <span className="smn"><Dot c={r.cat} />{label(r.cat)}<small>{r.list.length} lançamento{r.list.length > 1 ? "s" : ""} · {Math.round((r.cents / total) * 100)}%</small></span>
           <b>{R(r.cents)}</b>
           <div className="smbar"><i style={{ width: Math.max(2, Math.round((r.cents / total) * 100)) + "%" }} /></div>
         </summary>

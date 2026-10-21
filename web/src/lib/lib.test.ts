@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { brl, R, signR, fmtD, digits, moneyMask, fold, textOn, lastDay, shiftYM } from "./format";
 import { accBal, totBal, matchEntry, sg, descHints, catForDesc, groupByCat } from "./ledger";
 import { ctKey, hlKey, ftKey, ftTotal, faturaRows } from "./imports";
+import { addMonths, launchEntries, repCount } from "./launch";
 import type { Account, Entry } from "./types";
 
 const acct: Account = { id: "a", name: "Inter", color: "#FF7A00", start: 100000 };
@@ -306,5 +307,36 @@ describe("categoria nos itens da fatura e extrato por categoria", () => {
   it("agrupa o extrato por categoria com total com sinal", () => {
     const g = groupByCat([e({ id: "1", cat: "Mercado", cents: 1000 }), e({ id: "2", cat: "Mercado", cents: 500 }), e({ id: "3", type: "rec", cat: "Salário", cents: 9000 }), e({ id: "4", xfer: 1, cents: 100 })]);
     expect(g.map(x => [x.cat, x.cents])).toEqual([["Salário", 9000], ["Mercado", -1500], ["Transferências", -100]]);
+  });
+});
+
+describe("lançar: parcelas, repetir, dividir e duas formas", () => {
+  const base = { acct: "a", type: "desp" as const, cents: 10000, date: "2026-10-31", desc: "Notebook", cat: "Lazer" };
+  it("addMonths mantém o fim do mês", () => {
+    expect(addMonths("2026-10-31", 1)).toBe("2026-11-30"); expect(addMonths("2026-01-31", 1)).toBe("2026-02-28"); expect(addMonths("2026-11-15", 3)).toBe("2027-02-15");
+  });
+  it("parcelado: total dividido, sobra na 1ª, descrição com 1/3", () => {
+    const es = launchEntries({ ...base, rep: { k: "p", n: 3 } });
+    expect(es.map(x => [x.cents, x.date, x.desc])).toEqual([[3334, "2026-10-31", "Notebook 1/3"], [3333, "2026-11-30", "Notebook 2/3"], [3333, "2026-12-31", "Notebook 3/3"]]);
+    expect(es.reduce((s, x) => s + x.cents, 0)).toBe(10000);
+  });
+  it("todo mês por N meses e até um mês; a pagar vale para todos", () => {
+    expect(launchEntries({ ...base, rep: { k: "m", n: 4 }, open: true }).every(x => x.cents === 10000 && x.open === 1)).toBe(true);
+    expect(repCount({ k: "u", until: "2027-02" }, "2026-10-15")).toBe(5); expect(repCount({ k: "u", until: "2026-09" }, "2026-10-15")).toBe(0);
+    expect(repCount({ k: "p", n: 1 }, "2026-10-15")).toBe(0);
+  });
+  it("dividir com 4: sai tudo, 3 partes a receber em Reembolso", () => {
+    const es = launchEntries({ ...base, people: 4 });
+    expect(es).toHaveLength(4); expect(es[0].cents).toBe(10000);
+    expect(es.slice(1).map(x => [x.type, x.cents, x.open, x.cat, x.desc])).toEqual(Array(3).fill(["rec", 2500, 1, "Reembolso", "A receber: Notebook"]));
+  });
+  it("duas formas: parte sai de outra conta", () => {
+    const es = launchEntries({ ...base, acct2: "b", cents2: 4000 });
+    expect(es.map(x => [x.acct, x.cents])).toEqual([["a", 6000], ["b", 4000]]);
+    expect(launchEntries({ ...base, acct2: "b", cents2: 10000 })).toHaveLength(1); // parte igual ao total: ignora
+  });
+  it("a pagar e a receber não entram no saldo nem em Entrou", () => {
+    const es = [e({ cents: 1000 }), e({ cents: 5000, open: 1 }), e({ type: "rec", cents: 700, open: 1 })];
+    expect(accBal(acct, es, "2026-10-21")).toBe(99000);
   });
 });

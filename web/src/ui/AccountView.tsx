@@ -4,13 +4,14 @@ import { acctEntries, entMonth, cardUsed, faturaPaid, faturas, groupByCat, isCar
 import { MESN, R, dayLbl, fmtD, fmtDM, signR } from "../lib/format";
 import { actions, ledger } from "../lib/store";
 import type { Entry } from "../lib/types";
+import { Dot } from "./Dot";
 import { useArmed } from "./hooks";
 import { backHome, openSheet, toast } from "./uiStore";
 
 const ExRow = ({ e, byCat }: { e: Entry; byCat?: boolean }) => (
   <button type="button" className="ex" data-ex={e.id} onClick={() => openSheet({ kind: "entry", id: e.id })}>
     <i className={e.type}>{e.xfer ? "⇄" : e.type === "rec" ? "↓" : "↑"}</i>
-    <span className="nm">{e.desc}{byCat ? <small>{fmtDM(e.date)}</small> : e.cat ? <small>{e.cat}</small> : null}</span>
+    <span className="nm">{e.desc}{e.open && <em className="opn">{e.type === "rec" ? "A receber" : "A pagar"}</em>}{byCat ? <small>{fmtDM(e.date)}</small> : e.cat ? <small><Dot c={e.cat} />{e.cat}</small> : null}</span>
     <b className={e.type === "rec" ? "cr" : ""}>{e.type === "rec" ? "+" : "−"}{R(e.cents)}</b>
   </button>
 );
@@ -29,7 +30,7 @@ export function AccountView({ id }: { id: string }) {
   const months = [...new Set(all.map(e => entMonth(a, e.date)))].sort().reverse(); // cartão: mês do vencimento da fatura
   const mon = months.includes(monSel) ? monSel : "";
   const L = all.filter(e => matchEntry(e, q, cat) && (!mon || entMonth(a, e.date) === mon));
-  const fut = L.filter(e => isFut(e)), past = L.filter(e => !isFut(e)), days = [...new Set(past.map(e => e.date))];
+  const openL = L.filter(e => e.open), fut = L.filter(e => !e.open && isFut(e)), past = L.filter(e => !e.open && !isFut(e)), days = [...new Set(past.map(e => e.date))];
   const filtering = !!(q || cat || mon);
   const sumIn = L.filter(e => e.type === "rec").reduce((s, e) => s + e.cents, 0), sumOut = L.filter(e => e.type === "desp").reduce((s, e) => s + e.cents, 0);
 
@@ -78,7 +79,7 @@ export function AccountView({ id }: { id: string }) {
           <div className="cards" id="exCats">
             {used.length > 0 && <>
               <button type="button" className="cpill txt" aria-pressed={!cat} onClick={() => setCat("")}>Todas</button>
-              {used.map(c => <button type="button" key={c} className="cpill txt" data-xcat={c} aria-pressed={c === cat} onClick={() => setCat(c === cat ? "" : c)}>{c}</button>)}
+              {used.map(c => <button type="button" key={c} className="cpill txt" data-xcat={c} aria-pressed={c === cat} onClick={() => setCat(c === cat ? "" : c)}><Dot c={c} />{c}</button>)}
             </>}
           </div>
         </div>
@@ -88,8 +89,9 @@ export function AccountView({ id }: { id: string }) {
           <p className="exsum">{L.length} lançamento{L.length > 1 ? "s" : ""}{sumIn ? ` · Entradas ${R(sumIn)}` : ""}{sumOut ? ` · Saídas ${R(sumOut)}` : ""}</p>
         )}
         {by === "cat"
-          ? groupByCat(L).map(g => <div key={g.cat}><div className="dayh" style={{ display: "flex", justifyContent: "space-between" }}><span>{g.cat}</span><span>{signR(g.cents)}</span></div>{g.list.map(e => <ExRow key={e.id} e={e} byCat />)}</div>)
+          ? groupByCat(L).map(g => <div key={g.cat}><div className="dayh" style={{ display: "flex", justifyContent: "space-between" }}><span><Dot c={g.cat} />{g.cat}</span><span>{signR(g.cents)}</span></div>{g.list.map(e => <ExRow key={e.id} e={e} byCat />)}</div>)
           : <>
+            {openL.length > 0 && <><div className="dayh">{openL.some(e => e.type === "desp") ? "A pagar" : "A receber"}{openL.some(e => e.type === "desp") && openL.some(e => e.type === "rec") ? " / a receber" : ""}</div>{openL.map(e => <ExRow key={e.id} e={e} />)}</>}
             {fut.length > 0 && <><div className="dayh">Agendado</div>{fut.map(e => <ExRow key={e.id} e={e} />)}</>}
             {days.map(d => <div key={d}><div className="dayh">{dayLbl(d)}</div>{past.filter(e => e.date === d).map(e => <ExRow key={e.id} e={e} />)}</div>)}
           </>}
