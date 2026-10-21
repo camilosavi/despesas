@@ -262,7 +262,8 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surfa
 .catpill:not(:has(button)){padding-right:12px}
 .catpill button{width:24px;height:24px;border:0;border-radius:50%;background:none;color:var(--muted);font-size:1.05rem;line-height:1}
 .catadd{display:grid;grid-template-columns:1fr auto;gap:8px}
-.catadd input,.catnew input{width:100%;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.catadd input,.catnew input,input.limin{width:100%;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+input.limin{display:block;margin:0 0 10px}
 .catnew{display:inline-flex;gap:6px;align-items:center;flex:1 1 220px}
 .chip.add{border-style:dashed}
 #splitField .two{margin:6px 0 8px}
@@ -923,7 +924,8 @@ nav.tabs.onme::before{opacity:0}
   #pHome:not([hidden]),#pCards:not([hidden]),#pFx:not([hidden]),#pAno:not([hidden]),#pOrc:not([hidden]),#pMe:not([hidden]),#mBody{column-count:2;column-gap:22px;margin-top:6px}
   main:not([hidden]){padding-top:18px}
   main section,#mBody>section,#importBox>*{break-inside:avoid;-webkit-column-break-inside:avoid}
-  main>section:first-child,#mBody>section:first-child{margin-top:0}
+  main>section:first-child,#mBody>section:first-child,#pMe>section:first-child{margin-top:0!important}
+  #pMe>section{margin-top:0;margin-bottom:12px}
   .msearch{max-width:560px}
   .sheet{inset:0!important;margin:auto!important;height:fit-content;max-height:88vh!important;width:min(580px,92vw);border-radius:26px!important;
     padding:12px 22px 22px!important;box-shadow:0 30px 80px rgba(0,0,0,.35)}
