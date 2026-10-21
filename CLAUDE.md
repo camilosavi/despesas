@@ -51,7 +51,11 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      home abre "Sua conta" (sincronizar agora, sair; sair só com tudo enviado e limpa o aparelho). Holerite/fatura/conta repetidos em
      dois aparelhos: o índice único `(user_id, imp)` recusa o 2º e vale o que já estava no banco. Mapeamento: `start`↔`start_cents`,
      `desc`↔`descr`, `xfer` 1↔true. **Não testado contra o Supabase real** (sandbox sem acesso): só com simulação.
-   - Ainda **não** tem: categorias, editar lançamento, limite/cartão como item próprio, conferência com o saldo real, busca/filtro no extrato.
+   - **Layout** (21/10/2026): celular = uma coluna (cartão, botões, contas, "Ler um PDF"); PC (≥ 900 px) usa a tela toda: `.colL` (cartão, `#acts`, PDF)
+     fixa à esquerda e `#view` (contas em grade ou extrato) à direita. Tudo alinhado na borda da moldura do cartão.
+   - **Editar lançamento** (21/10/2026): ao tocar num lançamento aparece **Editar** (reaproveita a janela Lançar, `openLanc(id)`: valor, descrição, conta, data,
+     entrada/saída; mantém `imp` e `items`). Transferência não edita (apagar e refazer; apagar leva o par).
+   - Ainda **não** tem: categorias, limite/cartão como item próprio, conferência com o saldo real, busca/filtro no extrato.
 
 ## Cores e logo (21/10/2026)
 

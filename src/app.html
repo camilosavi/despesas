@@ -670,6 +670,7 @@ function openEntrySheet(id){
   const e=entries.find(x=>x.id===id);if(!e)return;const a=accOf(e.acct);
   openSheet(sheetHead(e.type==="rec"?"Entrada":"Saída")+`<div class="kv"><span>Descrição</span><b>${esc(e.desc)}</b><span>Valor</span><b class="${e.type==="rec"?"ok":""}">${e.type==="rec"?"+":"−"}${R(e.cents)}</b><span>Data</span><b>${fmtD(e.date)}${isFut(e)?" (agendado)":""}</b><span>Conta</span><b>${esc(a?a.name:"—")}</b></div>
   ${e.items&&e.items.length?`<div class="ln sub">Itens da fatura · ${e.items.length}</div>`+e.items.map(y=>`<div class="ln"><span>${fmtDM(y.date)}</span><span class="dsc">${esc(y.desc)}</span><b class="${y.cents<0?"cr":""}">${R(y.cents)}</b></div>`).join(""):""}
+  ${e.tr?"":`<button type="button" class="btn primary wide" id="exEdit" data-id="${e.id}">Editar</button>`}
   <button type="button" class="btn wide" id="exDel" data-id="${e.id}">${e.tr?"Apagar a transferência":"Apagar este lançamento"}</button>`);
 }
 
@@ -681,6 +682,7 @@ document.addEventListener("click",e=>{
   if(t.closest("#acctNew")){openAddSheet();return}
   if(t.closest("#editCard")){openEditSheet();return}
   const x=t.closest("[data-ex]");if(x){openEntrySheet(x.dataset.ex);return}
+  const ee=t.closest("#exEdit");if(ee){openLanc(ee.dataset.id);return}
   const dx=t.closest("#exDel");if(dx){armed(dx,"Toque de novo para apagar",()=>{{const ee=entries.find(y=>y.id===dx.dataset.id);entries=entries.filter(y=>y.id!==dx.dataset.id&&!(ee&&ee.tr&&y.tr===ee.tr))};saveAll();closeSheet();renderAll();toast("Lançamento apagado")});return}
   const da=t.closest("#acctDel");if(da){armed(da,"Toque de novo: apaga a conta e o extrato",()=>{const id=openId;accts=accts.filter(a=>a.id!==id);entries=entries.filter(y=>y.acct!==id);saveAll();openId=null;renderAll();toast("Conta apagada")});return}
   /* nova conta */
@@ -771,13 +773,14 @@ function viewHolerite(x,i){const h=x.h;
 let lc=null, tf=null;
 const chipsOf=(attr,sel,skip)=>accts.filter(a=>a.id!==skip).map(a=>`<button type="button" class="cpill" ${attr}="${a.id}" aria-pressed="${a.id===sel}">${acctBadge(a)}<span>${esc(a.name)}</span></button>`).join("");
 const needAcct=(n)=>sheetHead(n)+`<p class="hint" style="color:var(--muted)">Crie ${n==="Transferir"?"duas contas":"uma conta"} primeiro.</p><button type="button" class="btn primary wide" data-hlnew>Adicionar conta</button>`;
-function openLanc(){
+function openLanc(editId){
   if(!accts.length){openSheet(needAcct("Lançar"));return}
-  lc={type:"desp",acct:openId&&accOf(openId)?openId:accts[0].id,date:today()};
-  openSheet(sheetHead("Lançar")+`<div class="seg" id="lcSeg"><button type="button" data-lctype="desp" aria-pressed="true">Saída</button><button type="button" data-lctype="rec" aria-pressed="false">Entrada</button></div>
-  <div class="bigamt"><span>R$</span><input type="text" id="lcAmt" class="money" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
-  <div class="field"><label for="lcDesc">Descrição</label><input type="text" id="lcDesc" maxlength="60" placeholder="Ex.: mercado, Pix, salário"></div>
-  <div class="field"><span class="lbl" id="lcAcctL">Sai da conta</span><div class="cards" id="lcAccts">${chipsOf("data-lcacct",lc.acct)}</div></div>
+  const old=editId?entries.find(x=>x.id===editId):null;
+  lc=old?{type:old.type,acct:accOf(old.acct)?old.acct:accts[0].id,date:old.date,edit:old.id}:{type:"desp",acct:openId&&accOf(openId)?openId:accts[0].id,date:today()};
+  openSheet(sheetHead(old?"Editar":"Lançar")+`<div class="seg" id="lcSeg"><button type="button" data-lctype="desp" aria-pressed="${lc.type==="desp"}">Saída</button><button type="button" data-lctype="rec" aria-pressed="${lc.type==="rec"}">Entrada</button></div>
+  <div class="bigamt"><span>R$</span><input type="text" id="lcAmt" class="money" inputmode="numeric" placeholder="0,00" aria-label="Valor" value="${old?brl(old.cents):""}"></div>
+  <div class="field"><label for="lcDesc">Descrição</label><input type="text" id="lcDesc" maxlength="60" placeholder="Ex.: mercado, Pix, salário" value="${old?esc(old.desc):""}"></div>
+  <div class="field"><span class="lbl" id="lcAcctL">${lc.type==="rec"?"Entra na conta":"Sai da conta"}</span><div class="cards" id="lcAccts">${chipsOf("data-lcacct",lc.acct)}</div></div>
   <div class="field"><label for="lcDate">Data</label><input type="date" id="lcDate" value="${lc.date}"></div>
   <p class="err" id="lcErr"></p><button type="button" class="btn primary wide" id="lcSave">Salvar</button>`);
   setTimeout(()=>$("lcAmt")?.focus(),80);
@@ -801,7 +804,9 @@ document.addEventListener("click",e=>{
     const c=t.closest("[data-lcacct]");if(c){lc.acct=c.dataset.lcacct;document.querySelectorAll("[data-lcacct]").forEach(b=>b.setAttribute("aria-pressed",b===c));return}
     if(t.closest("#lcSave")){const v=digits($("lcAmt").value),d=$("lcDate").value;
       if(!v){$("lcErr").textContent="Informe o valor.";return}if(!d){$("lcErr").textContent="Informe a data.";return}
-      entries.push({id:uid(),acct:lc.acct,type:lc.type,cents:v,date:d,desc:$("lcDesc").value.trim()||(lc.type==="rec"?"Entrada":"Saída"),at:Date.now()});
+      const ds=$("lcDesc").value.trim()||(lc.type==="rec"?"Entrada":"Saída"), old=lc.edit&&entries.find(x=>x.id===lc.edit);
+      if(old){Object.assign(old,{acct:lc.acct,type:lc.type,cents:v,date:d,desc:ds});saveAll();closeSheet();renderAll();toast("Lançamento atualizado ✓",true);return}
+      entries.push({id:uid(),acct:lc.acct,type:lc.type,cents:v,date:d,desc:ds,at:Date.now()});
       saveAll();closeSheet();renderAll();toast(lc.type==="rec"?"Entrada lançada ✓":"Saída lançada ✓",true);return}
   }
   if(tf&&$("sheet").querySelector("#tfSave")){
