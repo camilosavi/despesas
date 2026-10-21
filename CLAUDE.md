@@ -681,3 +681,8 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Contas e cartões** (pedido dele: juntar "Na conta" com os cartões): no celular, com conta cadastrada, `contaBlock(true)` lista as
   contas e depois os cartões (`walCardRows`: livre, vencimento, fatura em aberto com `rollAmt`); os quadros grandes de cartões saem dessa tela.
 - `billShown`: fatura **vazia** que já venceu também passa para a próxima (antes abria o cartão numa fatura passada de R$ 0,00).
+- **Listas sem caixa** (celular): no Hoje e no Mês as seções ficam direto no fundo (título 1,22rem); quadros de cartões, faixas e
+  caixinhas continuam como estavam. "Posso comprar?" virou faixa discreta. No Mês, os quadros de cartões do filtro viraram
+  pílulas com a bolinha da cor do banco, na mesma linha de Todos / A pagar / Pagos / Receitas (`mesFilterBar`, `.mfc`; PC igual).
+- **Lançar** (celular): `#sheet` vira flex em coluna; valor grande no topo (Bricolage 2,9rem), "Importar fatura ou conta (PDF)"
+  desce para o fim (`order`) e a linha do Salvar fica grudada embaixo (sticky).

@@ -1434,6 +1434,29 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   header.top .tcard .split{position:static;text-align:left;margin-top:10px!important}
   nav.tabs .tab[aria-current="page"] span{display:none}
 }
+
+/* ---------- Listas sem caixa e Lançar (21/10/2026, continuação do "Cartão no topo"; só celular) ---------- */
+@media (max-width:979px){
+  /* Hoje e Mês: listas direto no fundo, título maior, sem bloco colorido (caixinhas e cartões continuam iguais) */
+  #pHome>section:not(:has(.htiles)):not(:has(.banner)):not(:has(.bline)),#mBody>section:not(:has(.htiles)){background:none!important;box-shadow:none!important;padding:0 4px!important;margin-top:24px!important}
+  #pHome>section>h2,#mBody>section>h2{font-size:1.22rem!important;margin-bottom:6px!important}
+  .canbuy-card{background:color-mix(in srgb,var(--ink) 7%,transparent)!important;color:var(--ink)!important}
+  .canbuy-card small,.canbuy-card .hint{opacity:.7}
+  .htiles .htile .htv{white-space:nowrap;font-size:1.2rem!important}
+  .mfc{display:flex;align-items:center;gap:7px}
+  .mfc i{width:9px;height:9px;border-radius:50%;flex:none}
+  .mfp.on{background:var(--ink)!important;color:var(--bg)!important}
+  /* Lançar: valor grande no topo, importar e salvar embaixo */
+  #sheet:not([hidden]){display:flex;flex-direction:column}
+  #sheet>*{flex:none}
+  #sheet #pdfAnyRow{order:5;margin-top:6px}
+  #sheet #err{order:6}#sheet #lancHelp{order:7}
+  #sheet>.row:last-child{order:8;position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));margin:6px -16px calc(-18px - env(safe-area-inset-bottom,0px));padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--surface);z-index:2}
+  #sheet .amount{margin:14px 0 10px;border:0!important;padding:0}
+  #sheet .amount input{font-family:var(--serif)!important;font-weight:700;font-size:2.9rem!important;letter-spacing:-.03em;padding:0}
+  #sheet .amount span{font-size:1.2rem;align-self:center;opacity:.7}
+  #sheet .field input:not([type=checkbox]),#sheet .field select,#sheet .catpick-btn{border-radius:16px!important}
+}
 </style>
 
 <div class="wrap">
@@ -2764,6 +2787,9 @@ function mesFilterBar(){
       <span class="htl">fatura</span>
       <span class="htv">${R(cardTotal(c,view))}</span>
       <span class="htl htsub">${due||"&nbsp;"}</span></button>`};
+  if(!IS_WIDE.matches) return `<div class="mfbar"><div class="mfrow">`+chip("all","Todos")+
+    cs.map(c=>`<button class="mfp mfc ${mesF==="card:"+c?"on":""}" data-mesf="card:${esc(c)}"><i style="background:${cardColor(c)}"></i>${esc(c)}</button>`).join("")+
+    chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+`</div>${mesPayBtn()}</div>`;
   return `<div class="mfbar">${cs.length?`<div class="htiles mftiles">${cs.map(tile).join("")}</div>`:""}<div class="mfrow">`+
     chip("all","Todos")+chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+`</div>${mesPayBtn()}</div>`;
 }
