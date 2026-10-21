@@ -44,7 +44,8 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      `supabase/schema.sql` (tabelas `accts` e `entries` com `user_id` + RLS; Data API ligada, "expor novas tabelas" desligado, grants só
      para `authenticated`). Tudo por `fetch` (GoTrue e PostgREST), sem biblioteca; a chave *publishable* fica no código (pública por
      desenho; a senha do banco e a `service_role` **nunca** vão para o repositório nem para a memória). Tela de login (e-mail e senha;
-     "Criar conta"); sem login o app não abre. O aparelho guarda cópia local (funciona sem internet) e `despesas.zero.base` = o que já subiu:
+     "Criar conta" e **Entrar com o Google**: redireciona para `/auth/v1/authorize?provider=google` e volta com `#access_token=` no endereço; o
+     cliente OAuth do Google Cloud é o mesmo do app antigo, com o callback do Supabase adicionado; Apple fica de fora, exige conta paga); sem login o app não abre. O aparelho guarda cópia local (funciona sem internet) e `despesas.zero.base` = o que já subiu:
      a cada mudança envia o diff (apagados, novos, alterados) e depois baixa tudo (banco = verdade; se mexeram durante o envio, não
      sobrescreve). Sincroniza 1,2 s depois de mexer, a cada 60 s, ao voltar ao app e ao voltar a internet. Botão "☁ Em dia" no cartão da
      home abre "Sua conta" (sincronizar agora, sair; sair só com tudo enviado e limpa o aparelho). Holerite/fatura/conta repetidos em
