@@ -662,3 +662,22 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - Formulário da caixinha começa com a grade de **tipos** (`SV_KINDS`: Viagem, Reserva de emergência, Casa própria, Carro ou moto, Casamento, Estudos, Celular e eletrônicos, Presente, Saúde, Investir, Outro). Tocar preenche o nome (só se estiver vazio ou ainda com o nome do tipo anterior) e guarda `b.kind`; o ícone da linha vem de `svIcon(b)` (kind, senão pelo nome via `boxAvatar`). `svFormKind()` dá o tipo escolhido (Viagem por padrão no atalho `fxMeta` da aba Moedas).
 - **Banco em cada movimento**: `moves[].bank` (texto, de `ALL_BANKS()` ou "Outro banco…"). Guardar/Tirar e editar movimento têm "Em qual banco" (`svBankField`/`svBankVal`; ids `svBk`/`svBkNew`, `mvBk`/`mvBkNew`). Movimento sem banco conta no `b.bank` (banco principal, opcional), senão em "Sem banco definido".
 - Caixinha aberta mostra **"Onde está o dinheiro"** (`svBankRows(b)`: saldo por banco, R$/€/US$; compras de moeda com `fxAll` contam onde foram feitas). `boxBanks(b)` junta principal + bancos com saldo + `svFxBanks` e dá os selos ao lado do nome. O total da caixinha não muda (soma de tudo).
+
+## Cartão no topo (21/10/2026, pedido dele: "começar do 0"; o visual do cartão é o que ele mais gosta)
+- Desenho aprovado no canvas "Minhas Despesas — 3 direções" (artifact de design). Só no **celular (≤ 979 px)**; PC continua igual.
+- O topo de toda tela é um cartão: `header.top` vira a moldura (cor do cartão 22% no fundo) e `.tcard` (wrapper novo dentro do
+  header; no PC é `display:contents`) é o cartão com chip (`::before`), brilho (`::after`) e degradê. **Não confundir com `.hcard`**,
+  que já é o bloco clicável do Início/Ano (o nome colidiu e quebrou os blocos; por isso `.tcard`).
+- Cor: `--hc` = cor do cartão de verdade (setada no `cardTheme`, que agora inclui `--hc`); sem cartão, `--head` do tema.
+  Hoje e Contas usam a cor da 1ª conta (`accts()[0].name`), e o título do Hoje é o nome dela.
+- Linha do tempo embaixo do cartão: `#hTl` (`hTlSet(steps,pct)`, `hTlUpdate()` chamado pelo `header()`, que agora embrulha o `header0()`).
+  Hoje: Hoje / próximos 2 vencimentos do mês / Dia N. Mês: Dia 1 / Hoje / Dia N. Tela do cartão: Aberta / Fecha / Vence (`closeOf`).
+  Contas, Ano, Fixos, Você: sem linha do tempo.
+- No cartão aparecem só 2 valores: `#big` à esquerda e o 1º item do `.split` à direita (o 2º some). ≤ 380 px empilha.
+- Tela do cartão no celular: o `.phys-card` e o `.card-cycle` do corpo somem (o topo já é o cartão); fica só o "Marcar fatura como paga".
+  "‹ Contas" fica no canto do cartão.
+- Barra de baixo: cápsula lisa, home = círculo com ponto, aba ativa = pílula clara com o nome (`<span>` dentro do `.tab`; ≤ 380 px só ícone).
+  "Carteira" agora se chama **Contas** (o id continua `pWal`).
+- **Contas e cartões** (pedido dele: juntar "Na conta" com os cartões): no celular, com conta cadastrada, `contaBlock(true)` lista as
+  contas e depois os cartões (`walCardRows`: livre, vencimento, fatura em aberto com `rollAmt`); os quadros grandes de cartões saem dessa tela.
+- `billShown`: fatura **vazia** que já venceu também passa para a próxima (antes abria o cartão numa fatura passada de R$ 0,00).

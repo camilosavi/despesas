@@ -981,13 +981,13 @@ h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
   .svmini{display:grid;gap:14px;margin-top:6px}.svm{display:grid;gap:6px}.svm>span:first-child{display:flex;justify-content:space-between;gap:10px;font-size:.92rem}
   .svm>span:first-child>span{color:var(--muted);font-variant-numeric:tabular-nums}.svm .mini{margin:0;display:block}
   header.top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:36px;align-items:end}
-  header.top>*,header.top>.hcard>*{grid-column:1/-1}
-  header.top>.hcard>.bigrow{grid-column:1}
-  header.top>.hcard>.monthpill{justify-self:start}
-  header.top>.hcard>.split{grid-column:2;margin-top:0;border-top:0;padding-top:0;align-self:end;padding-bottom:6px}
-  header.top>.hcard>.split div{padding:0 18px}
-  header.top>.hcard>.split div:first-child{border-left:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent)}
-  header.top>.hcard>.split b{font-size:1.35rem}
+  header.top>*,header.top>.tcard>*{grid-column:1/-1}
+  header.top>.tcard>.bigrow{grid-column:1}
+  header.top>.tcard>.monthpill{justify-self:start}
+  header.top>.tcard>.split{grid-column:2;margin-top:0;border-top:0;padding-top:0;align-self:end;padding-bottom:6px}
+  header.top>.tcard>.split div{padding:0 18px}
+  header.top>.tcard>.split div:first-child{border-left:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent)}
+  header.top>.tcard>.split b{font-size:1.35rem}
   #pHome:not([hidden]){column-count:auto!important}
   #pHome .banner{margin-top:0}
   .hdash{display:grid;gap:26px}
@@ -1377,8 +1377,8 @@ header.top{padding:18px 16px!important}
 
 /* ---------- Cartão no topo (21/10/2026, pedido dele: "o visual do cartão é a coisa mais legal do app"): no celular o topo de
    toda tela é o cartão (chip, brilho, degradê na cor do tema ou do cartão aberto) + caixa da linha do tempo; barra de baixo nova
-   (home em círculo, aba ativa com nome). PC continua como estava (.hcard vira display:contents). ---------- */
-.hcard{display:contents}.htl{display:none!important}
+   (home em círculo, aba ativa com nome). PC continua como estava (.tcard vira display:contents). ---------- */
+.tcard{display:contents}.htl{display:none!important}
 @media (max-width:979px){
   :root{--tla:color-mix(in srgb,var(--hc,var(--head)) 55%,#fff)}
   :root[data-theme="light"]{--tla:var(--hc,var(--head))}
@@ -1386,36 +1386,37 @@ header.top{padding:18px 16px!important}
   header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0!important;padding:14px!important;border-radius:32px!important;box-shadow:none!important;
     background:color-mix(in srgb,var(--hc,var(--head)) 22%,var(--bg))!important;color:var(--ink)}
   body::before{display:none!important}
-  .hcard{display:block;position:relative;overflow:hidden;border-radius:22px;padding:18px 20px;color:var(--head-ink);
+  .tcard{display:block;position:relative;overflow:hidden;border-radius:22px;padding:18px 20px;color:var(--head-ink);
     background:linear-gradient(135deg,var(--hc,var(--head)) 0%,color-mix(in srgb,var(--hc,var(--head)) 58%,#000) 100%);box-shadow:0 12px 28px -4px rgba(0,0,0,.35)}
-  .hcard::after{content:"";position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22) 0%,transparent 70%);pointer-events:none}
-  .hcard::before{content:"";display:block;width:32px;height:24px;border-radius:6px;margin-bottom:12px;background:linear-gradient(135deg,#e6c875 0%,#b59132 100%);box-shadow:inset 0 1px 1px rgba(255,255,255,.5)}
-  .hcard>*{position:relative;z-index:1}
-  .hcard .titlerow{min-height:0;margin-bottom:2px}
-  .hcard #ptitle{font-family:var(--display)!important;font-weight:700!important;font-size:1.25rem!important;opacity:1!important;letter-spacing:-.01em!important;display:block!important}
-  .hcard .monthpill{margin:0 0 8px -8px;background:none!important;border:0!important;padding:0;gap:0;backdrop-filter:none;-webkit-backdrop-filter:none}
-  .hcard .monthpill span{font-size:.95rem;min-width:0;padding:0 6px}
-  header.top .hcard .bigrow{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px}
-  header.top .hcard .label{color:var(--head-ink)!important;margin:0;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;opacity:.82;font-weight:600}
-  header.top .hcard .big{font-family:var(--display)!important;font-weight:700;font-size:1.65rem!important;line-height:1.15;letter-spacing:-.02em}
-  header.top .hcard .big small{font-size:.62em;margin-right:3px;opacity:.85}
-  header.top .hcard .split{position:absolute;right:20px;bottom:18px;margin:0!important;padding:0!important;border:0!important;display:block!important;text-align:right}
-  header.top .hcard .split div,.hcard .split div+div{background:none!important;border:0!important;padding:0!important;border-radius:0!important}
-  header.top .hcard .split div:nth-child(2){display:none!important}
-  header.top .hcard .split span{font-size:.66rem!important;letter-spacing:.08em!important;text-transform:uppercase!important;opacity:.82;font-weight:600;color:inherit!important}
-  @media (max-width:410px){header.top .hcard .big,header.top .hcard .split b{font-size:1.3rem!important}}
-  header.top .hcard .split b{font-family:var(--display)!important;font-size:1.65rem!important;line-height:1.15;letter-spacing:-.02em}
-  header.top .hcard .hbar,header.top .hcard .prog,header.top .hcard .foot{display:none!important}
-  .hcard .backbtn{position:absolute;top:14px;right:14px;z-index:2;background:rgba(255,255,255,.18);color:var(--head-ink);padding:6px 12px 6px 8px;font-size:.8rem}
+  .tcard::after{content:"";position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22) 0%,transparent 70%);pointer-events:none}
+  .tcard::before{content:"";display:block;width:32px;height:24px;border-radius:6px;margin-bottom:12px;background:linear-gradient(135deg,#e6c875 0%,#b59132 100%);box-shadow:inset 0 1px 1px rgba(255,255,255,.5)}
+  .tcard>*{position:relative;z-index:1}
+  .tcard .titlerow{min-height:0;margin-bottom:2px}
+  .tcard #ptitle{font-family:var(--display)!important;font-weight:700!important;font-size:1.25rem!important;opacity:1!important;letter-spacing:-.01em!important;display:block!important}
+  .tcard .monthpill{margin:0 0 8px -8px;background:none!important;border:0!important;padding:0;gap:0;backdrop-filter:none;-webkit-backdrop-filter:none}
+  .tcard .monthpill span{font-size:.95rem;min-width:0;padding:0 6px}
+  header.top .tcard .bigrow{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px}
+  header.top .tcard .label{color:var(--head-ink)!important;margin:0;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;opacity:.82;font-weight:600}
+  header.top .tcard .big{font-family:var(--display)!important;font-weight:700;font-size:1.65rem!important;line-height:1.15;letter-spacing:-.02em}
+  header.top .tcard .big small{font-size:.62em;margin-right:3px;opacity:.85}
+  header.top .tcard .split{position:absolute;right:20px;bottom:18px;margin:0!important;padding:0!important;border:0!important;display:block!important;text-align:right}
+  header.top .tcard .split div,.tcard .split div+div{background:none!important;border:0!important;padding:0!important;border-radius:0!important}
+  header.top .tcard .split div:nth-child(2){display:none!important}
+  header.top .tcard .split span{font-size:.66rem!important;letter-spacing:.08em!important;text-transform:uppercase!important;opacity:.82;font-weight:600;color:inherit!important}
+  @media (max-width:410px){header.top .tcard .big,header.top .tcard .split b{font-size:1.3rem!important}}
+  header.top .tcard .split b{font-family:var(--display)!important;font-size:1.65rem!important;line-height:1.15;letter-spacing:-.02em}
+  header.top .tcard .hbar,header.top .tcard .prog,header.top .tcard .foot{display:none!important}
+  .tcard .backbtn{position:absolute;top:14px;right:14px;z-index:2;background:rgba(255,255,255,.18);color:var(--head-ink);padding:6px 12px 6px 8px;font-size:.8rem}
   .cdhero .phys-card,.cdhero .card-cycle{display:none}
-  .hcard .mehead .nm{font-size:1.4rem}
+  .cdhero>section:not(:has(#payCard)){display:none}
+  .tcard .mehead .nm{font-size:1.4rem}
   .htl:not([hidden]){display:block!important;margin-top:12px;padding:12px 14px 12px;border-radius:18px;background:color-mix(in srgb,var(--ink) 5%,transparent);border:1px solid color-mix(in srgb,var(--ink) 14%,transparent)}
   .htlin{position:relative;display:flex;justify-content:space-between;padding-bottom:1px}
   .htln,.htlp{position:absolute;top:26px;left:20px;height:2px;border-radius:1px;background:color-mix(in srgb,var(--ink) 18%,transparent)}
   .htln{right:20px}.htlp{background:var(--tla);z-index:0}
   .htls{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
   .htls span{font-size:.76rem;font-weight:600;color:var(--ink);white-space:nowrap;text-transform:none;letter-spacing:0}
-  body:has(#pMes:not([hidden])) .hcard #ptitle,body:has(#pMe:not([hidden])) .hcard #ptitle{display:none!important}
+  body:has(#pMes:not([hidden])) .tcard #ptitle,body:has(#pAno:not([hidden]) .ano-subnav,#pAno:not([hidden]) [data-msw]) .tcard #ptitle,body:has(#pMe:not([hidden])) .tcard #ptitle{display:none!important}
   .htls.next span{color:var(--muted)}
   .htls i{width:10px;height:10px;border-radius:50%;background:var(--tla);box-shadow:0 0 0 2px var(--tla)}
   .htls.now i{box-shadow:0 0 0 3px color-mix(in srgb,var(--tla) 35%,transparent)}
@@ -1437,11 +1438,18 @@ header.top{padding:18px 16px!important}
 button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align:left;font:inherit;cursor:pointer}
 .acsub{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 2px;padding-top:12px;border-top:1px solid var(--line);font-weight:700;font-size:.92rem}
 .acsub .lk{background:none;border:0;color:var(--accent);font:inherit;font-weight:600;font-size:.84rem}
+@media (max-width:979px){
+  .tcard>.titlerow{position:static}
+}
+@media (max-width:380px){
+  header.top .tcard .split{position:static;text-align:left;margin-top:10px!important}
+  nav.tabs .tab[aria-current="page"] span{display:none}
+}
 </style>
 
 <div class="wrap">
   <header class="top">
-    <div class="hcard">
+    <div class="tcard">
     <div class="titlerow">
       <button class="backbtn" id="backBtn" hidden><span aria-hidden="true">‹</span> <span id="backLbl">Voltar</span></button>
       <h1 id="ptitle">Mês</h1>
@@ -2142,7 +2150,7 @@ function hTlUpdate(){
     const U=upcoming(31).filter(x=>x.date>=t&&x.date.slice(0,7)===cur), seen=[], st=[{t:"Hoje",st:"now"}];
     U.forEach(x=>{if(!seen.includes(x.date)&&seen.length<2){seen.push(x.date);st.push({t:"Vence "+fmtDM(x.date),st:"next"})}});
     const ld=lastDay(cur);st.push({t:"Dia "+ld,st:"next"});hTlSet(st,0);return}
-  if(tab==="pMes"||(tab==="pAno"&&anoSubTab!=="metas")){
+  if(tab==="pMes"){
     const ld=lastDay(view), isCur=view===cur, past=view<cur, d=+t.slice(8);
     hTlSet([{t:"Dia 1",st:past||isCur?"done":"next"},...(isCur?[{t:"Hoje, dia "+d,st:"now"}]:[]),{t:"Dia "+ld,st:past?"done":"next"}],past?100:isCur?50:0);return}
   if(tab==="pCards"&&selCard&&!isBen(selCard)){
@@ -2449,7 +2457,7 @@ function walCardRows(){
   const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
   if(!cs.length&&!B.length) return "";
   const row=(c,sub,val,neg)=>`<button class="acone cardgo" data-opencard="${esc(c)}">${cardBadge(c)}<span class="t"><b>${esc(c)}</b><span>${sub}</span></span><span class="v ${neg?"neg":""}">${val}</span></button>`;
-  return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=cardTotal(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
+  return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=cardTotal(c,bs.ym)+rollAmt(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
     const f=k.limit?cardFree(c).free:null;
     return row(c,[f!=null?`livre ${R(Math.max(0,f))}`:"",due].filter(Boolean).join(" · "),R(tot),f!=null&&f<0)}).join("")+
     B.map(b=>{const v=benBal(b), nx=benNext(b);return row(b.name,nx?`crédito ${fmtDM(nx)}`:"vale",R(v),v<0)}).join("");
@@ -2470,9 +2478,9 @@ function contaBlock(withCards){
   if(!IS_WIDE.matches) return `<section><h2>${withCards?"Contas e cartões":"Na conta"} ${ext}</h2><div class="card">`+
     A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:""}</span></span><span class="v">${R(A.length===1?tot:accBalOf(a))}</span></div>`).join("")+
     (A.length>1?`<div class="acone"><span class="t"><b>Total</b></span><span class="v">${R(tot)}</span></div>`:"")+
-    (withCards?walCardRows():"")+
     (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
-    (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+`</div></section>`;
+    (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+
+    (withCards?walCardRows():"")+`</div></section>`;
   return `<section><h2>Saldo na conta ${ext}</h2><div class="card rate">
     <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div></div></div>
     ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${R(accBalOf(a))}</b></div>`).join("")}</div>`:""}
@@ -3103,7 +3111,7 @@ let tlOpen=new Set(), catOpen=new Set();
 /* faixa de cartões no topo do Mês: fatura do mês de cada um; tocar abre o cartão nesse mês */
 /* fatura do mês já paga → mostra a próxima que tem valor (pedido dele, out/2026). Volta {ym, from} (from = mês pago) */
 function billShown(c,ym){
-  const L=cardItems(c,ym).filter(x=>!rollYM(x)), paid=L.length&&L.every(isPaid)&&!rollAmt(c,ym);
+  const L=cardItems(c,ym).filter(x=>!rollYM(x)), paid=(L.length?L.every(isPaid):true)&&!rollAmt(c,ym);
   if(!paid) return {ym,from:null};
   {const d=cardDue(c,ym);if(d&&d>=today()) return {ym,from:null}} /* só passa para a próxima se a fatura já venceu (pedido dele, 15/10/2026) */
   for(let i=1;i<=12;i++){const m=shiftYM(ym,i);if(cardTotal(c,m)||rollAmt(c,m)) return {ym:m,from:ym}}
