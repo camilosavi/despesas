@@ -33,3 +33,7 @@ drop policy if exists own_accts on accts;
 drop policy if exists own_entries on entries;
 create policy own_accts on accts for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy own_entries on entries for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- Com "Automatically expose new tables" desligado, libere so o que o app usa (apenas usuario logado).
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on accts, entries to authenticated;
