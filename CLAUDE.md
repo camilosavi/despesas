@@ -65,14 +65,16 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      (movimentos em `moves jsonb`; **rodar o bloco `boxes` de `supabase/schema.sql`**). Sem a tabela, contas e lançamentos seguem sincronizando e as caixinhas ficam no aparelho (mostra "Erro ao sincronizar" e não deixa sair).
    - **Cartão puro** (21/10/2026, `kind:"cartao"` na conta; Renner, etc.): sem saldo; mesma lista da home, depois das contas, com "Cartão · gasto em <mês>" e fora do Saldo total.
      Aberto: topo mostra "Gasto em <mês>"; "Lançar" vira só compra; fora de Transferir e de "Paga pela conta" do PDF (fatura lida continua virando despesa na conta que paga).
-     Coluna `kind text` em `accts`: **rodar a última linha de `supabase/schema.sql`** (o app só manda `kind` quando é cartão). Falta: limite.
+     Coluna `kind text` em `accts`: **rodar a última linha de `supabase/schema.sql`** (o app só manda `kind` quando é cartão). 
    - **Mês pelo vencimento da fatura** (21/10/2026): cartão tem `closeDay` e `dueDay` (Personalizar; o leitor de fatura preenche sozinho se faltar). `entMonth(a, data)` = mês do vencimento da fatura em que a compra cai
      (fecha 25, vence 2: compra de 20/09 = outubro; de 26/09 = novembro). Vale no "Fatura de <mês>" do cartão e no filtro de mês do extrato (chips "out/26"). A fatura lida vira despesa na data do vencimento (já era o mês certo).
      Colunas `close_day`, `due_day` em `accts`: **rodar as 2 últimas linhas de `supabase/schema.sql`**.
    - **Pagar fatura** (21/10/2026, `ui/sheets/PaySheet.tsx`): no cartão aberto, seção "Faturas" (por mês de vencimento: total, "Em aberto"/"Paga ✓ em", botão Pagar). Pagar = despesa "Fatura <cartão>" na conta escolhida
      (valor editável, data = vencimento do cartão), com as compras em `items`, `imp:"pagfatura-<idCartão>-AAAA-MM"`. Apagar o lançamento reabre a fatura. Fatura de PDF do mesmo banco que vence no mês também conta como paga
      (`faturaPaid`) e o leitor recusa lançar por cima de uma já paga. Sem coluna nova no banco.
-   - Ainda **não** tem: categorias próprias (criar/renomear), resumo por categoria, limite/cartão como item próprio, conferência com o saldo real.
+   - **Limite do cartão** (21/10/2026, `limit` na conta cartão; "Limite do cartão" em Novo cartão/Personalizar): usado = faturas em aberto (`cardUsed`, todos os meses); topo do cartão mostra "Limite disponível" e a seção "Faturas" tem a barra
+     (vermelha se passar). Pagar a fatura libera o limite. Coluna `limit_cents` em `accts`: **rodar a última linha de `supabase/schema.sql`**.
+   - Ainda **não** tem: categorias próprias (criar/renomear), resumo por categoria, conferência com o saldo real.
 
 ## Cores e logo (21/10/2026)
 

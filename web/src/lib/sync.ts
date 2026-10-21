@@ -77,8 +77,8 @@ const idList = (a: string[]) => "in.(" + a.map(i => '"' + encodeURIComponent(i) 
 async function delIds(tbl: string, ids: string[]) { for (let i = 0; i < ids.length; i += 100) await api("DELETE", tbl + "?id=" + idList(ids.slice(i, i + 100))); }
 
 /* ---------- mapeamento app ↔ banco ---------- */
-export const aRow = (a: Account) => ({ id: a.id, name: a.name, color: a.color || null, label: a.label || null, start_cents: a.start || 0, ...(a.kind ? { kind: a.kind } : {}), ...(a.closeDay ? { close_day: a.closeDay } : {}), ...(a.dueDay ? { due_day: a.dueDay } : {}) }); // `kind` só vai quando é cartão: sem a coluna no banco, quem não usa cartão continua sincronizando
-export const aFrom = (r: Json): Account => ({ id: r.id, name: r.name, color: r.color || CARD_PALETTE[0], ...(r.label ? { label: r.label } : {}), start: +r.start_cents || 0, ...(r.kind === "cartao" ? { kind: "cartao" as const } : {}), ...(r.close_day ? { closeDay: +r.close_day } : {}), ...(r.due_day ? { dueDay: +r.due_day } : {}) });
+export const aRow = (a: Account) => ({ id: a.id, name: a.name, color: a.color || null, label: a.label || null, start_cents: a.start || 0, ...(a.kind ? { kind: a.kind } : {}), ...(a.closeDay ? { close_day: a.closeDay } : {}), ...(a.dueDay ? { due_day: a.dueDay } : {}), ...(a.limit ? { limit_cents: a.limit } : {}) }); // `kind` só vai quando é cartão: sem a coluna no banco, quem não usa cartão continua sincronizando
+export const aFrom = (r: Json): Account => ({ id: r.id, name: r.name, color: r.color || CARD_PALETTE[0], ...(r.label ? { label: r.label } : {}), start: +r.start_cents || 0, ...(r.kind === "cartao" ? { kind: "cartao" as const } : {}), ...(r.close_day ? { closeDay: +r.close_day } : {}), ...(r.due_day ? { dueDay: +r.due_day } : {}), ...(r.limit_cents ? { limit: +r.limit_cents } : {}) });
 // `cat` só vai quando existe: sem a coluna no banco, quem não usa categoria continua sincronizando
 export const eRow = (e: Entry) => ({
   id: e.id, acct: e.acct, type: e.type, cents: e.cents, date: e.date, descr: e.desc || "", imp: e.imp || null,

@@ -213,3 +213,18 @@ describe("pagar fatura do cartão", () => {
     expect(faturaPaid(card, "2026-10", [...es, e({ imp: "fatura-Pan-2026-10-02" })])).toBeUndefined();
   });
 });
+
+import { cardUsed } from "./ledger";
+describe("limite do cartão", () => {
+  const card: Account = { id: "c", name: "Inter", color: "#f70", start: 0, kind: "cartao", closeDay: 25, dueDay: 2, limit: 100000 };
+  const es = [e({ acct: "c", cents: 10000, date: "2026-09-20" }), e({ acct: "c", cents: 3000, date: "2026-09-26" })];
+  it("usado = faturas em aberto; pagar libera o limite", () => {
+    expect(cardUsed(card, es)).toBe(13000);
+    expect(cardUsed(card, [...es, e({ imp: "pagfatura-c-2026-10" })])).toBe(3000);
+  });
+  it("limit só vai ao banco quando existe", () => {
+    expect(aRow(card).limit_cents).toBe(100000);
+    expect("limit_cents" in aRow({ ...card, limit: undefined })).toBe(false);
+    expect(aFrom(JSON.parse(JSON.stringify(aRow(card)))).limit).toBe(100000);
+  });
+});

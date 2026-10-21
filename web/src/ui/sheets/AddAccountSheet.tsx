@@ -14,7 +14,7 @@ export function AddAccountSheet() {
   const have = new Set(accts.map(c => c.name.toLowerCase()));
   const [picked, setPicked] = useState<string | null>(null);
   const [color, setColor] = useState(() => CARD_PALETTE.find(c => !accts.some(a => a.color === c)) || CARD_PALETTE[0]);
-  const [name, setName] = useState(""), [bal, setBal] = useState(""), [err, setErr] = useState(""), [card, setCard] = useState(false), [closeD, setCloseD] = useState(""), [dueD, setDueD] = useState("");
+  const [name, setName] = useState(""), [bal, setBal] = useState(""), [err, setErr] = useState(""), [card, setCard] = useState(false), [lim, setLim] = useState(""), [closeD, setCloseD] = useState(""), [dueD, setDueD] = useState("");
   const nameRef = useRef<HTMLInputElement>(null);
   useEffect(() => { if (picked === "") nameRef.current?.focus(); }, [picked]);
 
@@ -34,7 +34,7 @@ export function AddAccountSheet() {
     if (picked === null) { setErr("Escolha o banco ou toque em Outro."); return; }
     if (!nm) { setErr("Dê um nome à conta."); return; }
     if (nm.toLowerCase() === "outro" || accts.some(c => c.name.toLowerCase() === nm.toLowerCase())) { setErr("Já existe uma conta com esse nome."); return; }
-    const a = { id: uid(), name: nm, color, start: card ? 0 : digits(bal), ...(card ? { kind: "cartao" as const, closeDay: (+closeD >= 1 && +closeD <= 31 ? +closeD : undefined), dueDay: (+dueD >= 1 && +dueD <= 31 ? +dueD : undefined) } : {}) };
+    const a = { id: uid(), name: nm, color, start: card ? 0 : digits(bal), ...(card ? { kind: "cartao" as const, limit: digits(lim) || undefined, closeDay: (+closeD >= 1 && +closeD <= 31 ? +closeD : undefined), dueDay: (+dueD >= 1 && +dueD <= 31 ? +dueD : undefined) } : {}) };
     actions.addAccount(a); closeSheet(); openAccount(a.id); toast((card ? "Cartão " : "Conta ") + nm + " criado" + (card ? "" : "a"));
   }
   return (<>
@@ -52,7 +52,8 @@ export function AddAccountSheet() {
       </div>
     </div>
     <div className="field" hidden={picked !== ""}><label htmlFor="cdName">Nome da conta</label><input type="text" id="cdName" ref={nameRef} placeholder="Ex.: Nubank, C6, Itaú" maxLength={20} value={name} onChange={e => setName(e.target.value)} /></div>
-        <div className="field" hidden={!card}><span className="lbl">Fatura (dia do mês)</span>
+        <div className="field" hidden={!card}><label htmlFor="cdLim">Limite do cartão (R$)</label><MoneyInput id="cdLim" value={lim} onChange={v => setLim(moneyMask(v))} /></div>
+    <div className="field" hidden={!card}><span className="lbl">Fatura (dia do mês)</span>
       <div className="fx-calc-row">
         <label className="fx-f">Fecha dia<input type="text" inputMode="numeric" className="fld" id="cdClose" aria-label="Fecha dia" placeholder="25" maxLength={2} value={closeD} onChange={e => setCloseD(e.target.value.replace(/\D/g, ""))} /></label>
         <label className="fx-f">Vence dia<input type="text" inputMode="numeric" className="fld" id="cdDue" aria-label="Vence dia" placeholder="2" maxLength={2} value={dueD} onChange={e => setDueD(e.target.value.replace(/\D/g, ""))} /></label>

@@ -228,3 +228,5 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
 .cardtag{display:block;font-size:.76rem;font-weight:600;color:var(--muted);margin-top:1px}
 
 .fatrow{gap:10px;cursor:default}.fatrow .btn{min-height:36px;padding:0 14px}
+
+.limbox{margin:2px 0 12px}.limbar{height:8px;border-radius:4px;background:var(--chip);overflow:hidden}.limbar i{display:block;height:100%;border-radius:4px;background:var(--accent)}.limbar i.over{background:var(--neg)}.limbox small{display:block;margin-top:6px;color:var(--muted);font-size:.82rem;font-weight:600}

@@ -65,3 +65,6 @@ alter table accts add column if not exists kind text;
 -- Fechamento e vencimento do cartão (21/10/2026): o mês do gasto é o do vencimento da fatura. Quem já rodou o esquema acima roda só estas linhas.
 alter table accts add column if not exists close_day int;
 alter table accts add column if not exists due_day int;
+
+-- Limite do cartão (21/10/2026). Quem já rodou o esquema acima roda só esta linha.
+alter table accts add column if not exists limit_cents bigint;

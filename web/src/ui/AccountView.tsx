@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../lib/createStore";
-import { acctEntries, entMonth, faturaPaid, faturas, isCard, isFut, matchEntry } from "../lib/ledger";
+import { acctEntries, entMonth, cardUsed, faturaPaid, faturas, isCard, isFut, matchEntry } from "../lib/ledger";
 import { MESN, R, dayLbl, fmtD } from "../lib/format";
 import { actions, ledger } from "../lib/store";
 import type { Entry } from "../lib/types";
@@ -35,9 +35,18 @@ export function AccountView({ id }: { id: string }) {
 
   const fats = isCard(a) ? faturas(a, entries) : [];
   return (<>
-    {fats.length > 0 && (
+    {(fats.length > 0 || !!a.limit) && (
       <section className="sec" id="faturas">
         <h2>Faturas</h2>
+        {!!a.limit && (() => {
+          const used = cardUsed(a, entries), pct = Math.min(100, Math.round((used / a.limit!) * 100));
+          return (
+            <div className="limbox" id="limbox">
+              <div className="limbar"><i className={used > a.limit! ? "over" : ""} style={{ width: pct + "%" }} /></div>
+              <small>{R(used)} usados de {R(a.limit!)} · {used > a.limit! ? "passou " + R(used - a.limit!) : "disponível " + R(a.limit! - used)}</small>
+            </div>
+          );
+        })()}
         {fats.map(f => {
           const paid = faturaPaid(a, f.ym, entries);
           return (
