@@ -1423,6 +1423,9 @@ header.top{padding:18px 16px!important}
   .tabav{border:0}
   .fab{background:var(--btn)!important;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 8px 22px rgba(0,0,0,.28)!important;border-radius:50%!important}
 }
+button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align:left;font:inherit;cursor:pointer}
+.acsub{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 2px;padding-top:12px;border-top:1px solid var(--line);font-weight:700;font-size:.92rem}
+.acsub .lk{background:none;border:0;color:var(--accent);font:inherit;font-weight:600;font-size:.84rem}
 </style>
 
 <div class="wrap">
@@ -2430,7 +2433,17 @@ function endBal(ym){
 /* marca como pago guardando a hora, para o saldo da conta acompanhar */
 const paidPatch=to=>to?{paid:true,paidAt:Date.now()}:{paid:false,paidAt:0};
 function acReadDraft(){if(!acDraft)return;acDraft=acDraft.map((a,i)=>({...a,name:($("acn_"+i)?.value??a.name).trim(),free:a.free,cents:$("acv_"+i)?digits($("acv_"+i).value):a.cents}))}
-function contaBlock(){
+/* Contas (celular): os cartões entram na mesma lista das contas (21/10/2026, pedido dele: "juntar Na conta com os cartões") */
+function walCardRows(){
+  const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
+  if(!cs.length&&!B.length) return "";
+  const row=(c,sub,val,neg)=>`<button class="acone cardgo" data-opencard="${esc(c)}">${cardBadge(c)}<span class="t"><b>${esc(c)}</b><span>${sub}</span></span><span class="v ${neg?"neg":""}">${val}</span></button>`;
+  return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=cardTotal(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
+    const f=k.limit?cardFree(c).free:null;
+    return row(c,[f!=null?`livre ${R(Math.max(0,f))}`:"",due].filter(Boolean).join(" · "),R(tot),f!=null&&f<0)}).join("")+
+    B.map(b=>{const v=benBal(b), nx=benNext(b);return row(b.name,nx?`crédito ${fmtDM(nx)}`:"vale",R(v),v<0)}).join("");
+}
+function contaBlock(withCards){
   const ym=curYM(), mn=monthLabel(ym).split(" ")[0].toLowerCase(), A=accts();
   if(acDraft) return `<section><h2>Saldo na conta</h2><div class="card rate"><div class="src">Veja o saldo no app do banco e digite aqui. Fica só neste aparelho.</div>`+
     acDraft.map((a,i)=>{const cs=ALL_BANKS(), opts=[...cs,...(a.name&&!cs.includes(a.name)?[a.name]:[])];
@@ -2443,9 +2456,10 @@ function contaBlock(){
   const at=A.map(a=>a.at).filter(Boolean).sort()[0], old=at&&at<addDays(today(),-3);
   const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button id="acEdit">Atualizar</button></span>`;
   /* banco limpo (out/2026): no celular, uma linha por conta; "ainda entra / falta pagar / sobra" já estão no topo */
-  if(!IS_WIDE.matches) return `<section><h2>Na conta ${ext}</h2><div class="card">`+
+  if(!IS_WIDE.matches) return `<section><h2>${withCards?"Contas e cartões":"Na conta"} ${ext}</h2><div class="card">`+
     A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:""}</span></span><span class="v">${R(A.length===1?tot:accBalOf(a))}</span></div>`).join("")+
     (A.length>1?`<div class="acone"><span class="t"><b>Total</b></span><span class="v">${R(tot)}</span></div>`:"")+
+    (withCards?walCardRows():"")+
     (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
     (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+`</div></section>`;
   return `<section><h2>Saldo na conta ${ext}</h2><div class="card rate">
@@ -4043,7 +4057,7 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main">${contaBlock()}${hojeCards()}${saveSection()}${debtSection()}</div>
+      <div class="ano-col-main">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())})()}${saveSection()}${debtSection()}</div>
       <div class="ano-col-side">${fxRowSection()}${divSection()}</div>
     </div>`;
   } else if(anoSubTab === "ano"){
