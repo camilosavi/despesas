@@ -4,9 +4,11 @@ import "./styles.css";
 import { installIosTouchFix } from "./lib/iosTouch";
 import { startSync } from "./lib/sync";
 import { App } from "./ui/App";
+import { installNavHistory } from "./ui/navHistory";
 
 startSync();
 installIosTouchFix();
+installNavHistory();
 createRoot(document.getElementById("root")!).render(<StrictMode><App /></StrictMode>);
 
 // PWA: service worker só em produção e em https (ou localhost)

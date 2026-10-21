@@ -82,6 +82,8 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
    - **Qualidade de vida** (21/10/2026): *Desfazer* no aviso ao apagar lançamento, transferência ou conta (6 s; `toast(texto, undo)`); *Duplicar* no lançamento (`{kind:"lanc", copyId}`, só sem `tr`/`imp`);
      sugestão de descrição já usada (`descHints`, `<datalist>`) que preenche a categoria da última igual (`catForDesc`, só se ele ainda não tocou nas categorias); atalhos **Hoje/Ontem** (`DateField`, também em Transferir);
      **Enter** salva em Lançar/Transferir; Lançar abre na última conta usada (`despesas.zero.lastAcct`, só no aparelho).
+   - **Olho** (21/10/2026, canto do cartão no topo, ao lado de Personalizar): borra os valores das listas e do cartão (`html.hide`, `despesas.zero.hide` só no aparelho); as janelas continuam legíveis.
+   - **Voltar do celular** (`ui/navHistory.ts`): conta aberta e janela aberta são níveis do histórico; voltar fecha a janela, depois volta às contas, depois sai do app. ✕ e ‹ Contas desfazem as entradas com `history.go` (juntadas num só por microtask).
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)
