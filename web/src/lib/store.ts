@@ -3,6 +3,7 @@ import { createStore } from "./createStore";
 import { cardColor } from "./banks";
 import { uid } from "./format";
 import { lsGet, lsJson, lsSet } from "./storage";
+import { CAT_RENAME } from "./categories";
 import type { Account, Entry, SaveBox, SaveMove } from "./types";
 
 export const KEY_ACCTS = "despesas.zero.accts", KEY_ENTRIES = "despesas.zero.entries", KEY_BOXES = "despesas.zero.boxes";
@@ -74,6 +75,17 @@ export const actions = {
     const s = ledger.get(), a = s.accts.find(x => x.id === from), b = s.accts.find(x => x.id === into); if (!a || !b || from === into) return;
     const fill: Partial<Account> = {}; for (const k of ["limit", "closeDay", "dueDay"] as const) if (!b[k] && a[k]) fill[k] = a[k];
     commit({ ...s, accts: s.accts.filter(x => x.id !== from).map(x => (x.id === into ? { ...x, ...fill } : x)), entries: s.entries.map(e => (e.acct === from ? { ...e, acct: into } : e)) });
+  },
+  /** passa os nomes de categoria da versão de 21/10 (manhã) para os do app antigo, nos lançamentos e nos itens das faturas; sem nada para trocar não grava */
+  migrateCats() {
+    const s = ledger.get(); let n = 0;
+    const entries = s.entries.map(e => {
+      const m = CAT_RENAME[e.type], c = e.cat && m[e.cat];
+      const items = e.items?.some(i => i.cat && CAT_RENAME.desp[i.cat]) ? e.items.map(i => (i.cat && CAT_RENAME.desp[i.cat] ? { ...i, cat: CAT_RENAME.desp[i.cat] } : i)) : e.items;
+      if (!c && items === e.items) return e;
+      n++; return { ...e, ...(c ? { cat: c } : {}), ...(items ? { items } : {}) };
+    });
+    if (n) commit({ ...s, entries });
   },
   deleteAccount(id: string) { const s = ledger.get(); commit({ ...s, accts: s.accts.filter(a => a.id !== id), entries: s.entries.filter(e => e.acct !== id) }); },
   addEntries(...es: Entry[]) { const s = ledger.get(); commit({ ...s, entries: [...s.entries, ...es] }); },

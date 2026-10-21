@@ -252,10 +252,10 @@ html.hide :is(.big,.split b,.boxline b,.acrow b,.boxrow-vals,.ex b,.exsum,.limbo
 #lcMore{margin-top:4px}
 #lcMoreBox select,#lcMoreBox input[type=number],#lcMoreBox input[type=month]{width:100%;margin-top:6px}
 
-.ex .cdot,.cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline;flex:none}
+.ex .cdot,.cdot{display:inline-block;width:15px;height:15px;margin-right:6px;vertical-align:-3px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .catrow{border-bottom:1px solid var(--line)}
 .catname{display:flex;align-items:center;gap:2px;width:100%;min-height:46px;background:none;border:0;font-size:16px;color:var(--ink);text-align:left}
-.catname .cdot{width:14px;height:14px;margin-right:10px}
+.catname .cdot{width:20px;height:20px;margin-right:10px;vertical-align:middle}
 .catedit{padding:0 0 12px}
 .swatches{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
 .swatches button{width:32px;height:32px;border-radius:50%;border:2px solid transparent}

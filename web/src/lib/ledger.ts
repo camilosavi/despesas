@@ -1,5 +1,6 @@
 // Contas e lançamentos: saldo, "entrou no mês" e busca. Funções puras (recebem os dados e a data de hoje).
 import { bankOf } from "./banks";
+import { CAT_CARD } from "./categories";
 import { brl, fmtD, fold, lastDay, shiftYM, today } from "./format";
 import type { Account, Entry } from "./types";
 
@@ -52,7 +53,7 @@ export const totBal = (accts: Account[], entries: Entry[], t = today()) => accts
 /** lançamentos que não são receita nem gasto de verdade: ajuste de saldo e o pagamento da fatura (as compras do cartão já são os gastos) */
 export const isAdj = (e: Entry) => !!e.imp && e.imp.startsWith("ajuste-");
 export const countsInSummary = (e: Entry) => !e.xfer && !isAdj(e) && !(e.imp && e.imp.startsWith("pagfatura-"));
-/** fatura lida com categoria nos itens: no resumo cada item conta na sua categoria (sem categoria = a da fatura, "Cartão"); a diferença para o total do banco fica na categoria da fatura */
+/** fatura lida com categoria nos itens: no resumo cada item conta na sua categoria (sem categoria = a da fatura, "Faturas de cartão"); a diferença para o total do banco fica na categoria da fatura */
 export const expandItems = (e: Entry): Entry[] => {
   if (!e.items || !e.items.some(i => i.cat)) return [e];
   const parts = e.items.map((i, k): Entry => ({ ...e, id: e.id + "#" + k, cents: i.cents, date: i.date || e.date, desc: i.desc, cat: i.cat || e.cat, items: undefined }));
@@ -94,7 +95,7 @@ export const catForDesc = (entries: Entry[], type: Entry["type"], desc: string) 
   const k = fold(desc.trim()); if (!k) return "";
   let best: Entry | undefined;
   for (const e of entries) if (e.type === type && !e.xfer && e.cat && fold(e.desc.trim()) === k && (!best || (e.at || 0) > (best.at || 0))) best = e;
-  if (best && best.cat !== "Cartão") return best.cat!;
+  if (best && best.cat !== CAT_CARD) return best.cat!;
   if (type === "desp") for (const e of entries) for (const i of e.items || []) if (i.cat && fold(i.desc.trim()) === k) return i.cat; // compra igual numa fatura já categorizada
   return best?.cat ?? "";
 };

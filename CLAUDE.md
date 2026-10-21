@@ -55,10 +55,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      fixa à esquerda e `#view` (contas em grade ou extrato) à direita. Tudo alinhado na borda da moldura do cartão.
    - **Editar lançamento** (21/10/2026): ao tocar num lançamento aparece **Editar** (reaproveita a janela Lançar, `openLanc(id)`: valor, descrição, conta, data,
      entrada/saída; mantém `imp` e `items`). Transferência não edita (apagar e refazer; apagar leva o par).
-   - **Categorias** (21/10/2026): lista fixa (`CAT_OUT`: Mercado, Alimentação, Transporte, Moradia, Contas, Cartão, Saúde, Lazer, Educação, Assinaturas,
-     Outros; `CAT_IN`: Salário, Rendimento, Reembolso, Outros), escolhida no Lançar/Editar (toque de novo desmarca). Campo `cat` no lançamento
+   - **Categorias** (21/10/2026): lista fixa (`CAT_OUT` e `CAT_IN`, ver "Categorias do app antigo" abaixo), escolhida no Lançar/Editar (toque de novo desmarca). Campo `cat` no lançamento
      (coluna `cat text` em `entries`: **rodar a última linha de `supabase/schema.sql` antes de usar**; o app só manda `cat` quando existe, então
-     quem não usa categoria sincroniza mesmo sem a coluna). Holerite lido → "Salário", fatura → "Cartão", conta/boleto → "Contas".
+     quem não usa categoria sincroniza mesmo sem a coluna). Holerite lido → "Salário", fatura → "Faturas de cartão", conta/boleto → "Casa e contas".
    - **Busca e filtro no extrato** (por conta): campo "Buscar no extrato" (descrição, categoria, valor ou data) + chips das categorias em uso;
      filtro ativo mostra "N lançamentos · Entradas · Saídas". Só a lista é redesenhada (o campo mantém o foco); some ao trocar de conta.
    - **Caixinhas** (21/10/2026, `lib/boxes.ts`, `despesas.zero.boxes`): metas em BRL/EUR/USD com movimentos (guardar/resgatar, cotação). Sincronizam como 1 linha por caixinha na tabela `boxes`
@@ -103,6 +102,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
    - **Cartões enxutos** (21/10/2026, "essa aba do cartão parece mto confusa", opção "faixa na home + cartão enxuto"): na home, faixa lateral "Cartões" (`.cstrip`/`.ctile`: cor do cartão, "vence dd/mm", "Fatura de <mês>", valor, barra do limite) e "Contas" só com contas de banco.
      `openFatura(a, entries)` = fatura em aberto da vez (mais antiga que vence neste mês ou depois; só atrasadas → a mais nova). Cartão aberto: topo mostra essa fatura + "Limite disponível"; seção "Fatura" com chips dos meses de vencimento (uma fatura por vez), cartão da fatura (total, vence, "Em aberto"/"Paga ✓", **Pagar**) e barra de limite; abaixo "Compras da fatura" já filtradas pelo mês escolhido (sem chips de mês).
    - **Juntar contas** (`actions.mergeAccount`, "Juntar … em outro(a)" no Personalizar; só entre contas do mesmo tipo, confirma com 2 toques): lançamentos passam para a conta de destino, que mantém nome, cor e saldo inicial (limite e dias da fatura vêm da outra se faltarem). O Open Finance acha a conta pelo banco no nome (`bankOf`): a que fica deve ter "Inter" no nome.
+   - **Categorias do app antigo** (21/10/2026, "puxe as categorias do outro app, estavam boas"; `lib/categories.ts`, `catcolor.ts`, `catIcons.ts`): saídas Alimentação, Mercado, Transporte, Casa e contas, Lazer, Esporte, Saúde, Compras, Educação, Assinaturas, Faturas de cartão, Outros;
+     entradas Salário, Rendimentos, Divisões, Saldo anterior, Outras receitas. Cores e ícones do app antigo (`Dot` agora desenha o ícone). **Categorias pessoais dele (Intercâmbio, Cidadania, Câmbio, Aulas/bicos) NÃO entram no código público**: ele cria com "+ Nova".
+     `actions.migrateCats` troca os nomes da manhã de 21/10 (Moradia/Contas→Casa e contas, Cartão→Faturas de cartão, Rendimento→Rendimentos, Reembolso→Divisões, Outros de entrada→Outras receitas) nos lançamentos e itens; roda a cada mudança dos lançamentos, idempotente.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../lib/createStore";
-import { ledger } from "../lib/store";
+import { actions, ledger } from "../lib/store";
 import { drive, finishDrive, returningFromDrive } from "../lib/driveImport";
 import { ofAuto } from "../lib/openfinance";
 import { finishGoogle, returningFromGoogle, session } from "../lib/sync";
@@ -19,7 +19,8 @@ export function App() {
   const openId = useStore(ui, s => s.openId);
   const hasOpen = useStore(ledger, s => (openId ? s.accts.some(a => a.id === openId) : false));
   const [finishing, setFinishing] = useState(returningFromGoogle());
-  const back = useStore(drive, s => s.back);
+  const back = useStore(drive, s => s.back), ents = useStore(ledger, s => s.entries);
+  useEffect(() => { actions.migrateCats(); }, [ents]); // nomes de categoria antigos (manhã de 21/10) viram os do app antigo; idempotente
   useEffect(() => { if (returningFromDrive()) { const m = finishDrive(); if (m) toast(m); } }, []); // volta do Google (Drive): só guarda o token
   useEffect(() => { if (ses && back) { drive.set({ back: false }); openSheet({ kind: "me" }); } }, [ses, back]); // e abre "Sua conta" para pedir a senha
 

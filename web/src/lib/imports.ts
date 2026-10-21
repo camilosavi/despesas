@@ -1,4 +1,5 @@
 // PDF lido → lançamento. As chaves `imp` evitam lançar o mesmo documento duas vezes (o banco também recusa a repetição).
+import { CAT_CARD } from "./categories";
 import { uid } from "./format";
 import { titleCase } from "./pdf/parsers";
 import type { ContaPdf, Fatura, HoleritePdf } from "./pdf/read";
@@ -33,10 +34,10 @@ export const faturaDays = (r: Fatura, due: string) => {
 };
 
 export const contaEntry = (acct: string, c: ContaPdf): Entry =>
-  ({ id: uid(), acct, type: "desp", cents: c.cents, date: c.due, desc: "Conta " + c.name, cat: "Contas", imp: ctKey(c), at: Date.now() });
+  ({ id: uid(), acct, type: "desp", cents: c.cents, date: c.due, desc: "Conta " + c.name, cat: "Casa e contas", imp: ctKey(c), at: Date.now() });
 export const holeriteEntry = (acct: string, h: HoleritePdf): Entry =>
   ({ id: uid(), acct, type: "rec", cents: h.cents, date: h.date, desc: h.kind + (h.emp ? " · " + h.emp : ""), cat: "Salário", imp: hlKey(h), at: Date.now() });
 /** uma despesa "Fatura <banco>" no vencimento, com o total do banco e os itens guardados dentro */
 export const faturaEntry = (acct: string, r: Fatura, d: string, cats: string[] = []): Entry =>
-  ({ id: uid(), acct, type: "desp", cents: ftTotal(r), date: d, desc: "Fatura " + (r.bank || "cartão"), cat: "Cartão", imp: ftKey(r, d), at: Date.now(),
+  ({ id: uid(), acct, type: "desp", cents: ftTotal(r), date: d, desc: "Fatura " + (r.bank || "cartão"), cat: CAT_CARD, imp: ftKey(r, d), at: Date.now(),
      items: faturaRows(r).buys.map((y, k) => ({ date: y.date, desc: itemName(y), cents: y.cents, ...(cats[k] ? { cat: cats[k] } : {}) })) });

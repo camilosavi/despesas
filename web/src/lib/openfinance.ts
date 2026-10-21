@@ -1,6 +1,7 @@
 // Open Finance (Meu Pluggy) do Inter: conta e cartão viram lançamentos sozinhos. As chaves da Pluggy ficam num Worker do Cloudflare dele
 // (tools/pluggy-worker.js); aqui ficam só no aparelho o endereço do Worker, a chave (APP_KEY) e os ids das conexões.
 import { bankOf, cardColor, cardLabel } from "./banks";
+import { CAT_CARD } from "./categories";
 import { createStore } from "./createStore";
 import { fold, pad, uid, ymd } from "./format";
 import { catForDesc, isCard, sg } from "./ledger";
@@ -49,7 +50,7 @@ export function bankEntries(tx: OfTx[], acct: string, guess: Guess): Entry[] {
     const c = cents(t.amount); if (!c || t.status === "PENDING") continue;
     const d = String(t.description || ""), m = /^(.+?)\s+-\s+(.*)$/.exec(d), kind = (m ? m[1] : d).trim(), det = (m ? m[2] : "").replace(/^null$/i, "").trim();
     const type: Entry["type"] = c > 0 ? "rec" : "desp", abs = Math.abs(c), date = ofDay(t.date), rcv = t.paymentData?.receiver?.name || "";
-    if (/fatura/i.test(d) || /^REALIZE\b/i.test(rcv) || t.category === "Credit card payment") { out.push(mk(acct, type, abs, date, "Pagamento de fatura", "pagfatura-of-" + t.id, "Cartão")); continue; }
+    if (/fatura/i.test(d) || /^REALIZE\b/i.test(rcv) || t.category === "Credit card payment") { out.push(mk(acct, type, abs, date, "Pagamento de fatura", "pagfatura-of-" + t.id, CAT_CARD)); continue; }
     if (t.category === "Same person transfer") { out.push(mk(acct, type, abs, date, type === "rec" ? "Transferência recebida de mim" : "Transferência enviada para mim", "of-" + t.id, "", true)); continue; }
     if (/^Cr[eé]dito liberado/i.test(d)) { out.push(mk(acct, type, abs, date, "Crédito liberado (Pix no crédito)", "of-" + t.id, "", true)); continue; }
     const desc = /compra no d[eé]bito/i.test(kind) ? nice(shop(det)) : det ? kind + " · " + nice(det) : kind;

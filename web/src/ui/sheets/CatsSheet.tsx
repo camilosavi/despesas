@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CAT_IN, CAT_OUT, catsOf, isFixedCat } from "../../lib/categories";
+import { CAT_IN, CAT_OUT, catsOf, isFixedCat, isLastCat, lastCat } from "../../lib/categories";
 import { CAT_PALETTE, catColor, catPrefs, isHidden, moveCatColor, setCatColor, toggleHide } from "../../lib/catcolor";
 import { useStore } from "../../lib/createStore";
 import { actions, ledger } from "../../lib/store";
@@ -13,7 +13,7 @@ export function CatsSheet() {
   useStore(catPrefs, s => s);
   const [type, setType] = useState<"desp" | "rec">("desp"), [sel, setSel] = useState(""), [name, setName] = useState("");
   const fixed = type === "rec" ? CAT_IN : CAT_OUT;
-  const all = [...fixed.filter(c => c !== "Outros"), ...catsOf(type, entries).filter(c => !fixed.includes(c)), "Outros"];
+  const all = [...fixed.filter(c => c !== lastCat(type)), ...catsOf(type, entries).filter(c => !fixed.includes(c)), lastCat(type)];
   const rename = (from: string, to: string) => { actions.renameCat(from, to); moveCatColor(from, to.trim()); setSel(""); toast(to.trim() ? "Categoria renomeada" : "Categoria apagada (lançamentos ficam sem categoria)"); };
   return (<>
     <SheetHead title="Categorias" />
@@ -25,7 +25,7 @@ export function CatsSheet() {
         </button>
         {sel === c && <div className="catedit">
           <div className="swatches">{CAT_PALETTE.map(col => <button type="button" key={col} aria-label={"Cor " + col} aria-pressed={catColor(c) === col} style={{ background: col }} onClick={() => setCatColor(c, col)} />)}</div>
-          {isFixedCat(c) && c !== "Outros" && <button type="button" className="btn soft wide" onClick={() => toggleHide(c)}>{isHidden(c) ? "Mostrar nas listas" : "Esconder das listas"}</button>}
+          {isFixedCat(c) && !isLastCat(c) && <button type="button" className="btn soft wide" onClick={() => toggleHide(c)}>{isHidden(c) ? "Mostrar nas listas" : "Esconder das listas"}</button>}
           {!isFixedCat(c) && <div className="smedit">
             <input type="text" aria-label="Nome da categoria" maxLength={20} value={name} onChange={e => setName(e.target.value)} />
             <button type="button" className="btn soft" disabled={!name.trim() || name.trim() === c} onClick={() => rename(c, name)}>Renomear</button>

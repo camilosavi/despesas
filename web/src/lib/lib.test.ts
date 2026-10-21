@@ -239,7 +239,7 @@ import { catsOf, isFixedCat } from "./categories";
 describe("resumo por categoria", () => {
   const es = [
     e({ cents: 4000, cat: "Mercado", date: "2026-10-03" }), e({ cents: 6000, cat: "Mercado", date: "2026-10-09" }), e({ cents: 2500, cat: "Pets", date: "2026-10-11" }), e({ cents: 700, date: "2026-10-12" }),
-    e({ cents: 9999, cat: "Cartão", date: "2026-10-12", imp: "pagfatura-c-2026-10" }), e({ cents: 5000, cat: "Mercado", xfer: 1, tr: "t" }),
+    e({ cents: 9999, cat: "Faturas de cartão", date: "2026-10-12", imp: "pagfatura-c-2026-10" }), e({ cents: 5000, cat: "Mercado", xfer: 1, tr: "t" }),
     e({ type: "rec", cents: 300000, cat: "Salário", date: "2026-10-05" }), e({ type: "rec", cents: 1234, date: "2026-10-06", imp: "ajuste-1" }), e({ cents: 888, cat: "Mercado", date: "2026-09-30" }),
   ];
   it("soma por categoria, ordena e ignora transferência, ajuste e pagamento de fatura", () => {
@@ -253,8 +253,8 @@ describe("resumo por categoria", () => {
     expect(summaryMonths([acct], es, "2026-10-21")).toEqual(["2026-10", "2026-09"]);
   });
   it("categorias criadas aparecem a partir dos lançamentos, 'Outros' por último", () => {
-    expect(catsOf("desp", es).slice(-3)).toEqual(["Assinaturas", "Pets", "Outros"]);
-    expect(catsOf("rec", es)).toEqual(["Salário", "Rendimento", "Reembolso", "Outros"]);
+    expect(catsOf("desp", es).slice(-3)).toEqual(["Faturas de cartão", "Pets", "Outros"]);
+    expect(catsOf("rec", es)).toEqual(["Salário", "Rendimentos", "Divisões", "Saldo anterior", "Outras receitas"]);
     expect(catsOf("rec", [], "Freela")).toContain("Freela");
     expect(isFixedCat("Mercado")).toBe(true); expect(isFixedCat("Pets")).toBe(false);
   });
@@ -329,10 +329,10 @@ describe("lançar: parcelas, repetir, dividir e duas formas", () => {
     expect(repCount({ k: "u", until: "2027-02" }, "2026-10-15")).toBe(5); expect(repCount({ k: "u", until: "2026-09" }, "2026-10-15")).toBe(0);
     expect(repCount({ k: "p", n: 1 }, "2026-10-15")).toBe(0);
   });
-  it("dividir com 4: sai tudo, 3 partes a receber em Reembolso", () => {
+  it("dividir com 4: sai tudo, 3 partes a receber em Divisões", () => {
     const es = launchEntries({ ...base, people: 4 });
     expect(es).toHaveLength(4); expect(es[0].cents).toBe(10000);
-    expect(es.slice(1).map(x => [x.type, x.cents, x.open, x.cat, x.desc])).toEqual(Array(3).fill(["rec", 2500, 1, "Reembolso", "A receber: Notebook"]));
+    expect(es.slice(1).map(x => [x.type, x.cents, x.open, x.cat, x.desc])).toEqual(Array(3).fill(["rec", 2500, 1, "Divisões", "A receber: Notebook"]));
   });
   it("duas formas: parte sai de outra conta", () => {
     const es = launchEntries({ ...base, acct2: "b", cents2: 4000 });
@@ -360,7 +360,7 @@ describe("Open Finance (formato da Pluggy)", () => {
     expect(es.map(x => [x.imp, x.type, x.cents, x.desc, x.cat ?? "", !!x.xfer])).toEqual([
       ["of-1", "rec", 899, "Pix recebido · Fulano De Tal", "", false],
       ["of-2", "desp", 4550, "Mercado Sao Vicente It", "Mercado", false],
-      ["pagfatura-of-3", "desp", 115086, "Pagamento de fatura", "Cartão", false],
+      ["pagfatura-of-3", "desp", 115086, "Pagamento de fatura", "Faturas de cartão", false],
       ["of-4", "desp", 52400, "Transferência enviada para mim", "", true],
       ["of-5", "rec", 4500, "Crédito liberado (Pix no crédito)", "", true],
     ]);
@@ -417,5 +417,17 @@ describe("juntar contas", () => {
     const s = ledger.get();
     expect(s.accts.map(a => a.id)).toEqual(["x2"]); expect(s.entries.every(x => x.acct === "x2")).toBe(true); expect(s.entries).toHaveLength(2);
     expect(s.accts[0]).toMatchObject({ name: "Cartão Inter", limit: 341000, closeDay: 25, dueDay: 2 });
+  });
+});
+
+describe("migrar nomes de categoria", () => {
+  it("troca os nomes de 21/10 pelos do app antigo, também nos itens, e é idempotente", () => {
+    ledger.set({ ...ledger.get(), entries: [e({ id: "g1", cat: "Moradia" }), e({ id: "g2", cat: "Contas" }), e({ id: "g3", cat: "Cartão", items: [{ date: "2026-10-01", desc: "x", cents: 1, cat: "Contas" }] }),
+      e({ id: "g4", type: "rec", cat: "Reembolso" }), e({ id: "g5", type: "rec", cat: "Outros" }), e({ id: "g6", cat: "Outros" }), e({ id: "g7", cat: "Pets" })] });
+    actions.migrateCats();
+    const c = Object.fromEntries(ledger.get().entries.map(x => [x.id, x.cat]));
+    expect(c).toEqual({ g1: "Casa e contas", g2: "Casa e contas", g3: "Faturas de cartão", g4: "Divisões", g5: "Outras receitas", g6: "Outros", g7: "Pets" });
+    expect(ledger.get().entries[2].items![0].cat).toBe("Casa e contas");
+    const before = ledger.get().entries; actions.migrateCats(); expect(ledger.get().entries).toBe(before);
   });
 });

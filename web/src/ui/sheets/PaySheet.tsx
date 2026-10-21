@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CAT_CARD } from "../../lib/categories";
 import { useStore } from "../../lib/createStore";
 import { bankOf } from "../../lib/banks";
 import { MESN, R, brl, digits, moneyMask, today, uid } from "../../lib/format";
@@ -35,7 +36,7 @@ export function PaySheet({ id, ym: first }: { id: string; ym?: string }) {
     if (!v) { setErr("Informe o valor."); return; }
     if (!date) { setErr("Informe a data."); return; }
     if (!acct) return;
-    actions.addEntries({ id: uid(), acct, type: "desp", cents: v, date, desc: "Fatura " + card!.name, cat: "Cartão", imp: `pagfatura-${card!.id}-${ym}`, at: Date.now(), items: f!.items.sort((a, b) => a.date.localeCompare(b.date)) });
+    actions.addEntries({ id: uid(), acct, type: "desp", cents: v, date, desc: "Fatura " + card!.name, cat: CAT_CARD, imp: `pagfatura-${card!.id}-${ym}`, at: Date.now(), items: f!.items.sort((a, b) => a.date.localeCompare(b.date)) });
     closeSheet(); toast("Fatura paga ✓");
   }
   return (<>

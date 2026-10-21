@@ -1,4 +1,5 @@
 // Lançar: uma entrada vira vários lançamentos (parcelas, todo mês, dividir com pessoas ou pagar com duas formas).
+import { CAT_DIV } from "./categories";
 import { lastDay, pad, uid } from "./format";
 import type { Entry, EntryType } from "./types";
 
@@ -42,6 +43,6 @@ export function launchEntries(i: LaunchIn, now = Date.now()): Entry[] {
   out.push(mk(i.acct, i.type, two ? i.cents - i.cents2! : i.cents, i.date, i.desc, i.cat, i.open));
   if (two) out.push(mk(i.acct2!, i.type, i.cents2!, i.date, i.desc, i.cat, i.open));
   const p = i.type === "desp" && !two ? Math.floor(i.people || 1) : 1, share = p > 1 ? Math.floor(i.cents / p) : 0;
-  if (share > 0) for (let k = 1; k < p; k++) out.push(mk(i.acct, "rec", share, i.date, "A receber: " + i.desc, "Reembolso", true));
+  if (share > 0) for (let k = 1; k < p; k++) out.push(mk(i.acct, "rec", share, i.date, "A receber: " + i.desc, CAT_DIV, true));
   return out;
 }
