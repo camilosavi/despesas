@@ -39,3 +39,13 @@ describe("guessCat", () => {
     expect(guessCat("desp", "Xyz")).toBe("");
   });
 });
+import { notCardBuy } from "./dedupe";
+describe("notCardBuy", () => {
+  it("separa Pix de compra", () => {
+    expect(notCardBuy(E({ desc: "Pix enviado · Fulano", imp: "of-1" }))).toBe(true);
+    expect(notCardBuy(E({ desc: "Pagamento de fatura", imp: "pagfatura-of-1" }))).toBe(true);
+    expect(notCardBuy(E({ type: "rec", desc: "Salário" }))).toBe(true);
+    expect(notCardBuy(E({ desc: "Posto Ituano", imp: "of-2" }))).toBe(false);
+    expect(notCardBuy(E({ desc: "Airbnb 2/6", imp: "of-3" }))).toBe(false);
+  });
+});

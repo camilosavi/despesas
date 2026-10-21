@@ -111,6 +111,7 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      Automático: Open Finance (`take()` → `matchForImport`, junta no lançamento manual sem chave e dá a chave `of-`) e leitura de fatura/conta/holerite (`actions.addOrMerge`). Os já existentes: botão "N possíveis duplicados" na home → "Juntar" / "São diferentes" (`despesas.zero.dupOk`, só no aparelho).
      `mergedEntry`: fica o lançamento dele (nome, data, categoria) e ganha a chave/itens do outro. Limite: compra solta do cartão x item dentro de fatura de PDF não é comparada.
    - **Palpite de categoria por marca** (21/10/2026, `guessCat` em `lib/categories.ts`, regras do app antigo): Netflix/Spotify/Claude/Udemy/Apple/Google → Assinaturas, Uber/posto → Transporte, iFood/padaria → Alimentação, IOF/juros → Outros etc. Entra por último em `catForDesc` (o histórico dele vence), então vale no Lançar, nos itens da fatura lida e no Open Finance.
+   - **Tirar movimento de conta do cartão** (21/10/2026, Personalizar do cartão, `actions.moveNonCard`, `notCardBuy` em `lib/dedupe.ts`): Pix, transferência, entrada, pagamento de fatura e formato "tipo · detalhe" do banco saem do cartão para a conta do mesmo banco (confirma com 2 toques).
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

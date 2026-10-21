@@ -19,6 +19,8 @@ export const similar = (a: string, b: string) => {
   return shared >= 1 && shared / Math.min(wa.length, wb.length) >= 0.5;
 };
 const basic = (a: Entry, b: Entry) => a.id !== b.id && a.acct === b.acct && a.type === b.type && a.cents === b.cents && !a.xfer && !b.xfer && !a.tr && !b.tr;
+/** lançamento que não é compra de cartão (Pix, transferência, entrada, pagamento de fatura, formato "tipo · detalhe" do banco) */
+export const notCardBuy = (e: Entry) => e.type === "rec" || !!e.xfer || !!e.tr || !!e.imp?.startsWith("pagfatura-") || !!e.imp?.startsWith("fatura-") || / · /.test(e.desc) || /\b(pix|transfer[eê]ncia|ted|doc|boleto|saque|dep[oó]sito|d[eé]bito)\b/i.test(e.desc);
 /** dois lançamentos que parecem o mesmo pagamento */
 export const sameTx = (a: Entry, b: Entry) => {
   if (!basic(a, b) || (isOf(a) && isOf(b))) return false; // dois do banco com a mesma chave diferente são compras diferentes

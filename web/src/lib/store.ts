@@ -4,7 +4,7 @@ import { cardColor } from "./banks";
 import { uid } from "./format";
 import { lsGet, lsJson, lsSet } from "./storage";
 import { CAT_RENAME } from "./categories";
-import { matchForImport, mergedEntry } from "./dedupe";
+import { matchForImport, mergedEntry, notCardBuy } from "./dedupe";
 import type { Account, Entry, SaveBox, SaveMove } from "./types";
 
 export const KEY_ACCTS = "despesas.zero.accts", KEY_ENTRIES = "despesas.zero.entries", KEY_BOXES = "despesas.zero.boxes";
@@ -93,6 +93,12 @@ export const actions = {
     const m = matchForImport(ledger.get().entries, e);
     if (!m) { commit({ ...ledger.get(), entries: [...ledger.get().entries, e] }); return false; }
     const s = ledger.get(); commit({ ...s, entries: s.entries.map(x => (x.id === m.id ? mergedEntry(x, e) : x)) }); return true;
+  },
+  /** tira de um cartão o que é movimento de conta (Pix etc.) e passa para uma conta; devolve quantos */
+  moveNonCard(cardId: string, toId: string): number {
+    const s = ledger.get(); let n = 0;
+    const entries = s.entries.map(e => (e.acct === cardId && notCardBuy(e) ? (n++, { ...e, acct: toId }) : e));
+    if (n) commit({ ...s, entries }); return n;
   },
   /** junta dois lançamentos que são o mesmo pagamento: fica `keep`, ganhando o que só o outro tinha, e `drop` some */
   mergeEntries(keepId: string, dropId: string) {

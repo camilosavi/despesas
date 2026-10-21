@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useStore } from "../../lib/createStore";
 import { CARD_PALETTE, cardLabel } from "../../lib/banks";
+import { bankOf } from "../../lib/banks";
+import { notCardBuy } from "../../lib/dedupe";
 import { brl, digits, moneyMask, textOn } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
 import { Badge } from "../Badge";
@@ -20,6 +22,10 @@ export function EditAccountSheet() {
   const [into, setInto] = useState("");
   const mates = accts.filter(x => a && x.id !== a.id && (x.kind === "cartao") === (a.kind === "cartao")), target = mates.find(x => x.id === into);
   const merge = useArmed("Toque de novo para juntar", target ? `Juntar em ${target.name}` : "Juntar", () => { if (!a || !target) return; actions.mergeAccount(a.id, target.id); closeSheet(); openAccount(target.id); toast(`Juntado em ${target.name} ✓`); });
+  const entries = useStore(ledger, s => s.entries), banks = accts.filter(x => x.kind !== "cartao");
+  const strayN = a?.kind === "cartao" ? entries.filter(e => e.acct === a.id && notCardBuy(e)).length : 0;
+  const bk = a ? bankOf(a.name) : "", dest = banks.find(x => bk && bankOf(x.name) === bk) || banks[0];
+  const stray = useArmed("Toque de novo para mover", dest ? `Mover ${strayN} para ${dest.name}` : "Crie uma conta antes", () => { if (!a || !dest) return; const n = actions.moveNonCard(a.id, dest.id); toast(`${n} movido${n > 1 ? "s" : ""} para ${dest.name} ✓`); });
   const del = useArmed("Toque de novo: apaga e leva os lançamentos", a?.kind === "cartao" ? "Apagar este cartão" : "Apagar esta conta", () => {
     if (!a) return; const acc = a, gone = ledger.get().entries.filter(e => e.acct === a.id), cardLbl = a.kind === "cartao" ? "Cartão apagado" : "Conta apagada";
     actions.deleteAccount(a.id); closeSheet(); backHome(); toast(cardLbl, () => { actions.addAccount(acc); actions.addEntries(...gone); });
@@ -64,6 +70,11 @@ export function EditAccountSheet() {
         {target && <><p className="hint">Os lançamentos de <b>{a.name}</b> vão para <b>{target.name}</b> e {a.name} some. Fica o nome, a cor e o saldo inicial de {target.name}.</p>
           <button type="button" className="btn wide" id="edMergeGo" onClick={merge.onClick}>{merge.text}</button></>}
       </div>
+    )}
+    {strayN > 0 && dest && (
+      <div className="field" id="edStray"><label>Movimentos de conta dentro do cartão</label>
+        <p className="hint">{strayN} lançamento{strayN > 1 ? "s" : ""} (Pix, transferência, entrada, pagamento de fatura) não {strayN > 1 ? "são" : "é"} compra de cartão. Mover para <b>{dest.name}</b>.</p>
+        <button type="button" className="btn wide" id="edStrayGo" onClick={stray.onClick}>{stray.text}</button></div>
     )}
     <p className="err" id="edErr">{err}</p>
     <button type="button" className="btn primary wide" id="edSave" onClick={save}>Salvar</button>
