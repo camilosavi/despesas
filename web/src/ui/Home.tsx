@@ -4,6 +4,8 @@ import { MESN, R, signR, textOn } from "../lib/format";
 import { ledger } from "../lib/store";
 import { Badge } from "./Badge";
 import { openAccount, openSheet } from "./uiStore";
+import { findDupes } from "../lib/dedupe";
+import { dupIgnored } from "./sheets/DupsSheet";
 
 import { boxBal, boxBrl, boxIcon, boxProgress, boxTotalsByCur, fmtMoneyCur } from "../lib/boxes";
 
@@ -12,8 +14,10 @@ export function Home() {
   const { accts, entries, boxes } = useStore(ledger, s => s);
   const totals = boxTotalsByCur(boxes), cards = accts.filter(isCard);
 
+  const nd = findDupes(entries, dupIgnored()).length;
   return (
     <>
+      {nd > 0 && <button type="button" className="btn soft wide" id="dupBtn" onClick={() => openSheet({ kind: "dups" })}>{nd} possíve{nd > 1 ? "is duplicados" : "l duplicado"} · ver</button>}
       {cards.length > 0 && (
         <section className="sec" id="cards">
           <h2>Cartões</h2>

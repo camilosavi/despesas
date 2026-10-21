@@ -2,6 +2,7 @@
 // (tools/pluggy-worker.js); aqui ficam só no aparelho o endereço do Worker, a chave (APP_KEY) e os ids das conexões.
 import { bankOf, cardColor, cardLabel } from "./banks";
 import { CAT_CARD } from "./categories";
+import { matchForImport } from "./dedupe";
 import { createStore } from "./createStore";
 import { fold, pad, uid, ymd } from "./format";
 import { catForDesc, isCard, sg } from "./ledger";
@@ -97,7 +98,7 @@ export async function ofRun(manual = false): Promise<string> {
   const c = ofCfg(); if (running || !c.url || !c.key || !c.items?.length) return "";
   running = true; ofState.set({ busy: true, err: "" });
   const s = st(); s.chk = Date.now(); s.since ||= ymd(-30); s.seen ||= {}; s.done ||= {}; s.cal ||= {}; s.bal ||= {}; s.upd ||= {}; const banks = new Set(s.banks || []);
-  let novos = 0, nomes = "";
+  let novos = 0, merged = 0, nomes = "";
   try {
     for (const it of c.items) {
       const info = await api("/item?itemId=" + encodeURIComponent(it.id)).catch(() => null), up = info?.lastUpdatedAt as string | undefined;
@@ -105,7 +106,18 @@ export async function ofRun(manual = false): Promise<string> {
       const accs = ((await api("/accounts?itemId=" + encodeURIComponent(it.id))).results || []) as any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
       const bank = accs.find(x => x.type === "BANK" && x.subtype !== "SAVINGS_ACCOUNT") || accs.find(x => x.type === "BANK"), cred = accs.find(x => x.type === "CREDIT");
       const guess: Guess = (t, d) => catForDesc(ledger.get().entries, t, d);
-      const take = (list: Entry[]) => { const have = new Set(ledger.get().entries.map(e => e.imp)); const nw = list.filter(e => { const id = String(e.imp).replace(/^(pagfatura-)?of-/, ""); return !have.has(e.imp) && !s.done![id]; }); list.forEach(e => { s.done![String(e.imp).replace(/^(pagfatura-)?of-/, "")] = 1; }); if (nw.length) actions.addEntries(...nw); return nw.length; };
+      const take = (list: Entry[]) => { // o que já existe (mesma chave, ou o mesmo pagamento lançado à mão / por PDF) é juntado, não duplicado
+        const have = new Set(ledger.get().entries.map(e => e.imp)), used = new Set<string>(); let add = 0;
+        const nw: Entry[] = [];
+        for (const e of list) {
+          const id = String(e.imp).replace(/^(pagfatura-)?of-/, ""); if (have.has(e.imp) || s.done![id]) { s.done![id] = 1; continue; }
+          s.done![id] = 1;
+          const m = matchForImport(ledger.get().entries, e, used);
+          if (m) { used.add(m.id); merged++; if (!m.imp && !m.items) actions.updateEntry(m.id, { ...m, imp: e.imp }); continue; }
+          nw.push(e); add++;
+        }
+        if (nw.length) actions.addEntries(...nw); return add;
+      };
       const txs = async (id: string, from: string) => (((await api("/transactions?accountId=" + encodeURIComponent(id) + "&from=" + from)).results || []) as OfTx[]);
       if (bank) {
         const nm = ofBankName(bank.name || bank.marketingName), a = acctFor(nm, false); banks.add(cardLabel(nm)); nomes ||= nm;
@@ -132,7 +144,8 @@ export async function ofRun(manual = false): Promise<string> {
     }
     const ids = Object.keys(s.done!); if (ids.length > 800) for (const k of ids.slice(0, ids.length - 800)) delete s.done![k];
     s.banks = [...banks]; stSave(s); ofState.set({ busy: false, err: "" });
-    return novos ? `${nomes || "Banco"}: ${novos} lançamento${novos > 1 ? "s" : ""} novo${novos > 1 ? "s" : ""} ✓` : manual ? "Nada novo no banco" : "";
+    const jj = merged ? ` · ${merged} já existia${merged > 1 ? "m" : ""} (juntado${merged > 1 ? "s" : ""})` : "";
+    return novos ? `${nomes || "Banco"}: ${novos} lançamento${novos > 1 ? "s" : ""} novo${novos > 1 ? "s" : ""} ✓${jj}` : merged ? `${nomes || "Banco"}: nada novo${jj}` : manual ? "Nada novo no banco" : "";
   } catch (e) {
     stSave(s); const msg = e instanceof Error ? e.message : String(e); ofState.set({ busy: false, err: msg });
     return manual ? "Não deu: " + msg : "";

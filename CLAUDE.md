@@ -107,6 +107,9 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      `actions.migrateCats` troca os nomes da manhã de 21/10 (Moradia/Contas→Casa e contas, Cartão→Faturas de cartão, Rendimento→Rendimentos, Reembolso→Divisões, Outros de entrada→Outras receitas) nos lançamentos e itens; roda a cada mudança dos lançamentos, idempotente.
    - **Apagar cartão/conta também no Personalizar** (botão no fim da janela; confirma com 2 toques e tem Desfazer; leva os lançamentos junto). Continua no fim da tela da conta.
    - **Linha do extrato como no app antigo** (21/10/2026, "categoria junto com lançamento, muito mais prático"; `ExRow` em `AccountView.tsx`): ícone redondo da categoria na cor dela (sem categoria: "Outros"; transferência: ⇄), descrição, "categoria · a pagar/agendado" embaixo e valor à direita.
+   - **Juntar duplicados** (21/10/2026, `lib/dedupe.ts`, `DupsSheet`): mesmo pagamento vindo de lançamento à mão, PDF ou Open Finance vira um só. `sameTx` = mesma conta/tipo/valor, ≤ 4 dias, descrição parecida (palavras em comum; parcela "4/10" ≠ "5/10"); pagamentos de fatura (`fatura-`/`pagfatura-`) ≤ 10 dias. Dois do banco (`of-`) nunca juntam.
+     Automático: Open Finance (`take()` → `matchForImport`, junta no lançamento manual sem chave e dá a chave `of-`) e leitura de fatura/conta/holerite (`actions.addOrMerge`). Os já existentes: botão "N possíveis duplicados" na home → "Juntar" / "São diferentes" (`despesas.zero.dupOk`, só no aparelho).
+     `mergedEntry`: fica o lançamento dele (nome, data, categoria) e ganha a chave/itens do outro. Limite: compra solta do cartão x item dentro de fatura de PDF não é comparada.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

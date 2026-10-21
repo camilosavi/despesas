@@ -52,7 +52,7 @@ function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: n
     if (entries.some(y => y.imp === ftKey(r, d))) return;
     const pk = bankOf(r.bank || ""), mine = pk && ledger.get().accts.find(a => a.kind === "cartao" && bankOf(a.name) === pk && faturaPaid(a, d.slice(0, 7), entries));
     if (mine) { toast("Essa fatura já foi paga pelo cartão " + mine.name + "."); return; }
-    actions.addEntries(faturaEntry(acct, r, d, cats)); toast("Fatura lançada ✓");
+    toast(actions.addOrMerge(faturaEntry(acct, r, d, cats)) ? "Fatura juntada com a que já estava lançada ✓" : "Fatura lançada ✓");
     // o cartão do mesmo banco aprende os dias de fechamento e vencimento (só se ainda não tiver)
     const bk = bankOf(r.bank || ""), card = bk && ledger.get().accts.find(a => a.kind === "cartao" && bankOf(a.name) === bk && !(a.closeDay && a.dueDay));
     if (card) { const dd = faturaDays(r, d); if (dd.closeDay && dd.dueDay) actions.updateAccount(card.id, dd); }
@@ -83,7 +83,7 @@ function ContaView({ x, i }: { x: Extract<ReadResult, { kind: "conta" }>; i: num
     <details className="rd" open>
       <summary><span>Conta {c.name} <small>{x.name}</small></span></summary>
       <div className="kv"><span>Empresa</span><b>{c.name}</b><span>Vencimento</span><b>{fmtD(c.due)}</b><span>Valor</span><b>{R(c.cents)}</b><span>Débito automático</span><b>{c.auto ? "sim" : "não"}</b></div>
-      <Block i={i} x={x} imp={ctKey(c)} doneText="Já lançada em" label="Paga pela conta" onGo={acct => { if (!ledger.get().entries.some(y => y.imp === ctKey(c))) { actions.addEntries(contaEntry(acct, c)); toast("Conta lançada ✓"); } }}
+      <Block i={i} x={x} imp={ctKey(c)} doneText="Já lançada em" label="Paga pela conta" onGo={acct => { if (!ledger.get().entries.some(y => y.imp === ctKey(c))) { toast(actions.addOrMerge(contaEntry(acct, c)) ? "Conta juntada com a que já estava lançada ✓" : "Conta lançada ✓"); } }}
         button={`Lançar conta de ${R(c.cents)} em {conta} · vence ${fmtDM(c.due)}`} />
     </details>
   );
@@ -106,7 +106,7 @@ function HoleriteView({ x, i }: { x: Extract<ReadResult, { kind: "holerite" }>; 
       {h.conv && h.conv.by && h.conv.by.length > 0 && h.conv.by.map((b, k) => <div className="ln h2" key={k}><span>{b.k} · {b.n}</span><b>{R(b.cents)}</b></div>)}
       {P.length > 0 && <><div className="ln sub">Proventos</div>{P.map(ev)}</>}
       {D.length > 0 && <><div className="ln sub">Descontos</div>{D.map(ev)}</>}
-      <Block i={i} x={x} imp={hlKey(h)} doneText="Já lançado em" label="Entra em" onGo={acct => { if (!ledger.get().entries.some(y => y.imp === hlKey(h))) { actions.addEntries(holeriteEntry(acct, h)); toast("Holerite lançado ✓"); } }}
+      <Block i={i} x={x} imp={hlKey(h)} doneText="Já lançado em" label="Entra em" onGo={acct => { if (!ledger.get().entries.some(y => y.imp === hlKey(h))) { toast(actions.addOrMerge(holeriteEntry(acct, h)) ? "Holerite juntado com o que já estava lançado ✓" : "Holerite lançado ✓"); } }}
         button={`Lançar ${R(h.cents)} em {conta}${h.date > today() ? ` · cai em ${fmtDM(h.date)}` : ""}`} />
     </details>
   );

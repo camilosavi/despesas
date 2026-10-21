@@ -4,6 +4,7 @@ import { cardColor } from "./banks";
 import { uid } from "./format";
 import { lsGet, lsJson, lsSet } from "./storage";
 import { CAT_RENAME } from "./categories";
+import { matchForImport, mergedEntry } from "./dedupe";
 import type { Account, Entry, SaveBox, SaveMove } from "./types";
 
 export const KEY_ACCTS = "despesas.zero.accts", KEY_ENTRIES = "despesas.zero.entries", KEY_BOXES = "despesas.zero.boxes";
@@ -86,6 +87,17 @@ export const actions = {
       n++; return { ...e, ...(c ? { cat: c } : {}), ...(items ? { items } : {}) };
     });
     if (n) commit({ ...s, entries });
+  },
+  /** lança um (do PDF); se já existe o mesmo pagamento (à mão ou do banco), junta nele em vez de duplicar. true = juntou */
+  addOrMerge(e: Entry): boolean {
+    const m = matchForImport(ledger.get().entries, e);
+    if (!m) { commit({ ...ledger.get(), entries: [...ledger.get().entries, e] }); return false; }
+    const s = ledger.get(); commit({ ...s, entries: s.entries.map(x => (x.id === m.id ? mergedEntry(x, e) : x)) }); return true;
+  },
+  /** junta dois lançamentos que são o mesmo pagamento: fica `keep`, ganhando o que só o outro tinha, e `drop` some */
+  mergeEntries(keepId: string, dropId: string) {
+    const s = ledger.get(), k = s.entries.find(e => e.id === keepId), d = s.entries.find(e => e.id === dropId); if (!k || !d || k.id === d.id) return;
+    commit({ ...s, entries: s.entries.filter(e => e.id !== dropId).map(e => (e.id === keepId ? mergedEntry(k, d) : e)) });
   },
   deleteAccount(id: string) { const s = ledger.get(); commit({ ...s, accts: s.accts.filter(a => a.id !== id), entries: s.entries.filter(e => e.acct !== id) }); },
   addEntries(...es: Entry[]) { const s = ledger.get(); commit({ ...s, entries: [...s.entries, ...es] }); },
