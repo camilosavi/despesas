@@ -106,6 +106,7 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      entradas Salário, Rendimentos, Divisões, Saldo anterior, Outras receitas. Cores e ícones do app antigo (`Dot` agora desenha o ícone). **Categorias pessoais dele (Intercâmbio, Cidadania, Câmbio, Aulas/bicos) NÃO entram no código público**: ele cria com "+ Nova".
      `actions.migrateCats` troca os nomes da manhã de 21/10 (Moradia/Contas→Casa e contas, Cartão→Faturas de cartão, Rendimento→Rendimentos, Reembolso→Divisões, Outros de entrada→Outras receitas) nos lançamentos e itens; roda a cada mudança dos lançamentos, idempotente.
    - **Apagar cartão/conta também no Personalizar** (botão no fim da janela; confirma com 2 toques e tem Desfazer; leva os lançamentos junto). Continua no fim da tela da conta.
+   - **Linha do extrato como no app antigo** (21/10/2026, "categoria junto com lançamento, muito mais prático"; `ExRow` em `AccountView.tsx`): ícone redondo da categoria na cor dela (sem categoria: "Outros"; transferência: ⇄), descrição, "categoria · a pagar/agendado" embaixo e valor à direita.
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

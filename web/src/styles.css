@@ -281,3 +281,8 @@ html.hide :is(.ctv,.fatcard b){filter:blur(9px);user-select:none}
 .tcard.acc::before{order:1;margin:auto 0 14px}
 .tcard.acc h1{order:0;margin:0}
 .tcard.acc .bigrow{order:2;margin-top:0}
+
+.ex i.ci{background:color-mix(in srgb,var(--cc) 18%,transparent);color:var(--cc);width:38px;height:38px}
+.ex i.ci svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ex i.ci.rec{color:var(--cc)}
+.ex{grid-template-columns:38px 1fr auto}

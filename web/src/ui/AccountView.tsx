@@ -6,16 +6,25 @@ import { MESN, R, dayLbl, fmtD, fmtDM, signR } from "../lib/format";
 import { actions, ledger } from "../lib/store";
 import type { Entry } from "../lib/types";
 import { Dot } from "./Dot";
+import { catColor, catPrefs } from "../lib/catcolor";
+import { catIconPath } from "../lib/catIcons";
 import { useArmed } from "./hooks";
 import { backHome, openSheet, toast } from "./uiStore";
 
-const ExRow = ({ e, byCat }: { e: Entry; byCat?: boolean }) => (
-  <button type="button" className="ex" data-ex={e.id} onClick={() => openSheet({ kind: "entry", id: e.id })}>
-    <i className={e.type}>{e.xfer ? "⇄" : e.type === "rec" ? "↓" : "↑"}</i>
-    <span className="nm">{e.desc}{e.open && <em className="opn">{e.type === "rec" ? "A receber" : "A pagar"}</em>}{byCat ? <small>{fmtDM(e.date)}</small> : e.cat ? <small><Dot c={e.cat} />{e.cat}</small> : null}</span>
-    <b className={e.type === "rec" ? "cr" : ""}>{e.type === "rec" ? "+" : "−"}{R(e.cents)}</b>
-  </button>
-);
+/** linha do extrato como no app antigo: ícone redondo da categoria (na cor dela), descrição, "categoria · situação" embaixo e valor */
+const ExRow = ({ e, byCat }: { e: Entry; byCat?: boolean }) => {
+  const p = useStore(catPrefs, s => s), col = e.xfer ? "var(--muted)" : catColor(e.cat || "", p);
+  const meta = [byCat ? fmtDM(e.date) : "", !byCat && e.cat ? e.cat : "", e.open ? (e.type === "rec" ? "a receber" : "a pagar") : isFut(e) ? "agendado" : ""].filter(Boolean).join(" · ");
+  return (
+    <button type="button" className="ex" data-ex={e.id} onClick={() => openSheet({ kind: "entry", id: e.id })}>
+      <i className={"ci " + e.type} style={{ "--cc": col } as React.CSSProperties}>
+        {e.xfer ? "⇄" : <svg viewBox="0 0 24 24" aria-hidden="true" dangerouslySetInnerHTML={{ __html: catIconPath(e.cat || (e.type === "rec" ? "Outras receitas" : "Outros")) }} />}
+      </i>
+      <span className="nm">{e.desc}{meta ? <small>{meta}</small> : null}</span>
+      <b className={e.type === "rec" ? "cr" : ""}>{e.type === "rec" ? "+" : "−"}{R(e.cents)}</b>
+    </button>
+  );
+};
 
 /** extrato da conta aberta, com busca e filtro por categoria (o estado do filtro some ao trocar de conta: key={id}) */
 export function AccountView({ id }: { id: string }) {
