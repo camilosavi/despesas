@@ -71,8 +71,8 @@ header.top{margin:calc(env(safe-area-inset-top,0px) + 8px) 0 0;padding:14px;bord
 @media (min-width:700px){.sheet{bottom:auto;top:50%;transform:translateY(-50%);border-radius:28px;max-height:84vh}}
 .sheet[hidden],.scrim[hidden]{display:none}
 .auth{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;
-  --gold:#D9B66F;--navy:#14203A;--ink2:#F6EFE0;--soft:#A9B3C7;--fld:#1B2A4A;--bd:rgba(217,182,111,.28);
-  background:#14203A;color:var(--ink2);color-scheme:dark}
+  --gold:#D9B66F;--navy:#1C2C45;--ink2:#F6EFE0;--soft:#A9B3C7;--fld:#24364F;--bd:rgba(217,182,111,.28);
+  background:#1C2C45;color:var(--ink2);color-scheme:dark}
 .auth[hidden]{display:none}
 .noauth .wrap{display:none}
 .authbox{width:100%;max-width:380px;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px))}
@@ -1023,7 +1023,7 @@ setInterval(()=>{if(ses&&!document.hidden)syncNow()},60000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&ses)syncNow()});
 addEventListener("online",()=>{if(ses)syncNow()});
 /* entrar / criar conta */
-function showAuth(msg){document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#14203A");document.body.classList.add("noauth");$("auth").hidden=false;$("authMsg").textContent=msg||"";closeSheet()}
+function showAuth(msg){document.querySelector('meta[name="theme-color"]')?.setAttribute("content","#1C2C45");document.body.classList.add("noauth");$("auth").hidden=false;$("authMsg").textContent=msg||"";closeSheet()}
 function hideAuth(){document.body.classList.remove("noauth");$("auth").hidden=true;$("authMsg").textContent=""}
 function authErr(e){const m=String(e&&e.message||""),c=e&&e.code||"";
   return /invalid_credentials/.test(c)||/invalid login/i.test(m)?"E-mail ou senha incorretos.":
