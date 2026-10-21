@@ -1,5 +1,5 @@
-const C="despesas-9b61724f", RT="despesas-runtime";
-const ASSETS=["./","index.html","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png","icon-maskable-512.png","logo.png"];
+const C="despesas-b8c8e30b", RT="despesas-runtime";
+const ASSETS=["./","index.html","manifest.webmanifest","tostao-180.png","tostao-192.png","tostao-512.png","tostao-maskable-512.png","tostao-logo.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==RT&&x!=="despesas-av").map(x=>caches.delete(x)))));self.clients.claim()});
 const fromCache=req=>caches.match(req,{ignoreSearch:true}).then(r=>r||(req.mode==="navigate"?caches.match("index.html"):undefined));
@@ -24,7 +24,7 @@ self.addEventListener("push",e=>{
   let d={};try{d=e.data?e.data.json():{}}catch(_){d={body:e.data?e.data.text():""}}
   // número no ícone = avisos ainda não abertos (igual ao sininho); o app recalcula ao abrir
   const bump=caches.open("despesas-av").then(c=>c.match("n").then(r=>r?r.text():"0").then(t=>{const n=(+t||0)+1;return c.put("n",new Response(String(n))).then(()=>self.navigator&&self.navigator.setAppBadge?self.navigator.setAppBadge(n):0)})).catch(()=>{});
-  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Tostão",{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"icon-192.png",badge:"icon-192.png",data:{url:d.url||"./",av:d.av||""}})]));
+  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Tostão",{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"tostao-192.png",badge:"tostao-192.png",data:{url:d.url||"./",av:d.av||""}})]));
 });
 self.addEventListener("notificationclick",e=>{
   e.notification.close();

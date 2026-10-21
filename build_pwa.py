@@ -15,21 +15,21 @@ doc=f'''<!doctype html>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tostão">
-<meta name="theme-color" content="#0E3B35">
+<meta name="theme-color" content="#14203A">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png?v=4">
-<link rel="icon" href="icon-192.png?v=4">
+<link rel="apple-touch-icon" href="tostao-180.png?v=4">
+<link rel="icon" href="tostao-192.png?v=4">
 <style>:root{{color-scheme:light;padding-bottom:env(safe-area-inset-bottom,0px)}}body{{margin:0;font:14px system-ui,-apple-system,sans-serif;background:#F3F5F2}}img{{max-width:100%}}[hidden]{{display:none!important}}*{{-webkit-touch-callout:none}}input,textarea{{-webkit-touch-callout:default}}</style>
 </head><body>
 {body}
 </body></html>
 '''
 open('index.html','w', encoding='utf-8').write(doc)
-json.dump({"name":"Tostão","short_name":"Tostão","start_url":"./","scope":"./","display":"standalone","background_color":"#1C2A46","theme_color":"#0E3B35","lang":"pt-BR",
- "icons":[{"src":"icon-192.png?v=4","sizes":"192x192","type":"image/png"},{"src":"icon-512.png?v=4","sizes":"512x512","type":"image/png"},{"src":"icon-maskable-512.png?v=4","sizes":"512x512","type":"image/png","purpose":"maskable"}]},open('manifest.webmanifest','w', encoding='utf-8'),ensure_ascii=False,indent=1)
+json.dump({"name":"Tostão","short_name":"Tostão","start_url":"./","scope":"./","display":"standalone","background_color":"#1C2C45","theme_color":"#14203A","lang":"pt-BR",
+ "icons":[{"src":"tostao-192.png?v=4","sizes":"192x192","type":"image/png"},{"src":"tostao-512.png?v=4","sizes":"512x512","type":"image/png"},{"src":"tostao-maskable-512.png?v=4","sizes":"512x512","type":"image/png","purpose":"maskable"}]},open('manifest.webmanifest','w', encoding='utf-8'),ensure_ascii=False,indent=1)
 import hashlib; ver=hashlib.md5(doc.encode()).hexdigest()[:8]
 open('sw.js','w', encoding='utf-8').write(f'''const C="despesas-{ver}", RT="despesas-runtime";
-const ASSETS=["./","index.html","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png","icon-maskable-512.png","logo.png"];
+const ASSETS=["./","index.html","manifest.webmanifest","tostao-180.png","tostao-192.png","tostao-512.png","tostao-maskable-512.png","tostao-logo.png"];
 self.addEventListener("install",e=>{{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));self.skipWaiting()}});
 self.addEventListener("activate",e=>{{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==RT&&x!=="despesas-av").map(x=>caches.delete(x)))));self.clients.claim()}});
 const fromCache=req=>caches.match(req,{{ignoreSearch:true}}).then(r=>r||(req.mode==="navigate"?caches.match("index.html"):undefined));
@@ -54,7 +54,7 @@ self.addEventListener("push",e=>{{
   let d={{}};try{{d=e.data?e.data.json():{{}}}}catch(_){{d={{body:e.data?e.data.text():""}}}}
   // número no ícone = avisos ainda não abertos (igual ao sininho); o app recalcula ao abrir
   const bump=caches.open("despesas-av").then(c=>c.match("n").then(r=>r?r.text():"0").then(t=>{{const n=(+t||0)+1;return c.put("n",new Response(String(n))).then(()=>self.navigator&&self.navigator.setAppBadge?self.navigator.setAppBadge(n):0)}})).catch(()=>{{}});
-  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Tostão",{{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"icon-192.png",badge:"icon-192.png",data:{{url:d.url||"./",av:d.av||""}}}})]));
+  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Tostão",{{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"tostao-192.png",badge:"tostao-192.png",data:{{url:d.url||"./",av:d.av||""}}}})]));
 }});
 self.addEventListener("notificationclick",e=>{{
   e.notification.close();
