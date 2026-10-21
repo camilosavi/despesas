@@ -222,3 +222,5 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
 .box-footer-btns{display:flex;gap:10px;margin-top:20px}
 .bad-txt{color:var(--neg)}
 .x.sm{width:26px;height:26px;font-size:.8rem}
+
+.boxrow-vals{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.boxrow-vals small{color:var(--mut,inherit);font-size:.78rem}

@@ -5,7 +5,7 @@ import { ledger } from "../lib/store";
 import { Badge } from "./Badge";
 import { openAccount, openSheet } from "./uiStore";
 
-import { boxBal, boxIcon, boxProgress, boxTotalsByCur, fmtMoneyCur } from "../lib/boxes";
+import { boxBal, boxBrl, boxIcon, boxProgress, boxTotalsByCur, fmtMoneyCur } from "../lib/boxes";
 
 /** lista de contas e caixinhas */
 export function Home() {
@@ -38,7 +38,7 @@ export function Home() {
         </div>
 
         {boxes.map(b => {
-          const bal = boxBal(b);
+          const bal = boxBal(b), inBrl = boxBrl(b);
           const prog = boxProgress(b);
           return (
             <button
@@ -57,7 +57,10 @@ export function Home() {
                   </div>
                 )}
               </div>
-              <b className={`boxrow-val ${bal < 0 ? "bad" : ""}`}>{fmtMoneyCur(bal, b.cur)}</b>
+              <div className="boxrow-vals">
+                <b className={`boxrow-val ${bal < 0 ? "bad" : ""}`}>{fmtMoneyCur(bal, b.cur)}</b>
+                {inBrl !== 0 && <small>+ {fmtMoneyCur(inBrl, "BRL")}</small>}
+              </div>
             </button>
           );
         })}

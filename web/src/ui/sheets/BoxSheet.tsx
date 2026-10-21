@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { boxBal, boxIcon, boxProgress, fetchLiveRates, fmtMoneyCur } from "../../lib/boxes";
+import { boxBal, boxBrl, boxIcon, boxProgress, fetchLiveRates, fmtMoneyCur } from "../../lib/boxes";
 import { brl, digits, today, uid } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
 import { useStore } from "../../lib/createStore";
@@ -12,6 +12,7 @@ export function BoxSheet({ id }: { id: string }) {
   const [mode, setMode] = useState<"in" | "out">("in");
   const [val, setVal] = useState("");
   const [date, setDate] = useState(today());
+  const [inReal, setInReal] = useState(false); // caixinha de euro/dólar: guardar direto em reais, sem converter
   const [rate, setRate] = useState("");
   const [brlV, setBrlV] = useState("");
   // valor na moeda, cotação e valor em R$: ao preencher 2 dos 3, o terceiro é calculado (o mais antigo de ordem de edição)
@@ -30,6 +31,8 @@ export function BoxSheet({ id }: { id: string }) {
   const prog = boxProgress(box);
   const cents = digits(val);
   const isFx = box.cur === "EUR" || box.cur === "USD";
+  const fxMode = isFx && !inReal; // cotação e conversão só quando o valor é na moeda da caixinha
+  const inBrl = boxBrl(box);
 
   const rateN = parseFloat(rate.replace(",", ".")) || 0;
   const brlCents = digits(brlV);
@@ -50,18 +53,19 @@ export function BoxSheet({ id }: { id: string }) {
     setVal(v.val); setRate(v.rate); setBrlV(v.brl); setOrder(ord);
   };
 
+  const pickReal = (r: boolean) => { setInReal(r); setVal(""); setBrlV(""); setOrder(rateN ? ["rate"] : []); };
   const onConfirm = () => {
     if (!cents) { toast("Digite um valor"); return; }
     const sign = mode === "out" ? -1 : 1;
     const finalCents = sign * cents;
-    const finalRate = isFx && rateN > 0 ? rateN : undefined;
-    const brlVal = isFx ? (brlCents || (finalRate ? Math.round(cents * finalRate) : undefined)) : undefined;
+    const finalRate = fxMode && rateN > 0 ? rateN : undefined;
+    const brlVal = fxMode ? (brlCents || (finalRate ? Math.round(cents * finalRate) : undefined)) : undefined;
 
     actions.addBoxMove(box.id, {
       id: uid(),
       date: date || today(),
       cents: finalCents,
-      cur: box.cur,
+      cur: inReal ? "BRL" : box.cur,
       rate: finalRate,
       brl: brlVal,
       note: note.trim() || undefined,
@@ -87,6 +91,7 @@ export function BoxSheet({ id }: { id: string }) {
         <div>
           <span className="boxcur-lbl">Saldo guardado ({box.cur})</span>
           <b className={`boxcur-val ${bal < 0 ? "bad" : ""}`}>{fmtMoneyCur(bal, box.cur)}</b>
+          {inBrl !== 0 && <small className="boxmv-note">+ {fmtMoneyCur(inBrl, "BRL")} guardados em reais</small>}
           {prog && (
             <div className="boxprog-box">
               <div className="boxprog-bar"><i style={{ width: `${prog.pct}%` }} /></div>
@@ -102,12 +107,19 @@ export function BoxSheet({ id }: { id: string }) {
           <button type="button" aria-pressed={mode === "out"} onClick={() => setMode("out")}>− Resgatar</button>
         </div>
 
+        {isFx && (
+          <div className="seg">
+            <button type="button" aria-pressed={!inReal} onClick={() => pickReal(false)}>{box.cur === "EUR" ? "Em euro (€)" : "Em dólar (US$)"}</button>
+            <button type="button" aria-pressed={inReal} onClick={() => pickReal(true)}>Em reais (R$)</button>
+          </div>
+        )}
+
         <div className="bigamt">
-          <span>{box.cur === "BRL" ? "R$" : box.cur === "EUR" ? "€" : "US$"}</span>
-          <MoneyInput aria-label="Valor" value={val} onChange={v => edit("val", v)} />
+          <span>{box.cur === "BRL" || inReal ? "R$" : box.cur === "EUR" ? "€" : "US$"}</span>
+          <MoneyInput aria-label="Valor" value={val} onChange={v => (inReal ? setVal(v) : edit("val", v))} />
         </div>
 
-        {isFx && (
+        {fxMode && (
           <div className="fx-rate-row">
             <label className="lbl">Preencha 2 dos 3: o terceiro é calculado</label>
             <div className="fx-calc-row">

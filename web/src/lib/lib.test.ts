@@ -127,3 +127,15 @@ describe("sync das caixinhas", () => {
     expect(bFrom({ id: "x", name: "N", cur: null, moves: null })).toEqual({ id: "x", name: "N", cur: "BRL", moves: [] });
   });
 });
+
+import { boxBrl } from "./boxes";
+describe("caixinha com dois saldos", () => {
+  it("reais guardados direto ficam à parte do euro", () => {
+    const b: SaveBox = { id: "b", name: "Dublin", cur: "EUR", goal: 300000, moves: [
+      { id: "1", date: "2026-10-01", cents: 50000, cur: "EUR" }, { id: "2", date: "2026-10-02", cents: 20000, cur: "BRL" }, { id: "3", date: "2026-10-03", cents: -5000, cur: "BRL" }] };
+    expect(boxBal(b)).toBe(50000);
+    expect(boxBrl(b)).toBe(15000);
+    expect(boxTotalsByCur([b])).toEqual({ BRL: 15000, EUR: 50000, USD: 0 });
+    expect(boxBrl({ ...b, cur: "BRL" })).toBe(0);
+  });
+});

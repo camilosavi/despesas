@@ -19,13 +19,19 @@ export const boxIcon = (b: SaveBox) => {
   return match ? match.i : "💰";
 };
 
+/** saldo na moeda da caixinha (movimentos em outra moeda não entram: ver boxBrl) */
 export const boxBal = (b: SaveBox): number =>
-  (b.moves || []).reduce((sum, m) => sum + m.cents, 0);
+  (b.moves || []).reduce((sum, m) => sum + ((m.cur || b.cur) === b.cur ? m.cents : 0), 0);
+
+/** em caixinha de euro/dólar: o que foi guardado direto em reais, sem converter (a meta só conta a moeda da caixinha) */
+export const boxBrl = (b: SaveBox): number =>
+  b.cur === "BRL" ? 0 : (b.moves || []).reduce((sum, m) => sum + (m.cur === "BRL" ? m.cents : 0), 0);
 
 export const boxTotalsByCur = (boxes: SaveBox[]) => {
   const totals: Record<Currency, number> = { BRL: 0, EUR: 0, USD: 0 };
   for (const b of boxes) {
     totals[b.cur] = (totals[b.cur] || 0) + boxBal(b);
+    totals.BRL += boxBrl(b);
   }
   return totals;
 };
