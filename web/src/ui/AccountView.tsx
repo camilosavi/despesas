@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "../lib/createStore";
 import { ofHasBank, ofRun, ofState, ofWhenText } from "../lib/openfinance";
-import { acctEntries, entMonth, cardUsed, faturaPaid, faturas, groupByCat, isCard, isFut, matchEntry } from "../lib/ledger";
+import { acctEntries, entMonth, cardUsed, faturaDue, faturaPaid, faturas, groupByCat, isCard, isFut, matchEntry, openFatura } from "../lib/ledger";
 import { MESN, R, dayLbl, fmtD, fmtDM, signR } from "../lib/format";
 import { actions, ledger } from "../lib/store";
 import type { Entry } from "../lib/types";
@@ -31,38 +31,39 @@ export function AccountView({ id }: { id: string }) {
   const used = [...new Set(all.filter(e => e.cat).map(e => e.cat as string))];
   const cat = used.includes(catSel) ? catSel : "";
   const months = [...new Set(all.map(e => entMonth(a, e.date)))].sort().reverse(); // cartão: mês do vencimento da fatura
-  const mon = months.includes(monSel) ? monSel : "";
+  const card = isCard(a), fats = card ? faturas(a, entries) : [], cur = card ? openFatura(a, entries) : null;
+  const fatMons = [...new Set([...fats.map(f => f.ym), ...(cur ? [cur.ym] : [])])].sort(); // cartão: uma fatura por vez (meses de vencimento, do mais antigo ao mais novo)
+  const fatYm = fatMons.includes(monSel) ? monSel : cur?.ym ?? fatMons[fatMons.length - 1] ?? "";
+  const mon = card ? fatYm : months.includes(monSel) ? monSel : "";
   const L = all.filter(e => matchEntry(e, q, cat) && (!mon || entMonth(a, e.date) === mon));
   const openL = L.filter(e => e.open), fut = L.filter(e => !e.open && isFut(e)), past = L.filter(e => !e.open && !isFut(e)), days = [...new Set(past.map(e => e.date))];
-  const filtering = !!(q || cat || mon);
+  const filtering = !!(q || cat || (!card && mon));
   const sumIn = L.filter(e => e.type === "rec").reduce((s, e) => s + e.cents, 0), sumOut = L.filter(e => e.type === "desp").reduce((s, e) => s + e.cents, 0);
 
-  const fats = isCard(a) ? faturas(a, entries) : [];
   return (<>
-    {(fats.length > 0 || !!a.limit) && (
-      <section className="sec" id="faturas">
-        <h2>Faturas</h2>
-        {!!a.limit && (() => {
-          const used = cardUsed(a, entries), pct = Math.min(100, Math.round((used / a.limit!) * 100));
-          return (
+    {card && (fatMons.length > 0 || !!a.limit) && (() => {
+      const f = fats.find(x => x.ym === fatYm), paid = f ? faturaPaid(a, fatYm, entries) : undefined, due = faturaDue(a, fatYm);
+      const used = a.limit ? cardUsed(a, entries) : 0, pct = a.limit ? Math.min(100, Math.round((used / a.limit) * 100)) : 0;
+      return (
+        <section className="sec" id="faturas">
+          <h2>Fatura</h2>
+          {fatMons.length > 0 && <div className="cards" id="fatMons">{fatMons.map(m => <button type="button" key={m} className="cpill txt" data-fat={m} aria-pressed={m === fatYm} onClick={() => setMon(m)}>{MESN[+m.slice(5) - 1]}/{m.slice(2, 4)}</button>)}</div>}
+          {fatYm && (
+            <div className="fatcard" id="fatcard">
+              <div><small>{MESN[+fatYm.slice(5) - 1]}/{fatYm.slice(2, 4)}</small><b>{R(f?.cents ?? 0)}</b>
+                <span className={"cardtag" + (paid ? " ok" : "")}>{paid ? "Paga ✓ em " + fmtD(paid.date) : (a.dueDay ? "vence " + fmtDM(due) + " · " : "") + "Em aberto"}</span></div>
+              {!paid && !!f && <button type="button" className="btn primary" data-pay={fatYm} onClick={() => openSheet({ kind: "pay", id, ym: fatYm })}>Pagar</button>}
+            </div>
+          )}
+          {!!a.limit && (
             <div className="limbox" id="limbox">
-              <div className="limbar"><i className={used > a.limit! ? "over" : ""} style={{ width: pct + "%" }} /></div>
-              <small>{R(used)} usados de {R(a.limit!)} · {used > a.limit! ? "passou " + R(used - a.limit!) : "disponível " + R(a.limit! - used)}</small>
+              <div className="limbar"><i className={used > a.limit ? "over" : ""} style={{ width: pct + "%" }} /></div>
+              <small>{used > a.limit ? "Passou " + R(used - a.limit) + " do limite" : "Limite livre " + R(a.limit - used)} · {R(used)} em aberto de {R(a.limit)}</small>
             </div>
-          );
-        })()}
-        {fats.map(f => {
-          const paid = faturaPaid(a, f.ym, entries);
-          return (
-            <div key={f.ym} className="acrow fatrow" data-fat={f.ym}>
-              <span className="nm">{MESN[+f.ym.slice(5) - 1]}/{f.ym.slice(2, 4)}<small className="cardtag">{paid ? "Paga ✓ em " + fmtD(paid.date) : "Em aberto"}</small></span>
-              <b>{R(f.cents)}</b>
-              {!paid && <button type="button" className="btn soft" data-pay={f.ym} onClick={() => openSheet({ kind: "pay", id, ym: f.ym })}>Pagar</button>}
-            </div>
-          );
-        })}
-      </section>
-    )}
+          )}
+        </section>
+      );
+    })()}
     {(!isCard(a) || ofHasBank(a)) && (
       <section className="sec">
         {!isCard(a) && <button type="button" className="btn soft wide" id="confBtn" onClick={() => openSheet({ kind: "conf", id })}>Conferir saldo com o banco</button>}
@@ -73,7 +74,7 @@ export function AccountView({ id }: { id: string }) {
       </section>
     )}
     <section className="sec">
-      <h2>Extrato</h2>
+      <h2>{card ? "Compras da fatura" : "Extrato"}</h2>
       {all.length > 0 && (
         <div className="exbar">
           <div className="seg" id="exBy">
@@ -81,7 +82,7 @@ export function AccountView({ id }: { id: string }) {
             <button type="button" aria-pressed={by === "cat"} onClick={() => setBy("cat")}>Por categoria</button>
           </div>
           <input type="search" className="exq" id="exQ" placeholder="Buscar no extrato" value={q} onChange={e => setQ(e.target.value)} autoComplete="off" enterKeyHint="search" />
-          {months.length > 1 && (
+          {!card && months.length > 1 && (
             <div className="cards" id="exMons">
               <button type="button" className="cpill txt" aria-pressed={!mon} onClick={() => setMon("")}>Todos os meses</button>
               {months.map(m => <button type="button" key={m} className="cpill txt" data-xmon={m} aria-pressed={m === mon} onClick={() => setMon(m === mon ? "" : m)}>{MESN[+m.slice(5) - 1]}/{m.slice(2, 4)}</button>)}

@@ -30,6 +30,11 @@ export const faturas = (a: Account, entries: Entry[]) => {
   }
   return [...m.values()].sort((x, y) => y.ym.localeCompare(x.ym));
 };
+/** a fatura "da vez": a mais antiga em aberto que vence neste mês ou depois; se só sobraram atrasadas, a mais nova delas; sem nenhuma, null */
+export const openFatura = (a: Account, entries: Entry[], t = today()) => {
+  const un = faturas(a, entries).filter(f => !faturaPaid(a, f.ym, entries)).sort((x, y) => x.ym.localeCompare(y.ym));
+  return un.find(f => f.ym >= t.slice(0, 7)) || un[un.length - 1] || null;
+};
 /** quanto do limite está usado: faturas em aberto de todos os meses (compras ainda não pagas) */
 export const cardUsed = (a: Account, entries: Entry[]) => faturas(a, entries).filter(f => !faturaPaid(a, f.ym, entries)).reduce((s, f) => s + f.cents, 0);
 /** pagamento da fatura do mês: o lançamento "pagfatura" feito aqui, ou a fatura do mesmo banco lida do PDF (vence nesse mês) */

@@ -1,6 +1,6 @@
 import { useStore } from "../lib/createStore";
-import { accBal, bankAccts, cardMonthLbl, cardSpent, isCard } from "../lib/ledger";
-import { MESN, R, signR, today } from "../lib/format";
+import { accBal, bankAccts, cardUsed, faturaDue, isCard, openFatura } from "../lib/ledger";
+import { MESN, R, signR, textOn } from "../lib/format";
 import { ledger } from "../lib/store";
 import { Badge } from "./Badge";
 import { openAccount, openSheet } from "./uiStore";
@@ -10,21 +10,31 @@ import { boxBal, boxBrl, boxIcon, boxProgress, boxTotalsByCur, fmtMoneyCur } fro
 /** lista de contas e caixinhas */
 export function Home() {
   const { accts, entries, boxes } = useStore(ledger, s => s);
-  const totals = boxTotalsByCur(boxes);
+  const totals = boxTotalsByCur(boxes), cards = accts.filter(isCard);
 
   return (
     <>
+      {cards.length > 0 && (
+        <section className="sec" id="cards">
+          <h2>Cartões</h2>
+          <div className="cstrip">
+            {cards.map(a => {
+              const f = openFatura(a, entries), ink = textOn(a.color || "#2f55e0"), used = a.limit ? Math.min(100, Math.round((cardUsed(a, entries) / a.limit) * 100)) : 0;
+              return (
+                <button type="button" key={a.id} className="ctile" data-open={a.id} onClick={() => openAccount(a.id)} style={{ "--tc": a.color || "#2f55e0", "--ti": ink } as React.CSSProperties}>
+                  <span className="cth"><b>{a.name.replace(/^Cartão\s+/i, "")}</b>{f && a.dueDay ? <small>vence {faturaDue(a, f.ym).slice(8)}/{faturaDue(a, f.ym).slice(5, 7)}</small> : null}</span>
+                  <span className="ctl">{f ? "Fatura de " + MESN[+f.ym.slice(5) - 1].toLowerCase() : "Fatura"}</span>
+                  <span className="ctv">{R(f?.cents ?? 0)}</span>
+                  {!!a.limit && <span className="ctb"><i style={{ width: used + "%" }} /></span>}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
       <section className="sec ctas">
         <h2>Contas</h2>
-        {[...bankAccts(accts), ...accts.filter(isCard)].map(a => {
-          if (isCard(a)) {
-            const g = cardSpent(a, entries);
-            return (
-              <button type="button" key={a.id} className="acrow" data-open={a.id} onClick={() => openAccount(a.id)}>
-                <Badge name={a.name} color={a.color} label={a.label} /><span className="nm">{a.name}<small className="cardtag">Cartão · {cardMonthLbl(a, MESN[+today().slice(5, 7) - 1]).toLowerCase()}</small></span><b>{R(g)}</b>
-              </button>
-            );
-          }
+        {bankAccts(accts).map(a => {
           const b = accBal(a, entries);
           return (
             <button type="button" key={a.id} className="acrow" data-open={a.id} onClick={() => openAccount(a.id)}>
