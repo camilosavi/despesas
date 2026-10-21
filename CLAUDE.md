@@ -85,6 +85,7 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
    - **Olho** (21/10/2026, canto do cartão no topo, ao lado de Personalizar): borra os valores das listas e do cartão (`html.hide`, `despesas.zero.hide` só no aparelho); as janelas continuam legíveis.
    - **Voltar do celular** (`ui/navHistory.ts`): conta aberta e janela aberta são níveis do histórico; voltar fecha a janela, depois volta às contas, depois sai do app. ✕ e ‹ Contas desfazem as entradas com `history.go` (juntadas num só por microtask).
    - **Arrastar para baixo fecha a janela** (`SheetHost`, só < 700 px): o gesto precisa começar com o conteúdo da janela no topo (rolar até o topo não fecha); passou de ~110 px ou foi rápido, fecha; senão volta.
+   - **Fatura lida** (21/10/2026, `faturaRows`/`isPay` em `lib/imports.ts`, sem mexer nos parsers): compras em ordem de data; crédito "Pagamento…" (Renner trazia o Pix da fatura anterior) fica à parte, **fora da soma, do total lançado e dos itens**; créditos aparecem como "−R$".
    - Ainda **não** tem: orçamento/meta por categoria, gráfico mensal.
 
 ## Cores e logo (21/10/2026)

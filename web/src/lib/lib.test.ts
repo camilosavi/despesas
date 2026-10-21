@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { brl, R, signR, fmtD, digits, moneyMask, fold, textOn, lastDay, shiftYM } from "./format";
 import { accBal, totBal, matchEntry, sg, descHints, catForDesc } from "./ledger";
-import { ctKey, hlKey, ftKey, ftTotal } from "./imports";
+import { ctKey, hlKey, ftKey, ftTotal, faturaRows } from "./imports";
 import type { Account, Entry } from "./types";
 
 const acct: Account = { id: "a", name: "Inter", color: "#FF7A00", start: 100000 };
@@ -269,5 +269,20 @@ describe("sugestões de descrição", () => {
     expect(catForDesc(es, "desp", " MERCADO dia ")).toBe("Lazer");
     expect(catForDesc(es, "desp", "Padaria")).toBe("");
     expect(catForDesc(es, "desp", "")).toBe("");
+  });
+});
+
+describe("fatura: pagamento fora da soma e ordem por data", () => {
+  const r = { bank: "Renner", due: "2026-10-15", rows: [
+    { date: "2026-09-16", desc: "Pagamento Fatura Pix", shop: "", cents: -115086 },
+    { date: "2026-09-12", desc: "Anthropic", shop: "", cents: 11564 }, { date: "2026-08-15", desc: "Caedu", shop: "", cents: 1666 },
+  ] };
+  it("separa o pagamento e ordena as compras", () => {
+    const { buys, pays } = faturaRows(r as never);
+    expect(buys.map(y => y.desc)).toEqual(["Caedu", "Anthropic"]); expect(pays).toHaveLength(1);
+  });
+  it("total sem o pagamento (com total do banco, vale o do banco)", () => {
+    expect(ftTotal(r as never)).toBe(13230);
+    expect(ftTotal({ ...r, total: 99 } as never)).toBe(99);
   });
 });

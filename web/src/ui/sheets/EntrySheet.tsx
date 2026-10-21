@@ -1,6 +1,6 @@
 import { useStore } from "../../lib/createStore";
 import { isFut } from "../../lib/ledger";
-import { R, fmtD, fmtDM } from "../../lib/format";
+import { R, fmtD, fmtDM, signR } from "../../lib/format";
 import { actions, ledger } from "../../lib/store";
 import { useArmed } from "../hooks";
 import { SheetHead } from "../Sheet";
@@ -24,7 +24,7 @@ export function EntrySheet({ id }: { id: string }) {
     </div>
     {e.items && e.items.length > 0 && <>
       <div className="ln sub">Itens da fatura · {e.items.length}</div>
-      {e.items.map((y, i) => <div className="ln" key={i}><span>{fmtDM(y.date)}</span><span className="dsc">{y.desc}</span><b className={y.cents < 0 ? "cr" : ""}>{R(y.cents)}</b></div>)}
+      {e.items.map((y, i) => <div className="ln" key={i}><span>{fmtDM(y.date)}</span><span className="dsc">{y.desc}</span><b className={y.cents < 0 ? "cr" : ""}>{signR(y.cents)}</b></div>)}
     </>}
     {!e.tr && <button type="button" className="btn primary wide" id="exEdit" onClick={() => openSheet({ kind: "lanc", editId: e.id })}>Editar</button>}
     {!e.tr && !e.imp && <button type="button" className="btn wide" id="exDup" onClick={() => openSheet({ kind: "lanc", copyId: e.id })}>Duplicar</button>}

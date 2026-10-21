@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 import { useStore } from "../../lib/createStore";
 import { bankOf } from "../../lib/banks";
-import { R, fmtD, fmtDM, today } from "../../lib/format";
-import { contaEntry, faturaDays, faturaEntry, ftKey, ftTotal, hlKey, hlName, holeriteEntry, itemName, ctKey } from "../../lib/imports";
+import { R, fmtD, fmtDM, signR, today } from "../../lib/format";
+import { contaEntry, faturaDays, faturaEntry, faturaRows, ftKey, ftTotal, hlKey, hlName, holeriteEntry, itemName, ctKey } from "../../lib/imports";
 import type { ContaPdf, Fatura, HoleritePdf, ReadResult } from "../../lib/pdf/read";
 import { actions, ledger } from "../../lib/store";
 import { bankAccts, faturaPaid } from "../../lib/ledger";
@@ -43,7 +43,7 @@ function Block({ i, x, imp, doneText, label, preferred, children, button, onGo }
 
 function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: number }) {
   const r: Fatura = x.r, entries = useStore(ledger, s => s.entries);
-  const sum = r.rows.reduce((s, y) => s + y.cents, 0), d = r.due || x.date || "";
+  const { buys, pays } = faturaRows(r), sum = buys.reduce((s, y) => s + y.cents, 0), d = r.due || x.date || "";
   const bankAcct = useStore(ledger, s => { const m = bankOf(r.bank || ""); return (m && bankAccts(s.accts).find(a => bankOf(a.name) === m)?.id) || undefined; });
   const chk = r.total == null ? null : Math.abs(sum - r.total) <= 1 ? <span className="ok">bate com o total do banco ✓</span> : <span className="bad">banco diz {R(r.total)}</span>;
   function go(acct: string) {
@@ -62,11 +62,12 @@ function FaturaView({ x, i }: { x: Extract<ReadResult, { kind: "fatura" }>; i: n
       <div className="kv">
         <span>Vencimento</span><b>{r.due ? fmtD(r.due) : "não achei"}</b>
         {r.close ? <><span>Fecha dia</span><b>{r.close}</b></> : null}
-        <span>Lançamentos</span><b>{r.rows.length}</b><span>Soma lida</span><b>{R(sum)}</b>
+        <span>Lançamentos</span><b>{buys.length}</b><span>Soma lida</span><b>{R(sum)}</b>
         {r.total != null ? <><span>Total do banco</span><b>{R(r.total)}</b></> : null}
       </div>
       {chk && <div className="kv" style={{ paddingTop: 0 }}><span>Conferência</span><b>{chk}</b></div>}
-      {r.rows.map((y, k) => <div className="ln" key={k}><span>{fmtDM(y.date)}</span><span className="dsc">{itemName(y)}</span><b className={y.cents < 0 ? "cr" : ""}>{R(y.cents)}</b></div>)}
+      {buys.map((y, k) => <div className="ln" key={k}><span>{fmtDM(y.date)}</span><span className="dsc">{itemName(y)}</span><b className={y.cents < 0 ? "cr" : ""}>{signR(y.cents)}</b></div>)}
+      {pays.length > 0 && <><div className="ln sub">Pagamento da fatura anterior · fora da soma</div>{pays.map((y, k) => <div className="ln" key={k}><span>{fmtDM(y.date)}</span><span className="dsc">{itemName(y)}</span><b className="cr">{signR(y.cents)}</b></div>)}</>}
       <Block i={i} x={x} imp={d ? ftKey(r, d) : false} doneText="Já lançada em" label="Paga pela conta" preferred={bankAcct} onGo={go}
         button={`Lançar fatura de ${R(ftTotal(r))} em {conta}${d ? ` · vence ${fmtDM(d)}` : ""}`}>
         {r.due ? null : <div className="field"><label htmlFor={`ftd${i}`}>Vencimento (não achei no PDF)</label><input type="date" id={`ftd${i}`} value={x.date || ""} onChange={e => patchResult(i, { date: e.target.value })} /></div>}
