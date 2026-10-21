@@ -252,7 +252,7 @@ html.hide :is(.big,.split b,.boxline b,.acrow b,.boxrow-vals,.ex b,.exsum,.limbo
 #lcMore{margin-top:4px}
 #lcMoreBox select,#lcMoreBox input[type=number],#lcMoreBox input[type=month]{width:100%;margin-top:6px}
 
-.cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline;flex:none}
+.ex .cdot,.cdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:baseline;flex:none}
 .catrow{border-bottom:1px solid var(--line)}
 .catname{display:flex;align-items:center;gap:2px;width:100%;min-height:46px;background:none;border:0;font-size:16px;color:var(--ink);text-align:left}
 .catname .cdot{width:14px;height:14px;margin-right:10px}
