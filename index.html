@@ -2,11 +2,11 @@
 <html lang="pt-BR"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Minhas Despesas</title>
+<title>Tostão</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Despesas">
+<meta name="apple-mobile-web-app-title" content="Tostão">
 <meta name="theme-color" content="#0E3B35">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -489,7 +489,7 @@ function diagTok(w){
 }
 function diagText(){
   const{pages,res,err:e,info:f}=lastPdf, all=pages.map(p=>p.items.map(i=>i.s).join(" ")).join(" ").replace(/\s+/g," ");
-  const out=[`Minhas Despesas · diagnóstico de fatura · ${pages.length} pág.`,
+  const out=[`Tostão · diagnóstico de fatura · ${pages.length} pág.`,
     `detecta: inter=${/Banco Inter|bancointer|inter\.co\//i.test(all)?1:0} pan=${/Banco Pan\b|bancopan/i.test(all)?1:0} renner=${/Realize|Renner/i.test(all)?1:0} picpay=${/PicPay/i.test(all)?1:0}`,
     f?`arquivo: ${f.tipo} ${f.kb} KB (${f.bytes} bytes) · início "${f.head}" · hex ${f.hex} · %PDF em ${f.off} (${f.ver}) · startxref=${f.startxref} · fim "${f.fim}" · pdf=${f.pdf} · senha pedida=${f.senha||0} · proteção=${f.enc} · %%EOF=${f.eof} objstm=${f.objstm} xrefstm=${f.xrefstm} · produtor=${f.producer}`:"arquivo: ?",
     `leitor: pdf.js ${PDFJS&&PDFJS.version||"?"} · ${navigator.userAgent.replace(/^Mozilla\/5\.0 /,"").slice(0,90)}`,

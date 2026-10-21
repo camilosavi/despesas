@@ -1,4 +1,4 @@
-const C="despesas-943473c1", RT="despesas-runtime";
+const C="despesas-7adbcdbd", RT="despesas-runtime";
 const ASSETS=["./","index.html","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==RT&&x!=="despesas-av").map(x=>caches.delete(x)))));self.clients.claim()});
@@ -24,7 +24,7 @@ self.addEventListener("push",e=>{
   let d={};try{d=e.data?e.data.json():{}}catch(_){d={body:e.data?e.data.text():""}}
   // número no ícone = avisos ainda não abertos (igual ao sininho); o app recalcula ao abrir
   const bump=caches.open("despesas-av").then(c=>c.match("n").then(r=>r?r.text():"0").then(t=>{const n=(+t||0)+1;return c.put("n",new Response(String(n))).then(()=>self.navigator&&self.navigator.setAppBadge?self.navigator.setAppBadge(n):0)})).catch(()=>{});
-  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Minhas Despesas",{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"icon-192.png",badge:"icon-192.png",data:{url:d.url||"./",av:d.av||""}})]));
+  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Tostão",{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"icon-192.png",badge:"icon-192.png",data:{url:d.url||"./",av:d.av||""}})]));
 });
 self.addEventListener("notificationclick",e=>{
   e.notification.close();

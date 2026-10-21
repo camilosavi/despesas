@@ -1,4 +1,4 @@
-# Minhas Despesas
+# Tostão
 
 App pessoal de controle de gastos (PWA). Os dados ficam salvos só no aparelho (localStorage); nada é enviado para este repositório.
 

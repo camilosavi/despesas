@@ -1,8 +1,9 @@
-# Minhas Despesas — contexto para o Claude
+# Tostão (antes "Minhas Despesas") — contexto para o Claude
 
 App pessoal de controle de gastos do Camilo, usado no iPhone 16 Pro Max (440 pt de largura).
 Publicado como PWA em **https://camilosavi.github.io/despesas/** (GitHub Pages, branch `main`, pasta raiz).
 Fala português; respostas curtas e diretas.
+Nome do app: **Tostão** (renomeado em 21/10/2026; repositório e endereço continuam `despesas`).
 
 ## Recomeço (21/10/2026)
 
