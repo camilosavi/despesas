@@ -50,7 +50,7 @@ Ficou o que está abaixo; o resto volta função por função, conversando tela 
      sobrescreve). Sincroniza 1,2 s depois de mexer, a cada 60 s, ao voltar ao app e ao voltar a internet. Botão "☁ Em dia" no cartão da
      home abre "Sua conta" (sincronizar agora, sair; sair só com tudo enviado e limpa o aparelho). Holerite/fatura/conta repetidos em
      dois aparelhos: o índice único `(user_id, imp)` recusa o 2º e vale o que já estava no banco. Mapeamento: `start`↔`start_cents`,
-     `desc`↔`descr`, `xfer` 1↔true. **Não testado contra o Supabase real** (sandbox sem acesso): só com simulação.
+     `desc`↔`descr`, `xfer` 1↔true. Lote de upsert sempre com as mesmas chaves (`uniform`, falta = null): o PostgREST recusa lote misto ("All object keys must match"). **Não testado contra o Supabase real** (sandbox sem acesso): só com simulação.
    - **Layout** (21/10/2026): celular = uma coluna (cartão, botões, contas, "Ler um PDF"); PC (≥ 900 px) usa a tela toda: `.colL` (cartão, `#acts`, PDF)
      fixa à esquerda e `#view` (contas em grade ou extrato) à direita. Tudo alinhado na borda da moldura do cartão.
    - **Editar lançamento** (21/10/2026): ao tocar num lançamento aparece **Editar** (reaproveita a janela Lançar, `openLanc(id)`: valor, descrição, conta, data,

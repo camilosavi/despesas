@@ -63,9 +63,14 @@ async function getAll(tbl: string): Promise<Json[]> {
     out.push(...p); if (p.length < 1000) return out;
   }
 }
+/** o PostgREST recusa lote com chaves diferentes ("All object keys must match"): todas as linhas passam a ter as mesmas chaves (falta = null) */
+export const uniform = (rows: Json[]): Json[] => {
+  const keys = [...new Set(rows.flatMap(r => Object.keys(r)))];
+  return rows.map(r => Object.fromEntries(keys.map(k => [k, k in r ? r[k] : null])));
+};
 async function upsert(tbl: string, rows: Json[]) {
   for (let i = 0; i < rows.length; i += 200) {
-    const part = rows.slice(i, i + 200);
+    const part = uniform(rows.slice(i, i + 200));
     try { await api("POST", tbl + "?on_conflict=id", part, MERGE); }
     catch (e) {
       if ((e as ApiError).code !== "23505") throw e; // mesmo holerite/fatura/conta já lançado em outro aparelho: o banco recusa a repetição e fica o que já estava lá

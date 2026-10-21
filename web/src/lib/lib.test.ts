@@ -4,6 +4,7 @@ import { accBal, totBal, matchEntry, sg, descHints, catForDesc, groupByCat } fro
 import { ctKey, hlKey, ftKey, ftTotal, faturaRows } from "./imports";
 import { addMonths, launchEntries, repCount } from "./launch";
 import { decryptSync, ofFromSync } from "./driveImport";
+import { eRow, uniform } from "./sync";
 import { bankEntries, cardEntries, ofBankName, ofDay } from "./openfinance";
 import type { Account, Entry } from "./types";
 
@@ -396,5 +397,14 @@ describe("importar Open Finance do Drive (arquivo do app antigo)", () => {
     await expect(decryptSync(f, "errada")).rejects.toThrow("senha");
     await expect(decryptSync('{"app":"outro"}', "x")).rejects.toThrow("formato");
     expect(ofFromSync(await decryptSync(f, "certa"))).toBeNull();
+  });
+});
+
+describe("sincronizar: lote com chaves iguais (PostgREST)", () => {
+  it("linhas com e sem cat/open ficam com as mesmas chaves", () => {
+    const rows = uniform([eRow({ ...e({ cents: 1 }), cat: "Mercado" }), eRow(e({ cents: 2, open: 1 })), eRow(e({ cents: 3 }))]);
+    const ks = rows.map(r => Object.keys(r).sort().join());
+    expect(new Set(ks).size).toBe(1);
+    expect(rows[0].open ?? null).toBeNull(); expect(rows[1].cat).toBeNull(); expect(rows[1].open).toBe(true);
   });
 });
