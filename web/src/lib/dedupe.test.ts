@@ -27,3 +27,15 @@ describe("dedupe", () => {
     expect(findDupes([c, d], new Set([[c.id, d.id].sort().join("|")])).length).toBe(0);
   });
 });
+import { guessCat } from "./categories";
+describe("guessCat", () => {
+  it("marcas", () => {
+    expect(guessCat("desp", "NETFLIX.COM")).toBe("Assinaturas");
+    expect(guessCat("desp", "Uber *Trip")).toBe("Transporte");
+    expect(guessCat("desp", "IFOOD *Restaurante")).toBe("Alimentação");
+    expect(guessCat("desp", "Carrefour Hiper")).toBe("Mercado");
+    expect(guessCat("rec", "Holerite")).toBe("Salário");
+    for (const [d, c] of [["IOF INTERNACIONAL", "Outros"], ["UDEMY SUBSCRIPTION", "Assinaturas"], ["SUPERMERCADOS PAGUE M", "Mercado"], ["POSTO ITUANO", "Transporte"], ["APPLE COM BILL", "Assinaturas"], ["GOOGLE G1AI101M", "Assinaturas"], ["AIRBNB", "Lazer"], ["OTICAS CAROL", "Saúde"], ["AMAZON BR", "Compras"], ["SHOPEE TNTINFOL", "Compras"], ["JIM COM", "Compras"]]) expect(guessCat("desp", d)).toBe(c);
+    expect(guessCat("desp", "Xyz")).toBe("");
+  });
+});

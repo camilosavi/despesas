@@ -1,6 +1,6 @@
 // Contas e lançamentos: saldo, "entrou no mês" e busca. Funções puras (recebem os dados e a data de hoje).
 import { bankOf } from "./banks";
-import { CAT_CARD } from "./categories";
+import { CAT_CARD, guessCat } from "./categories";
 import { brl, fmtD, fold, lastDay, shiftYM, today } from "./format";
 import type { Account, Entry } from "./types";
 
@@ -97,7 +97,7 @@ export const catForDesc = (entries: Entry[], type: Entry["type"], desc: string) 
   for (const e of entries) if (e.type === type && !e.xfer && e.cat && fold(e.desc.trim()) === k && (!best || (e.at || 0) > (best.at || 0))) best = e;
   if (best && best.cat !== CAT_CARD) return best.cat!;
   if (type === "desp") for (const e of entries) for (const i of e.items || []) if (i.cat && fold(i.desc.trim()) === k) return i.cat; // compra igual numa fatura já categorizada
-  return best?.cat ?? "";
+  return best?.cat ?? guessCat(type, desc); // sem histórico: palpite pela marca
 };
 /** extrato agrupado por categoria, da maior para a menor (total com sinal: entrada +, saída −) */
 export const groupByCat = (L: Entry[]) => {

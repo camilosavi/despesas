@@ -272,7 +272,7 @@ describe("sugestões de descrição", () => {
   });
   it("categoria vem do último lançamento com a mesma descrição (sem acento e caixa)", () => {
     expect(catForDesc(es, "desp", " MERCADO dia ")).toBe("Lazer");
-    expect(catForDesc(es, "desp", "Padaria")).toBe("");
+    expect(catForDesc(es, "desp", "Padaria")).toBe("Alimentação");
     expect(catForDesc(es, "desp", "")).toBe("");
   });
 });
