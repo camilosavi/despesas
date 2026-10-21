@@ -185,3 +185,38 @@ header.top{order:0}#acts{order:1}#view{order:2}#secPdf{order:3}
 .swatch.custom input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .swatch.custom:has(input:focus-visible){border-color:var(--ink)}
 .sec .acrow+.acrow{margin-top:0}
+
+/* ---------- caixinhas, moedas e metas ---------- */
+.sec-head-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.sec-head-row h2{margin:0;font-family:var(--display);font-weight:700;font-size:1.22rem}
+.sec-totals-row{display:flex;gap:6px;flex-wrap:wrap}
+.boxtot-chip{font-size:.8rem;font-weight:700;background:var(--chip);padding:4px 10px;border-radius:999px;font-family:var(--display)}
+.boxrow .boxico{font-size:1.5rem;width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:var(--chip);flex:none}
+.boxrow-info{display:flex;flex-direction:column;gap:3px;overflow:hidden;min-width:0}
+.boxrow-prog{display:flex;flex-direction:column;gap:3px}
+.boxrow-bar{width:100%;max-width:140px;height:5px;border-radius:3px;background:var(--chip);overflow:hidden}
+.boxrow-bar i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.boxhero{display:flex;align-items:center;gap:16px;margin:4px 0 16px;padding:14px;background:var(--bg);border-radius:18px}
+.boxico-lg{font-size:2.4rem;width:56px;height:56px;display:grid;place-items:center;background:var(--surface);border-radius:16px;flex:none}
+.boxcur-lbl{display:block;font-size:.74rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.boxcur-val{font-family:var(--display);font-size:1.6rem;line-height:1.2}
+.boxprog-bar{width:100%;height:6px;border-radius:3px;background:var(--line);margin:6px 0 3px;overflow:hidden}
+.boxprog-bar i{display:block;height:100%;background:var(--pos);border-radius:3px}
+.box-kinds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.box-kind-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer}
+.box-kind-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.box-kind-ico{font-size:1.3rem}
+.box-kind-lbl{font-size:.7rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.amount-input-row{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:14px;background:var(--bg);padding:0 14px;min-height:48px}
+.amount-input-row input{flex:1;border:0;background:transparent;outline:0;font-family:var(--display);font-size:1.2rem;font-weight:600;color:inherit}
+.fx-rate-row{margin:10px 0 14px;background:var(--bg);padding:10px 14px;border-radius:14px}
+.fx-calc-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.fx-calc-row input{width:110px;min-height:40px;padding:0 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);color:inherit}
+.fx-hint{font-weight:600;color:var(--accent);font-size:.9rem}
+.boxmoves-list{margin-top:18px}
+.boxmv-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.boxmv-note{display:block;font-size:.78rem;color:var(--muted);margin-top:1px}
+.boxmv-right{display:flex;align-items:center;gap:8px}
+.box-footer-btns{display:flex;gap:10px;margin-top:20px}
+.bad-txt{color:var(--neg)}
+.x.sm{width:26px;height:26px;font-size:.8rem}

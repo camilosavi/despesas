@@ -4,7 +4,8 @@ import type { ReadResult } from "../lib/pdf/read";
 
 export type SheetState =
   | { kind: "add" } | { kind: "edit" } | { kind: "entry"; id: string } | { kind: "lanc"; editId?: string } | { kind: "tran" }
-  | { kind: "me" } | { kind: "results" } | { kind: "diag"; idx: number };
+  | { kind: "me" } | { kind: "results" } | { kind: "diag"; idx: number }
+  | { kind: "box"; id: string } | { kind: "boxForm"; editId?: string };
 
 export const ui = createStore<{ openId: string | null; sheet: SheetState | null; toast: { text: string; n: number } | null }>({ openId: null, sheet: null, toast: null });
 export const openSheet = (sheet: SheetState) => ui.set({ sheet });

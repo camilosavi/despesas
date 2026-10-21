@@ -14,3 +14,12 @@ export interface Entry {
   at?: number;
 }
 export interface Session { at: string; rt: string; exp: number; uid: string; email: string }
+
+export type Currency = "BRL" | "EUR" | "USD";
+export interface SaveMove {
+  id: string; date: string; cents: number; cur?: Currency; rate?: number; brl?: number; note?: string;
+}
+export interface SaveBox {
+  id: string; name: string; kind?: string; icon?: string; cur: Currency;
+  goal?: number; target?: string; moves: SaveMove[];
+}

@@ -9,6 +9,8 @@ import { TranSheet } from "./sheets/TranSheet";
 import { MeSheet } from "./sheets/MeSheet";
 import { ResultsSheet } from "./sheets/ResultsSheet";
 import { DiagSheet } from "./sheets/DiagSheet";
+import { BoxSheet } from "./sheets/BoxSheet";
+import { BoxFormSheet } from "./sheets/BoxFormSheet";
 
 export function SheetHead({ title }: { title: string }) {
   return (<>
@@ -39,6 +41,8 @@ export function SheetHost() {
       {sheet.kind === "me" && <MeSheet />}
       {sheet.kind === "results" && <ResultsSheet />}
       {sheet.kind === "diag" && <DiagSheet idx={sheet.idx} />}
+      {sheet.kind === "box" && <BoxSheet id={sheet.id} />}
+      {sheet.kind === "boxForm" && <BoxFormSheet editId={sheet.editId} />}
     </div>
   </>);
 }

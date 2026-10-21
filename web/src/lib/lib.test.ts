@@ -70,3 +70,51 @@ describe("chaves de importação", () => {
     expect(ftTotal({ total: null, rows: [{ cents: 100 }, { cents: 250 }] } as never)).toBe(350);
   });
 });
+
+import { boxBal, boxProgress, boxTotalsByCur, fmtMoneyCur } from "./boxes";
+import type { SaveBox } from "./types";
+
+describe("caixinhas e moedas", () => {
+  const box1: SaveBox = {
+    id: "b1", name: "Viagem Paris", cur: "EUR", goal: 200000,
+    moves: [
+      { id: "m1", date: "2026-10-01", cents: 50000, cur: "EUR" },
+      { id: "m2", date: "2026-10-10", cents: 30000, cur: "EUR" },
+      { id: "m3", date: "2026-10-15", cents: -10000, cur: "EUR" },
+    ],
+  };
+  const box2: SaveBox = {
+    id: "b2", name: "Reserva", cur: "BRL", goal: 500000,
+    moves: [{ id: "m4", date: "2026-10-01", cents: 150000, cur: "BRL" }],
+  };
+
+  it("calcula saldo da caixinha somando e subtraindo movimentos", () => {
+    expect(boxBal(box1)).toBe(70000);
+    expect(boxBal(box2)).toBe(150000);
+  });
+
+  it("separa totais por moeda", () => {
+    const totals = boxTotalsByCur([box1, box2]);
+    expect(totals.EUR).toBe(70000);
+    expect(totals.BRL).toBe(150000);
+    expect(totals.USD).toBe(0);
+  });
+
+  it("calcula progresso e falta da meta", () => {
+    const p1 = boxProgress(box1);
+    expect(p1?.pct).toBe(35); // 700 / 2000 = 35%
+    expect(p1?.left).toBe(130000);
+    expect(p1?.done).toBe(false);
+
+    const doneBox: SaveBox = { ...box1, moves: [{ id: "m", date: "2026-10-01", cents: 250000 }] };
+    expect(boxProgress(doneBox)?.done).toBe(true);
+  });
+
+  it("formata valores respeitando o símbolo da moeda", () => {
+    expect(fmtMoneyCur(5000, "BRL")).toBe("R$ 50,00");
+    expect(fmtMoneyCur(5000, "EUR")).toBe("€ 50,00");
+    expect(fmtMoneyCur(5000, "USD")).toBe("US$ 50,00");
+    expect(fmtMoneyCur(-2000, "EUR")).toBe("−€ 20,00");
+  });
+});
+
