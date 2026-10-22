@@ -5330,8 +5330,14 @@ $("addBtn").onclick=()=>{
     }
   }
   openSheet();
-  if(tab==="pCards"&&selCard){if(isBen(selCard)){form.pay=selCard;form.card="";form.paid=true}else{form.pay="Crédito";form.card=selCard}chips()}
+  if(tab==="pCards"&&selCard){if(isBen(selCard)){form.pay=selCard;form.card="";form.paid=true}else{form.pay="Crédito";form.card=selCard;const d=cardBuyDate(selCard,view);if(d)$("date").value=d}chips()}
 };
+/* "+" dentro do cartão (21/10/2026): o mês visto é o do VENCIMENTO da fatura, não o da compra. Antes a data abria no dia 1º desse
+   mês (fatura que vence 02/11 → compra de 01/11 → caía na fatura de dezembro). Agora: hoje, se hoje cabe naquele ciclo ou a fatura já
+   fechou; fatura futura → 1º dia do ciclo dela, para a compra cair na fatura que ele está vendo. Sem vencimento no cartão: como antes. */
+function cardBuyDate(c,ym){const D=cardDue(c,ym);if(!D) return "";
+  const t=today(), prev=closeOfDue(c,cardDue(c,shiftYM(ym,-1))), d=t<=prev?addDays(prev,1):t;
+  return d<MIN_YM+"-01"?t:d}
 
 /* ---------- novo cartão ---------- */
 let cdColor=CARD_PALETTE[0];
