@@ -1,7 +1,7 @@
 <title>Minhas Despesas</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Despesas">
-<meta name="theme-color" content="#0E3B35">
+<meta name="theme-color" content="#14203A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap">
 <style>
@@ -1457,6 +1457,15 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   #sheet .amount span{font-size:1.2rem;align-self:center;opacity:.7}
   #sheet .field input:not([type=checkbox]),#sheet .field select,#sheet .catpick-btn{border-radius:16px!important}
 }
+/* tema Tostão (padrão, 21/10/2026): azul-marinho e dourado do logo "Um Tostão"; o verde antigo continua como tema "Verde" */
+:root[data-accent="tostao"]{--head:#14203A;--head-ink:#F3EEE2;--head-muted:#AAB4C9;--accent:#A67C2E;--accent-ink:#FFFFFF;--btn:#C9A25A;--btn-ink:#14203A;--pos:#12805F;--euro:#2F5FC4}
+@media (prefers-color-scheme:dark){:root[data-accent="tostao"]:not([data-theme="light"]){--head:#0E1830;--head-ink:#F3EEE2;--head-muted:#97A3BC;--accent:#D9B66F;--accent-ink:#14203A;--btn:#D9B66F;--btn-ink:#14203A}}
+:root[data-theme="dark"][data-accent="tostao"]{--head:#0E1830;--head-ink:#F3EEE2;--head-muted:#97A3BC;--accent:#D9B66F;--accent-ink:#14203A;--btn:#D9B66F;--btn-ink:#14203A}
+:root[data-accent="tostao"]:not([data-accent="verde"]){--bg:#F4F5F8;--zebra:#F8F9FB;--line:#E1E4EB;--chip:#ECEEF3;--muted:#5F6878;--ink:#141B2B}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"])[data-accent="tostao"]:not([data-accent="verde"]){--bg:#0A1226;--surface:#121C34;--zebra:#16213A;--line:#1F2B45;--chip:#1A2641;--muted:#97A3BC;--ink:#ECEFF5}}
+:root[data-theme="dark"][data-accent="tostao"]:not([data-accent="verde"]){--bg:#0A1226;--surface:#121C34;--zebra:#16213A;--line:#1F2B45;--chip:#1A2641;--muted:#97A3BC;--ink:#ECEFF5}
+.lk-logo{width:88px;height:88px;border-radius:50%;display:block;box-shadow:0 0 0 2px rgba(201,162,90,.55),0 10px 28px rgba(0,0,0,.35)}
+.lk-brand{flex-direction:column;gap:12px}
 </style>
 
 <div class="wrap">
@@ -3355,7 +3364,7 @@ let swipeJust=false;
   document.addEventListener("touchend",end);document.addEventListener("touchcancel",end);
 })();
 /* foto e tema: só neste aparelho (localStorage), aparecem também na tela de entrada */
-const THEMES={verde:["#0E3B35","#12A57E"],meianoite:["#0B1730","#2E4C8A"],bordo:["#3A0E17","#8A1E33"],petroleo:["#0B2C30","#16707A"],oliva:["#262A14","#5F6B26"],cafe:["#33241A","#8A5A36"],ameixa:["#2D1529","#7A3770"],...{azul:["#0F2C57","#2F6FE0"],roxo:["#2A1A55","#7A4FD6"],laranja:["#4A2410","#E0701A"],rosa:["#4A1530","#D6457F"],grafite:["#1E252C","#4C5F73"]}}, TH_N={verde:"Verde",meianoite:"Meia-noite",bordo:"Bordô",petroleo:"Petróleo",oliva:"Oliva",cafe:"Café",ameixa:"Ameixa",azul:"Azul",roxo:"Roxo",laranja:"Laranja",rosa:"Rosa",grafite:"Grafite"};
+const THEMES={tostao:["#14203A","#C9A25A"],verde:["#0E3B35","#12A57E"],meianoite:["#0B1730","#2E4C8A"],bordo:["#3A0E17","#8A1E33"],petroleo:["#0B2C30","#16707A"],oliva:["#262A14","#5F6B26"],cafe:["#33241A","#8A5A36"],ameixa:["#2D1529","#7A3770"],...{azul:["#0F2C57","#2F6FE0"],roxo:["#2A1A55","#7A4FD6"],laranja:["#4A2410","#E0701A"],rosa:["#4A1530","#D6457F"],grafite:["#1E252C","#4C5F73"]}}, TH_N={tostao:"Tostão",verde:"Verde",meianoite:"Meia-noite",bordo:"Bordô",petroleo:"Petróleo",oliva:"Oliva",cafe:"Café",ameixa:"Ameixa",azul:"Azul",roxo:"Roxo",laranja:"Laranja",rosa:"Rosa",grafite:"Grafite"};
 const userPhoto=()=>lsGet("despesas.photo");
 const myName=()=>{const a=typeof authData==="function"?authData():null;return (a&&a.name)||""};
 /* tema a partir de uma cor qualquer (cor livre ou cor da foto): topo escuro da mesma cor, destaque com contraste certo */
@@ -3367,7 +3376,7 @@ function genTheme(hex){
   const D=`--head:${hd};--head-muted:${mixHex(hd,"#ffffff",.55)};--accent:${ad};--accent-ink:${mixHex(hex,"#000000",.8)}`;
   return `:root[data-accent="gen"]{${L}}@media (prefers-color-scheme:dark){:root[data-accent="gen"]:not([data-theme="light"]){${D}}}:root[data-theme="dark"][data-accent="gen"]{${D}}`;
 }
-function applyTheme(){const t=lsGet("despesas.theme"), root=document.documentElement, mode=lsGet("despesas.mode");
+function applyTheme(){const t=lsGet("despesas.theme")||"tostao", root=document.documentElement, mode=lsGet("despesas.mode");
   if(mode==="light"||mode==="dark")root.dataset.theme=mode;else delete root.dataset.theme;
   {const tp=lsGet("despesas.topo");if(tp==="fixa"||tp==="antes")root.dataset.topo=tp;else delete root.dataset.topo}
   const gen=t==="livre"?lsGet("despesas.themeColor"):t==="foto"?lsGet("despesas.photoColor"):null;
@@ -3411,7 +3420,7 @@ function recurSection(){
   return `<section><h2>Gastos que se repetem <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">`+R2.map(r=>`<div class="item rec-it">${catIco(r.cat,"desp")}<span class="t"><div class="d">${esc(r.name)}</div><div class="m">${esc(catOf(r.cat,"desp").n)} · em ${r.n} dos últimos meses</div></span><span class="a">${R(r.avg)}<br><span class="m">por mês</span></span></div>`).join("")+`</div><p class="hint" style="margin-top:8px">Assinaturas e contas fixas que o app percebeu pelos seus lançamentos.</p></section>`;
 }
 function lookSection(){
-  const cur=lsGet("despesas.theme")||"verde", mode=lsGet("despesas.mode")||"auto", pc=lsGet("despesas.photoColor"), fc=lsGet("despesas.themeColor")||"#2E4C8A";
+  const cur=lsGet("despesas.theme")||"tostao", mode=lsGet("despesas.mode")||"auto", pc=lsGet("despesas.photoColor"), fc=lsGet("despesas.themeColor")||"#2E4C8A";
   const it=(k,inner,lbl,extra="")=>`<div class="thit">${inner}<span>${lbl}</span></div>`;
   const sw=k=>it(k,`<button class="thsw" data-theme-pick="${k}" style="--h:${THEMES[k][0]};--a:${THEMES[k][1]}" aria-label="Tema ${TH_N[k]}" aria-pressed="${k===cur}"></button>`,TH_N[k]);
   return `<section id="lookSec"><h2>Aparência</h2><div class="card rate">
@@ -3421,7 +3430,7 @@ function lookSection(){
     <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Faixa do relógio (iPhone)</div>
     <div class="segc" role="group" aria-label="Faixa do relógio" style="justify-self:start;flex-wrap:wrap">${[["","Padrão"],["fixa","Faixa fixa"],["antes","Como antes"]].map(([k,n])=>`<button data-topo-pick="${k}" aria-pressed="${(["fixa","antes"].includes(lsGet("despesas.topo"))?lsGet("despesas.topo"):"")===k}">${n}</button>`).join("")}</div></div>
     <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Sóbrios</div>
-    <div class="thgrid">${["verde","meianoite","bordo","petroleo","oliva","cafe"].map(sw).join("")}</div></div>
+    <div class="thgrid">${["tostao","verde","meianoite","bordo","petroleo","oliva","cafe"].map(sw).join("")}</div></div>
     <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Vivos e mais</div>
     <div class="thgrid">${["ameixa","azul","roxo","laranja","rosa","grafite"].map(sw).join("")}
       ${userPhoto()&&pc?it("foto",`<button class="thsw photo" data-theme-pick="foto" style="background-image:url('${userPhoto()}')" aria-label="Tema da cor da sua foto" aria-pressed="${cur==="foto"}"></button>`,"Sua foto"):""}
@@ -6836,7 +6845,7 @@ function unlock(){setTimeout(gResume,50);if(gResumed)setTimeout(syAutoAuth,600);
 function greet(){const h=new Date().getHours();return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"}
 function lockRender(msg="",isErr=false){
   const el=$("lock"), a=authData();
-  const brand=`<div class="lk-brand"><span class="lk-mark">R$</span>Minhas Despesas</div>`;
+  const brand=`<div class="lk-brand"><img class="lk-logo" src="tostao-logo.png" alt="Um Tostão">Minhas Despesas</div>`;
   if(lk.mode==="name"){
     el.innerHTML=`${brand}<div class="lk-hello"><small>Primeiro acesso</small><b>Vamos criar seu acesso</b></div>
       <div class="lk-msg">Como você quer ser chamado?</div>

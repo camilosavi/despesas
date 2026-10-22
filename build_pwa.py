@@ -15,7 +15,7 @@ doc=f'''<!doctype html>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Despesas">
-<meta name="theme-color" content="#0E3B35">
+<meta name="theme-color" content="#14203A">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
@@ -25,11 +25,11 @@ doc=f'''<!doctype html>
 </body></html>
 '''
 open('index.html','w', encoding='utf-8').write(doc)
-json.dump({"name":"Minhas Despesas","short_name":"Despesas","start_url":"./","scope":"./","display":"standalone","background_color":"#0E3B35","theme_color":"#0E3B35","lang":"pt-BR",
- "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]},open('manifest.webmanifest','w', encoding='utf-8'),ensure_ascii=False,indent=1)
+json.dump({"name":"Minhas Despesas","short_name":"Despesas","start_url":"./","scope":"./","display":"standalone","background_color":"#14203A","theme_color":"#14203A","lang":"pt-BR",
+ "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"},{"src":"icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]},open('manifest.webmanifest','w', encoding='utf-8'),ensure_ascii=False,indent=1)
 import hashlib; ver=hashlib.md5(doc.encode()).hexdigest()[:8]
 open('sw.js','w', encoding='utf-8').write(f'''const C="despesas-{ver}", RT="despesas-runtime";
-const ASSETS=["./","index.html","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png"];
+const ASSETS=["./","index.html","manifest.webmanifest","icon-180.png","icon-192.png","icon-512.png","tostao-logo.png"];
 self.addEventListener("install",e=>{{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));self.skipWaiting()}});
 self.addEventListener("activate",e=>{{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==RT&&x!=="despesas-av").map(x=>caches.delete(x)))));self.clients.claim()}});
 const fromCache=req=>caches.match(req,{{ignoreSearch:true}}).then(r=>r||(req.mode==="navigate"?caches.match("index.html"):undefined));

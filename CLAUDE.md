@@ -257,6 +257,10 @@ card?, parc?:"i/n", group?, createdAt}`
   item pago depois (`paidAt` > `bankAtTs`) devolve. Motivo: parcelas com juros (parcelamento de fatura, compra parcelada)
   somam mais do que o banco segura (no caso dele, centenas de reais de diferença). A conta pelos lançamentos aparece para comparar e as
   "Parcelas dos meses seguintes" abrem por compra. `limPct`/`limTag`, Início, faixa e lista usam `cardFree`.
+- **Tema Tostão = padrão** (21/10/2026, pedido dele: "tela de login e base do app na cor do logo"): `data-accent="tostao"` (azul-marinho `#14203A`
+  + dourado `#C9A25A`/`#D9B66F` do logo "Um Tostão"; botões dourados com texto marinho; fundo/superfícies azulados no escuro). Sem tema salvo
+  vale o Tostão (`applyTheme`/`lookSection`); o verde antigo continua escolhível ("Verde"). Tela da senha mostra o logo (`tostao-logo.png`,
+  `.lk-logo`) no lugar do "R$". Ícones do app (`icon-180/192/512.png`, `icon-maskable-512.png`), `theme-color` e manifest vêm do logo (`build_pwa.py`).
 - **Fatura paga → mostra a próxima** (`billShown`, out/2026, pedido dele): no Início (bloco Cartões, "fatura em aberto") e na
   faixa do Mês atual, cartão com a fatura do mês toda paga mostra a próxima com valor ("out paga ✓ · próxima vence dd/mm",
   abre naquele mês).
