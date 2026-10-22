@@ -262,6 +262,7 @@ card?, parc?:"i/n", group?, createdAt}`
   vale o Tostão (`applyTheme`/`lookSection`); o verde antigo continua escolhível ("Verde"). Tela da senha mostra o logo (`tostao-logo.png`,
   `.lk-logo`) no lugar do "R$". Ícones do app (`icon-180/192/512.png`, `icon-maskable-512.png`), `theme-color` e manifest vêm do logo (`build_pwa.py`).
 - **Nome do app = "Um Tostão"** (21/10/2026, pedido dele): título, manifest, nome na Tela de Início, tela da senha, barra do PC, imagem do resumo e aviso padrão. O nome "Minhas Despesas" só sobra em textos internos (diagnóstico, comentários).
+- **Ícones com nome novo** (`tostao-180/192/512.png`, `tostao-maskable-512.png`): o iPhone guarda o ícone da Tela de Início por endereço e só troca ao remover e adicionar o app de novo; nome novo força baixar o ícone certo. Os `icon-*.png` ficam só por compatibilidade.
 - **Tela da senha fixa no marinho/dourado** (21/10/2026, pedido dele, print com tema Café ficando marrom ao lado do logo): `.lock` redefine
   `--head/--btn/--accent` e fundo em degradê radial, logo 112 px com aro dourado, "MINHAS DESPESAS" em caixa alta pequena, teclado e bolinhas
   com toque dourado. Não segue o tema escolhido (o logo é marinho).
