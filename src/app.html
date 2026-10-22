@@ -5871,10 +5871,14 @@ function parseConta(pages){
 function parsePassagem(pages){
   const lines=pages.flatMap(pg=>pdfLines(pg)).map(l=>l.cells.map(c=>c.s).join("  "));
   const MES={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
-  const dts=[],cod=[];
+  const dts=[],cod=[];let dl=null,maxP=0;
   for(const t of lines){
     for(const m of t.matchAll(/(\d{2}) ([A-Za-zç]{3})[a-zç]* (\d{4}) \d{2}:\d{2}/g)){const k=MES[m[2].toLowerCase()];if(k) dts.push(`${m[3]}-${String(k).padStart(2,"0")}-${m[1]}`)}
-    for(const m of t.matchAll(/(?:^|\s)([A-Z]{3}) - [A-Za-zÀ-ú]/g)) cod.push(m[1]);
+    for(const m of t.matchAll(/(?:^|\s)([A-Z]{3}) - [A-Za-zÀ-ú]/g)) if(!/^(ADT|CHD|INF)$/.test(m[1])) cod.push(m[1]);
+    /* "Prazo" da reserva: "25 OUT 23:59" (sem ano; o PDF vem com espaços no meio dos números) */
+    const pm=!dl&&/(\d{1,2}) ([A-Za-zç]{3}) (\d{2}): ?(\d{2})/.exec(t.replace(/(\d) (\d)/g,"$1$2"));
+    if(pm&&MES[pm[2].toLowerCase()]) dl={d:+pm[1],m:MES[pm[2].toLowerCase()],hm:`${pm[3]}:${pm[4]}`};
+    const px=/^(\d{1,2})x\b/.exec(t.trim());if(px) maxP=Math.max(maxP,+px[1]);
   }
   if(dts.length<2||!lines.some(t=>/\bTarifa\b/i.test(t))) return null;
   /* linha de valores: 4+ "R$ x" — o último é o total (confere: soma dos três anteriores) */
@@ -5883,15 +5887,22 @@ function parsePassagem(pages){
   if(!vals) return null;
   const cents=vals[vals.length-1], soma=vals.slice(-4,-1).reduce((a,b)=>a+b,0);
   dts.sort();
-  return {cents,go:dts[0],back:dts.length>2?dts[dts.length-1]:"",from:cod[0]||"",to:cod.length>1?cod[cod.length-1]:"",sumOk:Math.abs(soma-cents)<=1};
+  const reserva=lines.some(t=>/Reserva A[ée]rea|\bReservado\b/i.test(t));
+  let until="";
+  if(reserva&&dl){const t0=(typeof today==="function"?today():new Date().toISOString().slice(0,10)), y0=+t0.slice(0,4);
+    const mk=y=>`${y}-${String(dl.m).padStart(2,"0")}-${String(dl.d).padStart(2,"0")}`;until=mk(y0)<t0?mk(y0+1):mk(y0)}
+  return {cents,go:dts[0],from:cod[0]||"",to:cod.length>1?cod[cod.length-1]:"",sumOk:Math.abs(soma-cents)<=1,reserva,until,untilHm:dl?dl.hm:"",maxP};
 }
 function openPassagem(p){
   closeSheets();openSheet();
   form.type="desp";form.cat="transp";form.cents=p.cents;setAmt();
   $("desc").value=`Passagem aérea${p.from&&p.to?` ${p.from}–${p.to}`:""}`;
+  if(p.reserva) form.paid=false; /* reserva ainda não emitida: nada foi pago */
   chips();applyRule();
   $("err").className="err info";
-  $("err").textContent=`Li a passagem: ${R(p.cents)}${p.go?`, ida em ${fmtDM(p.go)}/${p.go.slice(0,4)}`:""}${p.sumOk?"":" (confira o total)"}. Escolha como pagou e em quantas parcelas.`;
+  $("err").textContent=`Li a ${p.reserva?"reserva":"passagem"}: ${R(p.cents)}${p.go?`, ida em ${fmtDM(p.go)}/${p.go.slice(0,4)}`:""}${p.sumOk?"":" (confira o total)"}.`
+    +(p.reserva&&p.until?` Ainda não emitida: o prazo é ${fmtDM(p.until)}${p.untilHm?` às ${p.untilHm}`:""}.`:"")
+    +(p.maxP?` O PDF mostra parcelamento em até ${p.maxP}x.`:"")+" Escolha como vai pagar e em quantas parcelas.";
 }
 /* holerite (demonstrativo de pagamento): líquido, data do crédito e eventos → uma receita para conferir */
 function parseHolerite(pages){
