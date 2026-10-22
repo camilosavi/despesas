@@ -1477,6 +1477,24 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 :root[data-theme="dark"][data-accent="tostao"]:not([data-accent="verde"]){--bg:#0A1226;--surface:#121C34;--zebra:#16213A;--line:#1F2B45;--chip:#1A2641;--muted:#97A3BC;--ink:#ECEFF5}
 .lk-logo{width:88px;height:88px;border-radius:50%;display:block;box-shadow:0 0 0 2px rgba(201,162,90,.55),0 10px 28px rgba(0,0,0,.35)}
 .lk-brand{flex-direction:column;gap:12px}
+/* tela de senha sempre na identidade do logo (marinho + dourado), qualquer que seja o tema escolhido */
+.lock{--head:#14203A;--head-ink:#F3EEE2;--head-muted:#AAB4C9;--btn:#C9A25A;--btn-ink:#14203A;--accent:#C9A25A;--accent-ink:#14203A;
+  background:radial-gradient(120% 70% at 50% 8%,#223760 0,#14203A 46%,#0B1427 100%);padding-top:calc(40px + env(safe-area-inset-top,0px))}
+.lk-logo{width:112px;height:112px;box-shadow:0 0 0 2px rgba(201,162,90,.6),0 0 0 8px rgba(201,162,90,.10),0 14px 34px rgba(0,0,0,.45)}
+.lk-brand{gap:14px;font-size:.78rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--head-muted);opacity:1}
+.lk-av{width:64px!important;height:64px!important;box-shadow:0 0 0 2px rgba(201,162,90,.5)!important;border:0!important}
+.lk-hello b{font-size:1.55rem}.lk-hello{padding-top:16px}
+.lk-msg{margin-top:12px}
+.lk-dots i{border-color:rgba(201,162,90,.6)}
+.lk-dots i.on{background:#C9A25A;border-color:#C9A25A}
+.lk-pad button{background:rgba(255,255,255,.06);border:1px solid rgba(201,162,90,.22)}
+.lk-pad button:active{background:rgba(201,162,90,.28)}
+.lk-pad button.txt{background:none;border-color:transparent;color:var(--head-muted)}
+.lk-bio{border-color:rgba(201,162,90,.5);background:rgba(201,162,90,.10);color:#E9D3A3}
+.lk-big{background:rgba(201,162,90,.10)}
+.lk-link{color:#E9D3A3}
+.lk-msg.err{color:#F2A99C}
+@media (max-height:760px){.lk-logo{width:84px;height:84px}.lk-brand{gap:10px}.lock{padding-top:calc(18px + env(safe-area-inset-top,0px))}}
 </style>
 
 <div class="wrap">

@@ -261,6 +261,9 @@ card?, parc?:"i/n", group?, createdAt}`
   + dourado `#C9A25A`/`#D9B66F` do logo "Um Tostão"; botões dourados com texto marinho; fundo/superfícies azulados no escuro). Sem tema salvo
   vale o Tostão (`applyTheme`/`lookSection`); o verde antigo continua escolhível ("Verde"). Tela da senha mostra o logo (`tostao-logo.png`,
   `.lk-logo`) no lugar do "R$". Ícones do app (`icon-180/192/512.png`, `icon-maskable-512.png`), `theme-color` e manifest vêm do logo (`build_pwa.py`).
+- **Tela da senha fixa no marinho/dourado** (21/10/2026, pedido dele, print com tema Café ficando marrom ao lado do logo): `.lock` redefine
+  `--head/--btn/--accent` e fundo em degradê radial, logo 112 px com aro dourado, "MINHAS DESPESAS" em caixa alta pequena, teclado e bolinhas
+  com toque dourado. Não segue o tema escolhido (o logo é marinho).
 - **Fatura paga → mostra a próxima** (`billShown`, out/2026, pedido dele): no Início (bloco Cartões, "fatura em aberto") e na
   faixa do Mês atual, cartão com a fatura do mês toda paga mostra a próxima com valor ("out paga ✓ · próxima vence dd/mm",
   abre naquele mês).
