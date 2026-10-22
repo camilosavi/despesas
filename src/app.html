@@ -5535,7 +5535,7 @@ function parsePan(pages,all){
 /* o que o app já sabe ler (mostrado na lista de cartões e na tela Você) — manter em dia quando calibrar um layout novo */
 const READS=[["Faturas de cartão","Inter, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
-  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
+  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
 const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint expl" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
 /* PicPay (out/2026, fatura de uma amiga do Camilo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
    colunas, "DD/MM  ESTABELECIMENTO  valor" (sem R$; negativo = pagamento/crédito), um bloco por cartão (titular e "final XXXX");
@@ -5660,6 +5660,7 @@ async function readInvoice(file,auto){
     const hol=parseHolerite(pages);if(hol){openHolerite(hol);return}
     const exr=parseExtrato(pages);if(exr){openExtrato(exr);return}
     const r=parseInvoice(pages);lastPdf.res=r;
+    if(!r.rows.length&&!r.bank){const pa=parsePassagem(pages);if(pa){openPassagem(pa);return}}
     if(auto){
       if(!r.rows.length){const c=parseConta(pages);if(c){openConta(c);return}openDiag("Não reconheci esse PDF como fatura de cartão, conta ou holerite.");return}
       card=r.bank?await bankCard(r.bank):credCards().length===1?credCards()[0]:null;
@@ -5865,6 +5866,32 @@ function parseConta(pages){
   if(!dv||!vv) return null;
   const p=CONTAS.find(([,re])=>re.test(flat)), [d,m,y]=dv[0].split("/");
   return {name:p?p[0]:"Conta",due:`${y}-${m}-${d}`,cents:Number(vv[0].replace(/\./g,"").replace(",","")),auto:/D[ée]bito Autom[aá]tico/i.test(flat)};
+}
+/* passagem aérea (e-ticket/recibo de compra): total, trechos e datas → abre o lançamento já preenchido; cartão e parcelas ele escolhe no formulário */
+function parsePassagem(pages){
+  const lines=pages.flatMap(pg=>pdfLines(pg)).map(l=>l.cells.map(c=>c.s).join("  "));
+  const MES={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+  const dts=[],cod=[];
+  for(const t of lines){
+    for(const m of t.matchAll(/(\d{2}) ([A-Za-zç]{3})[a-zç]* (\d{4}) \d{2}:\d{2}/g)){const k=MES[m[2].toLowerCase()];if(k) dts.push(`${m[3]}-${String(k).padStart(2,"0")}-${m[1]}`)}
+    for(const m of t.matchAll(/(?:^|\s)([A-Z]{3}) - [A-Za-zÀ-ú]/g)) cod.push(m[1]);
+  }
+  if(dts.length<2||!lines.some(t=>/\bTarifa\b/i.test(t))) return null;
+  /* linha de valores: 4+ "R$ x" — o último é o total (confere: soma dos três anteriores) */
+  let vals=null;
+  for(const t of lines){const v=[...t.matchAll(/R\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})/g)].map(m=>Number(m[1].replace(/\./g,"").replace(",","")));if(v.length>=4)vals=v}
+  if(!vals) return null;
+  const cents=vals[vals.length-1], soma=vals.slice(-4,-1).reduce((a,b)=>a+b,0);
+  dts.sort();
+  return {cents,go:dts[0],back:dts.length>2?dts[dts.length-1]:"",from:cod[0]||"",to:cod.length>1?cod[cod.length-1]:"",sumOk:Math.abs(soma-cents)<=1};
+}
+function openPassagem(p){
+  closeSheets();openSheet();
+  form.type="desp";form.cat="transp";form.cents=p.cents;setAmt();
+  $("desc").value=`Passagem aérea${p.from&&p.to?` ${p.from}–${p.to}`:""}`;
+  chips();applyRule();
+  $("err").className="err info";
+  $("err").textContent=`Li a passagem: ${R(p.cents)}${p.go?`, ida em ${fmtDM(p.go)}/${p.go.slice(0,4)}`:""}${p.sumOk?"":" (confira o total)"}. Escolha como pagou e em quantas parcelas.`;
 }
 /* holerite (demonstrativo de pagamento): líquido, data do crédito e eventos → uma receita para conferir */
 function parseHolerite(pages){
