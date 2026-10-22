@@ -1,6 +1,6 @@
 {
- "name": "Minhas Despesas",
- "short_name": "Despesas",
+ "name": "Um Tostão",
+ "short_name": "Um Tostão",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",

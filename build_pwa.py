@@ -10,11 +10,11 @@ doc=f'''<!doctype html>
 <html lang="pt-BR"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Minhas Despesas</title>
+<title>Um Tostão</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Despesas">
+<meta name="apple-mobile-web-app-title" content="Um Tostão">
 <meta name="theme-color" content="#14203A">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -25,7 +25,7 @@ doc=f'''<!doctype html>
 </body></html>
 '''
 open('index.html','w', encoding='utf-8').write(doc)
-json.dump({"name":"Minhas Despesas","short_name":"Despesas","start_url":"./","scope":"./","display":"standalone","background_color":"#14203A","theme_color":"#14203A","lang":"pt-BR",
+json.dump({"name":"Um Tostão","short_name":"Um Tostão","start_url":"./","scope":"./","display":"standalone","background_color":"#14203A","theme_color":"#14203A","lang":"pt-BR",
  "icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"},{"src":"icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]},open('manifest.webmanifest','w', encoding='utf-8'),ensure_ascii=False,indent=1)
 import hashlib; ver=hashlib.md5(doc.encode()).hexdigest()[:8]
 open('sw.js','w', encoding='utf-8').write(f'''const C="despesas-{ver}", RT="despesas-runtime";
@@ -54,7 +54,7 @@ self.addEventListener("push",e=>{{
   let d={{}};try{{d=e.data?e.data.json():{{}}}}catch(_){{d={{body:e.data?e.data.text():""}}}}
   // número no ícone = avisos ainda não abertos (igual ao sininho); o app recalcula ao abrir
   const bump=caches.open("despesas-av").then(c=>c.match("n").then(r=>r?r.text():"0").then(t=>{{const n=(+t||0)+1;return c.put("n",new Response(String(n))).then(()=>self.navigator&&self.navigator.setAppBadge?self.navigator.setAppBadge(n):0)}})).catch(()=>{{}});
-  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Minhas Despesas",{{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"icon-192.png",badge:"icon-192.png",data:{{url:d.url||"./",av:d.av||""}}}})]));
+  e.waitUntil(Promise.all([bump,self.registration.showNotification(d.title||"Um Tostão",{{body:d.body||"",tag:d.tag||undefined,renotify:!!d.tag,icon:"icon-192.png",badge:"icon-192.png",data:{{url:d.url||"./",av:d.av||""}}}})]));
 }});
 self.addEventListener("notificationclick",e=>{{
   e.notification.close();
@@ -66,5 +66,5 @@ self.addEventListener("notificationclick",e=>{{
   }}));
 }});
 ''')
-open('README.md','w', encoding='utf-8').write("# Minhas Despesas\n\nApp pessoal de controle de gastos (PWA). Os dados ficam salvos só no aparelho (localStorage); nada é enviado para este repositório.\n\nAbra no Safari do iPhone → Compartilhar → Adicionar à Tela de Início.\n")
+open('README.md','w', encoding='utf-8').write("# Um Tostão (Minhas Despesas)\n\nApp pessoal de controle de gastos (PWA). Os dados ficam salvos só no aparelho (localStorage); nada é enviado para este repositório.\n\nAbra no Safari do iPhone → Compartilhar → Adicionar à Tela de Início.\n")
 print("index.html gerado",len(doc))

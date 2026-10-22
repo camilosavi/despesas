@@ -1,4 +1,4 @@
-# Minhas Despesas — contexto para o Claude
+# Um Tostão (antes "Minhas Despesas") — contexto para o Claude
 
 > **21/10/2026 (noite): o app antigo voltou ao `main`** (árvore idêntica ao commit `68e3b9b`), por pedido dele.
 > A versão nova (Tostão, React + TypeScript, login Supabase, contas, faturas, Open Finance) ficou guardada na branch
@@ -261,6 +261,7 @@ card?, parc?:"i/n", group?, createdAt}`
   + dourado `#C9A25A`/`#D9B66F` do logo "Um Tostão"; botões dourados com texto marinho; fundo/superfícies azulados no escuro). Sem tema salvo
   vale o Tostão (`applyTheme`/`lookSection`); o verde antigo continua escolhível ("Verde"). Tela da senha mostra o logo (`tostao-logo.png`,
   `.lk-logo`) no lugar do "R$". Ícones do app (`icon-180/192/512.png`, `icon-maskable-512.png`), `theme-color` e manifest vêm do logo (`build_pwa.py`).
+- **Nome do app = "Um Tostão"** (21/10/2026, pedido dele): título, manifest, nome na Tela de Início, tela da senha, barra do PC, imagem do resumo e aviso padrão. O nome "Minhas Despesas" só sobra em textos internos (diagnóstico, comentários).
 - **Tela da senha fixa no marinho/dourado** (21/10/2026, pedido dele, print com tema Café ficando marrom ao lado do logo): `.lock` redefine
   `--head/--btn/--accent` e fundo em degradê radial, logo 112 px com aro dourado, "MINHAS DESPESAS" em caixa alta pequena, teclado e bolinhas
   com toque dourado. Não segue o tema escolhido (o logo é marinho).

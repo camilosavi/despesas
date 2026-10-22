@@ -1,6 +1,6 @@
-<title>Minhas Despesas</title>
+<title>Um Tostão</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Despesas">
+<meta name="apple-mobile-web-app-title" content="Um Tostão">
 <meta name="theme-color" content="#14203A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap">
@@ -1470,7 +1470,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .lock{--head:#14203A;--head-ink:#F3EEE2;--head-muted:#AAB4C9;--btn:#C9A25A;--btn-ink:#14203A;--accent:#C9A25A;--accent-ink:#14203A;
   background:radial-gradient(120% 70% at 50% 8%,#223760 0,#14203A 46%,#0B1427 100%);padding-top:calc(40px + env(safe-area-inset-top,0px))}
 .lk-logo{width:112px;height:112px;box-shadow:0 0 0 2px rgba(201,162,90,.6),0 0 0 8px rgba(201,162,90,.10),0 14px 34px rgba(0,0,0,.45)}
-.lk-brand{gap:14px;font-size:.78rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--head-muted);opacity:1}
+.lk-brand{gap:14px;font-size:1.45rem;font-weight:700;letter-spacing:.01em;color:var(--head-ink);opacity:1}
 .lk-av{width:64px!important;height:64px!important;box-shadow:0 0 0 2px rgba(201,162,90,.5)!important;border:0!important}
 .lk-hello b{font-size:1.55rem}.lk-hello{padding-top:16px}
 .lk-msg{margin-top:12px}
@@ -1532,7 +1532,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 
 <button class="fab" id="addBtn" aria-label="Novo lançamento"><b aria-hidden="true">+</b><span id="addLbl">Lançamento</span></button>
 <nav class="tabs" aria-label="Seções">
-  <span class="tabbrand" aria-hidden="true">Minhas Despesas</span>
+  <span class="tabbrand" aria-hidden="true">Um Tostão</span>
   <button class="tab" data-tab="pHome" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg><span>Hoje</span></button>
   <button class="tab" data-tab="pWal"><svg viewBox="0 0 24 24"><path d="M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M16 13.5h2.5"/></svg><span>Contas</span></button>
   <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Mês</span></button>
@@ -2943,7 +2943,7 @@ async function mesShare(ym){
     rr(72,y+48,W-144,16,8,col("--chip")||"#eee");rr(72,y+48,Math.max(16,(W-144)*by[k]/mx),16,8,cv(cc.c))});
   let y=620+ks.length*100+20;
   if(fee){txt(`Juros, IOF e tarifas: ${R(fee)}`,72,y+20,32,600,col("--neg")||"#d9534f");y+=60}
-  txt("Minhas Despesas",W/2,H-60,28,600,col("--muted"),"center");
+  txt("Um Tostão",W/2,H-60,28,600,col("--muted"),"center");
   const blob=await new Promise(r=>c.toBlob(r,"image/png")), f=new File([blob],`resumo-${ym}.png`,{type:"image/png"});
   try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:"Resumo de "+monthLabel(ym)});return}}catch(e){if(e&&e.name==="AbortError")return}
   const u=URL.createObjectURL(blob), l=document.createElement("a");l.href=u;l.download=f.name;document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast("Imagem salva",true);
@@ -4443,7 +4443,7 @@ function pushSection(){
   const p=pushCfg(), head=`<section id="pushSec"><h2>Avisos de vencimento</h2><div class="card rate">`;
   const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
   if(!pushOk()||ios&&!standalone()) return head+`<div class="hint">${ios?"Para receber avisos no iPhone, abra o app pelo ícone da tela de início (Safari → Compartilhar → Adicionar à Tela de Início). Precisa do iOS 16.4 ou mais novo.":"Este navegador não aceita notificações de app."}</div></div></section>`;
-  if(Notification.permission==="denied") return head+`<div class="hint">As notificações estão bloqueadas para o app. ${ios?"Libere em Ajustes → Notificações → Despesas":"Libere nas permissões do site no navegador"} e volte aqui.</div></div></section>`;
+  if(Notification.permission==="denied") return head+`<div class="hint">As notificações estão bloqueadas para o app. ${ios?"Libere em Ajustes → Notificações → Um Tostão":"Libere nas permissões do site no navegador"} e volte aqui.</div></div></section>`;
   const opts=PUSH_HOURS.map(h=>`<option value="${h}"${(p.h??9)===h?" selected":""}>${h}h</option>`).join("");
   if(!p.on) return head+`<div class="hint expl">O celular avisa na véspera e no dia do vencimento de contas e faturas em aberto, mesmo com o app fechado. Se passar do dia sem marcar como pago, avisa mais uma vez. O aviso sai criptografado deste aparelho; o servidor só sabe o horário.</div>
     <div class="row" style="margin:0"><button class="btn primary" id="pushOn">Ativar avisos</button></div></div></section>`;
@@ -6822,8 +6822,8 @@ async function bioRegister(){
   try{
     const cred=await navigator.credentials.create({publicKey:{
       challenge:crypto.getRandomValues(new Uint8Array(32)),
-      rp:{name:"Minhas Despesas"},
-      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:a.name||"Minhas Despesas",displayName:a.name||"Minhas Despesas"},
+      rp:{name:"Um Tostão"},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:a.name||"Um Tostão",displayName:a.name||"Um Tostão"},
       pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],
       authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"preferred"},
       timeout:60000,attestation:"none"}});
@@ -6863,7 +6863,7 @@ function unlock(){setTimeout(gResume,50);if(gResumed)setTimeout(syAutoAuth,600);
 function greet(){const h=new Date().getHours();return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"}
 function lockRender(msg="",isErr=false){
   const el=$("lock"), a=authData();
-  const brand=`<div class="lk-brand"><img class="lk-logo" src="tostao-logo.png" alt="Um Tostão">Minhas Despesas</div>`;
+  const brand=`<div class="lk-brand"><img class="lk-logo" src="tostao-logo.png" alt="Um Tostão">Um Tostão</div>`;
   if(lk.mode==="name"){
     el.innerHTML=`${brand}<div class="lk-hello"><small>Primeiro acesso</small><b>Vamos criar seu acesso</b></div>
       <div class="lk-msg">Como você quer ser chamado?</div>
