@@ -86,7 +86,7 @@ export const aRow = (a: Account) => ({ id: a.id, name: a.name, color: a.color ||
 export const aFrom = (r: Json): Account => ({ id: r.id, name: r.name, color: r.color || CARD_PALETTE[0], ...(r.label ? { label: r.label } : {}), start: +r.start_cents || 0, ...(r.kind === "cartao" ? { kind: "cartao" as const } : {}), ...(r.close_day ? { closeDay: +r.close_day } : {}), ...(r.due_day ? { dueDay: +r.due_day } : {}), ...(r.limit_cents ? { limit: +r.limit_cents } : {}) });
 // `cat` só vai quando existe: sem a coluna no banco, quem não usa categoria continua sincronizando
 export const eRow = (e: Entry) => ({
-  id: e.id, acct: e.acct, type: e.type, cents: e.cents, date: e.date, descr: e.desc || "", imp: e.imp || null,
+  id: e.id, acct: e.acct, type: e.cents < 0 ? (e.type === "rec" ? "desp" : "rec") : e.type, cents: Math.abs(e.cents), date: e.date, descr: e.desc || "", imp: e.imp || null,
   xfer: !!e.xfer, tr: e.tr || null, items: e.items || null, at: e.at || null, ...(e.cat ? { cat: e.cat } : {}), ...(e.open ? { open: true } : {}),
 });
 /** linha para enviar: o que foi tirado do lançamento (categoria, "a pagar") vai como vazio, senão o upsert deixa o valor antigo no banco */
