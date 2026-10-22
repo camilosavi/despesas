@@ -263,6 +263,7 @@ card?, parc?:"i/n", group?, createdAt}`
   `.lk-logo`) no lugar do "R$". Ícones do app (`icon-180/192/512.png`, `icon-maskable-512.png`), `theme-color` e manifest vêm do logo (`build_pwa.py`).
 - **Nome do app = "Um Tostão"** (21/10/2026, pedido dele): título, manifest, nome na Tela de Início, tela da senha, barra do PC, imagem do resumo e aviso padrão. O nome "Minhas Despesas" só sobra em textos internos (diagnóstico, comentários).
 - **Ícones com nome novo** (`tostao-180/192/512.png`, `tostao-maskable-512.png`): o iPhone guarda o ícone da Tela de Início por endereço e só troca ao remover e adicionar o app de novo; nome novo força baixar o ícone certo. Os `icon-*.png` ficam só por compatibilidade.
+- **Ícone da Tela de Início embutido** (`ICON180` no `build_pwa.py`): o `apple-touch-icon` vai como data URI dentro do `index.html`, para o iPhone não depender de baixar outro arquivo (apareceu a letra "U" no lugar do logo). A cor da barra de status (`theme-color`) fica marinho enquanto a senha está na tela e volta ao tema ao destravar.
 - **Tela da senha fixa no marinho/dourado** (21/10/2026, pedido dele, print com tema Café ficando marrom ao lado do logo): `.lock` redefine
   `--head/--btn/--accent` e fundo em degradê radial, logo 112 px com aro dourado, "MINHAS DESPESAS" em caixa alta pequena, teclado e bolinhas
   com toque dourado. Não segue o tema escolhido (o logo é marinho).

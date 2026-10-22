@@ -6847,7 +6847,7 @@ async function bioUnlock(auto){
   }
   finally{lk.busy=false}
 }
-function lockApp(){const a=authData();lk={...lk,mode:a?(a.bio?"bio":"enter"):"name",pin:"",first:"",name:a?a.name:""};$("lock").hidden=false;document.body.style.overflow="hidden";lockRender();if(a&&a.bio)setTimeout(()=>bioUnlock(true),350)}
+function lockApp(){const a=authData();lk={...lk,mode:a?(a.bio?"bio":"enter"):"name",pin:"",first:"",name:a?a.name:""};$("lock").hidden=false;{const m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#14203A"}document.body.style.overflow="hidden";lockRender();if(a&&a.bio)setTimeout(()=>bioUnlock(true),350)}
 let gResumed=false;
 function gResume(){if(gResumed)return;gResumed=true;const b=G_BACK;renderSyncBits();
   if(!b){setTimeout(()=>{if(syncOn()&&!gTokOk())syAutoAuth();else syncNow(false)},300);return}
@@ -6859,7 +6859,7 @@ function gResume(){if(gResumed)return;gResumed=true;const b=G_BACK;renderSyncBit
   if(b.after==="setup"){go("pMe");setTimeout(()=>{$("syncSec")?.scrollIntoView({block:"start"});syncStart()},200)}
   else setTimeout(()=>syncNow(true),300);
 }
-function unlock(){setTimeout(gResume,50);if(gResumed)setTimeout(syAutoAuth,600);if(IS_PC)lsSet("despesas.unlockAt",String(Date.now()));$("lock").hidden=true;document.body.style.overflow="";lk.pin="";sessionStorage.setItem("despesas.unlocked","1")}
+function unlock(){setTimeout(gResume,50);if(gResumed)setTimeout(syAutoAuth,600);if(IS_PC)lsSet("despesas.unlockAt",String(Date.now()));$("lock").hidden=true;applyTheme();document.body.style.overflow="";lk.pin="";sessionStorage.setItem("despesas.unlocked","1")}
 function greet(){const h=new Date().getHours();return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"}
 function lockRender(msg="",isErr=false){
   const el=$("lock"), a=authData();

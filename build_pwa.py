@@ -6,6 +6,8 @@ body=src.replace('const PWA=false;','const PWA=true;',1)
 head_extra=[]
 for pat in [r'<title>.*?</title>\n', r'<meta name="apple-mobile-web-app-capable"[^>]*>\n', r'<meta name="apple-mobile-web-app-title"[^>]*>\n', r'<meta name="theme-color"[^>]*>\n']:
     body=re.sub(pat,'',body,count=1)
+import base64
+ICON180='data:image/png;base64,'+base64.b64encode(open('tostao-180.png','rb').read()).decode()
 doc=f'''<!doctype html>
 <html lang="pt-BR"><head>
 <meta charset="utf-8">
@@ -17,9 +19,9 @@ doc=f'''<!doctype html>
 <meta name="apple-mobile-web-app-title" content="Um Tostão">
 <meta name="theme-color" content="#14203A">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="tostao-180.png">
+<link rel="apple-touch-icon" href="{ICON180}">
 <link rel="icon" href="tostao-192.png">
-<style>:root{{color-scheme:light;padding-bottom:env(safe-area-inset-bottom,0px)}}body{{margin:0;font:14px system-ui,-apple-system,sans-serif;background:#F3F5F2}}img{{max-width:100%}}[hidden]{{display:none!important}}*{{-webkit-touch-callout:none}}input,textarea{{-webkit-touch-callout:default}}</style>
+<style>:root{{color-scheme:light;padding-bottom:env(safe-area-inset-bottom,0px)}}body{{margin:0;font:14px system-ui,-apple-system,sans-serif;background:#14203A}}img{{max-width:100%}}[hidden]{{display:none!important}}*{{-webkit-touch-callout:none}}input,textarea{{-webkit-touch-callout:default}}</style>
 </head><body>
 {body}
 </body></html>
