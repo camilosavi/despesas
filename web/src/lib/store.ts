@@ -113,6 +113,8 @@ export const actions = {
     const s = ledger.get(), e = s.entries.find(x => x.id === id);
     commit({ ...s, entries: s.entries.filter(x => x.id !== id && !(e && e.tr && x.tr === e.tr)) });
   },
+  /** apaga todos os lançamentos (contas, cartões e caixinhas ficam); devolve o que saiu, para desfazer */
+  clearEntries(): Entry[] { const s = ledger.get(), gone = s.entries; if (gone.length) commit({ ...s, entries: [] }); return gone; },
   /** troca o nome de uma categoria em todos os lançamentos (nome vazio = tira a categoria) */
   renameCat(from: string, to: string) {
     const s = ledger.get(), nm = to.trim();

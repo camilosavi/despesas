@@ -431,3 +431,17 @@ describe("migrar nomes de categoria", () => {
     const before = ledger.get().entries; actions.migrateCats(); expect(ledger.get().entries).toBe(before);
   });
 });
+
+describe("zerar lançamentos", () => {
+  it("apaga só os lançamentos, mantém contas e devolve o que saiu (desfazer)", () => {
+    ledger.set({ accts: [acct], boxes: [], entries: [e({ id: "z1" }), e({ id: "z2", type: "rec" })] });
+    const gone = actions.clearEntries();
+    expect(gone.map(x => x.id)).toEqual(["z1", "z2"]);
+    expect(ledger.get().entries).toEqual([]);
+    expect(ledger.get().accts).toEqual([acct]);
+    actions.addEntries(...gone);
+    expect(ledger.get().entries.length).toBe(2);
+    ledger.set({ ...ledger.get(), entries: [] });
+    const before = ledger.get(); expect(actions.clearEntries()).toEqual([]); expect(ledger.get()).toBe(before);
+  });
+});

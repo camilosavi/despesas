@@ -1,4 +1,5 @@
 import { useStore } from "../../lib/createStore";
+import { actions, ledger } from "../../lib/store";
 import { session, signOut, syncNow, syncState, syncText } from "../../lib/sync";
 import { useArmed } from "../hooks";
 import { OfSection } from "../OfSection";
@@ -14,6 +15,11 @@ export function MeSheet() {
     if (why) { toast(why); return; }
     backHome(); closeSheet();
   });
+  const n = useStore(ledger, s => s.entries.length);
+  const zero = useArmed("Toque de novo para apagar tudo", `Zerar todos os lançamentos (${n})`, () => {
+    const gone = actions.clearEntries(); closeSheet();
+    toast("Lançamentos zerados", () => actions.addEntries(...gone));
+  });
   async function syncAgora() {
     toast("Sincronizando…"); await syncNow();
     const { err, off } = syncState.get(); toast(err ? "Erro: " + err : off ? "Sem conexão" : "Tudo em dia ✓");
@@ -23,6 +29,7 @@ export function MeSheet() {
     <p className="mekv">Entrou como <b>{ses?.email || ""}</b><br /><span id="meState">{syncText()}</span></p>
     <button type="button" className="btn wide" id="meSync" onClick={() => void syncAgora()}>Sincronizar agora</button>
     <OfSection />
+    {n > 0 && <button type="button" className="btn wide danger" id="meZero" onClick={zero.onClick}>{zero.text}</button>}
     <button type="button" className="btn wide" id="meOut" onClick={out.onClick}>{out.text}</button>
   </>);
 }
