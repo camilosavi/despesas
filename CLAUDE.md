@@ -358,8 +358,10 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   e apagar; o + lança compra já com esse pagamento. `credCards()` = cartões sem benefício (use nos lugares de fatura/crédito).
   Compras com benefício ficam pagas, entram nas categorias mas **não** em `sumT` nem na linha do tempo; o Mês mostra
   "Pago com <cartão>" e o Início tem o bloco `bens` (só aparece se houver).
+- **Editar lançamento de cartão** (21/10/2026, `editBill`): trocar de cartão ou passar para/de Crédito refaz a fatura a partir da data da compra (`buy`): Pix→Crédito vai para o vencimento, Crédito→Pix volta para a data da compra, cartão A→B usa o vencimento de B. Data mexida à mão em item que já era de cartão vale como digitada. O aviso "Entra na fatura…" aparece também ao editar. Parcelas/repetição em cartão com vencimento dia 30 ou 31 não viram "último dia do mês" (`endOfMonth` só sem cartão).
 - **Pagar com duas formas** ("+ Pagar com duas formas" no lançamento novo, só "Só uma vez"): cria 2 lançamentos com o mesmo
   `group` ("s…"), a 2ª parte com outra forma (e cartão, se Crédito); o resto fica na forma principal.
+  **Cada parte acerta a própria data e situação** (`fitPart`, 21/10/2026): parte no Crédito vai para o vencimento da fatura do cartão dela (`buy` = data da compra) e nasce a pagar; parte à vista fica na data da compra e vem paga se já passou.
 - **Barra de baixo** (out/2026, pedido dele com print do Instagram): cápsula flutuante de vidro (`backdrop-filter`, cor do
   `--head` do tema), só ícones, pílula clara que desliza até a aba ativa (`--ti` no `nav.tabs`, setado em `go()`), e a
   foto da pessoa no fim (`#tabAv` → tela Você). A foto saiu do topo do Início (`#hAv` fica sempre escondido).

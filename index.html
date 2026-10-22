@@ -5087,7 +5087,20 @@ async function exportCSV(){
 }
 
 /* ---------- folha de lançamento ---------- */
+/* editando: trocar de cartão ou passar para/de Crédito refaz a fatura a partir da data da compra (antes a data ficava
+   na fatura antiga: Pix→Crédito não ia para o vencimento, Crédito→Pix e troca de cartão ficavam no vencimento velho).
+   Devolve {date,buy} ou null (nada a refazer). Data mexida à mão em item que já era de cartão vale como digitada. */
+function editBill(typed){
+  if(!editing||form.type!=="desp"||genFat(editing)) return null;
+  const oc=editing.pay==="Crédito"?(cardOf(editing)||""):"", nc=form.pay==="Crédito"&&form.card&&form.card!=="Outro"?form.card:"";
+  if(oc===nc) return null;
+  const P=!oc?typed:(typed===editing.date?(editing.buy||""):"");  /* sem cartão antes: a data digitada é a da compra; com cartão: a da compra está em buy */
+  if(!P) return null;
+  if(!nc) return {date:P,buy:""};
+  const b=billDate(nc,P);return {date:b,buy:b!==P?P:""};
+}
 function dateHint(){const h=$("dateHint");if(!h) return;const d=$("date").value;let t="";
+  if(d&&editing){const eb=editBill(d);if(eb&&eb.buy)t=`Entra na fatura do ${form.card} que vence ${fmtDM(eb.date)} (${monthLabel(eb.date.slice(0,7)).split(" ")[0].toLowerCase()}).`}
   if(d&&!editing){if(form.type==="desp"&&form.pay==="Crédito"&&form.card&&form.card!=="Outro"){const b=billDate(form.card,d);if(b!==d)t=`Entra na fatura do ${form.card} que vence ${fmtDM(b)} (${monthLabel(b.slice(0,7)).split(" ")[0].toLowerCase()}).`}
     else if(form.type==="rec"){const sh=salShift(form.cat,d);if(sh)t=`Salário do fim do mês conta em ${monthLabel(sh.date.slice(0,7)).split(" ")[0].toLowerCase()}, o mês em que você usa.`}}
   h.textContent=t;h.hidden=!t}
@@ -5187,7 +5200,7 @@ document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.tar
 $("catPickBtn").addEventListener("click",()=>{catNewOpen=false;chips();$("catSheet").hidden=false});
 $("catSheetClose").addEventListener("click",()=>{$("catSheet").hidden=true});
 $("acctChips").addEventListener("click",e=>{const b=e.target.closest("[data-acct]");if(b){form.acct=b.dataset.acct;chips()}});
-$("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false}else if(!editing)form.paid=($("date").value||today())<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
+$("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false;else form.paid=isPaid(editing)}else if(!editing)form.paid=($("date").value||today())<=today();else if(editing.pay==="Crédito")form.paid=(editing.buy||editing.date)<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
 function splitHint(){const h=$("splitHint");if(!h)return;const v=digits($("splitVal")?.value);h.textContent=v&&form.cents?(v<form.cents?`${form.pay}: ${R(form.cents-v)}`:"maior que o total"):""}
 $("splitField").addEventListener("click",e=>{
   if(e.target.closest("#splitOn")){form.split=true;chips();$("splitVal")?.focus();return}
@@ -5207,6 +5220,7 @@ $("sheet").addEventListener("submit",async e=>{
   if(isD) base.paid=benOf(base)?true:form.paid;
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}
   if(!editing&&isD&&base.card){const b=billDate(base.card,base.date);if(b!==base.date){base.buy=base.date;base.date=b}}
+  if(editing){const eb=editBill(base.date);if(eb){base.date=eb.date;base.buy=eb.buy}}
   /* compra no Crédito só fica paga quando a fatura vence/é paga (antes vinha "Pago" do dia da compra e os meses seguintes já apareciam pagos) */
   if(!editing&&isD&&base.pay==="Crédito") base.paid=false;
   if(!isD){const sh=salShift(base.cat,base.date);if(sh){base.date=sh.date;base.fell=sh.fell}}
@@ -5217,7 +5231,16 @@ $("sheet").addEventListener("submit",async e=>{
   if(isD&&!editing&&form.split){const v=digits($("splitVal")?.value);
     if(!v||v>=form.cents){err("err",!v?"Digite quanto foi pago com a outra forma.":"A parte dividida tem que ser menor que o total.");return}
     if($("rep").value!=="1"){err("err","Pagar com duas formas funciona só com “Só uma vez”.");return}
-    const p2=form.pay2;split={...base,cents:v,pay:p2,card:p2==="Crédito"&&form.card2&&form.card2!=="Outro"?form.card2:"",paid:benOf({pay:p2})?true:base.paid};delete split.paidAt;if(split.paid&&!benOf(split)&&p2!=="Crédito")split.paidAt=Date.now();base.cents=form.cents-v}
+    const p2=form.pay2;split={...base,cents:v,pay:p2,card:p2==="Crédito"&&form.card2&&form.card2!=="Outro"?form.card2:"",paid:benOf({pay:p2})?true:base.paid};delete split.paidAt;if(split.paid&&!benOf(split)&&p2!=="Crédito")split.paidAt=Date.now();base.cents=form.cents-v;
+    /* cada parte acerta sozinha a data e a situação pela data da compra: parte no Crédito vai para o vencimento da fatura do
+       cartão dela e nasce a pagar (antes nascia paga e na data da compra); parte à vista fica na data da compra e paga se já passou */
+    {const rawD=$("date").value, paid0=form.pay==="Crédito"?rawD<=today():form.paid, fitPart=o=>{
+      const cd=o.pay==="Crédito"&&o.card?o.card:"", b=cd?billDate(cd,rawD):rawD;
+      o.date=b;if(b!==rawD)o.buy=rawD;else delete o.buy;
+      if(benOf(o)){o.paid=true;delete o.paidAt}
+      else if(o.pay==="Crédito"){o.paid=false;delete o.paidAt}
+      else{o.paid=paid0;if(paid0)o.paidAt=Date.now();else delete o.paidAt}};
+      fitPart(base);fitPart(split)}}
   if(!editing&&split){$("saveBtn").disabled=true;
     try{const now=Date.now(),group="s"+now;await store.items.add({...base,group,createdAt:now});await store.items.add({...split,group,createdAt:now+1});
       toast(`Dividido: ${R(base.cents)} + ${R(split.cents)}`,true);view=base.date.slice(0,7);closeSheets();render()}catch(x){err("err","Não deu para salvar. Tente de novo.")}
@@ -5247,7 +5270,7 @@ $("sheet").addEventListener("submit",async e=>{
     } else {
       const n=Number(rep.slice(1)), group="g"+now, isP=rep[0]==="p";
       const each=isP?Math.floor(base.cents/n):base.cents, rest=isP?base.cents-each*n:0;
-      const rr=ruleDay(base.desc,base.type,base.cat), endOfMonth=base.date.slice(8)==String(lastDay(base.date.slice(0,7)));
+      const rr=ruleDay(base.desc,base.type,base.cat), endOfMonth=!base.card&&base.date.slice(8)==String(lastDay(base.date.slice(0,7)));  /* cartão com vencimento dia 30: não vira "último dia" (dia 31) nos meses seguintes */
       for(let i=0;i<n;i++){
         const bym=addMonths(base.date,i).slice(0,7);
         const date=rr?ruleDate(bym,rr):(endOfMonth?ruleDate(bym,"last"):addMonths(base.date,i));
