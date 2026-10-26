@@ -898,7 +898,7 @@ nav.tabs.onme::before{opacity:0}
 @media (prefers-reduced-motion:reduce){nav.tabs::before{transition:none}}
 
 /* ---------- computador (tela larga): abas na lateral esquerda, conteúdo em duas colunas, janelas no centro ---------- */
-.cdwrap,.cdhero,.cdmain,.cdmain2,.cdside{display:contents}
+.cdwrap,.cdhero,.cdmain,.cdmain2,.cdside,.cdcol{display:contents}
 @media (min-width:980px){
   #pCards:has(>.cdwrap){column-count:1!important}
   #mBody:has(>.mes-split){column-count:1!important}
@@ -1283,7 +1283,9 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
  .mft{flex:0 0 220px!important}
  /* tela do cartão: cartão e limite à esquerda (420 px), fatura e itens à direita */
  /* colunas independentes (26/10/2026): a direita (fatura+itens) ocupa as linhas 1–2 e "Limite do cartão" sobe logo abaixo do cartão, sem buraco */
- .cdwrap{grid-template-columns:minmax(0,420px) minmax(0,1fr)!important;grid-template-rows:min-content 1fr auto!important;column-gap:28px!important}
+ .cdwrap{grid-template-columns:minmax(0,420px) minmax(0,1fr)!important;grid-template-rows:none!important;column-gap:28px!important}
+ .cdwrap>.cdcol{display:block;min-width:0}
+ .cdcol>.cdmain2,.cdcol>.cdside{margin-top:14px!important}
  .cdwrap .cdhero{display:block;grid-column:1;grid-row:1;min-width:0}
  .cdwrap .cdmain2{grid-column:1!important;grid-row:2!important;margin-top:14px!important;column-count:1!important}
  .cdwrap .cdmain{grid-column:2!important;grid-row:1/3!important;column-count:1!important}
@@ -2726,7 +2728,7 @@ function recapCard(){
     ${lines.length?`<p>${lines.join(" ")}</p>`:""}<div class="row" style="margin:0"><button class="btn soft" id="recapOk">Ok</button><button class="btn primary" data-gomonth="${pm}">Ver ${nm.toLowerCase()}</button></div></div></section>`;
 }
 const IS_WIDE=matchMedia("(min-width:980px)");
-try{IS_WIDE.addEventListener("change",()=>{if(typeof tab!=="undefined"){if(tab==="pHome")renderHome();if(tab==="pMes")renderMes();if(tab==="pAno")renderAno()}})}catch(e){}
+try{IS_WIDE.addEventListener("change",()=>{if(typeof tab!=="undefined"){if(tab==="pHome")renderHome();if(tab==="pMes")renderMes();if(tab==="pAno")renderAno();if(tab==="pCards"&&typeof renderCards==="function")renderCards()}})}catch(e){}
 function renderHome(){
   if(document.activeElement&&(document.activeElement.id==="userIn"||/^ac[nv]_\d/.test(document.activeElement.id))) return;
   const o=homeOrder();
@@ -3650,7 +3652,10 @@ function renderCards(){
     <label class="btn soft" style="text-align:center;cursor:pointer;display:block">Importar fatura do ${esc(c)} (PDF)<input type="file" id="impFile" accept="application/pdf,.pdf" hidden></label>
     ${all.length?`<button class="tbtn" id="zeroMonth" style="margin-top:10px">Zerar ${mn}</button>`:""}</div></section>`;
   {const mainRest=mainA.startsWith(cardHero)?mainA.slice(cardHero.length):mainA, heroH=mainA.startsWith(cardHero)?cardHero:"";
-  h=`<div class="cdwrap"><div class="cdhero">${heroH}</div><div class="cdmain">${mainRest}</div>${side?`<aside class="cdside">${side}</aside>`:""}<div class="cdmain2">${h}</div></div>`}
+  /* computador: duas colunas independentes (esquerda = cartão + limite…, direita = fatura + itens + mesclar), sem buraco entre blocos de alturas diferentes */
+  h=IS_WIDE.matches
+    ?`<div class="cdwrap"><div class="cdcol"><div class="cdhero">${heroH}</div><div class="cdmain2">${h}</div></div><div class="cdcol"><div class="cdmain">${mainRest}</div>${side?`<aside class="cdside">${side}</aside>`:""}</div></div>`
+    :`<div class="cdwrap"><div class="cdhero">${heroH}</div><div class="cdmain">${mainRest}</div>${side?`<aside class="cdside">${side}</aside>`:""}<div class="cdmain2">${h}</div></div>`}
   $("pCards").innerHTML=h;
 }
 
