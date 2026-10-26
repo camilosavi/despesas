@@ -1882,7 +1882,7 @@ function note(t){$("note").textContent=t}
 (()=>{let last=0,lx=0,ly=0;
   document.addEventListener("touchend",e=>{const t=e.changedTouches&&e.changedTouches[0];if(!t)return;const n=Date.now();
     if(n-last<350&&Math.abs(t.clientX-lx)<40&&Math.abs(t.clientY-ly)<40&&!e.target.closest("input,textarea,select,[contenteditable]")){
-      e.preventDefault();(e.target.closest("button,a,label,[data-k],[data-id],[data-sv],[data-svmv],[data-db],[data-dbmv],[data-fxcur],[data-fxsheet],[data-opencard],[data-gotab],[data-gomonth],[data-cardmonth],.item,tr.click,td.c,.fxrow")||e.target).click()}
+      e.preventDefault();(e.target.closest("button,a,label,[data-k],[data-id],[data-sv],[data-svmv],[data-svfx],[data-db],[data-dbmv],[data-fxcur],[data-fxsheet],[data-opencard],[data-gotab],[data-gomonth],[data-cardmonth],.item,tr.click,td.c,.fxrow")||e.target).click()}
     last=n;lx=t.clientX;ly=t.clientY},{passive:false});
   ["gesturestart","gesturechange"].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
 })();
@@ -2143,22 +2143,33 @@ function limitBox(c){
   const k=cardCfg(c), used=cardUsed(c);
   if(limEditing||!k.limit) return `<div class="card rate"><div><b>Limite do ${esc(c)}</b><div class="src">Veja no app do banco e preencha. O “livre” é opcional, serve para conferir se falta lançar alguma compra.</div></div>
     <div class="two"><div class="field" style="margin:0"><label for="limTot">Limite total</label><input id="limTot" class="limin" inputmode="numeric" value="${k.limit?brl(k.limit):""}" placeholder="R$ 0,00"></div><div class="field" style="margin:0"><label for="limFree">Livre no banco hoje</label><input id="limFree" class="limin" inputmode="numeric" value="${k.bankFree!=null?brl(k.bankFree):""}" placeholder="opcional"></div></div>
-    <div class="row" style="margin:0">${k.limit?`<button class="btn soft" id="limCancel">Cancelar</button>`:""}<button class="btn primary" id="limSave">Salvar limite</button></div></div>`;
+    <div class="two" style="margin-top:10px"><div class="field" style="margin:0"><label for="limDue">Dia do vencimento</label><input id="limDue" class="limin" inputmode="numeric" maxlength="2" value="${k.due||""}" placeholder="ex.: 2"></div><div class="field" style="margin:0"><label for="limClose">Dia do fechamento</label><input id="limClose" class="limin" inputmode="numeric" maxlength="2" value="${k.close||""}" placeholder="opcional"></div></div>
+    <div class="hint expl">O vencimento define em qual mês a fatura conta; o fechamento decide em que fatura cai cada compra nova. Ao importar uma fatura, o banco pode ajustar os dois.</div>
+    <div class="row" style="margin:0">${k.limit?`<button class="btn soft" id="limCancel">Cancelar</button>`:""}<button class="btn primary" id="limSave">Salvar</button></div></div>`;
   const F=cardFree(c), free=F.free, usedE=k.limit-free, pct=Math.max(0,Math.min(100,usedE/k.limit*100));
   let rec="";
   if(F.bank){const gap=F.calc-free;
     rec=`<div class="hint">${Math.abs(gap)<100?`Pelos lançamentos também dá ${R(F.calc)} ✓`:`Pelos lançamentos daria ${R(F.calc)} (${gap<0?`${R(-gap)} a menos`:`${R(gap)} a mais`}). ${gap<0?"Normalmente são juros das parcelas e do parcelamento de fatura: o banco só segura no limite o valor da compra.":"Pode faltar lançar alguma compra."}`} Atualize o livre do banco de vez em quando em Editar.</div>`;
   } else rec=`<div class="hint expl">Para ficar igual ao banco, toque em Editar e informe o “livre” que aparece no app do banco.</div>`;
-  return `<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Limite livre</span><div class="val ${free<0?"neg":""}"><small>R$</small>${free<0?"−":""}${brl(Math.abs(free))}</div><div class="src">de ${R(k.limit)} · usado ${R(usedE)}${F.bank?` · pelo banco em ${fmtDM(k.bankAt||today())}`:""}</div></div><button class="tbtn" id="limEdit">Editar</button></div>
+  return `<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Limite livre</span><div class="val ${free<0?"neg":""}"><small>R$</small>${free<0?"−":""}${brl(Math.abs(free))}</div><div class="src">de ${R(k.limit)} · usado ${R(usedE)}${F.bank?` · pelo banco em ${fmtDM(k.bankAt||today())}`:""}</div>${k.due||k.close?`<div class="src">${[k.due?`vence dia ${k.due}`:"",k.close?`fecha dia ${k.close}`:""].filter(Boolean).join(" · ")}</div>`:""}</div><button class="tbtn" id="limEdit">Editar</button></div>
     <div class="bar" style="height:10px"><i style="width:${pct}%;background:${pct>90?"var(--neg)":pct>70?"var(--warn)":"var(--accent)"}"></i></div>
     ${limBreak(c)}
     ${pct>=80?`<div class="limwarn ${free<=0?"over":""}" style="font-size:.88rem">${free<=0?`Passou do limite em ${R(-free)}. Novas compras podem ser recusadas.`:`Já usou ${Math.round(pct)}% do limite. Cuidado com compras grandes.`}</div>`:""}<div class="hint expl">Pelos lançamentos, “usado” soma o que está lançado e não foi pago no ${esc(c)}: faturas abertas e parcelas futuras. Assinaturas e contas que se repetem só contam até a fatura em aberto, como no banco.</div>${rec}</div>`;
 }
 async function saveLimit(){
   const lim=digits($("limTot").value), fr=$("limFree").value.trim()?digits($("limFree").value):null;
-  if(!lim){toast("Digite o limite total.");return}
-  const cur={...(cfg.cards||{})};const old={...(cur[selCard]||{})};delete old.bankFree;delete old.bankAt;delete old.bankAtTs;cur[selCard]={...old,limit:lim,...(fr!=null?{bankFree:fr,bankAt:today(),bankAtTs:Date.now()}:{})};
-  try{document.activeElement?.blur();await saveCfg({cards:cur});limEditing=false;toast("Limite salvo");render()}catch(e){toast("Não deu para salvar.")}
+  const day=id=>{const v=($(id)?.value||"").trim();if(!v)return 0;const n=parseInt(v,10);return n>=1&&n<=31?n:-1};
+  const due=day("limDue"), close=day("limClose");
+  if(due<0||close<0){toast("O dia vai de 1 a 31.");return}
+  if(!lim&&!due&&!close){toast("Digite o limite total ou o dia do vencimento.");return}
+  const cur={...(cfg.cards||{})};const old={...(cur[selCard]||{})};delete old.bankFree;delete old.bankAt;delete old.bankAtTs;
+  /* vencimento mexido à mão: sai a marca do banco (`dueBank`); a próxima fatura importada ainda pode corrigir */
+  const o2={...old};if(due!==(+old.due||0))delete o2.dueBank;
+  if(due)o2.due=due;else delete o2.due;
+  if(close)o2.close=close;else delete o2.close;
+  if(lim)o2.limit=lim;else delete o2.limit;
+  cur[selCard]={...o2,...(lim&&fr!=null?{bankFree:fr,bankAt:today(),bankAtTs:Date.now()}:{})};
+  try{document.activeElement?.blur();await saveCfg({cards:cur});limEditing=false;toast("Cartão atualizado");render()}catch(e){toast("Não deu para salvar.")}
 }
 const seriesKey=x=>typeOf(x)+"|"+(x.group||x.desc||x.cat);
 function parcInfo(x){
@@ -2225,9 +2236,9 @@ function header0(){
   const wal=tab==="pAno"&&anoSubTab==="metas", isYear=tab==="pAno"&&!wal, isFx=tab==="pFx", isHome=tab==="pHome";
   const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
-  cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:!IS_WIDE.matches&&(isHome||wal)&&accts().length?accts()[0].name:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
+  cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:!IS_WIDE.matches&&(isHome||wal)&&acctsR().length?acctsR()[0].name:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
   const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:wal?"Contas":"Ano",pOrc:"Orçamento",pMe:"Você"};
-  $("ptitle").textContent=tab==="pHome"&&accts().length&&accts()[0].name?accts()[0].name:titles[tab]||"";
+  $("ptitle").textContent=tab==="pHome"&&acctsR().length&&acctsR()[0].name?acctsR()[0].name:titles[tab]||"";
   const sub=tab==="pCards"||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
   if(sub) $("backLbl").textContent=tab==="pFx"?"Contas":tab==="pCards"&&!selCard?"Contas":backTo==="pMes"?"Mês":backTo==="pHome"?"Hoje":"Contas";
@@ -2456,6 +2467,12 @@ async function moveHome(k,dir){
 let acDraft=null;
 const rr=()=>tab==="pHome"?renderHome():render();
 const accts=()=>Array.isArray(cfg.accts)?cfg.accts:[];
+/* moeda do saldo (26/10/2026, pedido dele): conta com `cur:"EUR"|"USD"` guarda o saldo na própria moeda (Revolut, Wise…).
+   Ela aparece na lista, mas NÃO entra no saldo em R$ (accBal/hasAcc/sobra do mês): euro não paga fatura em reais. */
+const acCur=a=>a&&(a.cur==="EUR"||a.cur==="USD")?a.cur:"BRL";
+const acctsR=()=>accts().filter(a=>acCur(a)==="BRL");
+const acVal=a=>acCur(a)==="BRL"?R(accBalOf(a)):M(a.cents,acCur(a));
+const acEqTxt=a=>{const c=acCur(a);if(c==="BRL")return"";const r=rateNum(c);return r?`≈ ${R(Math.round(a.cents*r))} hoje`:""};
 /* depois de informar o saldo: desconta o que foi marcado como pago (paidAt) e soma o que entrou (receita lançada depois) */
 const accTs=()=>{const A=accts();if(!A.length)return 0;return Math.max(...A.map(a=>a.atTs||Date.parse(a.at+"T23:59:59")))};
 /* dia em que a receita cai na conta: salário do fim do mês conta no mês seguinte (date = dia 1º), mas o dinheiro já caiu em `fell` */
@@ -2464,15 +2481,15 @@ function accMoves(name){const ts=accTs(), now=today(), mine=x=>!name||accOf(x)==
   const out=items.filter(x=>typeOf(x)==="desp"&&x.paidAt&&x.paidAt>ts&&!benOf(x)&&mine(x)).reduce((s,x)=>s+amt(x),0);
   const inn=items.filter(x=>typeOf(x)==="rec"&&(x.createdAt||0)>ts&&recDay(x)<=now&&mine(x)).reduce((s,x)=>s+x.cents,0);
   return {out,inn}}
-const accBal=()=>{const A=accts();if(!A.length)return 0;const m=accMoves();return A.reduce((s,a)=>s+a.cents,0)+m.inn-m.out};
+const accBal=()=>{const A=acctsR();if(!A.length)return 0;const m=accMoves();return A.reduce((s,a)=>s+a.cents,0)+m.inn-m.out};
 /* em que conta cada lançamento entra/sai: x.acct (nome); sem conta ou conta que não existe mais = 1ª conta. A soma das contas = accBal() */
-const accOf=x=>{const A=accts();if(!A.length)return"";return x.acct&&A.some(a=>a.name===x.acct)?x.acct:A[0].name};
-const accBalOf=a=>{const m=accMoves(a.name);return a.cents+m.inn-m.out};
+const accOf=x=>{const A=acctsR();if(!A.length)return"";return x.acct&&A.some(a=>a.name===x.acct)?x.acct:A[0].name};
+const accBalOf=a=>{if(acCur(a)!=="BRL")return a.cents;const m=accMoves(a.name);return a.cents+m.inn-m.out};
 /* ---------- saldos interligados: conta hoje → fim do mês → meses seguintes ----------
    Com Saldo na conta, o que já foi pago e o que já caiu está no saldo. Daqui para a frente só mexe na conta:
    receitas que ainda vão cair (+) e despesas a pagar (−), cada uma no mês dela. Atrasados de meses anteriores
    (vencimento a partir de MIN_DUE) entram no mês atual. Sem saldo, cai no jeito antigo (receitas − despesas). */
-const hasAcc=()=>accts().length>0;
+const hasAcc=()=>acctsR().length>0;
 /* fatura de cartão vencida e não paga vai para a próxima fatura do mesmo cartão (como o banco faz).
    rollYM(x) = mês da fatura em que ela cai agora; null se não rolou. Se aquela fatura já foi importada com
    "Saldo da fatura anterior", o banco já cobrou ali: a antiga não conta de novo (rollGone). */
@@ -2508,7 +2525,7 @@ function endBal(ym){
 }
 /* marca como pago guardando a hora, para o saldo da conta acompanhar */
 const paidPatch=to=>to?{paid:true,paidAt:Date.now()}:{paid:false,paidAt:0};
-function acReadDraft(){if(!acDraft)return;acDraft=acDraft.map((a,i)=>({...a,name:($("acn_"+i)?.value??a.name).trim(),free:a.free,cents:$("acv_"+i)?digits($("acv_"+i).value):a.cents}))}
+function acReadDraft(){if(!acDraft)return;acDraft=acDraft.map((a,i)=>({...a,name:($("acn_"+i)?.value??a.name).trim(),free:a.free,cents:$("acv_"+i)?digits($("acv_"+i).value):a.cents,cur:$("acc_"+i)?$("acc_"+i).value:a.cur}))}
 /* Contas (celular): os cartões entram na mesma lista das contas (21/10/2026, pedido dele: "juntar Na conta com os cartões") */
 function walCardRows(){
   const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
@@ -2525,7 +2542,7 @@ function contaBlock(withCards){
     acDraft.map((a,i)=>{const cs=ALL_BANKS(), opts=[...cs,...(a.name&&!cs.includes(a.name)?[a.name]:[])];
       const nm=cs.length&&!a.free?`<select id="acn_${i}" class="acsel" aria-label="Banco">${opts.map(c=>`<option ${c===a.name?"selected":""}>${esc(c)}</option>`).join("")}<option value="__new">Outro banco…</option></select>`
         :`<input type="text" id="acn_${i}" class="limin" maxlength="24" placeholder="Banco" value="${esc(a.name)}" aria-label="Nome da conta">`;
-      return `<div class="acrow">${cs.length&&!a.free?cardBadge(a.name||cs[0]):""}${nm}<input type="text" id="acv_${i}" class="limin" inputmode="numeric" placeholder="R$ 0,00" value="${a.cents?brl(a.cents):""}" aria-label="Saldo"><button class="acdel" data-acdel="${i}" aria-label="Tirar conta" ${acDraft.length<2?"hidden":""}>×</button></div>`}).join("")+
+      return `<div class="acrow">${cs.length&&!a.free?cardBadge(a.name||cs[0]):""}${nm}<input type="text" id="acv_${i}" class="limin" inputmode="numeric" placeholder="${acCur(a)==="EUR"?"€ 0,00":acCur(a)==="USD"?"US$ 0,00":"R$ 0,00"}" value="${a.cents?brl(a.cents):""}" aria-label="Saldo"><button class="acdel" data-acdel="${i}" aria-label="Tirar conta" ${acDraft.length<2?"hidden":""}>×</button><select id="acc_${i}" class="acsel" style="grid-column:1/-1" aria-label="Moeda do saldo"><option value="BRL" ${acCur(a)==="BRL"?"selected":""}>Saldo em R$ (real)</option><option value="EUR" ${a.cur==="EUR"?"selected":""}>Saldo em € (euro)</option><option value="USD" ${a.cur==="USD"?"selected":""}>Saldo em US$ (dólar)</option></select></div>`}).join("")+
     `<div class="toolbar acchips" style="margin:0;flex-wrap:wrap">${[...new Set([...credCards(),...FX_PICK,...BANK_PICK])].filter(c=>!acDraft.some(a=>a.name===c)).slice(0,10).map(c=>`<button class="tbtn" data-acbank="${esc(c)}">+ ${esc(c)}</button>`).join("")}<button class="tbtn" id="acAdd">+ Outra conta</button></div><div class="row" style="margin:0">${A.length?`<button class="btn soft" id="acCancel">Cancelar</button>`:""}<button class="btn primary" id="acSave">Salvar saldo</button></div></div></section>`;
   if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint expl">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></section>`;
   const tot=accBal(), mv=accMoves(), fl=accFlow(ym), open=fl.out, after=endBal(ym);
@@ -2533,14 +2550,14 @@ function contaBlock(withCards){
   const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button id="acEdit">Atualizar</button></span>`;
   /* banco limpo (out/2026): no celular, uma linha por conta; "ainda entra / falta pagar / sobra" já estão no topo */
   if(!IS_WIDE.matches) return `<section><h2>${withCards?"Contas e cartões":"Na conta"} ${ext}</h2><div class="card">`+
-    A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:""}</span></span><span class="v">${R(A.length===1?tot:accBalOf(a))}</span></div>`).join("")+
-    (A.length>1?`<div class="acone"><span class="t"><b>Total</b></span><span class="v">${R(tot)}</span></div>`:"")+
+    A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${[a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:"",acEqTxt(a)].filter(Boolean).join(" · ")}</span></span><span class="v">${acVal(a)}</span></div>`).join("")+
+    (acctsR().length>1?`<div class="acone"><span class="t"><b>Total</b></span><span class="v">${R(tot)}</span></div>`:"")+
     (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
     (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+
     (withCards?walCardRows():"")+`</div></section>`;
   return `<section><h2>Saldo na conta ${ext}</h2><div class="card rate">
     <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div></div></div>
-    ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${R(accBalOf(a))}</b></div>`).join("")}</div>`:""}
+    ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${acVal(a)}</b></div>`).join("")}</div>`:""}
     ${fl.late?`<div class="cmp"><div><span>Atrasado de meses anteriores</span><b class="neg">${R(fl.late)}</b></div></div>`:""}
     ${after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:""}
     ${old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:""}</div></section>`;
@@ -2579,7 +2596,7 @@ async function saveBen(){
   try{document.activeElement?.blur();await saveCfg({cards:cur});benEditing=false;toast("Saldo atualizado",true);render()}catch(e){toast("Não deu para salvar.")}
 }
 async function saveAccts(){
-  acReadDraft();const L=acDraft.filter(a=>a.name||a.cents).map(a=>({id:a.id||"a"+Date.now()+Math.random().toString(36).slice(2,5),name:a.name,cents:a.cents,at:today(),atTs:Date.now()}));
+  acReadDraft();const L=acDraft.filter(a=>a.name||a.cents).map(a=>({id:a.id||"a"+Date.now()+Math.random().toString(36).slice(2,5),name:a.name,cents:a.cents,...(a.cur==="EUR"||a.cur==="USD"?{cur:a.cur}:{}),at:today(),atTs:Date.now()}));
   if(!L.length){toast("Digite o saldo.");return}
   try{document.activeElement?.blur();await saveCfg({accts:L});acDraft=null;toast("Saldo salvo",true);rr()}catch(e){toast("Não deu para salvar.")}
 }
@@ -3484,7 +3501,7 @@ function timeline(ym,arr){
   rA.forEach(x=>E.push({k:"rec",x,date:x.date,cents:x.cents,paid:true}));
   salVirt(ym).forEach(x=>E.push({k:"rec",x,date:x.date,cents:x.cents,paid:true,virt:1}));
   E.sort((a,b)=>a.date.localeCompare(b.date)||(a.k==="rec"?-1:b.k==="rec"?1:0));
-  const A=accts(), fut=ym>curYM(), hasBal=(cur||fut)&&A.length, lateB=cur&&hasBal?accFlow(ym).late:0;let bal=!hasBal?0:cur?accBal()-lateB:endBal(shiftYM(ym,-1));
+  const A=acctsR(), fut=ym>curYM(), hasBal=(cur||fut)&&A.length, lateB=cur&&hasBal?accFlow(ym).late:0;let bal=!hasBal?0:cur?accBal()-lateB:endBal(shiftYM(ym,-1));
   E.forEach(e=>{
     const rec=e.k==="rec";
     if(hasBal&&!rec&&!e.paid&&!e.rolled){bal-=e.cents;e.after=bal<0?`<span class="tlafter neg">falta ${R(-bal)}</span>`:""}
@@ -3897,11 +3914,13 @@ function saveSection(){
       const meta=[!isFx&&(e||u)?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):"",svGoalTxt(b),svPaceTxt(b),!b.goal&&last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur||b.goalCur||"BRL")}`:""].filter(Boolean).join(" · ")||"sem movimentos";
       let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="d"><span class="sv-ico">${svIcon(b)}</span>${bks.map(cardBadge).join("")}${esc(b.name)}${isWon?`<span class="sv-won">META BATIDA 🎉</span>`:""}</span><span class="v ${v<0?"neg":""}">${dispVal}</span>${b.goal?`<span class="mini"><i style="width:${pct}%;background:${isFx?"var(--euro)":isWon?"var(--pos)":"var(--accent)"}"></i></span>`:""}<span class="m">${esc(meta)}</span></button>`;
       if(svOpen===b.id){
-        const allMv=[...(b.moves||[])].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=svAllMv?allMv:allMv.slice(0,5);
+        /* compras da aba Moedas somadas na caixinha (fxAll) também aparecem aqui, com "editar" que abre a compra (26/10/2026) */
+        const fxMv=b.fxAll?fx.filter(x=>fxCurOf(x)===boxFx(b)).map(x=>({id:"fx:"+x.id,fxId:x.id,date:x.date||"",cents:fxAmt(x),cur:boxFx(b),brl:x.brl,bank:fxPlaceBank(x.where)||"",where:x.where||""})):[];
+        const allMv=[...(b.moves||[]),...fxMv].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=svAllMv?allMv:allMv.slice(0,5);
         const pc=svPace(b), need=[pc&&pc.late?`Pela linha reta até ${shortMonth(b.target)}, era para ter ${svMoney(pc.exp,pc.cur)} agora. Para recuperar, guarde ~${svMoney(pc.per,pc.cur)} por mês daqui em diante.`:"",svNeedTxt(b)].filter(Boolean).join(" ");
         const bkRows=svBankRows(b), bkShow=bkRows.length>1||(bkRows[0]&&bkRows[0].bank);
         row+=`<div class="svedit">${need?`<p class="hint" style="margin:0 0 10px">${esc(need)}</p>`:""}${bkShow?`<div class="svbanks"><small>Onde está o dinheiro</small>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}${esc(r.bank||"Sem banco definido")}</span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
-          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
+          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>m.fxId?`<button class="svmv" data-svfx="${esc(m.fxId)}" aria-label="Editar compra de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · comprou${m.brl?` · R$ ${brl(m.brl)} a R$ ${rateTxt(m.brl/m.cents)}`:""}${m.where?` · ${esc(m.where)}`:""}</span><span><span class="pos" style="white-space:nowrap">+ ${svMoney(m.cents,m.cur)}</span> <span class="ed">editar</span></span></button>`:svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
           `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
@@ -4882,6 +4901,7 @@ document.addEventListener("click",async e=>{
   const fc=t.closest("[data-fxcur]"); if(fc){const nc=fc.dataset.fxcur;if(nc===fxCur)return;const dir=nc==="USD"?1:-1;fxCur=nc;lsSet("despesas.fxCur",fxCur);render();slideIn($("pFx"),dir);return}
   const fpl=t.closest("[data-fxplace]"); if(fpl){$("fxWhere").value=fpl.dataset.fxplace;fxPlaceChips();return}
   const fs=t.closest("[data-fxsheet]"); if(fs){fxSheetSet(fs.dataset.fxsheet);return}
+  const sfx=t.closest("[data-svfx]"); if(sfx){const x=fx.find(v=>String(v.id)===sfx.dataset.svfx);if(x)openFx(x);return}
   const smv=t.closest("[data-svmv]"); if(smv){svMvEdit=smv.dataset.svmv;renderAno();setTimeout(()=>{const v=$("mvVal");v&&v.scrollIntoView({block:"center",behavior:"smooth"})},30);return}
   if(t.id==="svDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const b=saves().find(x=>x.id===svOpen);svOpen=null;svSave(saves().filter(x=>x!==b),"Caixinha excluída");return}
@@ -5148,7 +5168,7 @@ function chips(){
   if($("catPickName")) $("catPickName").textContent=curCat.n||"Escolher categoria";
   $("catChips").innerHTML=CATS[form.type].map(c=>`<button type="button" class="catitem-btn" data-cat="${c.k}" aria-pressed="${form.cat===c.k}"><i class="dot" style="background:${c.c}"></i><span>${esc(c.n)}</span></button>`).join("")+
     (true?(catNewOpen?`<div class="catnew" style="grid-column:1/-1;display:flex;gap:8px;padding:4px 0"><input type="text" id="catNewIn" maxlength="24" placeholder="Nova categoria" enterkeyhint="done" autocomplete="off" style="flex:1"><button type="button" class="btn primary" id="catNewOk" style="flex:none;padding:10px 18px">Criar</button></div>`:`<button type="button" class="catitem-btn add" id="catNewBtn" style="grid-column:1/-1;justify-content:center;border-style:dashed;color:var(--muted)">+ Nova categoria</button>`):"");
-  {const A=accts(), ben=form.type==="desp"&&benOf({pay:form.pay});
+  {const A=acctsR(), ben=form.type==="desp"&&benOf({pay:form.pay});
     $("acctField").hidden=A.length<2||ben;
     $("acctLbl").textContent=form.type==="rec"?"Entra na conta":"Sai da conta";
     const cur=A.some(a=>a.name===form.acct)?form.acct:(A[0]||{}).name;
@@ -5250,7 +5270,7 @@ $("sheet").addEventListener("submit",async e=>{
   if($("date").value<MIN_YM+"-01"){err("err","O app começa em setembro/2026.");return}
   const isD=form.type==="desp";
   const base={type:form.type,cents:form.cents,desc:$("desc").value.trim(),cat:form.cat,pay:isD?form.pay:"",date:$("date").value,card:isD&&form.pay==="Crédito"&&form.card&&form.card!=="Outro"?form.card:""};
-  {const A=accts();if(A.length>1&&!(isD&&benOf(base))) base.acct=A.some(a=>a.name===form.acct)?form.acct:A[0].name;else if(editing&&editing.acct) base.acct=""}
+  {const A=acctsR();if(A.length>1&&!(isD&&benOf(base))) base.acct=A.some(a=>a.name===form.acct)?form.acct:A[0].name;else if(editing&&editing.acct) base.acct=""}
   if(isD) base.paid=benOf(base)?true:form.paid;
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}
   if(!editing&&isD&&base.card){const b=billDate(base.card,base.date);if(b!==base.date){base.buy=base.date;base.date=b}}
