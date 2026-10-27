@@ -68,5 +68,5 @@ self.addEventListener("notificationclick",e=>{{
   }}));
 }});
 ''')
-open('README.md','w', encoding='utf-8').write("# Um Tostão (Minhas Despesas)\n\nApp pessoal de controle de gastos (PWA). Os dados ficam salvos só no aparelho (localStorage); nada é enviado para este repositório.\n\nAbra no Safari do iPhone → Compartilhar → Adicionar à Tela de Início.\n")
+open('README.md','w', encoding='utf-8').write("# Um Tostão (Minhas Despesas)\n\nApp pessoal de controle de gastos (PWA). Entra com e-mail e senha ou Google (Supabase); os dados ficam no aparelho e são sincronizados com a conta de cada pessoa (esquema em `supabase/sync.sql`). Nenhum dado pessoal vem para este repositório.\n\nAbra no Safari do iPhone → Compartilhar → Adicionar à Tela de Início.\n")
 print("index.html gerado",len(doc))
