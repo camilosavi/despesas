@@ -3019,10 +3019,10 @@ function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)
   $("divHint").textContent=n>=2&&form.cents?`${R(Math.round(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
 /* Ano (out/2026): as 3 primeiras seções (próximos meses, dinheiro guardado, gráfico) ficam abertas; as outras ficam
    recolhidas mostrando só o título com o total; tocar abre. Lembra o que ficou aberto (despesas.anoOpen, só no aparelho). */
-const FOLD={pAno:{keep:3,key:"despesas.anoOpen"},pMe:{keep:1,key:"despesas.meOpen"}};
+const FOLD={pAno:{keep:3,key:"despesas.anoOpen"},pMe:{keep:0,key:"despesas.meOpen"}};
 const foldOpenSet=k=>{try{return new Set(JSON.parse(lsGet(k)||"[]"))}catch(e){return new Set()}};
 const anoOpenSet=()=>foldOpenSet("despesas.anoOpen");
-/* Você (out/2026, visual simples): igual ao Ano, só Aparência fica aberta */
+/* Você (out/2026, visual simples): igual ao Ano, tudo recolhido (Aparência também) */
 function anoFold(pid="pAno"){
   const P=$(pid), F=FOLD[pid];if(!P||!F) return;const O=foldOpenSet(F.key);
   [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<F.keep||!h)return;

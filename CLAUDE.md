@@ -499,7 +499,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Início/Mês/Ano/Moedas escondidos (menos os com `neg` no estilo) e classe `.expl` (escondida) nos textos fixos da tela do
   cartão; `.tlproj small` escondido. **Fôlego saiu do Início** (o gráfico Evolução já mostra). Saldo na conta: Extrato e
   Atualizar viraram links no título (`h2 .h2act`), sem o botão "Fim de <próximo>". Ano: sem a coluna Saldo quando há
-  Saldo na conta. **Você** recolhe as seções como o Ano (`FOLD`/`anoFold(pid)`: só Aparência aberta, `despesas.meOpen`);
+  Saldo na conta. **Você** recolhe as seções como o Ano (`FOLD`/`anoFold(pid)`: tudo recolhido, Aparência inclusive, `despesas.meOpen`);
   `renderAno`/`renderMe` chamam o `anoFold` no fim.
 - **Banco limpo** (out/2026, ele não estava convencido do visual; escolheu "banco limpo", incomodava informação demais e
   caixas): bloco CSS "banco limpo" no fim do `<style>`. Fundo neutro quase preto (só ~10% da cor do tema; claro quase
