@@ -1,5 +1,6 @@
 # Um Tostão (antes "Minhas Despesas") — contexto para o Claude
 
+> **27/10/2026: o `main` ganhou login + banco no Supabase** (seção "Conta e sincronização no Supabase" abaixo; no lugar do Drive).
 > **21/10/2026 (noite): o app antigo voltou ao `main`** (árvore idêntica ao commit `68e3b9b`), por pedido dele.
 > A versão nova (Tostão, React + TypeScript, login Supabase, contas, faturas, Open Finance) ficou guardada na branch
 > **`novo-tostao-21-10`** (último commit `1f22325`). Aqui valem as regras do app antigo abaixo (`src/app.html` + `build_pwa.py`).
@@ -93,7 +94,7 @@ card?, parc?:"i/n", group?, createdAt}`
 - Acesso: no app do iPhone (PWA) cada pessoa cria nome + senha de 6 dígitos no primeiro acesso (tela estilo app de
   banco). A senha fica só no aparelho (`despesas.auth`, PBKDF2 com sal); não dá para recuperar, só apagar os dados e
   recomeçar. Pede de novo ao reabrir o app ou depois de 5 min em segundo plano; "Bloquear app" na tela Você.
-  Não é login na nuvem: os dados continuam só no aparelho de cada um.
+  É só a trava local do aparelho; a conta na nuvem é o login do Supabase (seção abaixo), que vem antes.
   Face ID opcional: oferecido depois de criar a senha (ou "Ativar Face ID" na tela Você). Usa uma chave-senha do
   aparelho (WebAuthn, `auth.bio.id`) só como trava local. Com Face ID ativo o app abre na tela do Face ID
   (tenta sozinho; se o iPhone exigir toque, espera o toque); se falhar/cancelar vai para o teclado da senha.
@@ -435,7 +436,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   da Pluggy ficam num Worker do Cloudflare do próprio usuário (`tools/pluggy-worker.js`: secrets CLIENT_ID, CLIENT_SECRET,
   APP_KEY; rotas /token, /item, /accounts, /transactions, /bills, todas pedem `x-app-key`; erro da Pluggy em /transactions
   (usa `/v2/transactions` com cursor `after`; o antigo foi desativado) volta como `error`, não lista vazia). Tela Você → `ofSection()`: endereço
-  do Worker + APP_KEY em `despesas.of` (fora do backup e do repo; vai para os outros aparelhos pelo Drive, em `SYNC_PREFS`, criptografado) → "Conectar banco" abre o widget
+  do Worker + APP_KEY em `despesas.of` (fora do backup, do repo e da nuvem: não está em `SYNC_PREFS`; em outro aparelho, preencher de novo) → "Conectar banco" abre o widget
   (`pluggy-connect` latest via cdn.pluggy.ai, só o MeuPluggy) e guarda o `item.id`. **Sem "Reconectar"** (out/2026): item do
   Meu Pluggy não atualiza pelo widget (fica parado no aviso); só 1x por dia, na hora da Pluggy. `ofItemTxt` mostra
   "Atualizado pelo banco em … · próxima atualização …" (`/item`: `lastUpdatedAt`, `nextAutoSyncAt`, `status`); Worker antigo
@@ -553,43 +554,32 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   (`sal13`: fixo − 1ª parcela lançada − descontos, ou o valor dele) e "Terço de férias (previsto)" no mês escolhido.
 - **Gastos que se repetem** (Ano, `recurSection`): mesmo nome em ≥ 2 dos últimos 4 meses com valor ±15% → lista com
   total por mês e por ano. Backup mostra "Último backup: há N dias" (já salvava pela tela de compartilhar do iPhone).
-- **Sincronizar com o Google Drive** (out/2026, só a conta dele): `GDRIVE_CLIENT` = ID do cliente OAuth (projeto Google
-  Cloud dele "Minhas Despesas", tela de consentimento em **teste** com o Gmail dele como usuário de teste, origem
-  `https://camilosavi.github.io`, escopo `drive.appdata`). Vazio = seção escondida. Seção na tela Você (`syncSection`):
-  Conectar → **redirecionamento** para o Google (a janelinha GIS não volta no app da tela de início do iPhone;
-  `gAuth(after)` → volta em `/despesas/#access_token=…`, `G_BACK` guarda o token em `despesas.gtok` e limpa o endereço,
-  `gResume()` continua depois de destravar; URI de redirecionamento `https://camilosavi.github.io/despesas/` cadastrado
-  no cliente; token ~1 h, quando expira a faixa `#syncBanner` pede toque) → senha de sincronização
-  (≥ 8, mesma em todos os aparelhos, guardada em `despesas.syncPass` no aparelho). Arquivo `despesas-sync.json` na
-  appDataFolder, criptografado (PBKDF2 250k + AES-GCM). `syncNow` junta em 3 vias com a base `despesas.syncBase`
-  (hash por lançamento/compra/chave do cfg): quem mudou desde a base vence; os dois → este aparelho (1ª vez → nuvem).
-  Apagar sincroniza (some da base). Roda 3 s depois de gravar (`_emit`), ao abrir/voltar, ao destravar e a cada 2 min.
-  Foto e tema também sincronizam (`SYNC_PREFS`, parte `prefs` do arquivo); claro/escuro (`despesas.mode`), senha do
-  app e `cfg.seeded` ficam de cada aparelho. Testado com Drive simulado (2 aparelhos, apagar/editar/somar,
-  senha errada).
-  **Status claro** (out/2026, ele não sabia se "sincronizar" enviava ou recebia): o arquivo leva `dev` (`syDev()`: iPhone/
-  celular/computador) e `at`; `syncMeta` guarda `upAt/upN` (↑ enviado) e `downAt/downN/downFrom` (↓ recebido de qual
-  aparelho); `syncPend()` conta mudanças daqui ainda não enviadas (snapState × `syncBase`). Tela mostra "Em dia com o
-  Drive ✓" ou "N mudanças daqui esperando envio"; botão "Enviar agora"/"Conferir agora"; toast diz o que foi e veio.
-  **Login renova sozinho** (`syAutoAuth`): token vencido + e-mail conhecido → `gAuth("auto")` (prompt=none) ao abrir,
-  voltar ao app ou destravar, no máximo a cada 20 min (`despesas.gAutoAt`), sem janela aberta; erro só liga a faixa.
-  **Erros com motivo** (out/2026): o catch do `syncNow` diz o que houve (login recusado 401/403 → apaga o token e refaz o
-  login sozinho, respeitando os 20 min para não ficar em loop; sem internet; Drive fora do ar 5xx; 429; senão mostra o
-  código/motivo do Google). `syncMeta.errMsg/errAt` guarda o último erro (aparece mesmo depois de reabrir; some ao dar certo).
-  **Apagado não volta** (out/2026, ele: "mescla depois volta tudo"): `store.items.remove` grava lápide em
-  `despesas.syncDel` ({id: hora}, 180 dias); o arquivo do Drive leva `del` e o `syncNow` junta as lápides dos dois lados e
-  tira esses ids de items/fx (antes um aparelho sem base ou com cópia velha ressuscitava o que foi mesclado/apagado).
-  `syDelForget` tira lápides ao desfazer "Zerar mês" e ao restaurar backup. **Corrida:** se os dados mudaram enquanto o
-  Drive respondia (`snapState` ≠ foto do início), a rodada desiste sem gravar e reagenda (`syncSoon`).
-  **PC não enviava** (out/2026, ele: "o PC só recebe"): no computador a aba fica aberta, o token vencia em ~1 h e o
-  `syncNow` só marcava pendente (a renovação só rodava ao voltar ao app). Agora, com mudanças daqui (`syncPend`) e
-  token vencido, `syAutoAuth` renova sozinho (a cada 3 min; 20 min se a última renovação falhou, `despesas.gAutoErr`),
-  só com a pessoa parada 15 s (`syTouch`), sem janela aberta nem campo em foco; guarda tela/mês/rolagem em
-  `sessionStorage despesas.gview` e volta igual. `syFlush` envia na hora ao sair do app/aba (antes esperava 3 s).
-  **Ponto na foto** (`#tabAv[data-sync]`): laranja = falta enviar/entrar, vermelho = erro, azul piscando = sincronizando,
-  sem ponto = em dia. A faixa `#syncBanner` diz quantas mudanças não foram.
-  **Base64 em pedaços** (`binStr`): `String.fromCharCode(...array)` estourava a pilha ("Maximum call stack size
-  exceeded") com o arquivo da sincronização grande (foto + muitos lançamentos). Nunca usar spread em array grande.
+- **Conta e sincronização no Supabase** (27/10/2026, pedido dele: "quero pôr o Supabase na versão nova, tal qual estava na anterior"; a
+  versão com Supabase/React ficou na branch `novo-tostao-21-10`, isto aqui é o app antigo com o mesmo login). **Substituiu a sincronização
+  pelo Google Drive** (código do Drive removido; o cliente OAuth do Google Cloud é o mesmo que o Supabase usa no "Entrar com o Google").
+  - **Login obrigatório no PWA** (`PWA&&!sbSes()` → `showAuth()`, overlay `#auth` na paleta marinho/dourado da tela da senha, z-index acima de
+    `#lock`): e-mail + senha (`authGo`, `sbAuth` → `/auth/v1/token`, `/signup`) ou Google (`/auth/v1/authorize?provider=google&redirect_to=<app>`;
+    volta com `#access_token=…&refresh_token=…`, lido por `SB_BACK` antes de tudo, `sbFinish`). Sessão em `despesas.sb` ({at,rt,exp,uid,email}),
+    renovada sozinha em `sbTok`; refresh recusado (4xx) limpa a sessão e reabre o login. A senha de 6 dígitos/Face ID continuam como trava
+    local do aparelho (vem **depois** do login; no 1º acesso o "name" pede nome e PIN).
+  - URL do projeto e chave *publishable* (`SB_URL`, `SB_KEY`) ficam no código (públicas por desenho). **Nunca** senha do banco, `service_role`
+    ou chave secreta do Google no repositório.
+  - **Tabela** `sync_rows` (esquema em `supabase/sync.sql`, ele roda uma vez no SQL Editor): `user_id`, `kind`, `id`, `data` ({"v": valor}),
+    PK (user_id, kind, id), RLS por `auth.uid()`. `kind`: `i` lançamento, `f` compra de moeda, `c` chave do cfg, `p` foto/tema, `d` lápide,
+    `m` (id `dev`) = quem enviou por último. Sem a tabela: erro claro na seção ("rodar supabase/sync.sql") e a seção abre sozinha.
+  - **`syncNow`** (mesma junção em 3 vias de antes, só o transporte mudou): lê todas as linhas (`sbGetAll`, páginas de 1000), junta com a base
+    `despesas.syncBase` (hash por item/chave; quem mudou desde a base vence; os dois → este aparelho; 1ª vez → nuvem), grava só o que
+    mudou (`sbUp` em lotes, `sbDel` por `kind`+ids) e atualiza base, lápides (`despesas.syncDel`, 180 dias) e `syncMeta`. Roda 3 s depois de
+    gravar (`_emit`), ao abrir/voltar ao app, ao voltar a internet, ao sair da aba (`syFlush`) e a cada 2 min. Se os dados mudaram enquanto a
+    nuvem respondia, desiste e reagenda. Status/ponto na foto (`#tabAv[data-sync]`) e faixa `#syncBanner` (só com erro + mudanças pendentes).
+  - **Dados em texto na nuvem** (antes o arquivo do Drive ia criptografado com a "senha de sincronização", que deixou de existir): a proteção
+    agora é o login + RLS. O endereço/chave do Open Finance (`despesas.of`) **não sobe** (saiu de `SYNC_PREFS`; em outro aparelho, preencher de novo).
+    Claro/escuro, senha do app e `cfg.seeded` continuam de cada aparelho.
+  - **Sair da conta** (Você → "Conta e sincronização", 2 toques; `sbSignOut`): envia o que falta e, se tudo subiu, faz logout no Supabase e **apaga
+    todas as chaves `despesas.*` do aparelho** (os dados continuam na conta). Quem entra de novo recebe tudo. Cuidado: qualquer rotina que apague
+    dados locais **sem** apagar `despesas.syncBase` faz o próximo sync mandar apagar tudo na nuvem (o "Esqueci a senha" já limpa base, lápides e meta).
+  - Testado com Supabase simulado no navegador (2 aparelhos, 440 px e 1440 px, claro e escuro): login, erro de senha, subida dos dados antigos,
+    2º aparelho recebendo, apagar/lápide, edição, tabela ausente e sair/entrar de novo. O sandbox não alcança o Supabase real.
 - **Computador** (`@media (min-width:980px)`, out/2026): abas numa **barra fixa no topo** (out/2026, ele achou a lateral solta: `nav.tabs` vira barra sólida com "Minhas Despesas" (`.tabbrand`, só PC), abas com ícone + nome e a foto à direita, alinhada com `--pcw`; o título repetido Hoje/Mês/Planejar some do topo, fica na tela do cartão e na Você),
   topo vira cartão arredondado, conteúdo em 2 colunas (3 a partir de 1500 px) com `column-count` e `break-inside:avoid`
   nas seções, janelas de lançamento abrem no centro (modal), botão + no canto inferior direito. Testar em 1440×900.
@@ -601,7 +591,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 
 - **Tela Você** (out/2026, pedido dele: "config do usuário ao clicar no rosto, não no Ano"): painel `pMe` (`renderMe()`),
   não é aba da barra; abre pela foto (`#tabAv`, atalho **5** no computador). Topo mostra foto + nome, último backup e
-  Google Drive. Seções: Aparência, Senha e Face ID (`secSection`), Sincronizar, Categorias, Backup e exportação,
+  conta (e-mail e sincronização). Seções: Aparência, Senha e Face ID (`secSection`), Sincronizar, Categorias, Backup e exportação,
   Estatísticas, Zerar tudo. A pílula da barra some (`nav.tabs.onme`) e a foto ganha anel. Sem botão +.
   O **Ano** ficou só com números: próximos meses, caixinhas, gráfico, resumo, previstos e gastos que se repetem.
   **Senha no computador** (`IS_PC` = mouse): vale 6 h (`despesas.unlockAt`, `pcUnlocked()`, `RELOCK_MS`); "Bloquear app"

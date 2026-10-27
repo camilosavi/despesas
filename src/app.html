@@ -1489,6 +1489,17 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .lk-link{color:#E9D3A3}
 .lk-msg.err{color:#F2A99C}
 @media (max-height:760px){.lk-logo{width:84px;height:84px}.lk-brand{gap:10px}.lock{padding-top:calc(18px + env(safe-area-inset-top,0px))}}
+/* tela de login (conta no Supabase): mesma paleta da tela da senha */
+.auth{z-index:110}
+.au-box{width:100%;max-width:340px;margin:auto 0;display:grid;gap:12px}
+.au-box input{font:inherit;font-size:1.05rem;padding:15px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--head-ink);width:100%;box-sizing:border-box}
+.au-box input::placeholder{color:var(--head-muted)}
+.au-box .lk-msg{margin:0;min-height:1.3em}
+.au-box .ab{display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:14px;padding:15px;font:inherit;font-weight:700;font-size:1rem;background:var(--btn);color:var(--btn-ink)}
+.au-box .ab.sec{background:none;border:1px solid rgba(255,255,255,.2);color:var(--head-ink)}
+.au-box .ab:disabled{opacity:.5}
+.au-or{display:flex;align-items:center;gap:12px;color:var(--head-muted);font-size:.8rem}
+.au-or:before,.au-or:after{content:"";flex:1;height:1px;background:rgba(255,255,255,.16)}
 #walMenu{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center}
 #walMenu .wm-bg{position:absolute;inset:0;background:rgba(0,0,0,.35)}
 #walMenu .wm-box{position:relative;width:min(420px,100%);margin:0 12px calc(96px + env(safe-area-inset-bottom,0px));background:var(--surface);color:var(--ink);border-radius:24px;padding:14px;display:grid;gap:8px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
@@ -1565,7 +1576,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
     <div class="htl" id="hTl" hidden></div>
   </header>
 
-  <button class="syncbar" id="syncBanner" hidden>Toque para sincronizar com o Google Drive</button>
+  <button class="syncbar" id="syncBanner" hidden>Toque para sincronizar</button>
   <div id="importBox"></div>
   <main id="pHome"></main>
   <main id="pMes" hidden></main>
@@ -1682,6 +1693,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 <form class="sheet" id="diagSheet" hidden autocomplete="off"></form>
 <form class="sheet" id="xlsSheet" hidden autocomplete="off"></form>
 <div class="lock" id="lock" hidden aria-live="polite"></div>
+<div class="lock auth" id="auth" hidden></div>
 <label id="hapt" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none"><input type="checkbox" switch tabindex="-1"></label>
 <div class="toast" id="toast" hidden></div>
 
@@ -2297,7 +2309,7 @@ function header0(){
     $("meHead").innerHTML=`<span class="av">${avInner()}</span><div><p class="label">Seu perfil</p><div class="nm">${esc(myName()||"Você")}</div></div>`;
     const bk=cfg.lastBackup?daysSince(cfg.lastBackup):null;
     $("s1l").textContent="Último backup";$("s1").textContent=bk==null?"nunca":bk===0?"hoje":`há ${bk} ${bk===1?"dia":"dias"}`;
-    $("s2l").textContent="Google Drive";$("s2").textContent=syncOn()?"ligado":"desligado";
+    $("s2l").textContent="Sincronização";$("s2").textContent=syncOn()?"ligada":"desligada";
     $("hFoot").textContent="";
     return;
   }
@@ -2444,7 +2456,7 @@ function backupBanner(){
   const nd=daysSince(cfg.lastBackup);
   /* novo app (out/2026): no celular o lembrete é uma linha só */
   return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Nenhum backup ainda":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
-  return `<section><div class="card banner"><strong>Hora do backup</strong><p>${nd===Infinity?"Você ainda não fez nenhum backup.":`Seu último backup foi há ${nd} dias.`} Os dados ficam só neste iPhone; salve o arquivo no iCloud Drive para não perder nada.</p><div class="row"><button class="btn soft" id="bkLater">Depois</button><button class="btn primary" id="bkExport">Fazer backup</button></div></div></section>`;
+  return `<section><div class="card banner"><strong>Hora do backup</strong><p>${nd===Infinity?"Você ainda não fez nenhum backup.":`Seu último backup foi há ${nd} dias.`} ${syncOn()?"Seus dados já estão na sua conta; o arquivo é uma cópia extra.":"Os dados ficam só neste iPhone; salve o arquivo no iCloud Drive para não perder nada."}</p><div class="row"><button class="btn soft" id="bkLater">Depois</button><button class="btn primary" id="bkExport">Fazer backup</button></div></div></section>`;
 }
 
 /* ---------- "quem está usando": nome de usuário, só com permissão ---------- */
@@ -2979,7 +2991,7 @@ function anoFold(pid="pAno"){
   const P=$(pid), F=FOLD[pid];if(!P||!F) return;const O=foldOpenSet(F.key);
   [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<F.keep||!h)return;
     const k=(h.firstChild&&h.firstChild.textContent||h.textContent).trim().slice(0,30);
-    const force=(sec.id==="salSec"&&salXOpen)||(sec.id==="subSec"&&subEdit);
+    const force=(sec.id==="salSec"&&salXOpen)||(sec.id==="subSec"&&subEdit)||(sec.id==="syncSec"&&!!(SY.err||syncMeta().errMsg));
     sec.classList.add("fold");sec.dataset.fold=k;sec.classList.toggle("open",force||O.has(k));
     if(!h.querySelector(".foldcar"))h.insertAdjacentHTML("afterbegin",'<i class="foldcar" aria-hidden="true">›</i>');
     h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",sec.classList.contains("open"))});
@@ -3040,7 +3052,7 @@ const HELP={
   pCards:["Cartões",["Cada cartão mostra a fatura do mês, o limite livre e as próximas faturas.","Importe a fatura em PDF (ou OFX) do app do banco: o app confere com o que você já lançou, mescla os repetidos e cria as próximas parcelas.","“Fora da fatura do banco” e “Parecidos” ajudam a tirar lançamentos duplicados.","Fatura não paga no vencimento passa para a próxima, como o banco faz."]],
   pFx:["Moedas",["Registre compras de euro ou dólar: o app calcula o preço médio e quanto valem hoje.","A cotação atualiza sozinha; uma caixinha com meta pode somar essas compras."]],
   pAno:["Ano",["Os próximos meses mostram quanto entra, sai e fica na conta.","Caixinhas guardam dinheiro com meta e mês-alvo (e dizem se está no ritmo).","Salário previsto aprende com seus holerites; ali também dá para prever aumento, 13º e férias.","Assinaturas e Contas divididas mostram quem já te pagou a parte e têm botão para cobrar no WhatsApp."]],
-  pMe:["Você",["Aparência, senha e Face ID, avisos de vencimento, categorias e backup.","Seus dados ficam só neste aparelho. Faça backup de vez em quando (o app lembra) ou sincronize com o Google Drive se estiver disponível.","Importar planilha traz o que você controlava no Excel."]],
+  pMe:["Você",["Aparência, senha e Face ID, avisos de vencimento, categorias e backup.","Seus dados ficam na sua conta e em cada aparelho em que você entrou. Faça backup de vez em quando (o app lembra).","Importar planilha traz o que você controlava no Excel."]],
   lanc:["Lançamento",["Despesa ou receita, valor, categoria e forma de pagamento.","No Crédito o app põe na fatura certa sozinho. “Parcelar ou repetir” cria os meses seguintes.","“Dividir com outras pessoas” marca quanto é a sua parte; os Pix de volta entram em Contas divididas.","“Importar fatura ou conta” lê PDF ou OFX do banco."]]
 };
 function helpLink(k){return HELP[k]?`<div class="toolbar helpbar" style="justify-content:center;margin:22px 0 4px"><button class="tbtn" data-help="${k}">Como funciona esta tela</button></div>`:""}
@@ -3257,60 +3269,45 @@ function cardStrip(ym){
     return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${ym}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv">${R(v)}</span><span class="cm ${paid?"ok":late?"late":""}">${rv?`+ ${R(rv)} da anterior · `:""}${!L.length&&!rv?"nada no mês":paid?"paga ✓":late?"atrasada":due?"vence "+fmtDM(due):`${L.length} ${L.length===1?"item":"itens"}`}</span>${k.limit?`<span class="cl" title="${Math.round(pct)}% do limite"><i style="width:${pct}%;background:${pct>=100?"var(--neg)":pct>=80?"#e08a1e":col}"></i></span><span class="cm">livre ${R(Math.max(k.limit-cardUsed(c),0))}</span>`:""}</button>`}).join("");
   return `<section><h2>Cartões <button data-gocards="1">${cs.length?"Ver todos":"Adicionar"}</button></h2><div class="cstrip">${t}${cs.length?"":`<button class="ctile all" data-gocards="1"><b>+</b>Novo cartão</button>`}</div></section>`;
 }
-/* ---------- sincronizar com o Google Drive (opcional, só para contas liberadas no projeto do Google) ----------
-   Um arquivo criptografado (AES-GCM, chave PBKDF2 da senha de sincronização) na pasta escondida do app no Drive
-   (appDataFolder). Junta em 3 vias: base = último estado sincronizado; para cada lançamento/compra/chave do cfg,
-   quem mudou desde a base vence; mudou dos dois lados → fica o deste aparelho (na 1ª vez, o da nuvem). */
-const GDRIVE_CLIENT="770349175007-u1d2c54ce78ssqf10mqomhmro0saukgg.apps.googleusercontent.com";
-const SYNC_FILE="despesas-sync.json", SY={tok:null,exp:0,busy:false,err:"",pending:false};
-const syncOn=()=>!!(PWA&&GDRIVE_CLIENT&&lsGet("despesas.syncPass"));
+/* ---------- conta e sincronização (Supabase) ----------
+   Login por e-mail e senha ou Google (Supabase Auth, sessão em `despesas.sb`, renovada sozinha). Os dados do aparelho
+   (lançamentos, compras de moeda, chaves do cfg, foto e tema) ficam na tabela `sync_rows` (uma linha por item, RLS por
+   usuário; esquema em supabase/sync.sql). Junta em 3 vias com a base `despesas.syncBase`: para cada lançamento/compra/
+   chave do cfg, quem mudou desde a base vence; mudou dos dois lados → fica o deste aparelho (na 1ª vez, o da nuvem).
+   URL e chave *publishable* são públicas por desenho (a service_role NUNCA vem para o código). */
+const SB_URL="https://ndsiayzschaefigobwag.supabase.co", SB_KEY="sb_publishable_W_wX4ECguxH-Ay86y1bHfQ_MAKWhTHz";
+const SES_K="despesas.sb", SY={busy:false,err:"",pending:false};
+const sbSes=()=>{try{return JSON.parse(lsGet(SES_K)||"null")}catch(e){return null}};
+const sbSave=v=>lsSet(SES_K,v?JSON.stringify(v):null);
+const syncOn=()=>!!(PWA&&sbSes());
 const syncMeta=()=>{try{return JSON.parse(lsGet("despesas.syncMeta")||"{}")}catch(e){return {}}};
 const syncMetaSet=o=>lsSet("despesas.syncMeta",JSON.stringify({...syncMeta(),...o}));
-/* login no Google por redirecionamento (a janelinha não volta no app da tela de início do iPhone):
-   vai para a página do Google e volta para /despesas/ com o token no endereço (#access_token=…); o token vale ~1 h.
-   `after` diz o que continuar quando voltar: "setup" (pedir a senha) ou "sync". */
-const G_REDIR=location.origin+location.pathname.replace(/index\.html$/,"");
-function gAuth(after){
-  const st=Math.random().toString(36).slice(2)+Date.now().toString(36);
-  lsSet("despesas.gstate",JSON.stringify({st,after:after||"sync",t:Date.now()}));
-  const q=new URLSearchParams({client_id:GDRIVE_CLIENT,redirect_uri:G_REDIR,response_type:"token",scope:"https://www.googleapis.com/auth/drive.appdata",
-    include_granted_scopes:"true",state:st,prompt:syncMeta().email?"none":"consent",...(syncMeta().email?{login_hint:syncMeta().email}:{})});
-  if(after!=="auto")toast("Abrindo o Google…");
-  location.href="https://accounts.google.com/o/oauth2/v2/auth?"+q;
-  return new Promise(()=>{});
-}
-/* volta do Google: guarda o token e limpa o endereço (roda antes de tudo) */
-const G_BACK=(()=>{const h=location.hash;if(!/access_token=|error=/.test(h))return null;
-  const p=new URLSearchParams(h.slice(1));let saved=null;try{saved=JSON.parse(localStorage.getItem("despesas.gstate")||"null")}catch(e){}
-  history.replaceState(null,"",location.pathname+location.search);try{localStorage.removeItem("despesas.gstate")}catch(e){}
-  if(!saved||p.get("state")!==saved.st) return {err:"state"};
-  if(p.get("error")) return {err:p.get("error"),after:saved.after};
-  const tok=p.get("access_token"), exp=Date.now()+((+p.get("expires_in")||3600)-120)*1e3;
-  try{localStorage.setItem("despesas.gtok",JSON.stringify({t:tok,e:exp}))}catch(e){}
-  return {ok:true,after:saved.after}})();
-function gTokOk(){if(SY.tok&&Date.now()<SY.exp)return true;try{const o=JSON.parse(localStorage.getItem("despesas.gtok")||"null");if(o&&Date.now()<o.e){SY.tok=o.t;SY.exp=o.e;return true}}catch(e){}return false}
-async function gFetch(url,opt={}){const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:"Bearer "+SY.tok}});
-  if(r.status===401){SY.tok=null;SY.exp=0;try{localStorage.removeItem("despesas.gtok")}catch(e){}throw new Error("401")}
-  if(!r.ok){let why="";try{const j=await r.json();why=(j.error&&(j.error.errors&&j.error.errors[0]&&j.error.errors[0].reason||j.error.status))||""}catch(e){}
-    const er=new Error("http "+r.status);er.why=why;throw er}return r}
-async function gFind(){const q=encodeURIComponent(`name='${SYNC_FILE}'`);
-  const j=await (await gFetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime)&orderBy=modifiedTime desc`)).json();
-  return (j.files||[])[0]||null}
-async function gRead(id){return (await gFetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text()}
-async function gWrite(id,text){
-  if(id){await gFetch(`https://www.googleapis.com/upload/drive/v3/files/${id}?uploadType=media`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:text});return id}
-  const b="b"+Math.random().toString(36).slice(2), meta={name:SYNC_FILE,parents:["appDataFolder"]};
-  const body=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${text}\r\n--${b}--`;
-  const j=await (await gFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+b},body})).json();return j.id}
-async function gEmail(){try{const j=await (await gFetch("https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)")).json();return (j.user&&j.user.emailAddress)||""}catch(e){return ""}}
-/* criptografia */
-async function syKey(pass,salt){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);
-  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},k,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
-async function syEnc(obj,pass,saltB){const salt=saltB?unb64(saltB):crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
-  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},await syKey(pass,salt),new TextEncoder().encode(JSON.stringify(obj)));
-  return JSON.stringify({app:"minhas-despesas-sync",v:1,salt:b64(salt),iv:b64(iv),ct:b64(ct),at:new Date().toISOString()})}
-async function syDec(text,pass){const j=JSON.parse(text);if(!j||j.app!=="minhas-despesas-sync")throw new Error("formato");
-  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(j.iv)},await syKey(pass,unb64(j.salt)),unb64(j.ct));return {data:JSON.parse(new TextDecoder().decode(pt)),salt:j.salt}}
+const sbErr=(m,status,code)=>Object.assign(new Error(m),{status,code:code||""});
+async function sbAuth(path,body){
+  const r=await fetch(SB_URL+"/auth/v1/"+path,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw sbErr(j.msg||j.error_description||j.message||j.error||"http "+r.status,r.status,j.error_code||j.code);return j}
+const toSes=j=>({at:j.access_token,rt:j.refresh_token,exp:Date.now()+((+j.expires_in||3600)-60)*1e3,uid:(j.user&&j.user.id)||(sbSes()||{}).uid||"",email:(j.user&&j.user.email)||(sbSes()||{}).email||""});
+async function sbTok(){
+  const s=sbSes();if(!s)throw sbErr("sem login",401);
+  if(Date.now()<s.exp)return s.at;
+  try{sbSave(toSes(await sbAuth("token?grant_type=refresh_token",{refresh_token:s.rt})));return sbSes().at}
+  catch(e){if(e.status>=400&&e.status<500){sbSave(null);showAuth("A sessão acabou. Entre de novo.",true)}throw e}}
+async function sbApi(method,path,body,prefer){
+  const t=await sbTok();
+  const r=await fetch(SB_URL+"/rest/v1/"+path,{method,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(prefer?{Prefer:prefer}:{})},body:body?JSON.stringify(body):undefined});
+  if(r.status===401){const s=sbSes();if(s){s.exp=0;sbSave(s)}throw sbErr("401",401)}
+  if(!r.ok){const j=await r.json().catch(()=>({}));throw sbErr(j.message||j.msg||"http "+r.status,r.status,j.code)}
+  return r.status===204?null:await r.json().catch(()=>null)}
+/* linhas: kind i = lançamento, f = compra de moeda, c = chave do cfg, p = foto/tema, d = lápide, m = quem enviou por último; o valor vai em data.v */
+async function sbGetAll(){const out=[];for(let o=0;;o+=1000){const p=(await sbApi("GET",`sync_rows?select=kind,id,data&order=kind,id&limit=1000&offset=${o}`))||[];out.push(...p);if(p.length<1000)return out}}
+function rowsToState(rows){const s={items:{},fx:{},cfg:{},prefs:{},del:{},dev:""};
+  rows.forEach(r=>{const v=r.data&&r.data.v;if(r.kind==="i")s.items[r.id]=v;else if(r.kind==="f")s.fx[r.id]=v;else if(r.kind==="c")s.cfg[r.id]=v;else if(r.kind==="p")s.prefs[r.id]=v;else if(r.kind==="d")s.del[r.id]=+v||0;else if(r.kind==="m"&&r.id==="dev"&&v)s.dev=v.dev||""});return s}
+async function sbUp(kind,obj){
+  const uid=sbSes().uid, rows=Object.entries(obj).map(([id,v])=>({user_id:uid,kind,id,data:{v}}));
+  let part=[],sz=0;const flush=async()=>{if(part.length)await sbApi("POST","sync_rows?on_conflict=user_id,kind,id",part,"resolution=merge-duplicates,return=minimal");part=[];sz=0};
+  for(const r of rows){const n=JSON.stringify(r).length;if(part.length&&(part.length>=150||sz+n>1.5e6))await flush();part.push(r);sz+=n}
+  await flush()}
+async function sbDel(kind,ids){for(let i=0;i<ids.length;i+=60){const l=ids.slice(i,i+60).map(x=>encodeURIComponent('"'+String(x).replace(/\\/g,"\\\\").replace(/"/g,'\\"')+'"')).join(",");await sbApi("DELETE",`sync_rows?kind=eq.${kind}&id=in.(${l})`)}}
 /* junção em 3 vias */
 const stab=v=>JSON.stringify(v,(k,x)=>x&&typeof x==="object"&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,kk)=>(o[kk]=x[kk],o),{}):x);
 function merge3(base,loc,rem,first){const out={},keys=new Set([...Object.keys(base),...Object.keys(loc),...Object.keys(rem)]);
@@ -3319,40 +3316,36 @@ function merge3(base,loc,rem,first){const out={},keys=new Set([...Object.keys(ba
     const v=pick==="l"?loc[k]:rem[k];if(v!==undefined&&(pick==="l"?L:R)!==undefined)out[k]=v});return out}
 const byId=a=>Object.fromEntries((a||[]).filter(x=>x&&x.id).map(x=>[x.id,x]));
 const LOCAL_CFG=["seeded"];
-/* foto e tema também vão (claro/escuro e a senha do app continuam de cada aparelho) */
-const SYNC_PREFS=["despesas.photo","despesas.photoColor","despesas.theme","despesas.themeColor","despesas.of"];
+/* foto e tema também vão (claro/escuro, a senha do app e o endereço/chave do Open Finance continuam de cada aparelho) */
+const SYNC_PREFS=["despesas.photo","despesas.photoColor","despesas.theme","despesas.themeColor"];
 const prefSnap=()=>{const o={};SYNC_PREFS.forEach(k=>{const v=lsGet(k);if(v!=null)o[k]=v});return o};
 function snapState(){const c={...cfg};LOCAL_CFG.forEach(k=>delete c[k]);return {items:byId(local.rd("despesas.v3",[])),fx:byId(local.rd("despesas.fx3",[])),cfg:c,prefs:prefSnap()}}
 const hashMap=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k,stab(v)]));
-/* lápides: ids apagados aqui (mesclar, apagar, zerar) com a hora. Vão no arquivo do Drive e nenhum aparelho traz de
-   volta um lançamento/compra apagado em outro (antes: aparelho que reconectava, ou com cópia velha, ressuscitava tudo).
-   Ficam 180 dias. Desfazer/restaurar backup tira as lápides dos ids que voltaram (syDelForget). */
+/* lápides: ids apagados aqui (mesclar, apagar, zerar) com a hora. Vão para a nuvem e nenhum aparelho traz de volta um
+   lançamento/compra apagado em outro. Ficam 180 dias. Desfazer/restaurar backup tira as lápides dos ids que voltaram (syDelForget). */
 const syDel=()=>{try{return JSON.parse(lsGet("despesas.syncDel")||"{}")||{}}catch(e){return {}}};
 function syDelAdd(id){if(!id)return;const d=syDel();d[id]=Date.now();lsSet("despesas.syncDel",JSON.stringify(d))}
 function syDelForget(ids){const d=syDel();let ch=false;(ids||[]).forEach(id=>{if(d[id]){delete d[id];ch=true}});if(ch)lsSet("despesas.syncDel",JSON.stringify(d))}
 function syncBase(){try{return JSON.parse(lsGet("despesas.syncBase")||"null")}catch(e){return null}}
-/* nome do aparelho que vai junto no arquivo, para mostrar de onde veio a última mudança */
+/* nome do aparelho que vai junto, para mostrar de onde veio a última mudança */
 const syDev=()=>{const u=navigator.userAgent||"";return /iPhone|iPod/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Android/.test(u)?"celular":"computador"};
-/* quantas mudanças deste aparelho ainda não foram para o Drive (compara com a base da última sincronização) */
+/* quantas mudanças deste aparelho ainda não foram para a nuvem (compara com a base da última sincronização) */
 function syDiff(a,b){let n=0;["items","fx","cfg"].forEach(s=>{const A=a[s]||{},B=b[s]||{};new Set([...Object.keys(A),...Object.keys(B)]).forEach(k=>{if(A[k]!==B[k])n++})});return n}
 function syncPend(){const b=syncBase();if(!b)return 0;const l=snapState();return syDiff({items:hashMap(l.items),fx:hashMap(l.fx),cfg:hashMap(l.cfg)},b)}
 async function syncNow(manual){
   if(!syncOn()||SY.busy||store!==local)return;
-  if(!gTokOk()){if(!manual){SY.pending=true;renderSyncBits();if(syncPend())syAutoAuth();return}gAuth("sync");return}
   SY.busy=true;SY.err="";renderSyncBits();
   try{
-    const pass=lsGet("despesas.syncPass"), f=await gFind(), base=syncBase(), first=!base, loc=snapState();
-    let rem={items:{},fx:{},cfg:{},prefs:{}}, salt=null;
-    let remDev="", remDel={};
-    if(f){const d=await syDec(await gRead(f.id),pass);rem={items:d.data.items||{},fx:d.data.fx||{},cfg:d.data.cfg||{},prefs:d.data.prefs||{}};salt=d.salt;remDev=d.data.dev||"";remDel=d.data.del||{}}
-    /* mexeram nos dados enquanto o Drive respondia: não grava a foto velha por cima, tenta de novo daqui a pouco */
+    const base=syncBase(), first=!base, loc=snapState();
+    const R=rowsToState(await sbGetAll()), rem={items:R.items,fx:R.fx,cfg:R.cfg,prefs:R.prefs}, remDev=R.dev, remDel=R.del;
+    /* mexeram nos dados enquanto a nuvem respondia: não grava a foto velha por cima, tenta de novo daqui a pouco */
     if(stab(snapState())!==stab(loc)){SY.busy=false;renderSyncBits();syncSoon();return}
     const old=Date.now()-180*864e5, dl={};[remDel,syDel()].forEach(o=>Object.entries(o||{}).forEach(([k,t])=>{if(t>old&&!(dl[k]>=t))dl[k]=t}));
     const b={items:{},fx:{},cfg:{},prefs:{},...(base||{})};
     const m={items:merge3(b.items,loc.items,rem.items,first),fx:merge3(b.fx,loc.fx,rem.fx,first),cfg:merge3(b.cfg,loc.cfg,rem.cfg,first),prefs:merge3(b.prefs,loc.prefs,rem.prefs,first)};
     Object.keys(dl).forEach(k=>{delete m.items[k];delete m.fx[k]});
     if(stab(m.prefs)!==stab(loc.prefs)){SYNC_PREFS.forEach(k=>lsSet(k,k in m.prefs?m.prefs[k]:null));applyTheme();render()}
-    const changedLocal=stab(m)!==stab(loc), changedRemote=!f||stab(m)!==stab(rem)||stab(dl)!==stab(remDel);
+    const changedLocal=stab(m)!==stab(loc), changedRemote=stab(m)!==stab(rem)||stab(dl)!==stab(remDel);
     if(changedLocal&&stab(snapState())!==stab(loc)){SY.busy=false;renderSyncBits();syncSoon();return}
     if(changedLocal){
       const I=Object.values(m.items), X=Object.values(m.fx), C={...m.cfg};LOCAL_CFG.forEach(k=>{if(cfg[k]!==undefined)C[k]=cfg[k]});
@@ -3360,96 +3353,124 @@ async function syncNow(manual){
       local._emit("i",I);local._emit("f",X);local._emit("s",C)}
     const H=o=>({items:hashMap(o.items),fx:hashMap(o.fx),cfg:hashMap(o.cfg)}), hm=H(m);
     const up=changedRemote?syDiff(hm,H(rem)):0, down=changedLocal?syDiff(hm,H(loc)):0, now=Date.now();
-    if(changedRemote) await gWrite(f&&f.id,await syEnc({...m,del:dl,dev:syDev(),at:now},pass,salt));
+    if(changedRemote){
+      for(const [s,kd] of [["items","i"],["fx","f"],["cfg","c"],["prefs","p"]]){
+        const u={},d=[];Object.keys(m[s]).forEach(k=>{if(stab(m[s][k])!==stab(rem[s][k]))u[k]=m[s][k]});Object.keys(rem[s]).forEach(k=>{if(!(k in m[s]))d.push(k)});
+        if(Object.keys(u).length)await sbUp(kd,u);if(d.length)await sbDel(kd,d)}
+      const du={},dd=[];Object.keys(dl).forEach(k=>{if(dl[k]!==remDel[k])du[k]=dl[k]});Object.keys(remDel).forEach(k=>{if(!(k in dl))dd.push(k)});
+      if(Object.keys(du).length)await sbUp("d",du);if(dd.length)await sbDel("d",dd);
+      await sbUp("m",{dev:{dev:syDev(),at:now}})}
     lsSet("despesas.syncDel",JSON.stringify(dl));
     lsSet("despesas.syncBase",JSON.stringify({...hm,prefs:hashMap(m.prefs)}));
     syncMetaSet({errAt:0,errMsg:"",at:now,...(up?{upAt:now,upN:up}:{}),...(down||changedLocal?{downAt:now,downN:down,downFrom:remDev}:{})});SY.pending=false;
-    const fromTxt=remDev&&remDev!==syDev()?` do ${remDev}`:" do Drive";
-    if(manual)toast(up&&down?`Enviei ${up} e recebi ${down}${fromTxt}`:up?`Enviei ${up} ${up>1?"mudanças":"mudança"} para o Drive`:down?`Recebi ${down} ${down>1?"mudanças":"mudança"}${fromTxt}`:"Tudo igual ao Drive ✓",true);
+    const fromTxt=remDev&&remDev!==syDev()?` do ${remDev}`:" da nuvem";
+    if(manual)toast(up&&down?`Enviei ${up} e recebi ${down}${fromTxt}`:up?`Enviei ${up} ${up>1?"mudanças":"mudança"}`:down?`Recebi ${down} ${down>1?"mudanças":"mudança"}${fromTxt}`:"Tudo igual à nuvem ✓",true);
     else if(down)toast(`Chegou ${down>1?down+" mudanças":"1 mudança"}${fromTxt}`);
-  }catch(e){const m=String(e&&e.message||e), why=e&&e.why||"";
-    /* motivo de verdade na tela (antes era sempre "Não deu para sincronizar agora") e o login se refaz sozinho quando o Google recusa */
-    const auth=m==="401"||/http 403/.test(m)&&/insufficient|permission|auth|forbidden|scope/i.test(why);
-    if(auth){SY.tok=null;SY.exp=0;try{localStorage.removeItem("despesas.gtok")}catch(x){}SY.pending=true}
-    SY.err=auth?"O Google pediu para entrar de novo. Toque em Enviar agora (ou abra o app de novo).":
-      /decrypt|operation/i.test((e&&e.name||"")+m)?"Senha da sincronização diferente da usada no outro aparelho.":
-      /failed to fetch|load failed|network/i.test(m)?"Sem conexão com o Google agora. Tenta de novo sozinho em 2 min.":
-      /http 5\d\d/.test(m)?"O Google Drive está fora do ar agora. Tenta de novo sozinho em 2 min.":
-      /http 429|rateLimit|userRateLimit/i.test(m+why)?"Muitas tentativas seguidas. Tenta de novo sozinho em 2 min.":
-      `Não deu para sincronizar (${m}${why?" · "+why:""}).`;
-    syncMetaSet({errAt:Date.now(),errMsg:(m+(why?" · "+why:"")).slice(0,120)});
-    if(auth&&!manual)setTimeout(syAutoAuth,500)}
+  }catch(e){const m=String(e&&e.message||e);
+    /* motivo de verdade na tela; sessão vencida já abriu a tela de login (sbTok) */
+    SY.err=e&&e.status===401?"A sessão acabou. Entre de novo.":
+      !sbSes()?"":
+      e&&(e.code==="PGRST205"||e.code==="42P01"||/sync_rows/.test(m))?"Falta criar a tabela no Supabase (rodar supabase/sync.sql no SQL Editor).":
+      e&&e.status==null||/failed to fetch|load failed|network/i.test(m)?"Sem conexão agora. Tenta de novo sozinho em 2 min.":
+      e&&e.status>=500?"O Supabase está fora do ar agora. Tenta de novo sozinho em 2 min.":
+      e&&e.status===429?"Muitas tentativas seguidas. Tenta de novo sozinho em 2 min.":
+      `Não deu para sincronizar (${m.slice(0,90)}).`;
+    syncMetaSet({errAt:Date.now(),errMsg:m.slice(0,120)});SY.pending=true}
   SY.busy=false;renderSyncBits();
 }
-/* depois de mexer: sincroniza em 3 s; também ao abrir/voltar ao app e a cada 2 min */
+/* depois de mexer: sincroniza em 3 s; também ao abrir/voltar ao app, ao voltar a internet e a cada 2 min */
 let syncT=0;
 function syncSoon(){if(!syncOn())return;clearTimeout(syncT);syncT=setTimeout(()=>syncNow(false),3000);setTimeout(renderSyncBits,0)}
-document.addEventListener("visibilitychange",()=>{if(!document.hidden){setTimeout(ofAuto,2500);syncSoon();setTimeout(syAutoAuth,800);setTimeout(pushSync,1500);pushClear();avCheck()}});
-/* o login do Google dura ~1 h: quando venceu, renova sozinho (vai e volta do Google sem pedir nada, prompt=none)
-   ao abrir/voltar ao app, no máximo a cada 20 min e só com o app destravado e sem janela aberta */
-let syTouch=0;["pointerdown","keydown","wheel"].forEach(ev=>addEventListener(ev,()=>{syTouch=Date.now()},{passive:true,capture:true}));
-function syAutoAuth(){
-  if(!syncOn()||gTokOk()||!syncMeta().email||document.hidden||!$("lock").hidden) return;
-  if([...document.querySelectorAll(".sheet")].some(e=>e.offsetParent!==null)) return;
-  const ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)){SY.pending=true;renderSyncBits();return}
-  if(Date.now()-syTouch<15000){SY.pending=true;renderSyncBits();setTimeout(syAutoAuth,15000);return}
-  const gap=syncPend()&&Date.now()-(+lsGet("despesas.gAutoErr")||0)>20*60*1000?3*60*1000:20*60*1000;
-  if(Date.now()-(+lsGet("despesas.gAutoAt")||0)<gap){SY.pending=true;renderSyncBits();return}
-  lsSet("despesas.gAutoAt",String(Date.now()));
-  try{sessionStorage.setItem("despesas.gview",JSON.stringify({tab,view,y:scrollY}))}catch(e){}
-  gAuth("auto");
-}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){setTimeout(ofAuto,2500);syncSoon();setTimeout(pushSync,1500);pushClear();avCheck()}});
+addEventListener("online",()=>syncSoon());
 setInterval(()=>{if(!document.hidden)syncNow(false)},120000);
 /* saindo do app/aba: manda já o que mudou (antes esperava 3 s e, se fechasse antes, ficava só aqui) */
-function syFlush(){if(syncOn()&&gTokOk()&&!SY.busy&&syncPend()){clearTimeout(syncT);syncNow(false)}}
+function syFlush(){if(syncOn()&&!SY.busy&&syncPend()){clearTimeout(syncT);syncNow(false)}}
 document.addEventListener("visibilitychange",()=>{if(document.hidden)syFlush()});addEventListener("pagehide",syFlush);
 function renderSyncBits(){const el=$("syncState");if(el)el.innerHTML=syncStateHtml();
-  const on=syncOn(), pend=on?syncPend():0, noTok=on&&!gTokOk(), err=on&&!SY.busy&&(SY.err||syncMeta().errMsg);
-  const bn=$("syncBanner");if(bn){bn.hidden=!(on&&(SY.pending||pend)&&noTok);
-    bn.textContent=pend?`${pend} ${pend>1?"mudanças daqui ainda não foram":"mudança daqui ainda não foi"} para o Drive · toque para enviar`:"O login do Google venceu · toque para sincronizar"}
-  const av=$("tabAv");if(av){const st=!on?"":SY.busy?"busy":err?"err":pend||noTok&&SY.pending?"pend":"ok";
+  const on=syncOn(), pend=on?syncPend():0, err=on&&!SY.busy&&(SY.err||syncMeta().errMsg);
+  const bn=$("syncBanner");if(bn){bn.hidden=!(on&&pend&&err);
+    bn.textContent=`${pend} ${pend>1?"mudanças daqui ainda não foram":"mudança daqui ainda não foi"} para a nuvem · toque para enviar`}
+  const av=$("tabAv");if(av){const st=!on?"":SY.busy?"busy":err?"err":pend?"pend":"ok";
     if(st)av.dataset.sync=st;else delete av.dataset.sync;
-    av.title="Você: perfil e ajustes (5)"+(st==="ok"?" · em dia com o Drive":st==="pend"?" · falta enviar para o Drive":st==="err"?" · a sincronização falhou":st==="busy"?" · sincronizando":"")}}
+    av.title="Você: perfil e ajustes (5)"+(st==="ok"?" · em dia com a nuvem":st==="pend"?" · falta enviar para a nuvem":st==="err"?" · a sincronização falhou":st==="busy"?" · sincronizando":"")}}
 function syncStateHtml(){const mt=syncMeta(), pend=syncPend();
   if(SY.busy)return `<b>Sincronizando…</b><div class="src">Enviando o que mudou aqui e trazendo o que mudou no outro aparelho.</div>`;
   const last=[mt.upAt?`↑ enviado ${whenAgo(mt.upAt)}${mt.upN?` (${mt.upN})`:""}`:"",mt.downAt?`↓ recebido ${whenAgo(mt.downAt)}${mt.downFrom&&mt.downFrom!==syDev()?` do ${esc(mt.downFrom)}`:""}`:""].filter(Boolean).join(" · ");
   const head=SY.err||mt.errMsg?`<span class="warn" style="font-size:.92rem;font-weight:700">${esc(SY.err||`Não sincronizou da última vez (${mt.errMsg}).`)}</span>`
-    :pend?`<span class="warn" style="font-size:.92rem;font-weight:700">${pend} ${pend>1?"mudanças":"mudança"} daqui ${pend>1?"esperando":"esperando"} envio</span>`
-    :mt.at?`<span class="pos" style="font-size:.92rem;font-weight:700">Em dia com o Drive ✓</span>`:`<b>Ainda não sincronizou</b>`;
-  return `${head}<div class="src">${mt.at?`Conferido ${whenAgo(mt.at)}`:""}${last?` · ${last}`:""}${mt.email?`<br>${esc(mt.email)}`:""}</div>`}
+    :pend?`<span class="warn" style="font-size:.92rem;font-weight:700">${pend} ${pend>1?"mudanças":"mudança"} daqui esperando envio</span>`
+    :mt.at?`<span class="pos" style="font-size:.92rem;font-weight:700">Em dia com a nuvem ✓</span>`:`<b>Ainda não sincronizou</b>`;
+  const s=sbSes();
+  return `${head}<div class="src">${mt.at?`Conferido ${whenAgo(mt.at)}`:""}${last?` · ${last}`:""}${s&&s.email?`<br>${esc(s.email)}`:""}</div>`}
 const whenAgo=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?"agora":m<60?`há ${m} min`:m<1440?`há ${Math.round(m/60)} h`:`em ${new Date(t).toLocaleDateString("pt-BR")}`};
 let syncSetup=null;
 function syncSection(){
-  if(!PWA||!GDRIVE_CLIENT) return "";
-  if(syncOn()) return `<section id="syncSec"><h2>Sincronizar com o Google Drive</h2><div class="card rate"><div id="syncState">${syncStateHtml()}</div>
-    <div class="hint expl">É automático e nos dois sentidos: o que você muda aqui vai para o Drive, e o que mudou no outro aparelho chega aqui (ao abrir o app, 3 s depois de mexer e a cada 2 min). Não precisa escolher enviar ou receber. Os dados vão criptografados com a sua senha de sincronização, numa pasta escondida do seu Drive.</div>
-    <div class="row" style="margin:0"><button class="btn soft" id="syncOff">${syncSetup==="off"?"Toque de novo para desligar":"Desligar"}</button><button class="btn primary" id="syncGo">${syncPend()?"Enviar agora":"Conferir agora"}</button></div></div></section>`;
-  if(syncSetup&&syncSetup.step==="pass") return `<section id="syncSec"><h2>Sincronizar com o Google Drive</h2><div class="card rate">
-    <div><b>${syncSetup.exists?"Senha da sincronização":"Crie uma senha para a sincronização"}</b><div class="src">${syncSetup.exists?"A mesma que você criou no outro aparelho.":"Ela criptografa seus dados no Drive. Use a mesma nos outros aparelhos. Se esquecer, não dá para recuperar o que está no Drive (os dados deste aparelho continuam aqui)."}</div></div>
-    <input type="password" id="syPass" class="limin" autocomplete="new-password" placeholder="Mínimo 8 caracteres">
-    ${syncSetup.exists?"":`<input type="password" id="syPass2" class="limin" autocomplete="new-password" placeholder="Repita a senha">`}
-    <p class="err" id="syErr" style="margin:0"></p>
-    <div class="row" style="margin:0"><button class="btn soft" id="syCancel">Cancelar</button><button class="btn primary" id="syPassOk">${syncSetup.exists?"Entrar":"Ligar sincronização"}</button></div></div></section>`;
-  return `<section id="syncSec"><h2>Sincronizar com o Google Drive</h2><div class="card rate">
-    <div class="hint expl">Use o app no celular e no computador com os mesmos dados. Só funciona para contas Google liberadas no app; para os outros, tudo continua só neste aparelho.</div>
-    <div class="row" style="margin:0"><button class="btn primary" id="syncStart">Conectar Google Drive</button></div></div></section>`;
+  if(!syncOn()) return "";
+  return `<section id="syncSec"><h2>Conta e sincronização</h2><div class="card rate"><div id="syncState">${syncStateHtml()}</div>
+    <div class="hint expl">É automático e nos dois sentidos: o que você muda aqui vai para a sua conta, e o que mudou no outro aparelho chega aqui (ao abrir o app, 3 s depois de mexer e a cada 2 min). Não precisa escolher enviar ou receber. Ao sair da conta, os dados deste aparelho são apagados (eles continuam na conta).</div>
+    <div class="row" style="margin:0"><button class="btn soft" id="syncOff">${syncSetup==="off"?"Toque de novo para sair":"Sair da conta"}</button><button class="btn primary" id="syncGo">${syncPend()?"Enviar agora":"Conferir agora"}</button></div></div></section>`;
 }
-async function syncStart(){
-  if(!gTokOk()){gAuth("setup");return}
-  try{const f=await gFind(), email=await gEmail();syncMetaSet({email});syncSetup={step:"pass",exists:!!f,fid:f&&f.id};render();setTimeout(()=>$("syPass")?.focus(),60)}
-  catch(e){const w=e.why||"";
-    if(/accessNotConfigured|SERVICE_DISABLED/i.test(w)) toast("A Google Drive API não está ativada no projeto do Google Cloud.");
-    else if(/insufficient|PERMISSION_DENIED|scope/i.test(w)){toast("Faltou marcar a permissão do Drive no Google. Toque em Conectar de novo e marque a caixinha.");syncMetaSet({email:""});try{localStorage.removeItem("despesas.gtok")}catch(x){}SY.tok=null}
-    else toast(`Não deu para acessar o Drive (${e.message}${w?" · "+w:""}).`)}
-}
-async function syncPassOk(){
-  const p=$("syPass").value, e=t=>{$("syErr").textContent=t};
-  if(p.length<8){e("Use pelo menos 8 caracteres.");return}
-  if(!syncSetup.exists&&p!==$("syPass2").value){e("As senhas não são iguais.");return}
-  $("syPassOk").disabled=true;
-  if(syncSetup.exists){try{await syDec(await gRead(syncSetup.fid),p)}catch(x){$("syPassOk").disabled=false;e(x.message==="401"?"Login expirou, toque em Cancelar e conecte de novo.":"Senha errada.");return}}
-  lsSet("despesas.syncPass",p);lsSet("despesas.syncBase",null);syncSetup=null;render();await syncNow(true);
-}
+/* ---------- entrar, criar conta, Google, sair ---------- */
+const G_REDIR=location.origin+location.pathname.replace(/index\.html$/,"");
+/* volta do Google (pelo Supabase): token no endereço (#access_token=…&refresh_token=…); roda antes de tudo e limpa o endereço */
+const SB_BACK=(()=>{const p=new URLSearchParams(location.hash.slice(1)), q=new URLSearchParams(location.search);
+  const at=p.get("access_token"), er=p.get("error_description")||q.get("error_description");
+  if(!at&&!er)return null;
+  history.replaceState(null,"",location.pathname);
+  if(er)return {err:er.replace(/\+/g," ")};
+  return {at,rt:p.get("refresh_token")||"",exp:+p.get("expires_in")||3600}})();
+const AU_G=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.5-2.7c-1 .7-2.2 1-3.8 1-2.9 0-5.3-2-6.2-4.6H2.1v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14c-.2-.7-.4-1.3-.4-2s.1-1.4.4-2V7.2H2.1a11 11 0 0 0 0 9.6z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.1 7.2L5.8 10c.9-2.6 3.3-4.6 6.2-4.6z"/></svg>`;
+function showAuth(msg,isErr){
+  const el=$("auth");if(!el||!PWA)return;
+  if(el.hidden||!$("auForm")){el.hidden=false;document.body.style.overflow="hidden";
+    el.innerHTML=`<div class="lk-brand"><img class="lk-logo" src="tostao-logo.png" alt="Um Tostão">Um Tostão</div>
+    <form class="au-box" id="auForm" novalidate>
+      <input type="email" id="auEmail" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="E-mail" aria-label="E-mail">
+      <input type="password" id="auPass" autocomplete="current-password" placeholder="Senha" aria-label="Senha">
+      <div class="lk-msg" id="auMsg" role="alert"></div>
+      <button type="submit" class="ab" id="auIn">Entrar</button>
+      <button type="button" class="ab sec" id="auNew">Criar conta</button>
+      <div class="au-or"><span>ou</span></div>
+      <button type="button" class="ab sec" id="auGoogle">${AU_G}Entrar com o Google</button>
+    </form>`}
+  authMsg(msg||"",isErr)}
+function authMsg(t,isErr){const m=$("auMsg");if(m){m.textContent=t||"";m.classList.toggle("err",!!isErr)}}
+function hideAuth(){const el=$("auth");el.hidden=true;el.innerHTML="";if($("lock").hidden)document.body.style.overflow=""}
+function authErr(e){const m=String(e&&e.message||""), c=e&&e.code||"";
+  return /invalid_credentials/.test(c)||/invalid login/i.test(m)?"E-mail ou senha incorretos.":
+    /user_already_exists/.test(c)||/already registered/i.test(m)?"Esse e-mail já tem conta. Toque em Entrar.":
+    /email_not_confirmed/.test(c)?"Confirme o e-mail primeiro (veja a caixa de entrada).":
+    /weak_password/.test(c)?"Senha fraca. Use pelo menos 8 caracteres, com letras e números.":
+    /over_.*rate_limit|rate_limit/.test(c)||e&&e.status===429?"Muitas tentativas. Espere alguns minutos.":
+    /signup_disabled/.test(c)?"O cadastro está desativado no Supabase.":
+    !e||e.status==null?"Sem conexão. Tente de novo.":m||"Não deu para entrar."}
+async function authGo(create){
+  const em=($("auEmail").value||"").trim().toLowerCase(), pw=$("auPass").value||"";
+  if(!/^\S+@\S+\.\S+$/.test(em)){authMsg("Digite um e-mail válido.",true);return}
+  if(pw.length<6){authMsg("A senha precisa de 6 ou mais caracteres.",true);return}
+  const bt=[$("auIn"),$("auNew"),$("auGoogle")];bt.forEach(b=>b.disabled=true);authMsg("");
+  try{
+    if(create){const j=await sbAuth("signup",{email:em,password:pw});if(!j.access_token){authMsg("Conta criada. Confirme pelo e-mail e depois toque em Entrar.");bt.forEach(b=>b.disabled=false);return}sbSave(toSes(j))}
+    else sbSave(toSes(await sbAuth("token?grant_type=password",{email:em,password:pw})));
+    hideAuth();afterLogin()
+  }catch(e){authMsg(authErr(e),true);bt.forEach(b=>{if(b.isConnected)b.disabled=false})}}
+function afterLogin(){syncMetaSet({errAt:0,errMsg:""});render();renderSyncBits();setTimeout(()=>syncNow(true),300)}
+async function sbFinish(b){
+  showAuth(b.err?"Google: "+b.err:"Entrando…",!!b.err);if(b.err)return;
+  try{const r=await fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_KEY,Authorization:"Bearer "+b.at}});if(!r.ok)throw 0;const u=await r.json();
+    sbSave({at:b.at,rt:b.rt,exp:Date.now()+(b.exp-60)*1e3,uid:u.id||"",email:u.email||""});hideAuth();afterLogin()}
+  catch(e){authMsg("Não deu para entrar com o Google. Tente de novo.",true)}}
+/* sai só com tudo enviado; depois apaga os dados deste aparelho (continuam na conta) */
+async function sbSignOut(){
+  toast("Enviando o que falta…");await syncNow(false);
+  if(SY.busy||SY.err||syncPend()){toast("Há mudanças que ainda não subiram. Conecte e tente de novo.");render();return}
+  try{await fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+((sbSes()||{}).at||"")}})}catch(e){}
+  try{Object.keys(localStorage).filter(k=>k.startsWith("despesas.")).forEach(k=>localStorage.removeItem(k));sessionStorage.clear()}catch(e){}
+  location.reload()}
+$("auth").addEventListener("submit",e=>{e.preventDefault();authGo(false)});
+$("auth").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
+  if(t.id==="auNew")authGo(true);
+  else if(t.id==="auGoogle"){authMsg("Abrindo o Google…");location.href=SB_URL+"/auth/v1/authorize?provider=google&redirect_to="+encodeURIComponent(G_REDIR)}});
 /* arrastar um lançamento para a esquerda: marca como pago (ou volta para a pagar). Só despesas, fora de benefício. */
 let swipeJust=false;
 (function(){
@@ -4831,7 +4852,7 @@ function ofItemTxt(it){
 function ofSection(){
   if(!PWA) return "";
   const c=ofCfg(), head=`<section id="ofSec"><h2>Open Finance</h2><div class="card rate">`;
-  if(!ofReady()||ofOpen) return head+`<div class="hint">Puxa conta e cartão direto do banco, pelo Meu Pluggy. Precisa de um servidor seu (instruções em <b>tools/pluggy-worker.js</b> no GitHub do app). ${syncOn()?"O endereço e a chave vão para os seus outros aparelhos pela sincronização do Drive (criptografados).":"O endereço e a chave ficam neste aparelho; com a sincronização do Drive ligada, vão para os outros também."}</div>
+  if(!ofReady()||ofOpen) return head+`<div class="hint">Puxa conta e cartão direto do banco, pelo Meu Pluggy. Precisa de um servidor seu (instruções em <b>tools/pluggy-worker.js</b> no GitHub do app). O endereço e a chave ficam só neste aparelho (não vão para a nuvem); em outro aparelho, preencha de novo.</div>
     <input id="ofUrl" class="limin" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Endereço do servidor (…workers.dev)" value="${esc(c.url||"")}">
     <input id="ofKeyIn" type="password" class="limin" autocomplete="off" placeholder="Chave do servidor (APP_KEY)" value="${esc(c.key||"")}">
     <div class="row" style="margin:0">${ofOpen?`<button class="btn soft" id="ofCancel">Cancelar</button>`:""}<button class="btn primary" id="ofSave">Salvar servidor</button></div></div></section>`;
@@ -4967,12 +4988,8 @@ document.addEventListener("click",async e=>{
   const thp=t.closest("[data-theme-pick]"); if(thp){syncSoon();try{localStorage.setItem("despesas.theme",thp.dataset.themePick)}catch(e){}if(thp.dataset.themePick==="foto")photoSug=false;applyTheme();haptic&&haptic();render();return}
   const tpk=t.closest("[data-topo-pick]"); if(tpk){lsSet("despesas.topo",tpk.dataset.topoPick||null);applyTheme();render();return}
   const mdp=t.closest("[data-mode-pick]"); if(mdp){lsSet("despesas.mode",mdp.dataset.modePick==="auto"?null:mdp.dataset.modePick);applyTheme();render();return}
-  if(t.id==="syncStart"){syncStart();return}
-  if(t.id==="syPassOk"){syncPassOk();return}
-  if(t.id==="syCancel"){syncSetup=null;render();return}
   if(t.id==="syncGo"||t.closest("#syncBanner")){syncNow(true);return}
-  if(t.id==="syncOff"){if(syncSetup!=="off"){syncSetup="off";render();return}["despesas.syncPass","despesas.syncBase","despesas.syncMeta"].forEach(k=>lsSet(k,null));
-    try{localStorage.removeItem("despesas.gtok")}catch(e){}SY.tok=null;syncSetup=null;toast("Sincronização desligada");render();return}
+  if(t.id==="syncOff"){if(syncSetup!=="off"){syncSetup="off";render();return}syncSetup=null;sbSignOut();return}
   if(t.id==="photoDel"){try{localStorage.removeItem("despesas.photo");localStorage.removeItem("despesas.photoColor");if(lsGet("despesas.theme")==="foto")localStorage.removeItem("despesas.theme")}catch(e){}applyTheme();render();syncSoon();return}
   if(t.id==="mesPay"){(async()=>{const c=mesF.slice(5), L=cardItems(c,view);
     try{if(!L.every(isPaid)){for(const x of L){if(!isPaid(x)) await store.items.update(x.id,paidPatch(true))}toast("Fatura marcada como paga",true)}
@@ -7095,17 +7112,8 @@ async function bioUnlock(auto){
 }
 function lockApp(){const a=authData();lk={...lk,mode:a?(a.bio?"bio":"enter"):"name",pin:"",first:"",name:a?a.name:""};$("lock").hidden=false;{const m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#14203A"}document.body.style.overflow="hidden";lockRender();if(a&&a.bio)setTimeout(()=>bioUnlock(true),350)}
 let gResumed=false;
-function gResume(){if(gResumed)return;gResumed=true;const b=G_BACK;renderSyncBits();
-  if(!b){setTimeout(()=>{if(syncOn()&&!gTokOk())syAutoAuth();else syncNow(false)},300);return}
-  if(b.after==="auto"){let gv=null;try{gv=JSON.parse(sessionStorage.getItem("despesas.gview")||"null");sessionStorage.removeItem("despesas.gview")}catch(e){}
-    if(gv&&gv.tab&&$(gv.tab)){if(gv.view)view=gv.view;go(gv.tab);setTimeout(()=>scrollTo(0,gv.y||0),60)}
-    if(b.err){lsSet("despesas.gAutoErr",String(Date.now()));SY.pending=true;renderSyncBits()}else setTimeout(()=>syncNow(false),300);return}
-  if(b.err){go("pMe");setTimeout(()=>{$("syncSec")?.scrollIntoView({block:"start"});toast(b.err==="access_denied"?"Você cancelou o login do Google.":b.err==="interaction_required"||b.err==="login_required"?"Toque em Conectar de novo.":"Não deu para entrar no Google.")},200);
-    if(b.err==="interaction_required"||b.err==="login_required"||b.err==="consent_required")syncMetaSet({email:""});return}
-  if(b.after==="setup"){go("pMe");setTimeout(()=>{$("syncSec")?.scrollIntoView({block:"start"});syncStart()},200)}
-  else setTimeout(()=>syncNow(true),300);
-}
-function unlock(){setTimeout(gResume,50);if(gResumed)setTimeout(syAutoAuth,600);if(IS_PC)lsSet("despesas.unlockAt",String(Date.now()));$("lock").hidden=true;applyTheme();document.body.style.overflow="";lk.pin="";sessionStorage.setItem("despesas.unlocked","1")}
+function gResume(){if(gResumed)return;gResumed=true;renderSyncBits();setTimeout(()=>syncNow(false),300)}
+function unlock(){setTimeout(gResume,50);if(IS_PC)lsSet("despesas.unlockAt",String(Date.now()));$("lock").hidden=true;applyTheme();document.body.style.overflow="";lk.pin="";sessionStorage.setItem("despesas.unlocked","1")}
 function greet(){const h=new Date().getHours();return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"}
 function lockRender(msg="",isErr=false){
   const el=$("lock"), a=authData();
@@ -7114,7 +7122,7 @@ function lockRender(msg="",isErr=false){
     el.innerHTML=`${brand}<div class="lk-hello"><small>Primeiro acesso</small><b>Vamos criar seu acesso</b></div>
       <div class="lk-msg">Como você quer ser chamado?</div>
       <form class="lk-name" id="lkNameForm"><input id="lkName" maxlength="20" placeholder="Seu nome" autocomplete="given-name" value="${esc(lk.name)}"><button id="lkNameGo">Continuar</button></form>
-      <div class="lk-foot" style="margin-top:auto">Seus dados e sua senha ficam só neste aparelho. Ninguém mais tem acesso, nem quem criou o app.</div>`;
+      <div class="lk-foot" style="margin-top:auto">${syncOn()?"Esta senha abre o app só neste aparelho e não pode ser recuperada. Seus dados ficam salvos na sua conta.":"Seus dados e sua senha ficam só neste aparelho. Ninguém mais tem acesso, nem quem criou o app."}</div>`;
     setTimeout(()=>$("lkName")?.focus(),60);return;
   }
   if(lk.mode==="bio"){
@@ -7133,7 +7141,7 @@ function lockRender(msg="",isErr=false){
   }
   if(lk.mode==="forgot"){
     el.innerHTML=`${brand}<div class="lk-hello"><small>Esqueci a senha</small><b>Não dá para recuperar</b></div>
-      <div class="lk-msg" style="max-width:320px">A senha fica só neste aparelho. Para entrar de novo, é preciso apagar os dados do app e começar do zero (depois você pode restaurar um backup).</div>
+      <div class="lk-msg" style="max-width:320px">${syncOn()?"A senha fica só neste aparelho. Para entrar de novo, é preciso apagar os dados deste aparelho e criar uma senha nova; seus dados continuam na sua conta e voltam ao entrar. O que ainda não foi enviado para a conta se perde.":"A senha fica só neste aparelho. Para entrar de novo, é preciso apagar os dados do app e começar do zero (depois você pode restaurar um backup)."}</div>
       <div class="lk-reset" style="margin-bottom:auto"><button id="lkBack">Voltar e tentar de novo</button><button class="danger" id="lkWipe">${lk.wipeSure?"Toque de novo para apagar tudo":"Apagar dados e recomeçar"}</button></div>`;
     return;
   }
@@ -7193,7 +7201,7 @@ $("lock").addEventListener("click",e=>{
   }
   if(e.target.id==="lkWipe"){
     if(!lk.wipeSure){lk.wipeSure=true;lockRender();return}
-    ["despesas.v3","despesas.fx3","despesas.cfg3",AUTH_KEY,"despesas.lockTries","despesas.lockUntil"].forEach(k=>localStorage.removeItem(k));
+    ["despesas.v3","despesas.fx3","despesas.cfg3",AUTH_KEY,"despesas.lockTries","despesas.lockUntil","despesas.syncBase","despesas.syncDel","despesas.syncMeta"].forEach(k=>localStorage.removeItem(k));
     sessionStorage.removeItem("despesas.unlocked");location.reload();
   }
 });
@@ -7211,6 +7219,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 if(PWA&&window.crypto&&crypto.subtle&&!(authData()&&(sessionStorage.getItem("despesas.unlocked")||pcUnlocked()))) lockApp();
 else setTimeout(gResume,600);
+if(PWA){if(SB_BACK)sbFinish(SB_BACK);else if(!sbSes())showAuth()}
 
 /* ---------- métricas anônimas (GoatCounter): só contagens, nunca valores, nomes ou lançamentos ---------- */
 const GC_CODE="camilosavi";  // conta GoatCounter (painel: camilosavi.goatcounter.com); vazio = desligado
