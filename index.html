@@ -2029,18 +2029,21 @@ async function dropWithSeries(x){for(const y of laterSiblings(x)) await store.it
    banco e entra o nome/categoria que a pessoa deu; do lançado à mão vale o que foi digitado agora */
 function mergePatchNew(old,n){
   const g=n.group&&!old.group?{group:n.group}:{}, nm=n.desc&&n.desc.trim()?{desc:n.desc}:{};
-  if(old.imp||old.xls) return {...nm,cat:n.cat,...g,...(n.parc&&!old.parc?{parc:n.parc}:{})};
-  return {...nm,cat:n.cat,cents:n.cents,...(n.card?{card:n.card}:{}),...g,...(n.parc?{parc:n.parc}:{})};
+  const dv=n.div>=2&&!old.div?{div:n.div}:{};
+  if(old.imp||old.xls) return {...nm,cat:n.cat,...g,...dv,...(n.parc&&!old.parc?{parc:n.parc}:{})};
+  return {...nm,cat:n.cat,cents:n.cents,...(n.card?{card:n.card}:{}),...g,...dv,...(n.parc?{parc:n.parc}:{})};
 }
 async function mergePair(a,b){
   const score=x=>(x.imp?4:0)+(x.parc?2:0)+(x.buy?1:0);
   const [keep,drop]=score(b)>score(a)?[b,a]:[a,b];
   if(keep.imp&&!drop.imp){
-    const pt={...(!keep.parc&&drop.parc?{parc:drop.parc}:{}),...(drop.desc&&drop.desc.trim()?{desc:drop.desc}:{}),...(drop.cat&&drop.cat!=="outros"?{cat:drop.cat}:{})};
+    const pt={...(!keep.parc&&drop.parc?{parc:drop.parc}:{}),...(drop.desc&&drop.desc.trim()?{desc:drop.desc}:{}),...(drop.cat&&drop.cat!=="outros"?{cat:drop.cat}:{}),...(drop.div>=2&&!keep.div?{div:drop.div}:{})};
     if(Object.keys(pt).length) await store.items.update(keep.id,pt);
+    /* despesa dividida (ex.: Airbnb em 4): a divisão vem junto para o item da fatura e para as parcelas dele */
+    if(pt.div) for(const y of buySeries({...keep,...pt})) if(!y.div) await store.items.update(y.id,{div:pt.div});
     await dropWithSeries(drop);return;
   }
-  const patch={};["parc","group","buy","imp"].forEach(k=>{if(!keep[k]&&drop[k])patch[k]=drop[k]});
+  const patch={};["parc","group","buy","imp","div"].forEach(k=>{if(!keep[k]&&drop[k])patch[k]=drop[k]});
   if(toks(drop.desc).length>toks(keep.desc).length&&!keep.imp) patch.desc=drop.desc;
   if(Object.keys(patch).length) await store.items.update(keep.id,patch);
   await store.items.remove(drop.id);
