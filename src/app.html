@@ -3435,9 +3435,40 @@ function syncStateHtml(){const mt=syncMeta(), pend=syncPend();
   return `${head}<div class="src">${mt.at?`Conferido ${whenAgo(mt.at)}`:""}${last?` · ${last}`:""}${s&&s.email?`<br>${esc(s.email)}`:""}</div>`}
 const whenAgo=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?"agora":m<60?`há ${m} min`:m<1440?`há ${Math.round(m/60)} h`:`em ${new Date(t).toLocaleDateString("pt-BR")}`};
 let syncSetup=null;
+/* formas de entrar vinculadas à conta (e-mail e senha, Google, Apple): lê /auth/v1/user; vincular usa o "manual linking" do Supabase */
+let ID={prov:null,at:0,msg:"",pw:false,busy:false};
+const IDN=k=>({email:["E-mail e senha",""],google:["Google",AU_G],apple:["Apple",AU_A]})[k];
+function idHtml(){
+  if(!ID.prov)return `<div class="src">Carregando as formas de entrar…</div>`;
+  const rows=["email","google","apple"].map(k=>{const has=ID.prov.includes(k), nm=IDN(k)[0];
+    return `<div class="row" style="margin:0;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><span style="display:flex;align-items:center;gap:8px">${k==="email"?"✉️":IDN(k)[1]}<span><b>${nm}</b>${has?` <span class="pos">vinculado ✓</span>`:""}</span></span>
+      ${k!=="email"&&has?"":`<button class="btn soft" style="width:auto;padding:8px 14px" data-idgo="${k}" ${ID.busy?"disabled":""}>${k==="email"?(has?"Trocar senha":"Criar senha"):"Vincular"}</button>`}</div>`}).join("");
+  const pw=ID.pw?`<div style="display:grid;gap:8px;margin-top:8px"><input type="password" id="idPw" autocomplete="new-password" placeholder="Senha nova (6 ou mais)" aria-label="Senha nova"><button class="btn primary" id="idPwSave">Salvar senha</button></div>`:"";
+  return rows+pw+(ID.msg?`<div class="src" role="alert" style="margin-top:6px">${esc(ID.msg)}</div>`:"")}
+function idRender(){const el=$("idBox");if(el)el.innerHTML=idHtml()}
+async function idLoad(force){
+  if(!syncOn()||ID.busy||(!force&&ID.prov&&Date.now()-ID.at<6e4))return;
+  try{const t=await sbTok(), r=await fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_KEY,Authorization:"Bearer "+t}});if(!r.ok)throw 0;
+    const u=await r.json(), am=u.app_metadata||{}, L=new Set([...(am.providers||[]),am.provider,...(u.identities||[]).map(i=>i.provider)].filter(Boolean));
+    ID.prov=[...L];ID.at=Date.now();idRender()}
+  catch(e){if(!ID.prov){ID.prov=[];ID.msg="Não deu para ler as formas de entrar agora."}idRender()}}
+async function idLink(k){
+  ID.busy=true;ID.msg="Abrindo "+IDN(k)[0]+"…";idRender();
+  try{const t=await sbTok(), r=await fetch(SB_URL+"/auth/v1/user/identities/authorize?provider="+k+"&redirect_to="+encodeURIComponent(G_REDIR),{headers:{apikey:SB_KEY,Authorization:"Bearer "+t}});
+    const j=await r.json().catch(()=>({}));if(!r.ok||!j.url)throw sbErr(j.msg||j.message||"http "+r.status,r.status,j.error_code||j.code);
+    await syncNow(false);location.href=j.url}
+  catch(e){ID.busy=false;ID.msg=/manual.?link/i.test(e.message)||/identity_not_found|manual_linking_disabled/.test(e.code||"")?"Vincular ainda não está liberado no servidor (Supabase: Authentication, Sign In / Providers, Allow manual linking).":/provider.*(not enabled|disabled)|validation_failed/i.test(e.message+(e.code||""))?IDN(k)[0]+" ainda não está ligado no Supabase.":authErr(e);idRender()}}
+async function idSavePw(){
+  const pw=($("idPw")||{}).value||"";if(pw.length<6){ID.msg="A senha precisa de 6 ou mais caracteres.";idRender();return}
+  ID.busy=true;
+  try{const t=await sbTok(), r=await fetch(SB_URL+"/auth/v1/user",{method:"PUT",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
+    const j=await r.json().catch(()=>({}));if(!r.ok)throw sbErr(j.msg||j.message||"http "+r.status,r.status,j.error_code||j.code);
+    ID.pw=false;ID.msg="Senha salva. Agora dá para entrar com e-mail e senha.";ID.busy=false;await idLoad(true);toast("Senha salva.",true)}
+  catch(e){ID.busy=false;ID.msg=authErr(e);idRender()}}
 function syncSection(){
   if(!syncOn()) return "";
   return `<section id="syncSec"><h2>Conta e sincronização</h2><div class="card rate"><div id="syncState">${syncStateHtml()}</div>
+    <h3 style="margin:14px 0 4px;font-size:1rem">Formas de entrar</h3><div id="idBox">${idHtml()}</div>
     <div class="hint expl">É automático e nos dois sentidos: o que você muda aqui vai para a sua conta, e o que mudou no outro aparelho chega aqui (ao abrir o app, 3 s depois de mexer e a cada 2 min). Não precisa escolher enviar ou receber. Ao sair da conta, os dados deste aparelho são apagados (eles continuam na conta).</div>
     <div class="row" style="margin:0"><button class="btn soft" id="syncOff">${syncSetup==="off"?"Toque de novo para sair":"Sair da conta"}</button><button class="btn primary" id="syncGo">${syncPend()?"Enviar agora":"Conferir agora"}</button></div></div></section>`;
 }
@@ -4471,7 +4502,7 @@ function renderMe(){
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn danger" id="wipeLanc">Zerar lançamentos e saldo</button>${u?`<button class="btn soft" id="undoLanc">Desfazer (${u.items.length})</button>`:""}</div></div></section>`}
   h+=`<section><h2>Zerar tudo</h2><div class="card rate"><div class="hint expl">Apaga lançamentos, cartões, compras de euro, caixinhas e configurações deste aparelho e volta à tela de boas-vindas. A senha e ${BIO.f?"a":"o"} ${esc(bioN())} continuam. Fica uma cópia de segurança aqui no aparelho: na tela de boas-vindas dá para desfazer.</div>
     <div class="row" style="margin:0"><button class="btn danger" id="wipeAll">Zerar tudo</button></div></div></section>`;
-  $("pMe").innerHTML=h;anoFold("pMe");
+  $("pMe").innerHTML=h;anoFold("pMe");idLoad();
 }
 /* zerar um mês do cartão: apaga os lançamentos do cartão nesse mês e as parcelas seguintes das mesmas compras; dá para desfazer */
 const ZM_KEY="despesas.antesZerarMes";
@@ -5080,6 +5111,8 @@ document.addEventListener("click",async e=>{
   const tpk=t.closest("[data-topo-pick]"); if(tpk){lsSet("despesas.topo",tpk.dataset.topoPick||null);applyTheme();render();return}
   const mdp=t.closest("[data-mode-pick]"); if(mdp){lsSet("despesas.mode",mdp.dataset.modePick==="auto"?null:mdp.dataset.modePick);applyTheme();render();return}
   if(t.id==="syncGo"||t.closest("#syncBanner")){syncNow(true);return}
+  const idg=t.closest("[data-idgo]");if(idg){const k=idg.dataset.idgo;if(k==="email"){ID.pw=!ID.pw;ID.msg="";idRender();if(ID.pw)setTimeout(()=>{const i=$("idPw");i&&i.focus()},50)}else idLink(k);return}
+  if(t.id==="idPwSave"){idSavePw();return}
   if(t.id==="syncOff"){if(syncSetup!=="off"){syncSetup="off";render();return}syncSetup=null;sbSignOut();return}
   if(t.id==="photoDel"){try{localStorage.removeItem("despesas.photo");localStorage.removeItem("despesas.photoColor");if(lsGet("despesas.theme")==="foto")localStorage.removeItem("despesas.theme")}catch(e){}applyTheme();render();syncSoon();return}
   if(t.id==="mesPay"){(async()=>{const c=mesF.slice(5), L=cardItems(c,view);
