@@ -1103,8 +1103,7 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
 .bline{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surface);font-size:.92rem;border-top:0!important;margin-top:18px;border:1px solid var(--line);box-shadow:var(--card-shadow)}
 .bline .bt{flex:1;min-width:0}.bline .bdot{width:8px;height:8px;border-radius:4px;background:var(--warn);flex:none}
 .bline .lk{padding:4px 0}.bline #bkLater{color:var(--muted);font-weight:500}
-.ht-best{position:absolute;top:9px;left:14px;background:linear-gradient(135deg,#F59E0B 0%,#D97706 100%);color:#fff;font-size:.62rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:6px;box-shadow:0 2px 6px rgba(217,119,6,.3);z-index:2}
-*:has(>.htile>.ht-best)>.htile{padding-top:30px}
+.ht-best{font-size:.74rem;font-weight:700;color:var(--warn);margin-top:auto;position:relative;z-index:1}
 .canbuy-card{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--surface)) 0%,var(--surface) 75%);border:1px solid color-mix(in srgb,var(--accent) 24%,var(--line));box-shadow:var(--card-shadow);transition:transform .12s ease,box-shadow .12s ease;margin-bottom:14px}
 .canbuy-card:active{transform:scale(.98)}
 .canbuy-icon{font-size:1.6rem;line-height:1;flex:none}
@@ -2777,13 +2776,13 @@ function hojeCards(){
   const tile=(c,lab,val,bar,sub,neg)=>{
     const col=cardColor(c), best=isBestDay(c);
     return `<button class="htile" data-opencard="${esc(c)}" style="--card-acc:${col}">
-      ${best?`<span class="ht-best">★ Melhor dia</span>`:""}
       <div class="ht-glow"></div>
       <span class="htn">${cardBadge(c)}<b>${esc(c)}</b></span>
       <span class="htl">${lab}</span>
       <span class="htv ${neg?"neg":""}">${val}</span>
       ${bar!=null?`<span class="mini"><i style="width:${bar}%;background:${bar>=100?"var(--neg)":bar>=80?"var(--warn)":col}"></i></span>`:""}
       <span class="htl htsub">${sub}</span>
+      ${best?`<span class="ht-best">★ Melhor dia</span>`:""}
     </button>`;
   };
   const T=cs.map(c=>{const k=cardCfg(c);
