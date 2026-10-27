@@ -2626,7 +2626,10 @@ const recDay=x=>x.fell||x.date;
 function accMoves(name){const ts=accTs(), now=today(), mine=x=>!name||accOf(x)===name;
   const out=items.filter(x=>typeOf(x)==="desp"&&x.paidAt&&x.paidAt>ts&&!benOf(x)&&mine(x)).reduce((s,x)=>s+amt(x),0);
   const inn=items.filter(x=>typeOf(x)==="rec"&&(x.createdAt||0)>ts&&recDay(x)<=now&&mine(x)).reduce((s,x)=>s+x.cents,0);
-  return {out,inn}}
+  /* caixinha ligada à conta (27/10/2026, pedido dele): movimento com `acct` e `ts` (hora em que foi feito) tira (guardou) ou devolve (tirou) em R$ da conta, só depois do saldo informado */
+  const A=acctsR(), sv=!A.length?0:(cfg.save||[]).flatMap(b=>b.moves||[]).filter(m=>m.acct&&(m.ts||0)>ts&&(!name||(A.some(a=>a.name===m.acct)?m.acct:A[0].name)===name))
+    .reduce((s,m)=>s+(m.cents<0?-1:1)*Math.abs(m.cur&&m.cur!=="BRL"?(m.brl||0):(m.brl||m.cents)),0);
+  return {out:out+(sv>0?sv:0),inn:inn+(sv<0?-sv:0)}}
 const accBal=()=>{const A=acctsR();if(!A.length)return 0;const m=accMoves();return A.reduce((s,a)=>s+a.cents,0)+m.inn-m.out};
 /* em que conta cada lançamento entra/sai: x.acct (nome); sem conta ou conta que não existe mais = 1ª conta. A soma das contas = accBal() */
 const accOf=x=>{const A=acctsR();if(!A.length)return"";return x.acct&&A.some(a=>a.name===x.acct)?x.acct:A[0].name};
@@ -4077,6 +4080,11 @@ function svBankField(selId,newId,box,cur){
   const used=svBankRows(box).map(r=>r.bank).filter(Boolean), list=[...new Set([...used,...(box.bank?[box.bank]:[]),...ALL_BANKS()])];
   return `<label class="svlab">Em qual banco<select id="${selId}"><option value="">Sem banco definido</option>${list.map(n=>`<option ${n===cur?"selected":""}>${esc(n)}</option>`).join("")}<option value="__new">Outro banco…</option></select></label><input id="${newId}" maxlength="30" placeholder="Nome do banco" hidden>`;
 }
+/* "Descontar da conta": só com conta em R$ cadastrada; guardar tira do saldo, tirar devolve */
+function svAcField(id,cur){
+  const A=acctsR();if(!A.length) return "";
+  return `<label class="svlab">Descontar da conta<select id="${id}"><option value="">Não mexer no saldo</option>${A.map((a,i)=>`<option value="${esc(a.name)}" ${cur===undefined?(i===0?"selected":""):(a.name===cur?"selected":"")}>${esc(a.name)}</option>`).join("")}</select></label>`;
+}
 const svBankVal=(selId,newId)=>{const v=$(selId)?.value||"";return v==="__new"?($(newId)?.value||"").trim().slice(0,30):v};
 let svOpen=null, svForm=null, svMvEdit=null, svAllMv=false;
 function svGoalTxt(b){
@@ -4151,7 +4159,7 @@ function saveSection(){
         const allMv=[...(b.moves||[]),...fxMv].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=svAllMv?allMv:allMv.slice(0,5);
         const pc=svPace(b), need=[pc&&pc.late?`Pela linha reta até ${shortMonth(b.target)}, era para ter ${svMoney(pc.exp,pc.cur)} agora. Para recuperar, guarde ~${svMoney(pc.per,pc.cur)} por mês daqui em diante.`:"",svNeedTxt(b)].filter(Boolean).join(" ");
         const bkRows=svBankRows(b), bkShow=bkRows.length>1||(bkRows[0]&&bkRows[0].bank);
-        row+=`<div class="svedit">${need?`<p class="svneed">${esc(need)}</p>`:""}${bkShow?`<div class="svbanks"><div class="svsec">Onde está o dinheiro</div>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}${esc(r.bank||"Sem banco definido")}</span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svsec">Guardar ou tirar</div><div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
+        row+=`<div class="svedit">${need?`<p class="svneed">${esc(need)}</p>`:""}${bkShow?`<div class="svbanks"><div class="svsec">Onde está o dinheiro</div>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}${esc(r.bank||"Sem banco definido")}</span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svsec">Guardar ou tirar</div><div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}${svAcField("svAc")}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
           (mv.length?`<div class="svmvs"><div class="svsec">Movimentos</div>`+mv.map(m=>m.fxId?`<button class="svmv" data-svfx="${esc(m.fxId)}" aria-label="Editar compra de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · comprou${m.brl?` · R$ ${brl(m.brl)} a R$ ${rateTxt(m.brl/m.cents)}`:""}${m.where?` · ${esc(m.where)}`:""}</span><span><span class="pos" style="white-space:nowrap">+ ${svMoney(m.cents,m.cur)}</span> <span class="ed">editar</span></span></button>`:svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
         `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
@@ -4201,14 +4209,14 @@ async function svMove(sign){
   }
   if(!mv.cents){toast("Valor pequeno demais para essa cotação.");return}
   /* banco do depósito (20/10/2026, pedido dele: dinheiro em vários bancos): fica no movimento; sem escolha vale o banco principal */
-  const bank=svBankVal("svBk","svBkNew");
-  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:[...(b.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign*mv.cents,...(mv.cur!=="BRL"?{cur:mv.cur}:{}),...(mv.rate?{brl:mv.brl,rate:mv.rate}:{}),...(bank?{bank}:{})}]});
-  await svSave(list,`${sign>0?"Guardado":"Retirado"} ${svMoney(mv.cents,mv.cur)}${bank?` ${sign>0?"no":"do"} ${bank}`:""}${mv.rate?` (R$ ${rateTxt(mv.rate)} por ${FXC[mv.cur].sym})`:""}`);
+  const bank=svBankVal("svBk","svBkNew"), ac=($("svAc")||{}).value||"", acOk=ac&&(mv.cur==="BRL"||mv.brl);
+  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:[...(b.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign*mv.cents,...(acOk?{acct:ac,ts:Date.now()}:{}),...(mv.cur!=="BRL"?{cur:mv.cur}:{}),...(mv.rate?{brl:mv.brl,rate:mv.rate}:{}),...(bank?{bank}:{})}]});
+  await svSave(list,`${sign>0?"Guardado":"Retirado"} ${svMoney(mv.cents,mv.cur)}${bank?` ${sign>0?"no":"do"} ${bank}`:""}${mv.rate?` (R$ ${rateTxt(mv.rate)} por ${FXC[mv.cur].sym})`:""}${acOk?` · ${sign>0?"saiu da":"voltou para a"} conta ${ac}`:""}`);
 }
 function svMvForm(m){
   return `<div class="svmvf"><div class="svrow2"><select id="mvSign" aria-label="Tipo"><option value="1">Guardou</option><option value="-1" ${m.cents<0?"selected":""}>Tirou</option></select><input id="mvDate" type="date" value="${esc(m.date)}" min="${MIN_YM}-01" aria-label="Data"></div>
     <div class="svrow2 v"><input id="mvVal" inputmode="numeric" value="${brl(Math.abs(m.cents))}" aria-label="Valor"><select id="mvCur" aria-label="Moeda"><option value="BRL">R$</option><option value="EUR" ${m.cur==="EUR"?"selected":""}>€</option><option value="USD" ${m.cur==="USD"?"selected":""}>US$</option></select></div>
-    ${svBankField("mvBk","mvBkNew",saves().find(x=>x.id===svOpen)||{},m.bank||"")}
+    ${svBankField("mvBk","mvBkNew",saves().find(x=>x.id===svOpen)||{},m.bank||"")}${svAcField("mvAc",m.acct||"")}
     <div class="svbtns"><button class="btn soft" id="mvCancel">Cancelar</button><button class="btn primary" id="mvSave">Salvar</button></div>
     <button class="svdel" id="mvDel">Apagar este movimento</button></div>`;
 }
@@ -4216,8 +4224,8 @@ async function svMvSave(){
   const cents=digits($("mvVal").value), cv=$("mvCur").value, cur=cv==="EUR"||cv==="USD"?cv:"BRL", sign=$("mvSign").value==="-1"?-1:1, date=$("mvDate").value;
   if(!cents){toast("Informe o valor.");return}
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){toast("Escolha a data.");return}
-  const id=svMvEdit, bank=svBankVal("mvBk","mvBkNew");svMvEdit=null;
-  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:(b.moves||[]).map(m=>{if(m.id!==id)return m;const{cur:_c,bank:_b,...r}=m;const o={...r,date,cents:sign*cents,...(cur!=="BRL"?{cur}:{}),...(bank?{bank}:{})};if(o.rate){if(cur===m.cur)o.brl=Math.round(cents*o.rate);else{delete o.rate;delete o.brl}}return o})});
+  const id=svMvEdit, bank=svBankVal("mvBk","mvBkNew"), ac=($("mvAc")||{}).value||"";svMvEdit=null;
+  const list=saves().map(b=>b.id!==svOpen?b:{...b,moves:(b.moves||[]).map(m=>{if(m.id!==id)return m;const{cur:_c,bank:_b,acct:_a,ts:_t,...r}=m;const o={...r,date,cents:sign*cents,...(cur!=="BRL"?{cur}:{}),...(bank?{bank}:{}),...(ac?{acct:ac,ts:m.acct===ac&&m.ts?m.ts:Date.now()}:{})};if(o.rate){if(cur===m.cur)o.brl=Math.round(cents*o.rate);else{delete o.rate;delete o.brl}}return o})});
   await svSave(list,"Movimento atualizado");
 }
 async function svMvDel(btn){
