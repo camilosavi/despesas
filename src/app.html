@@ -1618,7 +1618,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
   <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div style="display:flex;gap:10px;align-items:center"><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"><span class="hint" id="divHint" style="margin:0">quantas pessoas, contando você</span></div></div>
-  <div class="field" id="pessoaField" hidden><span class="lbl" id="pessoaLbl">Pessoa</span><div class="chips" id="pessoaChips"></div><div id="pessoaBox" hidden style="margin-top:8px"><input type="text" id="pessoaVal" inputmode="numeric" placeholder="Quanto é dela (vazio = tudo)" aria-label="Quanto é da pessoa"><p class="hint" id="pessoaHint" style="margin:6px 0 0"></p></div></div>
+  <div class="field" id="pessoaField" hidden><span class="lbl" id="pessoaLbl">Pessoa</span><div class="chips" id="pessoaChips"></div><div id="pessoaBox" hidden style="margin-top:8px"></div></div>
   <div class="field" id="statusField"><span class="lbl">Situação</span><div class="seg" id="paidSeg" style="margin:0"><button type="button" data-paid="1">Pago</button><button type="button" data-paid="0">A pagar</button></div></div>
   <div class="field"><label for="date">Data</label><input type="date" id="date" min="2026-09-01"><p class="hint" id="dateHint" hidden style="margin:6px 0 0"></p></div>
   <div class="field" id="repField"><label for="rep">Parcelar ou repetir</label>
@@ -4146,9 +4146,14 @@ function azSubLines(name){
   return out;
 }
 /* lançamentos ligados à pessoa (campo "Pessoa" no lançamento): despesa = você pagou por ela / pagou a ela (+); receita = ela te pagou (−) */
-const azLinked=p=>items.filter(x=>x.pessoa===p.id&&!genFat(x));
-const azLv=x=>(x.pv||x.cents||0)*(typeOf(x)==="rec"?-1:1);
-const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x),0);
+/* várias pessoas no mesmo lançamento (x.pessoas=[{id,v?}], v = parte dela em centavos; o antigo x.pessoa/x.pv continua valendo).
+   Sem v: uma pessoa só = o valor todo; várias = o que sobra dividido igualmente entre as que ficaram sem valor. */
+const azParts=x=>{const L=x.pessoas&&x.pessoas.length?x.pessoas:(x.pessoa?[{id:x.pessoa,v:x.pv||0}]:[]);
+  const set=L.reduce((s,e)=>s+(e.v||0),0), blank=L.filter(e=>!e.v).length;
+  return L.map(e=>({id:e.id,c:e.v||(L.length===1?x.cents:Math.round(Math.max(0,x.cents-set)/blank))}))};
+const azLinked=p=>items.filter(x=>!genFat(x)&&azParts(x).some(e=>e.id===p.id));
+const azLv=(x,p)=>(azParts(x).find(e=>e.id===p.id)?.c||0)*(typeOf(x)==="rec"?-1:1);
+const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x,p),0);
 function azSection(){
   const L=azList();
   let h=`<section id="azSec"><h2>Pessoas ${azForm?"":`<button id="azAdd">+ Pessoa</button>`}</h2>`;
@@ -4163,7 +4168,7 @@ function azSection(){
       const mv=[...(p.moves||[])].sort((x,y)=>(x.done?1:0)-(y.done?1:0)||y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
       const line=(m,sub)=>`<${sub?"div":`button data-azmv="${esc(m.id)}"`} class="svmv" ${sub?"":`aria-label="Marcar como ${m.done?"não acertado":"acertado"}"`}><span style="${m.done?"text-decoration:line-through;opacity:.55":""}">${esc(m.desc||"Sem descrição")}${sub?"":` · ${fmtDate(m.date)}`}${sub?` · assinatura`:""}${m.done?" · acertado ✓":""}</span><span class="${m.cents<0?"neg":"pos"}" style="${m.done?"opacity:.55":""}">${m.cents<0?"−":"+"} ${R(Math.abs(m.cents))}${sub?"":`<span class="ed">${m.done?"desfazer":"acertar"}</span>`}</span></${sub?"div":"button"}>`;
       row+=`<div class="svedit"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div>`+
-        (mv.length||azSubLines(p.name).length||azLinked(p).length?`<div style="margin-top:10px">`+azSubLines(p.name).map(m=>line(m,true)).join("")+azLinked(p).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(x=>`<button class="svmv" data-id="${esc(x.id)}"><span>${esc(cleanDesc(x))} · ${fmtDM(x.buy||x.date)}${x.parc?` · ${x.parc}`:""}</span><span class="${azLv(x)<0?"neg":"pos"}">${azLv(x)<0?"−":"+"} ${R(Math.abs(azLv(x)))}<span class="ed">${typeOf(x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`).join("")+mv.map(m=>line(m,false)).join("")+`</div>`:"")+
+        (mv.length||azSubLines(p.name).length||azLinked(p).length?`<div style="margin-top:10px">`+azSubLines(p.name).map(m=>line(m,true)).join("")+azLinked(p).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(x=>`<button class="svmv" data-id="${esc(x.id)}"><span>${esc(cleanDesc(x))} · ${fmtDM(x.buy||x.date)}${x.parc?` · ${x.parc}`:""}</span><span class="${azLv(x,p)<0?"neg":"pos"}">${azLv(x,p)<0?"−":"+"} ${R(Math.abs(azLv(x,p)))}<span class="ed">${typeOf(x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`).join("")+mv.map(m=>line(m,false)).join("")+`</div>`:"")+
         `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
     }
     return row}).join("")+`</div></section>`;
@@ -5240,7 +5245,7 @@ document.addEventListener("input",e=>{
   const id=e.target.id;
   if(id==="mSearch"){mq=e.target.value;$("mClear").hidden=!mq;clearTimeout(renderMes.t);renderMes.t=setTimeout(renderMes,180)}
   if(id==="fQ"){F.q=e.target.value;clearTimeout(renderPlan.t);renderPlan.t=setTimeout(()=>{renderPlan();const q=$("fQ");q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)}
-  if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
+  if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||id.startsWith("pv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
   if(id&&id.startsWith("subPv_")&&$("subMine")){const tot=+($("subSave")?.dataset.subtot||0);let b=0;document.querySelectorAll("[id^=subPv_]").forEach(i=>b+=digits(i.value));$("subMine").textContent=b?`Recebe ${R(b)} · sai ${R(Math.max(0,tot-b))} para você`:"—"}
   if(id==="fxRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
   if(id==="svRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
@@ -5336,10 +5341,16 @@ function chips(){
     const cur=A.some(a=>a.name===form.acct)?form.acct:(A[0]||{}).name;
     $("acctChips").innerHTML=A.map(a=>`<button type="button" class="chip" data-acct="${esc(a.name)}" aria-pressed="${a.name===cur}">${esc(a.name)}</button>`).join("")}
   {const PE=azList();$("pessoaField").hidden=!PE.length;
-    $("pessoaLbl").textContent=form.type==="rec"?"Pessoa (quem te pagou)":"Pessoa (paguei por ela ou a ela)";
-    $("pessoaChips").innerHTML=[`<button type="button" class="chip" data-pessoa="" aria-pressed="${!form.pessoa}">Nenhuma</button>`,...PE.map(q=>`<button type="button" class="chip" data-pessoa="${esc(q.id)}" aria-pressed="${q.id===form.pessoa}">${esc(q.name)}</button>`)].join("");
-    const sel=PE.find(q=>q.id===form.pessoa);$("pessoaBox").hidden=!sel;
-    if(sel)$("pessoaHint").textContent=form.type==="rec"?`Entra no saldo: ${sel.name} te pagou.`:`Entra no saldo: ${sel.name} te deve (ou paga o que você devia).`}
+    const rec=form.type==="rec";if(!Array.isArray(form.pessoas))form.pessoas=[];form.pessoas=form.pessoas.filter(id=>PE.some(q=>q.id===id));if(!form.pv)form.pv={};
+    $("pessoaLbl").textContent=rec?"Pessoas (quem te pagou)":"Pessoas (paguei por elas ou a elas)";
+    $("pessoaChips").innerHTML=[`<button type="button" class="chip" data-pessoa="" aria-pressed="${!form.pessoas.length}">Nenhuma</button>`,...PE.map(q=>`<button type="button" class="chip" data-pessoa="${esc(q.id)}" aria-pressed="${form.pessoas.includes(q.id)}">${esc(q.name)}</button>`)].join("");
+    const box=$("pessoaBox");box.hidden=!form.pessoas.length;
+    const focus=document.activeElement&&document.activeElement.id&&document.activeElement.id.startsWith("pv_")?document.activeElement.id:"";
+    if(!box.dataset.k||box.dataset.k!==form.pessoas.join("|")+"|"+rec){box.dataset.k=form.pessoas.join("|")+"|"+rec;
+      box.innerHTML=form.pessoas.map((id,i)=>{const q=PE.find(z=>z.id===id);return `<div class="svrow2" style="grid-template-columns:1fr 120px;align-items:center;gap:8px;margin-bottom:6px"><span>${esc(q.name)}</span><input type="text" id="pv_${i}" inputmode="numeric" placeholder="${form.pessoas.length>1?"parte dela":"tudo"}" value="${form.pv[id]?brl(form.pv[id]):""}" aria-label="Quanto é de ${esc(q.name)}"></div>`}).join("")+
+        `<p class="hint" id="pessoaHint" style="margin:6px 0 0"></p>`}
+    if(form.pessoas.length){const n=form.pessoas.length,nm=form.pessoas.map(id=>(PE.find(z=>z.id===id)||{}).name).join(", ");
+      $("pessoaHint").textContent=(rec?`Entra no saldo: ${nm} ${n>1?"pagaram":"te pagou"}.`:`Entra no saldo: ${nm} ${n>1?"te devem":"te deve"} (ou ${n>1?"pagam":"paga"} o que você devia).`)+(n>1?" Sem valor, o resto se divide igual.":"")}}
   const PY=[...PAYS,...bens().map(b=>b.name)];
   $("payChips").innerHTML=PY.map(p=>`<button type="button" class="chip" data-pay="${esc(p)}" aria-pressed="${form.pay===p}">${esc(p)}</button>`).join("");
   $("statusField").classList.toggle("dim",!!benOf({pay:form.pay}));
@@ -5387,13 +5398,13 @@ function openSheet(x){
   closeSheets(true);
   editing=x||null;dupAck=null;mergeInto=null;
   const t=x?typeOf(x):form.type;
-  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoa:x.pessoa||""}:{type:t,cents:0,acct:form.acct||"",pessoa:"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
+  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoas:azParts(x).map(e=>e.id),pv:Object.fromEntries(azParts(x).filter((e,i)=>((x.pessoas&&x.pessoas.length?x.pessoas[i].v:x.pv)||0)).map(e=>[e.id,e.c]))}:{type:t,cents:0,acct:form.acct||"",pessoas:[],pv:{},cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
   $("desc").value=x?x.desc||"":"";
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();$("pessoaVal").value=x&&x.pv?brl(x.pv):"";
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();$("pessoaBox").dataset.k="";
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
@@ -5420,7 +5431,9 @@ $("catChips").addEventListener("keydown",async e=>{if(e.target.id==="catNewIn"&&
 document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target&&e.target.id==="canBuy"){e.preventDefault();canBuySheet()}});
 $("catPickBtn").addEventListener("click",()=>{catNewOpen=false;chips();$("catSheet").hidden=false});
 $("catSheetClose").addEventListener("click",()=>{$("catSheet").hidden=true});
-$("pessoaChips").addEventListener("click",e=>{const b=e.target.closest("[data-pessoa]");if(b){form.pessoa=b.dataset.pessoa;chips()}});
+$("pessoaChips").addEventListener("click",e=>{const b=e.target.closest("[data-pessoa]");if(!b)return;const id=b.dataset.pessoa;
+  if(!id){form.pessoas=[];form.pv={}}else if(form.pessoas.includes(id)){form.pessoas=form.pessoas.filter(z=>z!==id);delete form.pv[id]}else form.pessoas.push(id);chips()});
+$("pessoaBox").addEventListener("input",e=>{const m=/^pv_(\d+)$/.exec(e.target.id||"");if(m){const id=form.pessoas[+m[1]];if(id)form.pv[id]=digits(e.target.value)}})
 $("acctChips").addEventListener("click",e=>{const b=e.target.closest("[data-acct]");if(b){form.acct=b.dataset.acct;chips()}});
 $("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false;else form.paid=isPaid(editing)}else if(!editing)form.paid=($("date").value||today())<=today();else if(editing.pay==="Crédito")form.paid=(editing.buy||editing.date)<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
 function splitHint(){const h=$("splitHint");if(!h)return;const v=digits($("splitVal")?.value);h.textContent=v&&form.cents?(v<form.cents?`${form.pay}: ${R(form.cents-v)}`:"maior que o total"):""}
@@ -5438,9 +5451,9 @@ $("sheet").addEventListener("submit",async e=>{
   if($("date").value<MIN_YM+"-01"){err("err","O app começa em setembro/2026.");return}
   const isD=form.type==="desp";
   const base={type:form.type,cents:form.cents,desc:$("desc").value.trim(),cat:form.cat,pay:isD?form.pay:"",date:$("date").value,card:isD&&form.pay==="Crédito"&&form.card&&form.card!=="Outro"?form.card:""};
-  {const pe=form.pessoa&&azList().some(q=>q.id===form.pessoa)?form.pessoa:"";
-    if(pe){base.pessoa=pe;const pv=digits($("pessoaVal")?.value||"");base.pv=pv&&pv<base.cents?pv:0}
-    else if(editing&&editing.pessoa){base.pessoa="";base.pv=0}}
+  {const ids=(form.pessoas||[]).filter(id=>azList().some(q=>q.id===id));
+    if(ids.length){base.pessoas=ids.map(id=>{const v=(form.pv||{})[id]||0;return v&&v<base.cents?{id,v}:{id}});base.pessoa="";base.pv=0}
+    else if(editing&&(editing.pessoa||(editing.pessoas&&editing.pessoas.length))){base.pessoas=[];base.pessoa="";base.pv=0}}
   {const A=acctsR();if(A.length>1&&!(isD&&benOf(base))) base.acct=A.some(a=>a.name===form.acct)?form.acct:A[0].name;else if(editing&&editing.acct) base.acct=""}
   if(isD) base.paid=benOf(base)?true:form.paid;
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}
@@ -5490,8 +5503,10 @@ $("sheet").addEventListener("submit",async e=>{
     if(editing&&base.cat&&editing.cat!==base.cat) catLearnSet(base.type||typeOf(editing),cleanDesc({...editing,...base}),base.cat);
     if(rep==="1"){
       if(editing){await store.items.update(editing.id,base);
-        /* parcela/repetição: nome, categoria e conta valem para a série toda (valor, data e situação são de cada mês) */
+        /* parcela/repetição: nome, categoria, conta e pessoas valem para a série toda (valor, data e situação são de cada mês) */
         const pt={};["desc","cat","acct"].forEach(k=>{if((base[k]||"")!==(editing[k]||"")) pt[k]=base[k]||""});
+        {const pk=o=>JSON.stringify(azParts(o).map(e=>[e.id,(o.pessoas&&o.pessoas.length?o.pessoas.find(z=>z.id===e.id)?.v:o.pv)||0]));
+         if(pk(base)!==pk(editing)){pt.pessoas=base.pessoas||[];pt.pessoa="";pt.pv=0}}
         const ser=Object.keys(pt).length?(editing.group&&!/^s/.test(editing.group)?items.filter(y=>y.id!==editing.id&&y.group===editing.group):parcInfo(editing)?buySeries(editing):[]):[];
         for(const y of ser) await store.items.update(y.id,pt);
         toast(ser.length?`Atualizado, e mais ${ser.length} ${ser.length===1?"da série":"da série"}`:editing.paid===false&&base.paid!==false&&base.type==="desp"?"Marcado como pago":"Lançamento atualizado",true)}

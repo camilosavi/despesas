@@ -568,7 +568,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
     PK (user_id, kind, id), RLS por `auth.uid()`. `kind`: `i` lançamento, `f` compra de moeda, `c` chave do cfg, `p` foto/tema, `d` lápide,
     `m` (id `dev`) = quem enviou por último. Sem a tabela: erro claro na seção ("rodar supabase/sync.sql") e a seção abre sozinha.
   - **`syncNow`** (mesma junção em 3 vias de antes, só o transporte mudou): lê todas as linhas (`sbGetAll`, páginas de 1000), junta com a base
-    `despesas.syncBase` (hash por item/chave; quem mudou desde a base vence; os dois → este aparelho; 1ª vez → nuvem), grava só o que
+    `despesas.sbBase` (hash por item/chave; quem mudou desde a base vence; os dois → este aparelho; 1ª vez → nuvem), grava só o que
     mudou (`sbUp` em lotes, `sbDel` por `kind`+ids) e atualiza base, lápides (`despesas.syncDel`, 180 dias) e `syncMeta`. Roda 3 s depois de
     gravar (`_emit`), ao abrir/voltar ao app, ao voltar a internet, ao sair da aba (`syFlush`) e a cada 2 min. Se os dados mudaram enquanto a
     nuvem respondia, desiste e reagenda. Status/ponto na foto (`#tabAv[data-sync]`) e faixa `#syncBanner` (só com erro + mudanças pendentes).
@@ -577,7 +577,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
     Claro/escuro, senha do app e `cfg.seeded` continuam de cada aparelho.
   - **Sair da conta** (Você → "Conta e sincronização", 2 toques; `sbSignOut`): envia o que falta e, se tudo subiu, faz logout no Supabase e **apaga
     todas as chaves `despesas.*` do aparelho** (os dados continuam na conta). Quem entra de novo recebe tudo. Cuidado: qualquer rotina que apague
-    dados locais **sem** apagar `despesas.syncBase` faz o próximo sync mandar apagar tudo na nuvem (o "Esqueci a senha" já limpa base, lápides e meta).
+    dados locais **sem** apagar `despesas.sbBase` faz o próximo sync mandar apagar tudo na nuvem (o "Esqueci a senha" já limpa base, lápides e meta).
   - Testado com Supabase simulado no navegador (2 aparelhos, 440 px e 1440 px, claro e escuro): login, erro de senha, subida dos dados antigos,
     2º aparelho recebendo, apagar/lápide, edição, tabela ausente e sair/entrar de novo. O sandbox não alcança o Supabase real.
 - **Computador** (`@media (min-width:980px)`, out/2026): abas numa **barra fixa no topo** (out/2026, ele achou a lateral solta: `nav.tabs` vira barra sólida com "Minhas Despesas" (`.tabbrand`, só PC), abas com ícone + nome e a foto à direita, alinhada com `--pcw`; o título repetido Hoje/Mês/Planejar some do topo, fica na tela do cartão e na Você),
@@ -700,5 +700,6 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 ## Pessoas (27/10/2026, pedido dele: "coisas a pagar a minha mãe e ela tem coisas a me pagar")
 - Seção **Pessoas** na Contas (`azSection()`, `#azSec`; dados em `cfg.acertos=[{id,name,moves:[{id,date,cents,desc?,done?}]}]`, `cents > 0` = a pessoa te deve, `< 0` = você deve a ela; "acertar" marca `done`). Não entra como despesa/receita nem em saldos.
 - No lançamento, campo **Pessoa** (`#pessoaField`, só com pessoas criadas): `x.pessoa` (id) e `x.pv` (parte dela em centavos, vazio = tudo). Despesa soma (`azLv`: você pagou por ela ou a ela), receita subtrai (ela te pagou). `azBal` = movimentos em aberto + partes de assinatura dividida (Valor por pessoa, mesmo nome, ainda não paga no mês) + lançamentos ligados.
-- Editar parcela/repetição (`group` fora das "s…" ou `buySeries`): nome, categoria e conta passam para a série toda; valor, data e situação ficam por mês.
+- **Várias pessoas no lançamento** (27/10/2026, pedido dele): `x.pessoas=[{id,v?}]` (v = parte dela em centavos; sem v: uma pessoa = tudo, várias = o resto dividido igual); o antigo `x.pessoa`/`x.pv` continua lido por `azParts(x)`. Chips do formulário alternam (várias), uma linha de valor por pessoa (`#pv_<i>`). `azLv(x,p)` dá a parte de cada uma.
+- Editar parcela/repetição (`group` fora das "s…" ou `buySeries`): nome, categoria, conta e pessoas passam para a série toda; valor, data e situação ficam por mês.
 - Mesclar com item da fatura mantém `div` (divisão entre pessoas).
