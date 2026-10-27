@@ -346,6 +346,8 @@ input.limin{display:block;margin:0 0 10px}
 .svbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .azmh{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:.84rem;margin:14px 0 2px;padding-top:2px;color:var(--ink);font-variant-numeric:tabular-nums}
 .azmh:first-child{margin-top:0}
+.azloose{margin-top:14px;font-size:.84rem;color:var(--muted)}
+.azloose summary{cursor:pointer;font-weight:700;padding:6px 0}
 .azmt{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:.92rem}
 .svmv{display:flex;justify-content:space-between;font-size:.82rem;padding:7px 0;color:var(--muted);font-variant-numeric:tabular-nums}
 .svmv+.svmv,.svmv+.svmvf,.svmvf+.svmv{border-top:1px solid var(--line)}
@@ -4016,7 +4018,7 @@ function saveSection(){
         row+=`<div class="svedit">${need?`<p class="hint" style="margin:0 0 10px">${esc(need)}</p>`:""}${bkShow?`<div class="svbanks"><small>Onde está o dinheiro</small>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}${esc(r.bank||"Sem banco definido")}</span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
           (mv.length?`<div style="margin-top:10px">`+mv.map(m=>m.fxId?`<button class="svmv" data-svfx="${esc(m.fxId)}" aria-label="Editar compra de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · comprou${m.brl?` · R$ ${brl(m.brl)} a R$ ${rateTxt(m.brl/m.cents)}`:""}${m.where?` · ${esc(m.where)}`:""}</span><span><span class="pos" style="white-space:nowrap">+ ${svMoney(m.cents,m.cur)}</span> <span class="ed">editar</span></span></button>`:svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
-          `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
+        `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
       return row};
   const isF=b=>b.goalCur&&b.goalCur!=="BRL", gR=B.filter(b=>!isF(b)), gF=B.filter(isF);
@@ -4165,6 +4167,8 @@ const azAliases=p=>[p.name,...String(p.pix||"").split(",")].map(x=>x.trim()).fil
 const azPix=p=>{const A=azAliases(p),ig=p.pixIgn||[];
   return items.filter(x=>typeOf(x)==="rec"&&!genFat(x)&&x.cat!=="divid"&&(x.date||"")>=MIN_YM+"-01"&&!azParts(x).some(e=>e.id===p.id)&&A.some(n=>nmSame(shWho(x),n)))
     .map(x=>({x,ign:ig.includes(x.id),c:ig.includes(x.id)?0:-x.cents}))};
+/* Pix recebidos que não são de ninguém ainda (para ele escolher a pessoa quando o automático não pegou) */
+const azLoose=()=>{const PE=azList();return items.filter(x=>typeOf(x)==="rec"&&!genFat(x)&&!["divid","sal"].includes(x.cat)&&(x.date||"")>=MIN_YM+"-01"&&!azParts(x).length&&shWho(x)&&!PE.some(q=>azAliases(q).some(n=>nmSame(shWho(x),n)))).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,12)};
 /* mensal × total (27/10/2026, pedido dele: "pra não cobrar errado"): tudo que compõe o saldo da pessoa, com o mês de cada coisa.
    Lançamento = mês da compra (buy, senão data); movimento = mês da data; assinatura dividida em aberto = mês atual. */
 const azEntries=p=>{const E=[],cur=curYM();
@@ -4197,6 +4201,7 @@ function azSection(){
             const rows=L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
             return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+rows}).join("")+
             `<div class="azmh azmt"><span>Total</span><span class="${cls(b)}">${b?fm(b):"acertado ✓"}</span></div></div>`})()+
+          (()=>{const LO=azLoose();return LO.length?`<details class="azloose"><summary>Pix recebidos sem pessoa (${LO.length}) · é de ${nm}?</summary>`+LO.map(x=>`<button class="svmv" data-azlink="${esc(x.id)}"><span>${esc(shWho(x))} · ${fmtDM(x.date)}</span><span class="pos">${R(x.cents)}<span class="ed">é de ${nm}</span></span></button>`).join("")+`</details>`:""})()+
         `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
     }
     return row}).join("")+`</div></section>`;
@@ -5089,6 +5094,8 @@ document.addEventListener("click",async e=>{
   if(t.id==="svDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const b=saves().find(x=>x.id===svOpen);svOpen=null;svSave(saves().filter(x=>x!==b),"Caixinha excluída");return}
   const azr=t.closest("[data-az]"); if(azr){azForm=false;azOpen=azOpen===azr.dataset.az?null:azr.dataset.az;renderAno();return}
+  const azl=t.closest("[data-azlink]"); if(azl&&azOpen){const x=items.find(z=>z.id===azl.dataset.azlink),who=x?shWho(x):"";if(x){(async()=>{await store.items.update(x.id,{pessoas:[{id:azOpen}],pessoa:"",pv:0});
+    await azSave(azList().map(p=>p.id!==azOpen?p:{...p,pix:[...azAliases(p).slice(1),who].filter((n,i,a)=>n&&a.findIndex(o=>nmSame(o,n))===i).join(", ")}),`Ligado. Os próximos Pix de ${who} entram sozinhos.`)})()}return}
   const azx=t.closest("[data-azpix]"); if(azx){const id=azx.dataset.azpix;azSave(azList().map(p=>p.id!==azOpen?p:{...p,pixIgn:(p.pixIgn||[]).includes(id)?(p.pixIgn||[]).filter(z=>z!==id):[...(p.pixIgn||[]),id]}));return}
   const azm=t.closest("[data-azmv]"); if(azm){const id=azm.dataset.azmv;azSave(azList().map(p=>p.id!==azOpen?p:{...p,moves:(p.moves||[]).map(m=>m.id!==id?m:{...m,done:!m.done})}));return}
   if(t.id==="azDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
