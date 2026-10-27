@@ -7296,6 +7296,20 @@ function impMark(){
     const cand={id:"_imp"+r.i,type:"desp",desc:r.name,cat:r.cat,cents:r.cents,parc:r.parc,date:imp.bill+"-01",buy:r.date,card:imp.card,imp:"_"};
     const m=findSimilar(cand,ex,used);r.match=m?m.id:null;r.dup=!!m;if(m){used.add(m.id);r.on=false}else r.on=true;
   });
+  impRecur();
+}
+/* compra sem parcela que já veio em outro mês deste cartão com o mesmo valor (ou assinatura de nome conhecido) = assinatura:
+   liga ela e as dos outros meses no mesmo group (repetição mensal) e põe Assinaturas se estava em Outros. Pessoa troca na conferência. */
+function impRecur(){
+  const old=items.filter(x=>typeOf(x)==="desp"&&cardOf(x)===imp.card&&!genFat(x)&&!x.parc&&x.cat!=="cartao"&&!FEE_RE.test(cleanDesc(x))&&x.date.slice(0,7)!==imp.bill);
+  imp.rows.forEach(r=>{
+    r.rec=null;if(imp.pre||r.parc||r.cat==="cartao"||FEE_RE.test(r.name)) return;
+    const prev=old.filter(x=>closeC(x.cents,r.cents)&&(fold(x.desc||"")===fold(r.name)||nameSim(x.desc||"",r.name)>=.5));
+    const known=SUBN.some(([re])=>re.test(fold(r.name)));
+    if(!prev.length&&!known) return;
+    r.rec={prev,months:[...new Set(prev.map(x=>x.date.slice(0,7)))].sort()};
+    if(r.ser==null) r.ser=true;
+  });
 }
 function impRender(){
   const on=imp.rows.filter(r=>r.on), tot=imp.rows.reduce((s,r)=>s+r.cents,0), sel=on.reduce((s,r)=>s+r.cents,0);
@@ -7311,6 +7325,8 @@ function impRender(){
   <div class="field" style="margin-bottom:8px"><label for="impBill">Entra na fatura de</label><select id="impBill">${months.map(m=>`<option value="${m}" ${m===imp.bill?"selected":""}>${monthLabel(m)}</option>`).join("")}</select></div>
   <div class="ilist">${imp.rows.map(r=>{const[,m,d]=r.date.split("-");
     return `<label class="irow ${r.on?"":"off"}"><input type="checkbox" data-imp="${r.i}" ${r.on?"checked":""}><span class="d">${esc(r.name)}</span><span class="v">${R(r.cents)}</span><span class="m">${d}/${m} · ${esc(catOf(r.cat,"desp").n)}${r.parc?` · parcela ${r.parc}`:""}${imp.pre?(r.later?` · lança ${r.later} ${r.later===1?"parcela":"parcelas"} que ${r.later===1?"vence":"vencem"} de ${shortMonth(MIN_DUE.slice(0,7))} em diante`:` · só informativo`):""}${r.dup?` · já lançado como “${esc(cleanDesc(items.find(x=>x.id===r.match)||{}))}”, vai mesclar`:""}</span></label>`}).join("")}</div>
+  ${(()=>{const L=imp.rows.filter(r=>r.rec&&(r.on||r.match));if(!L.length||imp.pre) return "";
+    return `<p class="hint" style="margin:8px 0 2px">Parecem assinaturas (ligo todos os meses numa série):</p>`+L.map(r=>`<label class="check"><input type="checkbox" data-impser="${r.i}" ${r.ser?"checked":""}> ${esc(r.name)} · ${R(r.cents)} · ${r.rec.months.length?`visto em ${r.rec.months.map(shortMonth).join(", ")}`:"assinatura conhecida"}</label>`).join("")})()}
   ${imp.pre?`<p class="hint" style="margin:8px 0">Fatura com vencimento antes de ${monthLabel(MIN_DUE.slice(0,7)).toLowerCase()} é só informativa: entram só as parcelas que vencem de ${shortMonth(MIN_DUE.slice(0,7))} em diante; quando você importar a fatura seguinte, elas aparecem como “já lançado” e são mescladas.</p>`:""}
   ${imp.old&&imp.bill>=MIN_YM?`<label class="check"><input type="checkbox" id="impFull" ${imp.full?"checked":""}> Lançar a fatura inteira mesmo assim (histórico): tudo entra como pago, mescla com o que já está lançado e não mexe no saldo da conta</label>`:""}
   <label class="check"><input type="checkbox" id="impPaid" ${imp.paid?"checked":""} ${imp.full&&!imp.pre?"disabled":""}> Fatura já paga${imp.due&&imp.due<today()?" (o vencimento já passou)":""}</label>
@@ -7324,6 +7340,7 @@ function impRender(){
 function impSync(){
   if(!imp) return;
   document.querySelectorAll("#impSheet [data-imp]").forEach(c=>{imp.rows[+c.dataset.imp].on=c.checked});
+  document.querySelectorAll("#impSheet [data-impser]").forEach(c=>{imp.rows[+c.dataset.impser].ser=c.checked});
   const b=$("impBill");if(b&&b.value!==imp.bill){imp.bill=b.value;imp.rows.forEach(r=>r.on=true);impMark()}
   const f=$("impFuture");if(f)imp.future=f.checked;
   const g=$("impReplace");if(g)imp.replace=g.checked;
@@ -7339,13 +7356,19 @@ $("impSheet").addEventListener("submit",async e=>{
   const btn=e.target.querySelector("button[type=submit]");btn.disabled=true;
   const now=Date.now(), tag="fatura-"+(imp.due||imp.bill), card=imp.card;
   const ex=items.filter(x=>cardOf(x)===card);
-  const add=[];
+  const add=[], upd=[];
   if(imp.pre) on.forEach((r,k)=>{const g="g"+now+"_"+k;
     preParcs(r).forEach(p=>add.push({type:"desp",desc:r.name,cat:r.cat,cents:r.cents,pay:"Crédito",card,paid:impPaidFor(p.ym),buy:r.date,imp:tag,date:impDate(p.ym),parc:p.parc,group:g}))});
   else on.forEach((r,k)=>{
     const base={type:"desp",desc:r.name,cat:r.cat,cents:r.cents,pay:"Crédito",card,paid:false,buy:r.date,imp:tag};
-    const g="g"+now+"_"+k;
-    add.push({...base,paid:impPaidFor(imp.bill),date:impDate(imp.bill),parc:r.parc,...(r.parc?{group:g}:{})});
+    let g="g"+now+"_"+k;
+    /* parcela nova entra na série da parcela anterior que já está lançada */
+    const pm=/^(\d+)\/(\d+)$/.exec(r.parc||"");
+    if(pm){const sib=ex.find(y=>y.group&&y.parc&&parcInfo(y)&&parcInfo(y).n===+pm[2]&&(fold(y.desc||"")===fold(r.name)||nameSim(y.desc||"",r.name)>=.5)&&closeC(y.cents,r.cents));if(sib) g=sib.group}
+    if(r.ser&&r.rec){const pg=r.rec.prev.find(y=>y.group&&!/^s/.test(y.group));g=pg?pg.group:g;
+      if(!pg) r.rec.prev.forEach(y=>upd.push([y.id,{group:g,...(y.cat==="outros"?{cat:"assin"}:{})}]));
+      else r.rec.prev.filter(y=>!y.group).forEach(y=>upd.push([y.id,{group:g,...(y.cat==="outros"?{cat:"assin"}:{})}]))}
+    add.push({...base,...(r.ser&&r.rec&&r.cat==="outros"?{cat:"assin"}:{}),paid:impPaidFor(imp.bill),date:impDate(imp.bill),parc:r.parc,...(r.parc||(r.ser&&r.rec)?{group:g}:{})});
     const m=/^(\d+)\/(\d+)$/.exec(r.parc);
     if(imp.future&&m) for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){
       const ym=shiftYM(imp.bill,j), parc=`${i}/${+m[2]}`;
@@ -7353,9 +7376,11 @@ $("impSheet").addEventListener("submit",async e=>{
       add.push({...base,date:impDate(ym),parc,group:g});
     }
   });
-  const upd=[];
   mg.forEach((r,k)=>{const x=items.find(y=>y.id===r.match);if(!x) return;
-    const g=x.group||("g"+now+"_m"+k);upd.push([x.id,{buy:x.buy||r.date,imp:tag,cents:r.cents,...(impPaidFor(imp.bill)?{paid:true}:{}),...(r.parc&&!x.parc?{parc:r.parc}:{}),...(r.parc&&!x.group?{group:g}:{})}]);
+    let g=x.group||("g"+now+"_m"+k);
+    if(r.ser&&r.rec&&!x.group){const pg=r.rec.prev.find(y=>y.group&&!/^s/.test(y.group));g=pg?pg.group:g;
+      r.rec.prev.filter(y=>!y.group).forEach(y=>upd.push([y.id,{group:g,...(y.cat==="outros"?{cat:"assin"}:{})}]))}
+    upd.push([x.id,{buy:x.buy||r.date,imp:tag,cents:r.cents,...(r.ser&&r.rec&&!x.group?{group:g,...(x.cat==="outros"?{cat:"assin"}:{})}:{}),...(impPaidFor(imp.bill)?{paid:true}:{}),...(r.parc&&!x.parc?{parc:r.parc}:{}),...(r.parc&&!x.group?{group:g}:{})}]);
     const m=/^(\d+)\/(\d+)$/.exec(r.parc);
     if(imp.future&&m) for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){
       const ym=shiftYM(imp.bill,j), parc=`${i}/${+m[2]}`;
