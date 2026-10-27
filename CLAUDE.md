@@ -622,7 +622,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   (= botão +), **1–4** abas, **← →** mês, **/** buscar, **Esc** fecha janela (`sheetUp()`; cuidado: `openSheet(x)` ABRE
   o lançamento).
 
-- **Aparência alinhada** (27/10/2026, pedido dele: "realinha como achar melhor"; `lookSection`, bloco CSS "Aparência alinhada" no fim): blocos com o mesmo rótulo (Foto com miniatura, Modo, Cor do app, Faixa do relógio), seletores na largura toda, todas as cores numa grade só de 5 colunas (sóbrias + vivas + Sua foto + Cor livre), faixa do relógio por último. Seção recolhida por padrão como as outras da Você.
+- **Aparência alinhada** (27/10/2026, pedido dele: "realinha como achar melhor"; `lookSection`, bloco CSS "Aparência alinhada" no fim): blocos com o mesmo rótulo (Foto com miniatura, Modo, Cor do app, Faixa do relógio), seletores na largura toda, todas as cores numa grade só de 5 colunas (sóbrias + vivas + Sua foto + Cor livre), faixa do relógio por último. Seção recolhida por padrão como as outras da Você. A "Faixa do relógio (iPhone)" saiu da tela (o topo em cartão já resolve; o CSS `data-topo` ficou inerte e `applyTheme` limpa o atributo). **Bug corrigido:** `anoFold` tirava a chave da seção de `h.firstChild`, que depois do 1º desenho era o ícone "›", então todas as seções dividiam a chave "›" e não fechavam; agora usa o 1º nó de texto do título.
 - **Tela Você** (out/2026, pedido dele: "config do usuário ao clicar no rosto, não no Ano"): painel `pMe` (`renderMe()`),
   não é aba da barra; abre pela foto (`#tabAv`, atalho **5** no computador). Topo mostra foto + nome, último backup e
   conta (e-mail e sincronização). Seções: Aparência, Senha e Face ID (`secSection`), Sincronizar, Categorias, Backup e exportação,
