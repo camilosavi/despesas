@@ -1890,7 +1890,7 @@ function note(t){$("note").textContent=t}
 (()=>{let last=0,lx=0,ly=0;
   document.addEventListener("touchend",e=>{const t=e.changedTouches&&e.changedTouches[0];if(!t)return;const n=Date.now();
     if(n-last<350&&Math.abs(t.clientX-lx)<40&&Math.abs(t.clientY-ly)<40&&!e.target.closest("input,textarea,select,[contenteditable]")){
-      e.preventDefault();(e.target.closest("button,a,label,[data-k],[data-id],[data-sv],[data-svmv],[data-svfx],[data-db],[data-dbmv],[data-fxcur],[data-fxsheet],[data-opencard],[data-gotab],[data-gomonth],[data-cardmonth],.item,tr.click,td.c,.fxrow")||e.target).click()}
+      e.preventDefault();(e.target.closest("button,a,label,[data-k],[data-id],[data-sv],[data-svmv],[data-svfx],[data-db],[data-dbmv],[data-az],[data-azmv],[data-fxcur],[data-fxsheet],[data-opencard],[data-gotab],[data-gomonth],[data-cardmonth],.item,tr.click,td.c,.fxrow")||e.target).click()}
     last=n;lx=t.clientX;ly=t.clientY},{passive:false});
   ["gesturestart","gesturechange"].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault()));
 })();
@@ -4079,6 +4079,53 @@ function dbMvForm(m){
     <div class="svbtns"><button class="btn soft" id="dmCancel">Cancelar</button><button class="btn primary" id="dmSave">Salvar</button></div>
     <button class="svdel" id="dmDel">Apagar este movimento</button></div>`;
 }
+/* ---------- Acertos com pessoas (out/2026, pedido dele: "coisas a pagar a minha mãe e ela tem coisas a me pagar") ----------
+   cfg.acertos=[{id,name,moves:[{id,date,cents,desc?,done?}]}]; cents > 0 = a pessoa te deve, cents < 0 = você deve a ela.
+   Marcar "acertado" tira do saldo. Não entra como despesa/receita nem nos saldos das contas (é só controle). Partes de
+   assinaturas divididas com o nome dela (Valor por pessoa) que ainda não foram pagas no mês entram sozinhas no saldo. */
+const azList=()=>Array.isArray(cfg.acertos)?cfg.acertos:[];
+let azOpen=null, azForm=false;
+function azSubLines(name){
+  const out=[], mn=monthLabel(curYM()).split(" ")[0].toLowerCase();
+  Object.entries(subShare()).forEach(([sub,sh])=>{
+    if(!sh||!Array.isArray(sh.p)) return;
+    const part=sh.p.find(x=>x.nm&&x.c&&nmSame(x.nm,name)); if(!part) return;
+    const P=subPayers(sub,sh); if(P.miss.some(n=>nmSame(n,name))) out.push({desc:`${sub} (${mn})`,cents:part.c,sub:true});
+  });
+  return out;
+}
+const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0);
+function azSection(){
+  const L=azList();
+  let h=`<section id="azSec"><h2>Acertos ${azForm?"":`<button id="azAdd">+ Pessoa</button>`}</h2>`;
+  if(azForm) h+=`<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><input id="azName" maxlength="24" placeholder="Nome (ex.: Mãe)"><div class="svbtns"><button class="btn soft" id="azCancel">Cancelar</button><button class="btn primary" id="azCreate">Criar</button></div></div>`;
+  if(!L.length) return h+(azForm?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa (ex.: Mãe) para lançar o que ela te deve e o que você deve a ela.</div>`)+`</section>`;
+  const net=L.reduce((s,p)=>s+azBal(p),0);
+  h+=`<div class="card"><div class="svtot"><small>Saldo com todo mundo</small><b class="${net<0?"neg":net>0?"pos":""}">${R(Math.abs(net))}</b><span>${net>0?"te devem":net<0?"você deve":"tudo acertado ✓"}</span></div>`+
+  L.map(p=>{
+    const b=azBal(p), open=azOpen===p.id, nm=esc(p.name);
+    let row=`<button class="svrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="d">${nm}</span><span class="v ${b<0?"neg":b>0?"pos":""}">${R(Math.abs(b))}</span><span class="m">${b>0?`${nm} te deve`:b<0?`você deve a ${nm}`:"tudo acertado ✓"}</span></button>`;
+    if(open){
+      const mv=[...(p.moves||[])].sort((x,y)=>(x.done?1:0)-(y.done?1:0)||y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
+      const line=(m,sub)=>`<${sub?"div":`button data-azmv="${esc(m.id)}"`} class="svmv" ${sub?"":`aria-label="Marcar como ${m.done?"não acertado":"acertado"}"`}><span style="${m.done?"text-decoration:line-through;opacity:.55":""}">${esc(m.desc||"Sem descrição")}${sub?"":` · ${fmtDate(m.date)}`}${sub?` · assinatura`:""}${m.done?" · acertado ✓":""}</span><span class="${m.cents<0?"neg":"pos"}" style="${m.done?"opacity:.55":""}">${m.cents<0?"−":"+"} ${R(Math.abs(m.cents))}${sub?"":`<span class="ed">${m.done?"desfazer":"acertar"}</span>`}</span></${sub?"div":"button"}>`;
+      row+=`<div class="svedit"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div>`+
+        (mv.length||azSubLines(p.name).length?`<div style="margin-top:10px">`+azSubLines(p.name).map(m=>line(m,true)).join("")+mv.map(m=>line(m,false)).join("")+`</div>`:"")+
+        `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
+    }
+    return row}).join("")+`</div></section>`;
+  return h;
+}
+async function azSave(list,msg){document.activeElement?.blur?.();try{await saveCfg({acertos:list});if(msg)toast(msg,true);render()}catch(e){toast("Não deu para salvar. Tente de novo.")}}
+async function azCreate(){
+  const name=($("azName")?.value||"").trim();if(!name){toast("Diga o nome da pessoa.");return}
+  if(azList().some(p=>p.name.toLowerCase()===name.toLowerCase())){toast("Já existe alguém com esse nome.");return}
+  const id="az"+Date.now();azForm=false;azOpen=id;await azSave([...azList(),{id,name,moves:[]}],"Pessoa criada");
+}
+async function azMove(sign){
+  const cents=digits($("azVal")?.value);if(!cents){toast("Informe o valor.");return}
+  const desc=($("azDesc")?.value||"").trim();
+  await azSave(azList().map(p=>p.id!==azOpen?p:{...p,moves:[...(p.moves||[]),{id:"m"+Date.now(),date:today(),cents:sign*cents,...(desc?{desc}:{})}]}),"Lançado");
+}
 function debtSection(){
   const L=debts(), open=L.filter(d=>dbLeft(d)>0);
   let h=`<section id="debtSec"><h2>Dívidas ${dbForm?"":`<button id="dbAdd">+ Nova dívida</button>`}</h2>`;
@@ -4194,7 +4241,7 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())})()}${saveSection()}${debtSection()}</div>
+      <div class="ano-col-main">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())})()}${saveSection()}${debtSection()}${azSection()}</div>
       <div class="ano-col-side">${fxRowSection()}${divSection()}</div>
     </div>`;
   } else if(anoSubTab === "ano"){
@@ -4958,6 +5005,10 @@ document.addEventListener("click",async e=>{
   const smv=t.closest("[data-svmv]"); if(smv){svMvEdit=smv.dataset.svmv;renderAno();setTimeout(()=>{const v=$("mvVal");v&&v.scrollIntoView({block:"center",behavior:"smooth"})},30);return}
   if(t.id==="svDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const b=saves().find(x=>x.id===svOpen);svOpen=null;svSave(saves().filter(x=>x!==b),"Caixinha excluída");return}
+  const azr=t.closest("[data-az]"); if(azr){azForm=false;azOpen=azOpen===azr.dataset.az?null:azr.dataset.az;renderAno();return}
+  const azm=t.closest("[data-azmv]"); if(azm){const id=azm.dataset.azmv;azSave(azList().map(p=>p.id!==azOpen?p:{...p,moves:(p.moves||[]).map(m=>m.id!==id?m:{...m,done:!m.done})}));return}
+  if(t.id==="azDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
+    const id=azOpen;azOpen=null;azSave(azList().filter(p=>p.id!==id),"Pessoa excluída");return}
   const dbr=t.closest("[data-db]"); if(dbr){dbForm=null;dbMvEdit=null;dbAllMv=false;dbOpen=dbOpen===dbr.dataset.db?null:dbr.dataset.db;renderAno();return}
   const dmv=t.closest("[data-dbmv]"); if(dmv){dbMvEdit=dmv.dataset.dbmv;renderAno();setTimeout(()=>{const v=$("dmVal");v&&v.scrollIntoView({block:"center",behavior:"smooth"})},30);return}
   if(t.id==="dbDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
@@ -5103,6 +5154,12 @@ document.addEventListener("click",async e=>{
     case "dmSave":dbMvSave();break;
     case "dmDel":dbMvDel(t);break;
     case "dbAllMv":dbAllMv=!dbAllMv;dbMvEdit=null;renderAno();break;
+    case "azAdd":azForm=true;azOpen=null;renderAno();setTimeout(()=>$("azName")?.focus(),30);break;
+    case "azCancel":azForm=false;renderAno();break;
+    case "azCreate":azCreate();break;
+    case "azIn":azMove(1);break;
+    case "azOut":azMove(-1);break;
+    case "azAll":azSave(azList().map(p=>p.id!==azOpen?p:{...p,moves:(p.moves||[]).map(m=>({...m,done:true}))}),"Tudo acertado");break;
     case "svIn":svMove(1);break;
     case "svOut":svMove(-1);break;
   }
