@@ -1980,6 +1980,21 @@ function dupPairs(list){
   list.forEach((a,i)=>{if(used.has(a.id))return;for(let j=i+1;j<list.length;j++){const b=list[j];if(!used.has(b.id)&&!nd.has(dupKey(a,b))&&similarTo(a,b)){P.push([a,b]);used.add(a.id);used.add(b.id);break}}});
   return P;
 }
+/* "Mesclar tudo" de todos os meses e cartões (out/2026, pedido dele): mesmos pares sugeridos da tela do cartão
+   ("Fora da fatura do banco" = à mão × importado, e "Parecidos"), mês a mês, sem repetir item. */
+function allMergePairs(){
+  const out=[],nd=new Set(notDup());
+  credCards().forEach(c=>{
+    const ms=[...new Set(items.filter(x=>cardOf(x)===c&&!genFat(x)&&(x.date||"")>=MIN_YM+"-01").map(x=>x.date.slice(0,7)))].sort();
+    ms.forEach(ym=>{
+      const L=cardItems(c,ym).filter(x=>!genFat(x)), IM=L.filter(x=>x.imp), LO=L.filter(x=>!x.imp), used=new Set();
+      if(IM.length&&LO.length) LO.forEach(x=>{
+        const m=findSimilar(x,IM,used)||IM.filter(y=>!used.has(y.id)&&Math.abs(y.cents-x.cents)<=Math.max(1,Math.round(x.cents*0.005))).sort((p,q)=>nameSim(x.desc,q.desc)-nameSim(x.desc,p.desc))[0]||(x.parc?IM.filter(y=>!used.has(y.id)&&y.parc===x.parc&&nameSim(x.desc,y.desc)>=0.5)[0]:null);
+        if(m){used.add(m.id);used.add(x.id);out.push([x,m])}});
+      dupPairs(L.filter(x=>!used.has(x.id))).forEach(([a,b])=>{out.push([a,b])});
+    })});
+  return out;
+}
 /* mesclar: fica o que tem mais informação (veio de fatura, tem parcela/data da compra); o outro é apagado */
 /* só parcelas da mesma compra andam junto (a fatura importada já cria as próximas); repetição mensal sem parcela
    (assinatura, conta fixa) fica: o mês seguinte ainda não veio na fatura */
@@ -3642,6 +3657,7 @@ function renderCards(){
        `</div>${LO.length>1?`<div class="toolbar"><button class="tbtn" id="loAll">Apagar todos os ${LO.length} (${R(tl)})</button></div>`:""}</section>`;
    }}
   {const P=dupPairs(L);if(P.length) h+=`<section><h2>Parecidos <small>${P.length}</small></h2>${P.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(P.map(([a,b])=>a.id+"|"+b.id).join(","))}">Mesclar todos os ${P.length} pares</button></div>`:""}<div class="card">`+P.map(([a,b])=>`<div class="duprow"><div><b>${esc(cleanDesc(a))}</b> e <b>${esc(cleanDesc(b))}</b><span>${R(a.cents)}${a.parc?` · ${a.parc}`:""} · parecem o mesmo lançamento</span></div><div class="svbtns"><button class="btn soft" data-notdup="${esc(dupKey(a,b))}">Não são</button><button class="btn primary" data-merge="${esc(a.id)}|${esc(b.id)}">Mesclar</button></div></div>`).join("")+`</div></section>`}
+  {const AP=allMergePairs();if(AP.length>1) h+=`<section><h2>Mesclar tudo <small>${AP.length}</small></h2><div class="toolbar" style="margin:0"><button class="tbtn go" data-mgall="${esc(AP.map(([a,b])=>a.id+"|"+b.id).join(","))}">Mesclar os ${AP.length} pares de todos os meses e cartões</button></div></section>`}
   const side=h;h="";
   h+=`<section><h2>Limite do cartão</h2>${limitBox(c)}</section>`;
   h+=cardAcctBox(c);
