@@ -1639,6 +1639,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #saveSec .svmvf{padding:var(--g-gap) 0;display:grid;gap:8px}
 #saveSec .svmvf .svrow2,#saveSec .svmvf .svlab{margin:0}
 @media (max-width:359px){#saveSec .svbox{padding:0 12px}#saveSec .svbox>.svedit{margin:0 -12px;padding:12px}#saveSec .svrow .v{font-size:1rem}}
+#azSec .azseg{margin:0 0 var(--g-gap);display:grid;grid-template-columns:repeat(3,1fr)}
 </style>
 
 <div class="wrap">
@@ -4296,7 +4297,7 @@ function dbMvForm(m){
    Marcar "acertado" tira do saldo. Não entra como despesa/receita nem nos saldos das contas (é só controle). Partes de
    assinaturas divididas com o nome dela (Valor por pessoa) que ainda não foram pagas no mês entram sozinhas no saldo. */
 const azList=()=>Array.isArray(cfg.acertos)?cfg.acertos:[];
-let azOpen=null, azForm=false;
+let azOpen=null, azForm=false, azView=(()=>{try{return localStorage.getItem('despesas.azView')||'mes'}catch(e){return 'mes'}})();
 function azSubLines(name){
   const out=[], mn=monthLabel(curYM()).split(" ")[0].toLowerCase();
   Object.entries(subShare()).forEach(([sub,sh])=>{
@@ -4341,8 +4342,8 @@ function azSection(){
   if(azForm) h+=`<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><input id="azName" maxlength="24" placeholder="Nome (ex.: Mãe)"><div class="svbtns"><button class="btn soft" id="azCancel">Cancelar</button><button class="btn primary" id="azCreate">Criar</button></div></div>`;
   if(!L.length) return h+(azForm?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa (ex.: Mãe): dá para escolhê-la ao lançar uma despesa ou receita e ver quanto ela te deve ou você deve a ela.</div>`)+`</section>`;
   const net=L.reduce((s,p)=>s+azBal(p),0);
-  h+=`<div class="card"><div class="svtot"><small>Saldo com todo mundo</small><b class="${net<0?"neg":net>0?"pos":""}">${R(Math.abs(net))}</b><span>${net>0?"te devem":net<0?"você deve":"tudo acertado ✓"}</span></div>`+
-  L.map(p=>{
+  h+=`<div class="card"><div class="svtot"><small>Saldo com todo mundo</small><b class="${net<0?"neg":net>0?"pos":""}">${R(Math.abs(net))}</b><span>${net>0?"te devem":net<0?"você deve":"tudo acertado ✓"}</span></div><div class="seg azseg" role="group" aria-label="Organizar por">${[["mes","Por mês"],["az","A–Z"],["cat","Categoria"]].map(([k,t])=>`<button type="button" data-azview="${k}" aria-pressed="${azView===k}">${t}</button>`).join("")}</div>`+
+  (azView==="az"?[...L].sort((a,b)=>a.name.localeCompare(b.name,"pt",{sensitivity:"base"})):L).map(p=>{
     const b=azBal(p), cm=azMonthSum(p,curYM()), open=azOpen===p.id, nm=esc(p.name);
     let row=`<button class="svrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="d">${nm}</span><span class="v ${b<0?"neg":b>0?"pos":""}">${R(Math.abs(b))}</span><span class="m">${b>0?`${nm} te deve`:b<0?`você deve a ${nm}`:"tudo acertado ✓"}${b&&cm!==b?` · este mês ${cm?R(Math.abs(cm))+(cm<0?" (você deve)":""):"R$ 0,00"}`:""}</span></button>`;
     if(open){
@@ -4353,6 +4354,14 @@ function azSection(){
           const fm=v=>`${v<0?"−":"+"} ${R(Math.abs(v))}`, cls=v=>v<0?"neg":v>0?"pos":"";
           const ent=e=>e.k==="pix"?`<button class="svmv" data-azpix="${esc(e.x.id)}"><span style="${e.ign?"text-decoration:line-through;opacity:.55":""}">Pix recebido ✓ · ${fmtDM(e.d)}</span><span class="pos" style="${e.ign?"opacity:.55":""}">${e.ign?"":"− "}${R(e.x.cents)}<span class="ed">${e.ign?"usar":"ignorar"}</span></span></button>`:e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${cls(e.c)}">${fm(e.c)}<span class="ed">${typeOf(e.x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`;
           let n=0;
+          /* A–Z / Categoria (27/10/2026, pedido dele): agrupa por lançamento (nome) ou pela categoria do lançamento; cada grupo mostra quantos itens e o total */
+          const gname=e=>e.k==="sub"?(e.m.desc||"Assinatura"):e.k==="pix"?"Pix recebido":e.k==="m"?(e.m.desc||"Sem descrição"):cleanDesc(e.x).replace(/\s*\(?\d+\/\d+\)?$/,"");
+          const gcat=e=>e.k==="sub"?"Assinaturas":e.k==="pix"?"Pix recebido":e.k==="m"?"Avulso (sem lançamento)":catOf(e.x.cat,typeOf(e.x)).n;
+          const grouped=azView==="mes"?null:(()=>{const G={},key=azView==="cat"?gcat:gname;azEntries(p).forEach(e=>{const k=key(e)||"Sem nome",g=(G[k.toLowerCase()]=G[k.toLowerCase()]||{k,L:[]});g.L.push(e)});
+            return Object.values(G).sort((a,b)=>a.k.localeCompare(b.k,"pt",{sensitivity:"base"}))})();
+          if(grouped) return `<div style="margin-top:10px">`+grouped.map(g=>{const sum=g.L.reduce((t,e)=>t+e.c,0);
+            return `<div class="azmh"><span>${esc(g.k)} · ${g.L.length} ${g.L.length===1?"item":"itens"}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+g.L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<120).map(ent).join("")}).join("")+
+            `<div class="azmh azmt"><span>Total</span><span class="${cls(b)}">${b?fm(b):"acertado ✓"}</span></div></div>`;
           return `<div style="margin-top:10px">`+MS.map(([ym,L])=>{const sum=L.reduce((t,e)=>t+e.c,0);
             const rows=L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
             return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+rows}).join("")+
@@ -5250,6 +5259,7 @@ document.addEventListener("click",async e=>{
   const smv=t.closest("[data-svmv]"); if(smv){svMvEdit=smv.dataset.svmv;renderAno();setTimeout(()=>{const v=$("mvVal");v&&v.scrollIntoView({block:"center",behavior:"smooth"})},30);return}
   if(t.id==="svDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const b=saves().find(x=>x.id===svOpen);svOpen=null;svSave(saves().filter(x=>x!==b),"Caixinha excluída");return}
+  const azv=t.closest("[data-azview]"); if(azv){azView=azv.dataset.azview;try{localStorage.setItem("despesas.azView",azView)}catch(e){}renderAno();return}
   const azr=t.closest("[data-az]"); if(azr){azForm=false;azOpen=azOpen===azr.dataset.az?null:azr.dataset.az;renderAno();return}
   const azl=t.closest("[data-azlink]"); if(azl&&azOpen){const x=items.find(z=>z.id===azl.dataset.azlink),who=x?shWho(x):"";if(x){(async()=>{await store.items.update(x.id,{pessoas:[{id:azOpen}],pessoa:"",pv:0});
     await azSave(azList().map(p=>p.id!==azOpen?p:{...p,pix:[...azAliases(p).slice(1),who].filter((n,i,a)=>n&&a.findIndex(o=>nmSame(o,n))===i).join(", ")}),`Ligado. Os próximos Pix de ${who} entram sozinhos.`)})()}return}
