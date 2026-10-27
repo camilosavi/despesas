@@ -913,7 +913,7 @@ nav.tabs.onme::before{opacity:0}
   .cstrip .ctile{width:auto}
   .cstrip .ctile.all{width:auto;min-height:84px}
   .cstrip{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;overflow:visible;margin:0;padding:0}
-  .wrap{max-width:none;padding:0 var(--pcg) 64px}
+  .wrap{max-width:var(--pcw);padding:0 var(--pcg) 64px}
   header.top{margin:20px 0 0!important;border-radius:26px!important;padding:22px 28px 24px!important}
   body::before{display:none}
   #pHome:not([hidden]),#pCards:not([hidden]),#pFx:not([hidden]),#pAno:not([hidden]),#pOrc:not([hidden]),#pMe:not([hidden]),#mBody{column-count:2;column-gap:22px;margin-top:6px}
@@ -1147,9 +1147,8 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
    A cápsula de vidro vira uma barra fixa no topo, sólida: "Minhas Despesas" à esquerda, abas com ícone + nome, foto à direita.
    Alinhada com a largura do conteúdo (--pcw). No celular nada muda. */
 .tabbrand{display:none}
-:root{--pcw:100%;--pcg:36px}
-@media (min-width:1500px){:root{--pcg:clamp(36px,3vw,72px)}}
-@media (min-width:2200px){#pAno:not([hidden]),#pCards:not([hidden]){column-count:4}}
+:root{--pcw:1720px;--pcg:36px}
+
 @media (min-width:980px){
   body{padding-top:64px}
   #pAno:not([hidden]){column-count:auto!important;display:block}
@@ -1166,7 +1165,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
   nav.tabs{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;transform:none!important;
     width:auto!important;max-width:none!important;height:64px!important;margin:0!important;border-radius:0!important;
     display:flex!important;align-items:center;gap:6px;
-    padding:0 var(--pcg)!important;
+    padding:0 max(var(--pcg),calc((100% - var(--pcw))/2 + var(--pcg)))!important;
     background:color-mix(in srgb,var(--bg) 88%,transparent)!important;
     -webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);
     border:0!important;border-bottom:1px solid color-mix(in srgb,var(--line) 80%,transparent)!important;box-shadow:none!important;z-index:7}
