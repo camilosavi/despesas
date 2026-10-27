@@ -5628,7 +5628,7 @@ function repHint(){
   if(v[0]==="p"){const n=Number(v.slice(1));t=form.cents?`${n} parcelas de ${R(Math.floor(form.cents/n))}, uma por mês a partir da data. O valor acima é o total da compra.`:`O valor digitado é o total da compra, dividido em ${n} meses.`}
   if(v==="u"){const a=($("date").value||today()).slice(0,7), b=$("until").value, n=b?monthsSpan(a,b):0;
     t=!b?"Escolha até que mês repetir.":n<1?"O mês final tem que ser igual ou depois da data.":`Lança ${R(form.cents||0)} todo mês de ${shortMonth(a)} até ${shortMonth(b)} (${n} ${n===1?"mês":"meses"}).`}
-  if(v[0]==="m") t=`Lança ${R(form.cents||0)} todo mês por ${v.slice(1)} meses (ex.: aluguel, academia, salário).`;
+  if(v[0]==="m") t=`Repete ${R(form.cents||0)} cheio todo mês por ${v.slice(1)} meses (não divide; ex.: aluguel, academia). Para dividir a compra em parcelas, use 2x, 3x…`;
   if(v!=="1"&&form.type==="desp") t+=" Os meses futuros entram como “a pagar”.";
   $("repHint").textContent=t;
 }
