@@ -4168,12 +4168,20 @@ const azParts=x=>{const L=x.pessoas&&x.pessoas.length?x.pessoas:(x.pessoa?[{id:x
   return L.map(e=>({id:e.id,c:e.v||(L.length===1?x.cents:Math.round(Math.max(0,x.cents-set)/blank))}))};
 const azLinked=p=>items.filter(x=>!genFat(x)&&azParts(x).some(e=>e.id===p.id));
 const azLv=(x,p)=>(azParts(x).find(e=>e.id===p.id)?.c||0)*(typeOf(x)==="rec"?-1:1);
-const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x,p),0);
+const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x,p),0)+azPix(p).reduce((s,e)=>s+e.c,0);
+/* Pix recebido das pessoas (27/10/2026, pedido dele: "identifique se o pix foi recebido ao longo do mês"): receita cujo "Pix de <nome>"
+   (ou "… · <nome>") bate com o nome da pessoa ou com o "Nome no Pix" (p.pix, vários separados por vírgula) abate o que ela deve, no mês em
+   que caiu. Fora: receita já ligada à pessoa, divisão de assinatura (cat divid, tem fluxo próprio) e o que ele marcou "ignorar" (p.pixIgn). */
+const azAliases=p=>[p.name,...String(p.pix||"").split(",")].map(x=>x.trim()).filter(Boolean);
+const azPix=p=>{const A=azAliases(p),ig=p.pixIgn||[];
+  return items.filter(x=>typeOf(x)==="rec"&&!genFat(x)&&x.cat!=="divid"&&(x.date||"")>=MIN_YM+"-01"&&!azParts(x).some(e=>e.id===p.id)&&A.some(n=>nmSame(shWho(x),n)))
+    .map(x=>({x,ign:ig.includes(x.id),c:ig.includes(x.id)?0:-x.cents}))};
 /* mensal × total (27/10/2026, pedido dele: "pra não cobrar errado"): tudo que compõe o saldo da pessoa, com o mês de cada coisa.
    Lançamento = mês da compra (buy, senão data); movimento = mês da data; assinatura dividida em aberto = mês atual. */
 const azEntries=p=>{const E=[],cur=curYM();
   azSubLines(p.name).forEach(m=>E.push({ym:cur,c:m.cents,k:"sub",m}));
-  azLinked(p).forEach(x=>E.push({ym:(x.buy||x.date).slice(0,7),c:azLv(x,p),k:"x",x,d:x.buy||x.date}));
+  azLinked(p).forEach(x=>E.push({ym:x.date.slice(0,7),c:azLv(x,p),k:"x",x,d:x.date}));
+  azPix(p).forEach(e=>E.push({ym:e.x.date.slice(0,7),c:e.c,k:"pix",x:e.x,d:e.x.date,ign:e.ign}));
   (p.moves||[]).forEach(m=>E.push({ym:(m.date||cur).slice(0,7),c:m.done?0:m.cents,k:"m",m,d:m.date}));
   return E};
 const azMonths=p=>{const M={};azEntries(p).forEach(e=>{(M[e.ym]=M[e.ym]||[]).push(e)});return Object.entries(M).sort((a,b)=>b[0].localeCompare(a[0]))};
@@ -4191,10 +4199,10 @@ function azSection(){
     if(open){
       const mv=[...(p.moves||[])].sort((x,y)=>(x.done?1:0)-(y.done?1:0)||y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
       const line=(m,sub)=>`<${sub?"div":`button data-azmv="${esc(m.id)}"`} class="svmv" ${sub?"":`aria-label="Marcar como ${m.done?"não acertado":"acertado"}"`}><span style="${m.done?"text-decoration:line-through;opacity:.55":""}">${esc(m.desc||"Sem descrição")}${sub?"":` · ${fmtDate(m.date)}`}${sub?` · assinatura`:""}${m.done?" · acertado ✓":""}</span><span class="${m.cents<0?"neg":"pos"}" style="${m.done?"opacity:.55":""}">${m.cents<0?"−":"+"} ${R(Math.abs(m.cents))}${sub?"":`<span class="ed">${m.done?"desfazer":"acertar"}</span>`}</span></${sub?"div":"button"}>`;
-      row+=`<div class="svedit"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div>`+
+      row+=`<div class="svedit"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div><input id="azPixNm" maxlength="60" placeholder="Nome no Pix (ex.: Maria Silva), para achar o que ${nm} já pagou" value="${esc(p.pix||"")}" aria-label="Nome no Pix" style="margin-top:8px">`+
         (()=>{const MS=azMonths(p);if(!MS.length)return "";
           const fm=v=>`${v<0?"−":"+"} ${R(Math.abs(v))}`, cls=v=>v<0?"neg":v>0?"pos":"";
-          const ent=e=>e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${cls(e.c)}">${fm(e.c)}<span class="ed">${typeOf(e.x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`;
+          const ent=e=>e.k==="pix"?`<button class="svmv" data-azpix="${esc(e.x.id)}"><span style="${e.ign?"text-decoration:line-through;opacity:.55":""}">Pix recebido ✓ · ${fmtDM(e.d)}</span><span class="pos" style="${e.ign?"opacity:.55":""}">${e.ign?"":"− "}${R(e.x.cents)}<span class="ed">${e.ign?"usar":"ignorar"}</span></span></button>`:e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${cls(e.c)}">${fm(e.c)}<span class="ed">${typeOf(e.x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`;
           let n=0;
           return `<div style="margin-top:10px">`+MS.map(([ym,L])=>{const sum=L.reduce((t,e)=>t+e.c,0);
             const rows=L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
@@ -5092,6 +5100,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="svDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const b=saves().find(x=>x.id===svOpen);svOpen=null;svSave(saves().filter(x=>x!==b),"Caixinha excluída");return}
   const azr=t.closest("[data-az]"); if(azr){azForm=false;azOpen=azOpen===azr.dataset.az?null:azr.dataset.az;renderAno();return}
+  const azx=t.closest("[data-azpix]"); if(azx){const id=azx.dataset.azpix;azSave(azList().map(p=>p.id!==azOpen?p:{...p,pixIgn:(p.pixIgn||[]).includes(id)?(p.pixIgn||[]).filter(z=>z!==id):[...(p.pixIgn||[]),id]}));return}
   const azm=t.closest("[data-azmv]"); if(azm){const id=azm.dataset.azmv;azSave(azList().map(p=>p.id!==azOpen?p:{...p,moves:(p.moves||[]).map(m=>m.id!==id?m:{...m,done:!m.done})}));return}
   if(t.id==="azDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const id=azOpen;azOpen=null;azSave(azList().filter(p=>p.id!==id),"Pessoa excluída");return}
@@ -5251,6 +5260,7 @@ document.addEventListener("click",async e=>{
   }
 });
 document.addEventListener("change",e=>{
+  if(e.target.id==="azPixNm"&&azOpen){const v=e.target.value.trim();azSave(azList().map(p=>p.id!==azOpen?p:{...p,pix:v}),v?"Nome no Pix salvo":"");return}
   if(e.target.id==="svCur")svEqHint();
   if(e.target.id==="svBk"||e.target.id==="mvBk"){const n=$(e.target.id+"New");if(n){n.hidden=e.target.value!=="__new";if(!n.hidden)n.focus()}return}
   if(e.target.dataset&&e.target.dataset.ext!=null&&ext){const p=ext.plan[+e.target.dataset.ext];if(p){p.on=e.target.checked;extRender()}return}
