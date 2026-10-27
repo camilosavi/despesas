@@ -593,6 +593,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
     e-mail que já existe com "confirmar e-mail" ligado vem 200 com `identities` vazio → "já tem conta". Mensagens: `over_email_send_rate_limit`
     (limite de e-mails do Supabase, causa comum de "não deixa criar conta"), 5xx com texto do servidor. **Esqueci a senha** (`authForgot` →
     `/auth/v1/recover`; o link volta com `type=recovery` → `newPassForm`/`authSetPw`, PUT `/auth/v1/user`). `authGo.busy` evita toque duplo.
+    **Entrar com a Apple** (27/10/2026, `#auApple`): mesmo fluxo do Google (`/auth/v1/authorize?provider=apple`, volta pelo `SB_BACK`); precisa do provedor Apple ligado no Supabase (Services ID, Team ID, Key ID e chave .p8 da conta Apple Developer).
   - URL do projeto e chave *publishable* (`SB_URL`, `SB_KEY`) ficam no código (públicas por desenho). **Nunca** senha do banco, `service_role`
     ou chave secreta do Google no repositório.
   - **Tabela** `sync_rows` (esquema em `supabase/sync.sql`, ele roda uma vez no SQL Editor): `user_id`, `kind`, `id`, `data` ({"v": valor}),
