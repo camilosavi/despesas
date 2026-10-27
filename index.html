@@ -355,6 +355,9 @@ input.limin{display:block;margin:0 0 10px}
 .svedit{padding:4px 14px 14px;background:color-mix(in srgb,var(--chip) 45%,transparent)}
 .svedit input{font:inherit;font-size:16px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);min-height:44px}
 .svbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.azmh{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:.84rem;margin:14px 0 2px;padding-top:2px;color:var(--ink);font-variant-numeric:tabular-nums}
+.azmh:first-child{margin-top:0}
+.azmt{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:.92rem}
 .svmv{display:flex;justify-content:space-between;font-size:.82rem;padding:7px 0;color:var(--muted);font-variant-numeric:tabular-nums}
 .svmv+.svmv,.svmv+.svmvf,.svmvf+.svmv{border-top:1px solid var(--line)}
 button.svmv{width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;font:inherit;font-size:.82rem;color:var(--muted)}
@@ -4166,6 +4169,15 @@ const azParts=x=>{const L=x.pessoas&&x.pessoas.length?x.pessoas:(x.pessoa?[{id:x
 const azLinked=p=>items.filter(x=>!genFat(x)&&azParts(x).some(e=>e.id===p.id));
 const azLv=(x,p)=>(azParts(x).find(e=>e.id===p.id)?.c||0)*(typeOf(x)==="rec"?-1:1);
 const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x,p),0);
+/* mensal × total (27/10/2026, pedido dele: "pra não cobrar errado"): tudo que compõe o saldo da pessoa, com o mês de cada coisa.
+   Lançamento = mês da compra (buy, senão data); movimento = mês da data; assinatura dividida em aberto = mês atual. */
+const azEntries=p=>{const E=[],cur=curYM();
+  azSubLines(p.name).forEach(m=>E.push({ym:cur,c:m.cents,k:"sub",m}));
+  azLinked(p).forEach(x=>E.push({ym:(x.buy||x.date).slice(0,7),c:azLv(x,p),k:"x",x,d:x.buy||x.date}));
+  (p.moves||[]).forEach(m=>E.push({ym:(m.date||cur).slice(0,7),c:m.done?0:m.cents,k:"m",m,d:m.date}));
+  return E};
+const azMonths=p=>{const M={};azEntries(p).forEach(e=>{(M[e.ym]=M[e.ym]||[]).push(e)});return Object.entries(M).sort((a,b)=>b[0].localeCompare(a[0]))};
+const azMonthSum=(p,ym)=>azEntries(p).filter(e=>e.ym===ym).reduce((s,e)=>s+e.c,0);
 function azSection(){
   const L=azList();
   let h=`<section id="azSec"><h2>Pessoas ${azForm?"":`<button id="azAdd">+ Pessoa</button>`}</h2>`;
@@ -4174,13 +4186,20 @@ function azSection(){
   const net=L.reduce((s,p)=>s+azBal(p),0);
   h+=`<div class="card"><div class="svtot"><small>Saldo com todo mundo</small><b class="${net<0?"neg":net>0?"pos":""}">${R(Math.abs(net))}</b><span>${net>0?"te devem":net<0?"você deve":"tudo acertado ✓"}</span></div>`+
   L.map(p=>{
-    const b=azBal(p), open=azOpen===p.id, nm=esc(p.name);
-    let row=`<button class="svrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="d">${nm}</span><span class="v ${b<0?"neg":b>0?"pos":""}">${R(Math.abs(b))}</span><span class="m">${b>0?`${nm} te deve`:b<0?`você deve a ${nm}`:"tudo acertado ✓"}</span></button>`;
+    const b=azBal(p), cm=azMonthSum(p,curYM()), open=azOpen===p.id, nm=esc(p.name);
+    let row=`<button class="svrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="d">${nm}</span><span class="v ${b<0?"neg":b>0?"pos":""}">${R(Math.abs(b))}</span><span class="m">${b>0?`${nm} te deve`:b<0?`você deve a ${nm}`:"tudo acertado ✓"}${b&&cm!==b?` · este mês ${cm?R(Math.abs(cm))+(cm<0?" (você deve)":""):"R$ 0,00"}`:""}</span></button>`;
     if(open){
       const mv=[...(p.moves||[])].sort((x,y)=>(x.done?1:0)-(y.done?1:0)||y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
       const line=(m,sub)=>`<${sub?"div":`button data-azmv="${esc(m.id)}"`} class="svmv" ${sub?"":`aria-label="Marcar como ${m.done?"não acertado":"acertado"}"`}><span style="${m.done?"text-decoration:line-through;opacity:.55":""}">${esc(m.desc||"Sem descrição")}${sub?"":` · ${fmtDate(m.date)}`}${sub?` · assinatura`:""}${m.done?" · acertado ✓":""}</span><span class="${m.cents<0?"neg":"pos"}" style="${m.done?"opacity:.55":""}">${m.cents<0?"−":"+"} ${R(Math.abs(m.cents))}${sub?"":`<span class="ed">${m.done?"desfazer":"acertar"}</span>`}</span></${sub?"div":"button"}>`;
       row+=`<div class="svedit"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div>`+
-        (mv.length||azSubLines(p.name).length||azLinked(p).length?`<div style="margin-top:10px">`+azSubLines(p.name).map(m=>line(m,true)).join("")+azLinked(p).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(x=>`<button class="svmv" data-id="${esc(x.id)}"><span>${esc(cleanDesc(x))} · ${fmtDM(x.buy||x.date)}${x.parc?` · ${x.parc}`:""}</span><span class="${azLv(x,p)<0?"neg":"pos"}">${azLv(x,p)<0?"−":"+"} ${R(Math.abs(azLv(x,p)))}<span class="ed">${typeOf(x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`).join("")+mv.map(m=>line(m,false)).join("")+`</div>`:"")+
+        (()=>{const MS=azMonths(p);if(!MS.length)return "";
+          const fm=v=>`${v<0?"−":"+"} ${R(Math.abs(v))}`, cls=v=>v<0?"neg":v>0?"pos":"";
+          const ent=e=>e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${cls(e.c)}">${fm(e.c)}<span class="ed">${typeOf(e.x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`;
+          let n=0;
+          return `<div style="margin-top:10px">`+MS.map(([ym,L])=>{const sum=L.reduce((t,e)=>t+e.c,0);
+            const rows=L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
+            return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+rows}).join("")+
+            `<div class="azmh azmt"><span>Total</span><span class="${cls(b)}">${b?fm(b):"acertado ✓"}</span></div></div>`})()+
         `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
     }
     return row}).join("")+`</div></section>`;
