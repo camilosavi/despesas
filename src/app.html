@@ -5689,6 +5689,8 @@ function parseInvoice(pages){
   const all=pages.map(p=>p.items.map(i=>i.s).join(" ")).join(" \n ").replace(/\s+/g," ");
   if(/Banco Inter|bancointer|inter\.co\//i.test(all)) return parseInter(pages,all);
   if(/Banco Pan\b|bancopan/i.test(all)) return parsePan(pages,all);
+  if(/Nu Pagamentos|Nubank/i.test(all)&&/TRANSA[ÇC][ÕO]ES/.test(all)) return parseNubank(pages,all);
+  if(/Santander/i.test(all)&&/Detalhamento da Fatura/i.test(all)) return parseSantander(pages,all);
   /* PicPay: "Fechamento: dd/mm/aaaa" com ano; a Renner/Realize também cita PicPay (onde pagar) e tem "Próximo Fechamento dd/mm" */
   if(/PicPay/i.test(all)&&!/Realize/i.test(all)&&/Fechamento:?\s*\d{2}\/\d{2}\/\d{4}/i.test(all)&&/Estabelecimento/i.test(all)) return parsePicPay(pages);
   const bank=/Realize|Renner/i.test(all)?"Renner":"";
@@ -5791,8 +5793,92 @@ function parsePan(pages,all){
     break}
   return {bank:"Pan",due,rows,total,close:fm?+fm[1]:0};
 }
+/* Nubank (out/2026): capa "Data de vencimento: DD MÊS AAAA"; "Resumo da fatura atual" (Fatura anterior, Pagamento recebido,
+   Total de compras, Outros lançamentos, Total a pagar); páginas "TRANSAÇÕES DE DD MÊS A DD MÊS" com linhas
+   "DD MÊS | •••• NNNN | descrição - Parcela i/n | R$ valor" (compra por NuPay não tem o final do cartão); um bloco por titular
+   ("Nome R$ subtotal", sem data). "Pagamentos e Financiamentos": "Pagamento em DD MÊS" (ignorado), parcelamento de compra
+   ('Parcelamento de Compra "LOJA" - Parcela i/n' + linha "Total a pagar: … (valor da transação de R$ X …)"), Pix no crédito e boleto
+   no crédito (nome - Parcela i/n) e "Crédito de parcelamento de compra" (a compra original que virou parcela). */
+const NU_MES={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+const nuC=s=>moneyC(String(s).replace(/[−–]/g,"-"));
+function parseNubank(pages,all){
+  const dm=/Data de vencimento:?\s*(\d{1,2}) ([A-Za-zçÇ]{3}) (\d{4})/i.exec(all), dmo=dm&&NU_MES[dm[2].toLowerCase()];
+  const due=dm&&dmo?`${dm[3]}-${String(dmo).padStart(2,"0")}-${dm[1].padStart(2,"0")}`:"";
+  const cm=/DE \d{1,2} [A-ZÇ]{3} A (\d{1,2}) ([A-ZÇ]{3})/i.exec(all), closeD=cm?+cm[1]:0, closeM=cm&&NU_MES[cm[2].toLowerCase()]||(dmo||12);
+  const dueY=dm?+dm[3]:new Date().getFullYear(), closeY=closeM>(dmo||12)?dueY-1:dueY;
+  let rows=[];const fin=[];
+  pages.forEach(pg=>{
+    const L=pdfLines(pg);
+    if(!L.some(l=>/^TRANSA[ÇC][ÕO]ES\b/i.test(l.cells[0]&&l.cells[0].s||""))) return;
+    for(const ln of L){
+      const c=ln.cells, d=/^(\d{2}) ([A-ZÇa-zç]{3})$/.exec(c[0]&&c[0].s||"");
+      if(!d||!NU_MES[d[2].toLowerCase()]||c.length<3) continue;
+      const k=c.length-1, cents=nuC(c[k].s);if(cents==null) continue;
+      let desc=c.slice(1,k).map(x=>x.s).filter(s=>!/^[•·.]{2,}\s*\d{4}$/.test(s)).join(" ").replace(/\s+/g," ").trim();
+      if(/^Pagamento em \d/i.test(desc)||/^Cr[eé]dito de parcelamento/i.test(desc)) continue;
+      const m=NU_MES[d[2].toLowerCase()], y=m>closeM?closeY-1:closeY;
+      const date=`${y}-${String(m).padStart(2,"0")}-${d[1]}`;
+      /* parcelamento de compra: vira a parcela da loja e apaga a compra original (mesmo nome e valor da transação) */
+      const pc=/^Parcelamento de Compra "(.+)" - Parcela (\d+)\/(\d+)$/i.exec(desc);
+      if(pc){
+        const nxt=L[L.indexOf(ln)+1], tx=nxt&&/valor da transa[çc][ãa]o de (R\$\s*[\d.]+,\d{2})/i.exec(nxt.cells.map(x=>x.s).join(" ")+" "+(L[L.indexOf(ln)+2]?L[L.indexOf(ln)+2].cells.map(x=>x.s).join(" "):""));
+        fin.push({name:pc[1].trim().toLowerCase(),cents:tx?moneyC(tx[1]):null});
+        desc=`${pc[1].trim()} - Parcela ${pc[2]}/${pc[3]}`;
+      }
+      const pm=/\s*-\s*Parcela (\d+)\/(\d+)$/i.exec(desc);if(pm) desc=desc.slice(0,pm.index).trim();
+      desc=desc.replace(/\s+-\s+NuPay$/i,"");
+      rows.push({date,desc:pm?parcTag(desc,+pm[1],+pm[2]):desc,shop:"",cents,orig:desc.toLowerCase()});
+    }
+  });
+  fin.forEach(f=>{const j=rows.findIndex(r=>!r.gone&&!/Parc\./.test(r.desc)&&r.orig===f.name&&(f.cents==null||r.cents===f.cents));if(j>=0)rows[j].gone=1});
+  rows=rows.filter(r=>!r.gone).map(({orig,gone,...r})=>r);
+  let total=null,ant=null,pag=null;
+  for(const pg of pages) for(const ln of pdfLines(pg)){const c=ln.cells;if(c.length<2) continue;
+    const v=nuC(c[c.length-1].s);if(v==null) continue;
+    if(/^Fatura anterior$/i.test(c[0].s)) ant=v; else if(/^Pagamento recebido$/i.test(c[0].s)) pag=v; else if(/^Total a pagar$/i.test(c[0].s)) total=v}
+  if(ant!=null&&pag!=null&&ant+pag>0) rows.push({date:due?shiftYM(due.slice(0,7),-1)+due.slice(7):today(),desc:"Saldo da fatura anterior",shop:"",cents:ant+pag,prev:true});
+  return {bank:"Nubank",due,rows,total,close:closeD};
+}
+/* Santander (out/2026): capa com "Total a Pagar / Vencimento / Seu limite é" em caixas (valor logo abaixo do rótulo) e
+   "compras e pagamentos realizados até DD/MM"; "Detalhamento da Fatura" por cartão: "Pagamento e Demais Créditos" e "Despesas"
+   com colunas "Compra Data Descrição Parcela R$ US$"; linha "DD/MM DESCRIÇÃO [NN/NN] valor" (sem ano, sem R$), termina em
+   "VALOR TOTAL"; "Resumo da Fatura": Saldo Anterior, (-) Total de pagamentos, (=) Saldo Desta Fatura. */
+function parseSantander(pages,all){
+  let due="";
+  pages.some(pg=>{const v=pg.items.find(i=>/^Vencimento$/i.test(i.s.trim()));if(!v)return false;
+    const d=pg.items.filter(i=>/^\d{2}\/\d{2}\/\d{4}$/.test(i.s.trim())&&i.t>v.t&&i.t<v.t+30&&Math.abs(i.x-v.x)<50)[0];
+    if(d){const[a,b,y]=d.s.trim().split("/");due=`${y}-${b}-${a}`}return !!d});
+  const fm=/realizados at[eé] (\d{2})\/(\d{2})/i.exec(all), cm=fm?+fm[2]:0, dM=due?+due.slice(5,7):0, dY=due?+due.slice(0,4):new Date().getFullYear();
+  const cy=cm&&dM&&cm>dM?dY-1:dY;
+  const MON=/^-?\d{1,3}(?:\.\d{3})*,\d{2}$/, toC=v=>(v.startsWith("-")?-1:1)*Number(v.replace(/[-.]/g,"").replace(",",""));
+  let rows=[],sec="",total=null,ant=null,pag=null;
+  for(const pg of pages){
+    for(const ln of pdfLines(pg)){
+      const c=ln.cells, c0=c[0]&&c[0].s||"";
+      if(/^Pagamento e Demais Cr[eé]ditos$/i.test(c0)){sec="cred";continue}
+      if(/^Despesas$/i.test(c0)){sec="desp";continue}
+      if(/^VALOR TOTAL$/i.test(c0)||/^Resumo da Fatura$/i.test(c0)){sec="";continue}
+      const mv=c.slice(1).find(x=>MON.test(x.s));
+      if(/^Saldo Anterior$/i.test(c0)&&mv) ant=toC(mv.s); else if(/^\(-\) Total de pagamentos$/i.test(c0)&&mv) pag=toC(mv.s); else if(/^\(=\) Saldo Desta Fatura$/i.test(c0)&&mv) total=toC(mv.s);
+      if(!sec) continue;
+      const d=/^(\d{2})\/(\d{2})(?:\s+(.*))?$/.exec(c0);if(!d||!mv) continue;
+      const vi=c.indexOf(mv);if(vi<1&&!d[3]) continue;
+      const pcell=c.slice(1,vi).find(x=>/^\d{1,2}\/\d{1,2}$/.test(x.s)), pm=pcell&&/^(\d{1,2})\/(\d{1,2})$/.exec(pcell.s);
+      const desc=[d[3]||"",...c.slice(1,vi).filter(x=>x!==pcell).map(x=>x.s)].join(" ").replace(/\s+/g," ").trim();
+      if(!desc) continue;
+      const cents=toC(mv.s);
+      if(sec==="cred"&&/DEB(ITO)? AUTOM|PAGAMENTO|PGTO|PAGTO/i.test(desc)) continue;
+      const m=+d[2], y=cm&&m>cm?cy-1:cy;
+      rows.push({date:`${y}-${d[2]}-${d[1]}`,desc:pm?parcTag(desc,+pm[1],+pm[2]):desc,shop:"",cents:sec==="cred"&&cents>0?-cents:cents});
+    }
+  }
+  rows.filter(r=>r.cents<0&&!FIN_RE.test(r.desc)).forEach(cr=>{const j=rows.findIndex(x=>x.cents===-cr.cents&&!x.gone);if(j>=0){rows[j].gone=1;cr.gone=1}});
+  rows=rows.filter(r=>!r.gone);
+  if(ant!=null&&pag!=null&&ant-pag>0) rows.push({date:due?shiftYM(due.slice(0,7),-1)+due.slice(7):today(),desc:"Saldo da fatura anterior",shop:"",cents:ant-pag,prev:true});
+  return {bank:"Santander",due,rows,total,close:fm?+fm[1]:0};
+}
 /* o que o app já sabe ler (mostrado na lista de cartões e na tela Você) — manter em dia quando calibrar um layout novo */
-const READS=[["Faturas de cartão","Inter, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
+const READS=[["Faturas de cartão","Inter, Nubank, Santander, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
   ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
 const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint expl" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
@@ -5864,7 +5950,7 @@ function invoiceEntry(r){
     /wellhub|gympass|academ|smart ?fit|decathlon|centauro|netshoes|nike|adidas|under armour|track ?& ?field|esporte|sport|futebol/.test(t)?"esporte":
     /farm|drog|clinic|saude|otica/.test(t)?"saude":
     /cine|parque|show|ingresso|teatro|steam|playstation|\bpsn\b|xbox|nintendo|epic ?games|riot|blizzard|roblox|garena/.test(t)?"lazer":
-    /xsolla|ubisoft|game ?pass|ps ?plus|anthropic|claude|netflix|spotify|youtube|apple\.com|google|prime|disney|hbo|assinat|patreon|udemy|subscription/.test(t)?"assin":
+    /xsolla|ubisoft|game ?pass|ps ?plus|anthropic|claude|netflix|spotify|youtube|apple[. ]com|google|prime|disney|hbo|assinat|patreon|udemy|subscription/.test(t)?"assin":
     /\bclaro\b|\bvivo\b|\btim\b|\boi\b|energia|enel|cpfl|sabesp|internet|telefon/.test(t)?"casa":
     /uber|99|posto|combust|estacion|onibus|metro/.test(t)?"transp":
     /magazine|hobby|caedu|renner|riachuelo|americanas|magalu|amazon|shein|gradi|loja|shop/.test(t)?"compras":"outros";
@@ -6966,7 +7052,7 @@ function impRender(){
   const[dy,dm,dd]=(imp.due||"--").split("-");
   $("impSheet").innerHTML=`<div class="grip"></div>
   <h3><span>Fatura ${esc(imp.card)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="imphead"><b>${R(tot)} em ${imp.rows.length} lançamentos</b><span class="hint">${imp.total!=null?(imp.total===tot?`bate com o total do banco ✓ · `:`<span class="warn">banco diz ${R(imp.total)}</span> · `):""}${imp.due?`vence ${dd}/${dm}/${dy}${imp.credits.length||(imp.bank&&imp.bank!==imp.card)?" · ":""}`:""}${imp.bank&&imp.bank!==imp.card?`<span class="warn">parece fatura do ${esc(imp.bank)}</span> · `:""}${imp.credits.length?`${imp.credits.length===1?"pagamento anterior ignorado":"pagamentos anteriores ignorados"} (${R(-imp.credits.reduce((s,x)=>s+x.cents,0))})`:""}</span></div>
+  <div class="imphead"><b>${R(tot)} em ${imp.rows.length} lançamentos</b><span class="hint">${imp.total!=null?(Math.abs(imp.total-tot)<=2?`bate com o total do banco ✓ · `:`<span class="warn">banco diz ${R(imp.total)}</span> · `):""}${imp.due?`vence ${dd}/${dm}/${dy}${imp.credits.length||(imp.bank&&imp.bank!==imp.card)?" · ":""}`:""}${imp.bank&&imp.bank!==imp.card?`<span class="warn">parece fatura do ${esc(imp.bank)}</span> · `:""}${imp.credits.length?`${imp.credits.length===1?"pagamento anterior ignorado":"pagamentos anteriores ignorados"} (${R(-imp.credits.reduce((s,x)=>s+x.cents,0))})`:""}</span></div>
   ${imp.again?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 8px">Esta fatura já foi importada antes. O que já está lançado aparece como “já lançado”.</p>`:""}
   ${imp.guess?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 8px">Não achei o vencimento no PDF: escolhi o mês pela data das compras. Confira abaixo.</p>`:""}
   <div class="field" style="margin-bottom:8px"><label for="impBill">Entra na fatura de</label><select id="impBill">${months.map(m=>`<option value="${m}" ${m===imp.bill?"selected":""}>${monthLabel(m)}</option>`).join("")}</select></div>

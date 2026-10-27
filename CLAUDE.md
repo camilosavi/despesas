@@ -91,6 +91,23 @@ card?, parc?:"i/n", group?, createdAt}`
   checkbox "Tirar R$ X de <mês anterior>" (`imp.fin`): reduz o "Saldo da fatura anterior" daquele mês (`finOf`=tag,
   `finCut`) ou, sem ele, cria item negativo "Parcelado da fatura (volta nas parcelas)". Idempotente por `finOf`. O valor
   volta nas parcelas ("Parcelamento da fatura", cat `cartao`). A entrada paga ("PG ENT PR EF") é só pagamento, ignorada.
+  **Nubank** (`parseNubank`, 27/10/2026, só layout; PDF de 8 páginas, sem valores guardados): detecta "Nu Pagamentos"/"Nubank" + "TRANSAÇÕES".
+  Vencimento da capa "Data de vencimento: DD MÊS AAAA" (mês abreviado em maiúsculas); datas dos lançamentos "DD MÊS" sem ano (ano pelo
+  fechamento de "DE DD MÊS A DD MÊS", virando o ano quando o mês passa do fechamento). Páginas "TRANSAÇÕES": célula da data, final do cartão
+  ("•••• NNNN", ausente em compra por NuPay), descrição "… - Parcela i/n" e valor "R$ x"; blocos por titular ("Nome R$ subtotal", sem data) e
+  seção "Pagamentos e Financiamentos". Valores negativos vêm com "−" (U+2212): `nuC` troca por "-". Ignora "Pagamento em DD MÊS" e
+  "Crédito de parcelamento de compra". 'Parcelamento de Compra "LOJA" - Parcela i/n' (com a linha "Total a pagar: … valor da transação de R$ X")
+  vira a parcela de LOJA e apaga a compra original de mesmo nome e valor (não por valor sozinho: há compras diferentes de mesmo valor).
+  " - NuPay" some do nome. "Resumo da fatura atual": Fatura anterior + Pagamento recebido (negativo) > 0 vira "Saldo da fatura anterior";
+  "Total a pagar" vira `r.total`. O banco arredonda parcelas com juros e a soma pode diferir 1 centavo do total: a importação aceita
+  até 2 centavos de diferença ("bate com o total do banco ✓").
+  **Santander** (`parseSantander`, 27/10/2026, só layout; 3 páginas): detecta "Santander" + "Detalhamento da Fatura". Vencimento = data logo abaixo
+  do rótulo "Vencimento" na capa (caixas); fechamento de "compras e pagamentos realizados até DD/MM" (ano pelo vencimento). Por cartão:
+  "Pagamento e Demais Créditos" e "Despesas" (colunas Compra/Data/Descrição/Parcela/R$/US$), linha "DD/MM DESCRIÇÃO [NN/NN] valor" — data e descrição
+  chegam juntas na mesma célula; valor sem "R$", 1º número da linha = coluna R$; parcela em célula própria ("NN/NN" na anuidade). "VALOR TOTAL" e
+  "Resumo da Fatura" encerram a seção. Pagamento ("DEB AUTOM DE FATURA…") ignorado; outro crédito entra negativo e cancela compra de mesmo valor
+  (não calibrado: o PDF de exemplo não tinha estorno nem compra no exterior). "Resumo": Saldo Anterior − Total de pagamentos > 0 vira
+  "Saldo da fatura anterior"; "Saldo Desta Fatura" vira `r.total`. Vários cartões (titular + adicional) repetem as seções.
 - Acesso: no app do iPhone (PWA) cada pessoa cria nome + senha de 6 dígitos no primeiro acesso (tela estilo app de
   banco). A senha fica só no aparelho (`despesas.auth`, PBKDF2 com sal); não dá para recuperar, só apagar os dados e
   recomeçar. Pede de novo ao reabrir o app ou depois de 5 min em segundo plano; "Bloquear app" na tela Você.
