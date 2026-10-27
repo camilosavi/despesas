@@ -7030,7 +7030,33 @@ function xlBuildList(S){
     const card=type==="desp"&&M.k>=0?xlCard(xlTxt(r[M.k])):null;
     const cat=M.c>=0?xlCatName(xlTxt(r[M.c]),type,desc):xlCat(desc,type);
     E.push({key:"l"+i,label:desc||catOf(cat,type).n,type,cat,card,date,ym:date.slice(0,7),cents:Math.abs(v)})});
+  xlSeries(E,S);
   return E;
+}
+/* mesmo nome em vários meses (um por mês) vira série ligada: com "3/10" no nome = compra parcelada (parc + group);
+   sem isso, valor igual em meses seguidos = assinatura/repetição (group sem parc, cat Assinaturas se não veio categoria).
+   A pessoa troca na conferência (S.serOpt[chave] = parc | sub | off). Valores diferentes sem parcela no nome ficam soltos. */
+const XL_PARC=/\(?\s*(?:parcela|parc\.?)?\s*(\d{1,2})\s*(?:\/|de)\s*(\d{1,2})\s*\)?/i;
+function xlSeries(E,S){
+  const so=S.serOpt||(S.serOpt={}), G={};
+  E.forEach(e=>{
+    if(e.type!=="desp") return;
+    let name=e.label,i=0,n=0;const m=XL_PARC.exec(name);
+    if(m&&+m[2]>=2&&+m[1]>=1&&+m[1]<=+m[2]){i=+m[1];n=+m[2];name=name.replace(m[0]," ")}
+    name=name.replace(/\s+/g," ").replace(/[\s\-–·(]+$/,"").trim();
+    const nk=fold(name).replace(/\d+/g,"").trim();if(!nk) return;
+    e.name=name;e.pi=i;e.pn=n;
+    const k=nk+"|"+(e.card||"");(G[k]=G[k]||[]).push(e)});
+  Object.entries(G).forEach(([k,L])=>{
+    const yms=[...new Set(L.map(e=>e.ym))].sort();
+    if(yms.length<2||yms.length!==L.length) return;
+    L.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+    const explicit=L.some(e=>e.pn), tot=Math.max(0,...L.map(e=>e.pn||0))||L.length;
+    const eq=L.every(e=>closeC(e.cents,L[0].cents)), consec=yms.every((y,j)=>j===0||shiftYM(yms[j-1],1)===y);
+    const def=explicit?"parc":eq&&consec?"sub":"off";
+    if(def==="off") return;
+    const mode=so[k]||def;
+    L.forEach((e,j)=>{e.sk=k;e.smode=mode;e.parcStr=`${e.pi||j+1}/${tot}`})});
 }
 /* data, pago e situação (fora do período, já lançado, receita futura) de cada lançamento */
 function xlPlace(e){
@@ -7099,7 +7125,10 @@ function xlRender(){
     }else{
       const opt=(f,label,need)=>`<div class="field"><label for="xm${si}${f}">${label}</label><select id="xm${si}${f}" data-xmap="${si}|${f}">${need?"":`<option value="-1">—</option>`}${Array.from({length:S.W},(_,j)=>`<option value="${j}" ${S.map[f]===j?"selected":""}>${xlColName(j)}${S.hd[j]?` · ${esc(String(S.hd[j]).slice(0,24))}`:""}</option>`).join("")}</select></div>`;
       h+=`<p class="hint" style="margin:4px 0 8px">${S.remembered?"Usei as colunas da última vez. ":""}Confira de qual coluna vem cada coisa:</p><div class="xmap">${opt("d","Data",1)}${opt("v","Valor",1)}${opt("t","Descrição")}${opt("c","Categoria")}${opt("y","Tipo (receita/despesa)")}${opt("k","Cartão / forma de pagamento")}</div>
-      <div class="ilist xlist">${SE.slice(0,60).map(e=>`<label class="irow ${e.on?"":"off"}"><input type="checkbox" data-xl="${xl.E.indexOf(e)}" ${e.on?"checked":""} ${e.st==="ok"?"":"disabled"}><span class="d">${esc(e.label)}</span><span class="v">${e.type==="rec"?"+ ":""}${R(e.cents)}</span><span class="m">${fmtDM(e.date)}/${e.date.slice(2,4)} · ${esc(catOf(e.cat,e.type).n)}${e.card?` · ${esc(e.card)}`:""}${e.st!=="ok"?` · ${XL_ST[e.st]}`:""}</span></label>`).join("")}${SE.length>60?`<p class="hint" style="padding:8px 0">+ ${SE.length-60} lançamentos</p>`:""}${SE.length?"":`<p class="hint" style="padding:8px 0">Nenhuma linha com data e valor nessas colunas.</p>`}</div>`;
+      ${(()=>{const ks=[...new Set(SE.filter(e=>e.sk).map(e=>e.sk))];if(!ks.length)return "";
+        return `<p class="hint" style="margin:4px 0 8px">Mesmo nome em vários meses:</p><div class="xmap">${ks.map(k=>{const L=SE.filter(e=>e.sk===k), e0=L[0];
+          return `<div class="field"><label>${esc(e0.name)} · ${L.length} meses · ${R(e0.cents)}</label><select data-xser="${si}|${esc(k)}" aria-label="Como lançar"><option value="parc" ${e0.smode==="parc"?"selected":""}>Compra parcelada</option><option value="sub" ${e0.smode==="sub"?"selected":""}>Assinatura (repete todo mês)</option><option value="off" ${e0.smode==="off"?"selected":""}>Lançamentos soltos</option></select></div>`}).join("")}</div>`})()}
+      <div class="ilist xlist">${SE.slice(0,60).map(e=>`<label class="irow ${e.on?"":"off"}"><input type="checkbox" data-xl="${xl.E.indexOf(e)}" ${e.on?"checked":""} ${e.st==="ok"?"":"disabled"}><span class="d">${esc(e.label)}</span><span class="v">${e.type==="rec"?"+ ":""}${R(e.cents)}</span><span class="m">${fmtDM(e.date)}/${e.date.slice(2,4)} · ${esc(catOf(e.cat,e.type).n)}${e.card?` · ${esc(e.card)}`:""}${e.smode==="parc"?` · parcela ${e.parcStr}`:e.smode==="sub"?" · assinatura":""}${e.st!=="ok"?` · ${XL_ST[e.st]}`:""}</span></label>`).join("")}${SE.length>60?`<p class="hint" style="padding:8px 0">+ ${SE.length-60} lançamentos</p>`:""}${SE.length?"":`<p class="hint" style="padding:8px 0">Nenhuma linha com data e valor nessas colunas.</p>`}</div>`;
     }
   });
   if(nFut) h+=`<label class="check"><input type="checkbox" id="xRecFut" ${xl.recFut?"checked":""}> Lançar também receitas de meses que ainda não chegaram (${nFut})</label>`;
@@ -7110,13 +7139,14 @@ function xlRender(){
 }
 function xlSync(t){
   if(!xl) return;
-  const dv=t.dataset.xrow||t.dataset.xtype||t.dataset.xcat||t.dataset.xmap||"|", a=dv.slice(0,dv.indexOf("|")), b=dv.slice(dv.indexOf("|")+1), S=xl.sheets[+a];
+  const dv=t.dataset.xrow||t.dataset.xtype||t.dataset.xcat||t.dataset.xmap||t.dataset.xser||"|", a=dv.slice(0,dv.indexOf("|")), b=dv.slice(dv.indexOf("|")+1), S=xl.sheets[+a];
   if(t.dataset.xsh!=null) xl.sheets[+t.dataset.xsh].on=t.checked;
   else if(t.dataset.xyear!=null) xl.sheets[+t.dataset.xyear].year=+t.value;
   else if(t.dataset.xrow) S.rowOpt[b].on=t.checked;
   else if(t.dataset.xtype){S.rowOpt[b].type=t.value;S.rowOpt[b].cat=null}
   else if(t.dataset.xcat) S.rowOpt[b].cat=t.value;
   else if(t.dataset.xmap) S.map[b]=+t.value;
+  else if(t.dataset.xser) S.serOpt[b]=t.value;
   else if(t.id==="xRecFut") xl.recFut=t.checked;
   const keep=xl.E.filter(e=>!e.on&&e.st==="ok"&&xl.sheets[e.si].mode==="list").map(xlKey);
   if(t.dataset.xl!=null){xl.E[+t.dataset.xl].on=t.checked}
@@ -7132,11 +7162,13 @@ async function xlImport(btn){
     const cards={...(cfg.cards||{})};let nc=false;
     on.forEach(e=>{if(e.card&&!cards[e.card]&&!allCards().includes(e.card)){cards[e.card]={color:CARD_COLOR[e.card]||(bankOf(e.card)||{}).c||CARD_PALETTE[Object.keys(cards).length%CARD_PALETTE.length]};nc=true}});
     if(nc) await saveCfg({cards});
-    let n=0;
+    let n=0;const sg={};
     for(const e of on){const pl=xlPlace(e), S=xl.sheets[e.si];
-      const fat=e.card&&!e.date;
-      const x={type:e.type,desc:fat?`Fatura ${e.card}`:e.label,cat:fat?"cartao":e.cat,cents:e.cents,date:pl.date,...(pl.buy?{buy:pl.buy}:{}),
+      const fat=e.card&&!e.date, ser=e.sk&&e.smode!=="off"?e.smode:"";
+      if(ser&&!sg[e.si+"|"+e.sk]) sg[e.si+"|"+e.sk]="g"+now+"_x"+Object.keys(sg).length;
+      const x={type:e.type,desc:fat?`Fatura ${e.card}`:ser?e.name:e.label,cat:fat?"cartao":ser==="sub"&&e.cat==="outros"?"assin":e.cat,cents:e.cents,date:pl.date,...(pl.buy?{buy:pl.buy}:{}),
         pay:e.type==="rec"?"":e.card?"Crédito":"Pix",card:e.card||"",paid:e.type==="rec"?true:e.paidCol!=null?e.paidCol:e.card&&e.date?false:pl.date<t,
+        ...(ser?{group:sg[e.si+"|"+e.sk],...(ser==="parc"?{parc:e.parcStr}:{})}:{}),
         xls:id,xlsKey:xlKey(e),createdAt:now+n};
       await store.items.add(x);n++}
     const maps={...(cfg.xlsMaps||{})};xl.sheets.forEach(S=>{if(S.mode==="list"&&S.on)maps[S.sig]={d:S.map.d,v:S.map.v,t:S.map.t,c:S.map.c,y:S.map.y,k:S.map.k}});

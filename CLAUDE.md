@@ -250,7 +250,7 @@ card?, parc?:"i/n", group?, createdAt}`
   descrição/categoria/tipo/cartão por nome e conteúdo; a pessoa troca nos seletores; `cfg.xlsMaps[assinatura]` lembra).
   Pula totais (`XL_SKIP`), fórmulas que citam células (`ref`), linhas sem número. Linha com nome de cartão (`xlCard`) vira
   "Fatura X" (genFat: só conta se o cartão não tem itens no mês). Respeita `MIN_YM`/`MIN_DUE`; já lançado (`xlState`) e
-  receita de mês futuro (não pré-lançar salário) ficam desmarcados. Itens levam `xls:<id>` e `xlsKey`; `cfg.xlsLast` →
+  receita de mês futuro (não pré-lançar salário) ficam desmarcados. **Séries na lista** (27/10/2026, `xlSeries`, pedido dele: "reconhecer lançamentos com mesmo nome por vários meses… compra ou assinatura"): despesas de mesmo nome (e cartão), um por mês, viram série ligada. Com "i/n" no nome (`XL_PARC`: "(3/10)", "parcela 3 de 10") = **compra parcelada** (`parc` + `group`, nome sem a parcela); sem isso, valor igual em meses seguidos = **assinatura** (`group` sem `parc`; cat Assinaturas só se a categoria ficou "Outros"). Valores diferentes sem parcela no nome ficam soltos. Seletor "Mesmo nome em vários meses" na conferência (`S.serOpt`, `data-xser`: parcela / assinatura / soltos). Itens levam `xls:<id>` e `xlsKey`; `cfg.xlsLast` →
   "Desfazer importação (N)". Grade junta linhas de mesmo nome entre blocos (`rowOpt` por nome).
 - Zerar: "Zerar <mês>" na tela do cartão apaga os itens do cartão no mês + parcelas seguintes das mesmas compras
   (desfazer via `despesas.antesZerarMes`); "Zerar tudo" na tela Você (desfazer na tela de boas-vindas, `despesas.antesZerar`).
