@@ -1580,6 +1580,18 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .wrap main section,.wrap main section+section,#pHome>section+section,#mBody>section+section,#pAno>section+section{margin-top:0!important;margin-bottom:var(--g-gap)!important}
   .hdash section,.htop>section,.mes-split>*>section:last-child,.ano-visao-grid>*>section:last-child{margin-bottom:0!important}
   .hdash .htop+.htop,.hdash>*+*{margin-top:0!important}}
+/* Aparência alinhada (27/10/2026): blocos com rótulo igual, seletores na largura toda, cores em 4 colunas */
+#lookSec .card{display:grid;gap:var(--g-pad)}
+#lookSec .lkl{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px}
+#lookSec .lkph{display:flex;align-items:center;gap:14px}
+#lookSec .lkav{width:52px;height:52px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--btn) center/cover;color:var(--btn-ink);font-weight:800;font-size:1.2rem}
+#lookSec .lkph .btns{display:flex;gap:8px;flex-wrap:wrap}
+#lookSec .lkseg{display:flex;width:100%}
+#lookSec .lkseg button{flex:1;text-align:center;padding-inline:6px}
+#lookSec .thgrid{grid-template-columns:repeat(5,1fr);gap:14px 10px}
+#lookSec .thit .thsw{width:100%;max-width:64px}
+#lookSec .thit{text-align:center}
+#lookSec .thit span{display:block;margin-top:6px;font-size:.74rem;line-height:1.15;white-space:nowrap}
 </style>
 
 <div class="wrap">
@@ -3647,18 +3659,17 @@ function lookSection(){
   const cur=lsGet("despesas.theme")||"tostao", mode=lsGet("despesas.mode")||"auto", pc=lsGet("despesas.photoColor"), fc=lsGet("despesas.themeColor")||"#2E4C8A";
   const it=(k,inner,lbl,extra="")=>`<div class="thit">${inner}<span>${lbl}</span></div>`;
   const sw=k=>it(k,`<button class="thsw" data-theme-pick="${k}" style="--h:${THEMES[k][0]};--a:${THEMES[k][1]}" aria-label="Tema ${TH_N[k]}" aria-pressed="${k===cur}"></button>`,TH_N[k]);
+  const G=(t,inner)=>`<div class="lkg"><div class="lkl">${t}</div>${inner}</div>`;
+  const av=userPhoto()?`<span class="lkav" style="background-image:url('${userPhoto()}')"></span>`:`<span class="lkav">${esc(((typeof myName==="function"&&myName())||"?").slice(0,1).toUpperCase())}</span>`;
+  const topo=["fixa","antes"].includes(lsGet("despesas.topo"))?lsGet("despesas.topo"):"";
   return `<section id="lookSec"><h2>Aparência</h2><div class="card rate">
-    <div class="look"><div><b>Sua foto</b><div class="btns" style="margin-top:8px"><label class="tbtn" style="cursor:pointer">${userPhoto()?"Trocar foto":"Escolher foto"}<input type="file" id="photoIn" accept="image/*" hidden></label>${userPhoto()?`<button class="tbtn" id="photoDel">Tirar foto</button>`:""}</div></div></div>
+    ${G("Foto",`<div class="lkph">${av}<div class="btns"><label class="tbtn" style="cursor:pointer">${userPhoto()?"Trocar":"Escolher foto"}<input type="file" id="photoIn" accept="image/*" hidden></label>${userPhoto()?`<button class="tbtn" id="photoDel">Tirar</button>`:""}</div></div>`)}
     ${photoSug&&userPhoto()&&pc?`<div class="thsug"><i style="background:${pc}"></i><span style="font-size:.88rem">Combinar o app com a cor da sua foto?</span><button class="tbtn go" data-theme-pick="foto">Usar</button></div>`:""}
-    <div class="segc" role="group" aria-label="Claro ou escuro" style="justify-self:start">${[["auto","Automático"],["light","Claro"],["dark","Escuro"]].map(([k,n])=>`<button data-mode-pick="${k}" aria-pressed="${mode===k}">${n}</button>`).join("")}</div>
-    <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Faixa do relógio (iPhone)</div>
-    <div class="segc" role="group" aria-label="Faixa do relógio" style="justify-self:start;flex-wrap:wrap">${[["","Padrão"],["fixa","Faixa fixa"],["antes","Como antes"]].map(([k,n])=>`<button data-topo-pick="${k}" aria-pressed="${(["fixa","antes"].includes(lsGet("despesas.topo"))?lsGet("despesas.topo"):"")===k}">${n}</button>`).join("")}</div></div>
-    <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Sóbrios</div>
-    <div class="thgrid">${["tostao","verde","meianoite","bordo","petroleo","oliva","cafe"].map(sw).join("")}</div></div>
-    <div><div class="lbl" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:8px">Vivos e mais</div>
-    <div class="thgrid">${["ameixa","azul","roxo","laranja","rosa","grafite"].map(sw).join("")}
+    ${G("Modo",`<div class="segc lkseg" role="group" aria-label="Claro ou escuro">${[["auto","Automático"],["light","Claro"],["dark","Escuro"]].map(([k,n])=>`<button data-mode-pick="${k}" aria-pressed="${mode===k}">${n}</button>`).join("")}</div>`)}
+    ${G("Cor do app",`<div class="thgrid">${["tostao","verde","meianoite","bordo","petroleo","oliva","cafe","ameixa","azul","roxo","laranja","rosa","grafite"].map(sw).join("")}
       ${userPhoto()&&pc?it("foto",`<button class="thsw photo" data-theme-pick="foto" style="background-image:url('${userPhoto()}')" aria-label="Tema da cor da sua foto" aria-pressed="${cur==="foto"}"></button>`,"Sua foto"):""}
-      ${it("livre",`<span class="thsw free" role="button" aria-label="Escolher qualquer cor" aria-pressed="${cur==="livre"}" style="${cur==="livre"?`background:${fc}`:""}"><input type="color" id="themeFree" value="${fc}"></span>`,"Cor livre")}</div></div>
+      ${it("livre",`<span class="thsw free" role="button" aria-label="Escolher qualquer cor" aria-pressed="${cur==="livre"}" style="${cur==="livre"?`background:${fc}`:""}"><input type="color" id="themeFree" value="${fc}"></span>`,"Cor livre")}</div>`)}
+    ${G("Faixa do relógio (iPhone)",`<div class="segc lkseg" role="group" aria-label="Faixa do relógio">${[["","Padrão"],["fixa","Fixa"],["antes","Como antes"]].map(([k,n])=>`<button data-topo-pick="${k}" aria-pressed="${topo===k}">${n}</button>`).join("")}</div>`)}
     <div class="hint expl">A foto aparece na barra das abas e na tela de entrada.${syncOn()?" Foto e tema vão junto na sincronização.":" Foto e tema ficam só neste aparelho."}</div></div></section>`;
 }
 function timeline(ym,arr){
