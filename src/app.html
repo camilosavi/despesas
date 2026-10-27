@@ -3315,8 +3315,12 @@ const toSes=j=>({at:j.access_token,rt:j.refresh_token,exp:Date.now()+((+j.expire
 async function sbTok(){
   const s=sbSes();if(!s)throw sbErr("sem login",401);
   if(Date.now()<s.exp)return s.at;
-  try{sbSave(toSes(await sbAuth("token?grant_type=refresh_token",{refresh_token:s.rt})));return sbSes().at}
-  catch(e){if(e.status>=400&&e.status<500){sbSave(null);showAuth("A sessão acabou. Entre de novo.",true)}throw e}}
+  /* uma renovação por vez: duas ao mesmo tempo gastam o mesmo refresh_token e a 2ª derrubava o login */
+  if(!sbTok.p)sbTok.p=(async()=>{
+    try{sbSave(toSes(await sbAuth("token?grant_type=refresh_token",{refresh_token:s.rt})));return sbSes().at}
+    catch(e){if([400,401,403].includes(e.status)){sbSave(null);showAuth("A sessão acabou. Entre de novo.",true)}throw e}
+    finally{sbTok.p=null}})();
+  return sbTok.p}
 async function sbApi(method,path,body,prefer){
   const t=await sbTok();
   const r=await fetch(SB_URL+"/rest/v1/"+path,{method,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(prefer?{Prefer:prefer}:{})},body:body?JSON.stringify(body):undefined});
@@ -3445,7 +3449,7 @@ const SB_BACK=(()=>{const p=new URLSearchParams(location.hash.slice(1)), q=new U
   if(!at&&!er)return null;
   history.replaceState(null,"",location.pathname);
   if(er)return {err:er.replace(/\+/g," ")};
-  return {at,rt:p.get("refresh_token")||"",exp:+p.get("expires_in")||3600}})();
+  return {at,rt:p.get("refresh_token")||"",exp:+p.get("expires_in")||3600,rec:p.get("type")==="recovery"}})();
 const AU_G=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.5-2.7c-1 .7-2.2 1-3.8 1-2.9 0-5.3-2-6.2-4.6H2.1v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14c-.2-.7-.4-1.3-.4-2s.1-1.4.4-2V7.2H2.1a11 11 0 0 0 0 9.6z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.1 7.2L5.8 10c.9-2.6 3.3-4.6 6.2-4.6z"/></svg>`;
 function showAuth(msg,isErr){
   const el=$("auth");if(!el||!PWA)return;
@@ -3457,6 +3461,7 @@ function showAuth(msg,isErr){
       <div class="lk-msg" id="auMsg" role="alert"></div>
       <button type="submit" class="ab" id="auIn">Entrar</button>
       <button type="button" class="ab sec" id="auNew">Criar conta</button>
+      <button type="button" class="ab sec" id="auForgot" style="background:none;border:0;opacity:.8;font-size:.9rem">Esqueci a senha</button>
       <div class="au-or"><span>ou</span></div>
       <button type="button" class="ab sec" id="auGoogle">${AU_G}Entrar com o Google</button>
     </form>`}
@@ -3467,25 +3472,47 @@ function authErr(e){const m=String(e&&e.message||""), c=e&&e.code||"";
   return /invalid_credentials/.test(c)||/invalid login/i.test(m)?"E-mail ou senha incorretos.":
     /user_already_exists/.test(c)||/already registered/i.test(m)?"Esse e-mail já tem conta. Toque em Entrar.":
     /email_not_confirmed/.test(c)?"Confirme o e-mail primeiro (veja a caixa de entrada).":
-    /weak_password/.test(c)?"Senha fraca. Use pelo menos 8 caracteres, com letras e números.":
-    /over_.*rate_limit|rate_limit/.test(c)||e&&e.status===429?"Muitas tentativas. Espere alguns minutos.":
+    /weak_password/.test(c)?"Senha fraca. Use uma maior, com letras e números.":
+    /over_email_send_rate_limit/.test(c)?"Limite de e-mails do servidor atingido. Tente daqui a uma hora ou avise o Camilo.":
+    /rate_limit/.test(c)||e&&e.status===429?"Muitas tentativas. Espere alguns minutos.":
     /signup_disabled/.test(c)?"O cadastro está desativado no Supabase.":
-    !e||e.status==null?"Sem conexão. Tente de novo.":m||"Não deu para entrar."}
+    /signup.*(disabled|not allowed)/i.test(m)?"O cadastro está desativado no Supabase.":
+    !e||e.status==null?"Sem conexão. Tente de novo.":e.status>=500?"O servidor falhou"+(m&&!/^http/.test(m)?" ("+m+")":"")+". Tente de novo em instantes.":m||"Não deu para entrar."}
 async function authGo(create){
   const em=($("auEmail").value||"").trim().toLowerCase(), pw=$("auPass").value||"";
   if(!/^\S+@\S+\.\S+$/.test(em)){authMsg("Digite um e-mail válido.",true);return}
   if(pw.length<6){authMsg("A senha precisa de 6 ou mais caracteres.",true);return}
+  if(authGo.busy)return;authGo.busy=true;
   const bt=[$("auIn"),$("auNew"),$("auGoogle")];bt.forEach(b=>b.disabled=true);authMsg("");
   try{
-    if(create){const j=await sbAuth("signup",{email:em,password:pw});if(!j.access_token){authMsg("Conta criada. Confirme pelo e-mail e depois toque em Entrar.");bt.forEach(b=>b.disabled=false);return}sbSave(toSes(j))}
+    if(create){const j=await sbAuth("signup?redirect_to="+encodeURIComponent(G_REDIR),{email:em,password:pw});
+      /* e-mail que já tem conta: com "confirmar e-mail" ligado o Supabase devolve 200 sem sessão e sem identidades */
+      if(!j.access_token&&Array.isArray((j.user||j).identities)&&!(j.user||j).identities.length)throw sbErr("already registered",422,"user_already_exists");
+      if(!j.access_token){authMsg("Conta criada. Abra o link que chegou no seu e-mail (veja o spam) e depois toque em Entrar.");bt.forEach(b=>b.disabled=false);return}sbSave(toSes(j))}
     else sbSave(toSes(await sbAuth("token?grant_type=password",{email:em,password:pw})));
     hideAuth();afterLogin()
-  }catch(e){authMsg(authErr(e),true);bt.forEach(b=>{if(b.isConnected)b.disabled=false})}}
+  }catch(e){authMsg(authErr(e),true);bt.forEach(b=>{if(b.isConnected)b.disabled=false})}
+  finally{authGo.busy=false}}
+async function authForgot(){
+  const em=($("auEmail").value||"").trim().toLowerCase();
+  if(!/^\S+@\S+\.\S+$/.test(em)){authMsg("Digite seu e-mail acima e toque de novo.",true);return}
+  authMsg("Enviando…");
+  try{await sbAuth("recover?redirect_to="+encodeURIComponent(G_REDIR),{email:em});authMsg("Se esse e-mail tem conta, o link para criar a senha nova já foi enviado.")}
+  catch(e){authMsg(authErr(e),true)}}
+/* volta do link "esqueci a senha": já entra e pede a senha nova */
+function newPassForm(){showAuth("");const f=$("auForm");if(!f)return;
+  f.innerHTML=`<div class="lk-msg" style="margin-bottom:6px">Crie sua senha nova</div><input type="password" id="auPass" autocomplete="new-password" placeholder="Senha nova" aria-label="Senha nova"><div class="lk-msg" id="auMsg" role="alert"></div><button type="button" class="ab" id="auSetPw">Salvar e entrar</button>`}
+async function authSetPw(){
+  const pw=$("auPass").value||"";if(pw.length<6){authMsg("A senha precisa de 6 ou mais caracteres.",true);return}
+  try{const t=await sbTok();const r=await fetch(SB_URL+"/auth/v1/user",{method:"PUT",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
+    const j=await r.json().catch(()=>({}));if(!r.ok)throw sbErr(j.msg||j.message||"http "+r.status,r.status,j.error_code||j.code);
+    hideAuth();toast("Senha nova salva.",true);afterLogin()}
+  catch(e){authMsg(authErr(e),true)}}
 function afterLogin(){syncMetaSet({errAt:0,errMsg:""});render();renderSyncBits();setTimeout(()=>syncNow(true),300)}
 async function sbFinish(b){
-  showAuth(b.err?"Google: "+b.err:"Entrando…",!!b.err);if(b.err)return;
+  showAuth(b.err?(/expired|invalid/i.test(b.err)?"O link venceu ou já foi usado. Peça outro.":"Não deu para entrar: "+b.err):"Entrando…",!!b.err);if(b.err)return;
   try{const r=await fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_KEY,Authorization:"Bearer "+b.at}});if(!r.ok)throw 0;const u=await r.json();
-    sbSave({at:b.at,rt:b.rt,exp:Date.now()+(b.exp-60)*1e3,uid:u.id||"",email:u.email||""});hideAuth();afterLogin()}
+    sbSave({at:b.at,rt:b.rt,exp:Date.now()+(b.exp-60)*1e3,uid:u.id||"",email:u.email||""});if(b.rec){newPassForm();return}hideAuth();afterLogin()}
   catch(e){authMsg("Não deu para entrar com o Google. Tente de novo.",true)}}
 /* sai só com tudo enviado; depois apaga os dados deste aparelho (continuam na conta) */
 async function sbSignOut(){
@@ -3496,7 +3523,9 @@ async function sbSignOut(){
   location.reload()}
 $("auth").addEventListener("submit",e=>{e.preventDefault();authGo(false)});
 $("auth").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
-  if(t.id==="auNew")authGo(true);
+  if(t.id==="auNew"){const pi=$("auPass");if(pi)pi.setAttribute("autocomplete","new-password");authGo(true)}
+  else if(t.id==="auForgot")authForgot();
+  else if(t.id==="auSetPw")authSetPw();
   else if(t.id==="auGoogle"){authMsg("Abrindo o Google…");location.href=SB_URL+"/auth/v1/authorize?provider=google&redirect_to="+encodeURIComponent(G_REDIR)}});
 /* arrastar um lançamento para a esquerda: marca como pago (ou volta para a pagar). Só despesas, fora de benefício. */
 let swipeJust=false;

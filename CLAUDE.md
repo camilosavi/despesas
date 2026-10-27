@@ -588,6 +588,11 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
     volta com `#access_token=…&refresh_token=…`, lido por `SB_BACK` antes de tudo, `sbFinish`). Sessão em `despesas.sb` ({at,rt,exp,uid,email}),
     renovada sozinha em `sbTok`; refresh recusado (4xx) limpa a sessão e reabre o login. A senha de 6 dígitos/Face ID continuam como trava
     local do aparelho (vem **depois** do login; no 1º acesso o "name" pede nome e PIN).
+  - **Auditoria do login** (27/10/2026): `sbTok` renova uma vez por vez (`sbTok.p`; duas renovações juntas gastavam o mesmo refresh_token e
+    derrubavam o login) e só desloga em 400/401/403 (429 não). Cadastro: `redirect_to` no signup (link do e-mail volta ao app; `SB_BACK` entra),
+    e-mail que já existe com "confirmar e-mail" ligado vem 200 com `identities` vazio → "já tem conta". Mensagens: `over_email_send_rate_limit`
+    (limite de e-mails do Supabase, causa comum de "não deixa criar conta"), 5xx com texto do servidor. **Esqueci a senha** (`authForgot` →
+    `/auth/v1/recover`; o link volta com `type=recovery` → `newPassForm`/`authSetPw`, PUT `/auth/v1/user`). `authGo.busy` evita toque duplo.
   - URL do projeto e chave *publishable* (`SB_URL`, `SB_KEY`) ficam no código (públicas por desenho). **Nunca** senha do banco, `service_role`
     ou chave secreta do Google no repositório.
   - **Tabela** `sync_rows` (esquema em `supabase/sync.sql`, ele roda uma vez no SQL Editor): `user_id`, `kind`, `id`, `data` ({"v": valor}),
