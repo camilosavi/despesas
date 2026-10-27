@@ -4622,7 +4622,21 @@ function ofBanner(){
   const n=ofNews, k=t=>ofView.acc.findIndex(x=>x.type===t);
   const parts=[n.ext?`${n.ext} ${n.ext===1?"movimento novo":"movimentos novos"} na conta`:"",n.fat?`${n.fat} ${n.fat===1?"compra nova":"compras novas"} na fatura`:""].filter(Boolean);
   return `<section><div class="card banner"><strong>${esc(n.bank)}: ${parts.join(" e ")}</strong><p>Veio do banco pelo Open Finance. Saldo na conta e limite do cartão já foram atualizados.</p>
-    <div class="row" style="flex-wrap:wrap"><button class="btn soft" id="ofNo">Agora não</button>${n.ext?`<button class="btn primary" data-ofimp="${k("BANK")}" data-ofnews="1">Importar conta</button>`:""}${n.fat?`<button class="btn primary" data-ofimp="${k("CREDIT")}" data-ofnews="1">Importar fatura</button>`:""}</div></div></section>`;
+    <div class="row" style="flex-wrap:wrap"><button class="btn soft" id="ofNo">Agora não</button><button class="btn primary" id="ofAll">Importar e mesclar tudo</button>${n.ext?`<button class="btn primary" data-ofimp="${k("BANK")}" data-ofnews="1">Importar conta</button>`:""}${n.fat?`<button class="btn primary" data-ofimp="${k("CREDIT")}" data-ofnews="1">Importar fatura</button>`:""}</div></div></section>`;
+}
+/* "Importar e mesclar tudo" (out/2026, pedido dele): faz o mesmo que "Importar conta" e "Importar fatura", sem parar na
+   tela de conferência: vale o que o app já deixa marcado (já lançado = mescla/marca pago; novo = lança). */
+async function ofAutoAll(btn){
+  if(!ofView) return;btn.disabled=true;btn.textContent="Importando…";
+  const wait=async f=>{for(let i=0;i<80;i++){if(f())return true;await new Promise(r=>setTimeout(r,100))}return false};
+  try{
+    const nw=ofNews||{ext:1,fat:1};ofSeen(ofView);
+    const kb=ofView.acc.findIndex(x=>x.type==="BANK"), kc=ofView.acc.findIndex(x=>x.type==="CREDIT");
+    if(kc>=0&&nw.fat){await ofImport(kc);if(await wait(()=>!$("impSheet").hidden)){$("impSheet").requestSubmit();await wait(()=>$("impSheet").hidden)}}
+    if(kb>=0&&nw.ext){await ofImport(kb);if(await wait(()=>ext&&$("exGo"))){await extApply($("exGo"));await wait(()=>$("diagSheet").hidden)}}
+    toast("Importado e mesclado",true);
+  }catch(e){toast("Parou no meio. Confira o que entrou e tente de novo.")}
+  render();
 }
 const ofCents=v=>Math.round((+v||0)*100);
 function ofTypeTxt(x){return x.type==="CREDIT"?"Cartão de crédito":x.subtype==="SAVINGS_ACCOUNT"?"Poupança":x.type==="BANK"?"Conta":String(x.type||"")}
@@ -4992,6 +5006,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="scrim"&&$("catSheet")&&!$("catSheet").hidden){$("catSheet").hidden=true;return}
   if(t.closest("[data-close]")||t.id==="scrim"){closeSheets();return}
   {const tg=t.closest("[data-oftog]");if(tg){const k=+tg.dataset.oftog;ofOpenAcc.has(k)?ofOpenAcc.delete(k):ofOpenAcc.add(k);render();return}}
+  if(t.id==="ofAll"){ofAutoAll(t);return}
   {const o=t.closest("[data-ofload],[data-offorget],[data-ofimp]");if(o){
     if(o.dataset.ofimp!=null){if(o.dataset.ofnews&&ofView)ofSeen(ofView);ofImport(+o.dataset.ofimp);return}
     if(o.dataset.ofload){ofLoad(o,o.dataset.ofload);return}
