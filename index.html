@@ -2107,7 +2107,7 @@ function cardFree(c){
   let free=k.bankFree;const U=new Set(usedItems(c).map(x=>x.id));
   items.forEach(x=>{if(cardOf(x)!==c||genFat(x))return;
     const isNew=x.buy?x.buy>d0:(x.createdAt||0)>t0;
-    if(isNew&&U.has(x.id)) free-=amt(x);                                  /* compra nova ainda em aberto */
+    if(isNew&&U.has(x.id)){if(!(x.buy&&x.buy>today())) free-=amt(x)}      /* compra nova ainda em aberto (data de compra futura, ex.: assinatura prevista, o banco ainda não cobrou) */
     else if(!isNew&&isPaid(x)&&(x.paidAt||0)>t0) free+=amt(x)});            /* pagou depois: libera */
   return {free,calc,bank:true};
 }
