@@ -3283,7 +3283,7 @@ function cardStrip(ym){
 /* ---------- conta e sincronização (Supabase) ----------
    Login por e-mail e senha ou Google (Supabase Auth, sessão em `despesas.sb`, renovada sozinha). Os dados do aparelho
    (lançamentos, compras de moeda, chaves do cfg, foto e tema) ficam na tabela `sync_rows` (uma linha por item, RLS por
-   usuário; esquema em supabase/sync.sql). Junta em 3 vias com a base `despesas.syncBase`: para cada lançamento/compra/
+   usuário; esquema em supabase/sync.sql). Junta em 3 vias com a base `despesas.sbBase`: para cada lançamento/compra/
    chave do cfg, quem mudou desde a base vence; mudou dos dois lados → fica o deste aparelho (na 1ª vez, o da nuvem).
    URL e chave *publishable* são públicas por desenho (a service_role NUNCA vem para o código). */
 const SB_URL="https://ndsiayzschaefigobwag.supabase.co", SB_KEY="sb_publishable_W_wX4ECguxH-Ay86y1bHfQ_MAKWhTHz";
@@ -3291,8 +3291,8 @@ const SES_K="despesas.sb", SY={busy:false,err:"",pending:false};
 const sbSes=()=>{try{return JSON.parse(lsGet(SES_K)||"null")}catch(e){return null}};
 const sbSave=v=>lsSet(SES_K,v?JSON.stringify(v):null);
 const syncOn=()=>!!(PWA&&sbSes());
-const syncMeta=()=>{try{return JSON.parse(lsGet("despesas.syncMeta")||"{}")}catch(e){return {}}};
-const syncMetaSet=o=>lsSet("despesas.syncMeta",JSON.stringify({...syncMeta(),...o}));
+const syncMeta=()=>{try{return JSON.parse(lsGet("despesas.sbMeta")||"{}")}catch(e){return {}}};
+const syncMetaSet=o=>lsSet("despesas.sbMeta",JSON.stringify({...syncMeta(),...o}));
 const sbErr=(m,status,code)=>Object.assign(new Error(m),{status,code:code||""});
 async function sbAuth(path,body){
   const r=await fetch(SB_URL+"/auth/v1/"+path,{method:"POST",headers:{apikey:SB_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
@@ -3337,7 +3337,7 @@ const hashMap=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[k,stab(v)]))
 const syDel=()=>{try{return JSON.parse(lsGet("despesas.syncDel")||"{}")||{}}catch(e){return {}}};
 function syDelAdd(id){if(!id)return;const d=syDel();d[id]=Date.now();lsSet("despesas.syncDel",JSON.stringify(d))}
 function syDelForget(ids){const d=syDel();let ch=false;(ids||[]).forEach(id=>{if(d[id]){delete d[id];ch=true}});if(ch)lsSet("despesas.syncDel",JSON.stringify(d))}
-function syncBase(){try{return JSON.parse(lsGet("despesas.syncBase")||"null")}catch(e){return null}}
+function syncBase(){try{return JSON.parse(lsGet("despesas.sbBase")||"null")}catch(e){return null}}
 /* nome do aparelho que vai junto, para mostrar de onde veio a última mudança */
 const syDev=()=>{const u=navigator.userAgent||"";return /iPhone|iPod/.test(u)?"iPhone":/iPad/.test(u)?"iPad":/Android/.test(u)?"celular":"computador"};
 /* quantas mudanças deste aparelho ainda não foram para a nuvem (compara com a base da última sincronização) */
@@ -3359,6 +3359,8 @@ async function syncNow(manual){
     const changedLocal=stab(m)!==stab(loc), changedRemote=stab(m)!==stab(rem)||stab(dl)!==stab(remDel);
     if(changedLocal&&stab(snapState())!==stab(loc)){SY.busy=false;renderSyncBits();syncSoon();return}
     if(changedLocal){
+      /* cópia de segurança antes de trazer da nuvem: se a junção tirou lançamentos daqui, guarda como estava (Você → Conta → Desfazer) */
+      try{if(Object.keys(m.items).length<Object.keys(loc.items).length||Object.keys(m.fx).length<Object.keys(loc.fx).length)local.wr("despesas.antesSync",{t:Date.now(),items:Object.values(loc.items),fx:Object.values(loc.fx),cfg:loc.cfg})}catch(e){}
       const I=Object.values(m.items), X=Object.values(m.fx), C={...m.cfg};LOCAL_CFG.forEach(k=>{if(cfg[k]!==undefined)C[k]=cfg[k]});
       local.wr("despesas.v3",I);local.wr("despesas.fx3",X);local.wr("despesas.cfg3",C);
       local._emit("i",I);local._emit("f",X);local._emit("s",C)}
@@ -3372,7 +3374,7 @@ async function syncNow(manual){
       if(Object.keys(du).length)await sbUp("d",du);if(dd.length)await sbDel("d",dd);
       await sbUp("m",{dev:{dev:syDev(),at:now}})}
     lsSet("despesas.syncDel",JSON.stringify(dl));
-    lsSet("despesas.syncBase",JSON.stringify({...hm,prefs:hashMap(m.prefs)}));
+    lsSet("despesas.sbBase",JSON.stringify({...hm,prefs:hashMap(m.prefs)}));
     syncMetaSet({errAt:0,errMsg:"",at:now,...(up?{upAt:now,upN:up}:{}),...(down||changedLocal?{downAt:now,downN:down,downFrom:remDev}:{})});SY.pending=false;
     const fromTxt=remDev&&remDev!==syDev()?` do ${remDev}`:" da nuvem";
     if(manual)toast(up&&down?`Enviei ${up} e recebi ${down}${fromTxt}`:up?`Enviei ${up} ${up>1?"mudanças":"mudança"}`:down?`Recebi ${down} ${down>1?"mudanças":"mudança"}${fromTxt}`:"Tudo igual à nuvem ✓",true);
@@ -7212,7 +7214,7 @@ $("lock").addEventListener("click",e=>{
   }
   if(e.target.id==="lkWipe"){
     if(!lk.wipeSure){lk.wipeSure=true;lockRender();return}
-    ["despesas.v3","despesas.fx3","despesas.cfg3",AUTH_KEY,"despesas.lockTries","despesas.lockUntil","despesas.syncBase","despesas.syncDel","despesas.syncMeta"].forEach(k=>localStorage.removeItem(k));
+    ["despesas.v3","despesas.fx3","despesas.cfg3",AUTH_KEY,"despesas.lockTries","despesas.lockUntil","despesas.sbBase","despesas.syncDel","despesas.sbMeta","despesas.antesSync"].forEach(k=>localStorage.removeItem(k));
     sessionStorage.removeItem("despesas.unlocked");location.reload();
   }
 });
