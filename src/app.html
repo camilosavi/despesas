@@ -1603,6 +1603,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
   <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div style="display:flex;gap:10px;align-items:center"><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"><span class="hint" id="divHint" style="margin:0">quantas pessoas, contando você</span></div></div>
+  <div class="field" id="pessoaField" hidden><span class="lbl" id="pessoaLbl">Pessoa</span><div class="chips" id="pessoaChips"></div><div id="pessoaBox" hidden style="margin-top:8px"><input type="text" id="pessoaVal" inputmode="numeric" placeholder="Quanto é dela (vazio = tudo)" aria-label="Quanto é da pessoa"><p class="hint" id="pessoaHint" style="margin:6px 0 0"></p></div></div>
   <div class="field" id="statusField"><span class="lbl">Situação</span><div class="seg" id="paidSeg" style="margin:0"><button type="button" data-paid="1">Pago</button><button type="button" data-paid="0">A pagar</button></div></div>
   <div class="field"><label for="date">Data</label><input type="date" id="date" min="2026-09-01"><p class="hint" id="dateHint" hidden style="margin:6px 0 0"></p></div>
   <div class="field" id="repField"><label for="rep">Parcelar ou repetir</label>
@@ -4117,12 +4118,15 @@ function azSubLines(name){
   });
   return out;
 }
-const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0);
+/* lançamentos ligados à pessoa (campo "Pessoa" no lançamento): despesa = você pagou por ela / pagou a ela (+); receita = ela te pagou (−) */
+const azLinked=p=>items.filter(x=>x.pessoa===p.id&&!genFat(x));
+const azLv=x=>(x.pv||x.cents||0)*(typeOf(x)==="rec"?-1:1);
+const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x),0);
 function azSection(){
   const L=azList();
-  let h=`<section id="azSec"><h2>Acertos ${azForm?"":`<button id="azAdd">+ Pessoa</button>`}</h2>`;
+  let h=`<section id="azSec"><h2>Pessoas ${azForm?"":`<button id="azAdd">+ Pessoa</button>`}</h2>`;
   if(azForm) h+=`<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><input id="azName" maxlength="24" placeholder="Nome (ex.: Mãe)"><div class="svbtns"><button class="btn soft" id="azCancel">Cancelar</button><button class="btn primary" id="azCreate">Criar</button></div></div>`;
-  if(!L.length) return h+(azForm?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa (ex.: Mãe) para lançar o que ela te deve e o que você deve a ela.</div>`)+`</section>`;
+  if(!L.length) return h+(azForm?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa (ex.: Mãe): dá para escolhê-la ao lançar uma despesa ou receita e ver quanto ela te deve ou você deve a ela.</div>`)+`</section>`;
   const net=L.reduce((s,p)=>s+azBal(p),0);
   h+=`<div class="card"><div class="svtot"><small>Saldo com todo mundo</small><b class="${net<0?"neg":net>0?"pos":""}">${R(Math.abs(net))}</b><span>${net>0?"te devem":net<0?"você deve":"tudo acertado ✓"}</span></div>`+
   L.map(p=>{
@@ -4132,7 +4136,7 @@ function azSection(){
       const mv=[...(p.moves||[])].sort((x,y)=>(x.done?1:0)-(y.done?1:0)||y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
       const line=(m,sub)=>`<${sub?"div":`button data-azmv="${esc(m.id)}"`} class="svmv" ${sub?"":`aria-label="Marcar como ${m.done?"não acertado":"acertado"}"`}><span style="${m.done?"text-decoration:line-through;opacity:.55":""}">${esc(m.desc||"Sem descrição")}${sub?"":` · ${fmtDate(m.date)}`}${sub?` · assinatura`:""}${m.done?" · acertado ✓":""}</span><span class="${m.cents<0?"neg":"pos"}" style="${m.done?"opacity:.55":""}">${m.cents<0?"−":"+"} ${R(Math.abs(m.cents))}${sub?"":`<span class="ed">${m.done?"desfazer":"acertar"}</span>`}</span></${sub?"div":"button"}>`;
       row+=`<div class="svedit"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div>`+
-        (mv.length||azSubLines(p.name).length?`<div style="margin-top:10px">`+azSubLines(p.name).map(m=>line(m,true)).join("")+mv.map(m=>line(m,false)).join("")+`</div>`:"")+
+        (mv.length||azSubLines(p.name).length||azLinked(p).length?`<div style="margin-top:10px">`+azSubLines(p.name).map(m=>line(m,true)).join("")+azLinked(p).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30).map(x=>`<button class="svmv" data-id="${esc(x.id)}"><span>${esc(cleanDesc(x))} · ${fmtDM(x.buy||x.date)}${x.parc?` · ${x.parc}`:""}</span><span class="${azLv(x)<0?"neg":"pos"}">${azLv(x)<0?"−":"+"} ${R(Math.abs(azLv(x)))}<span class="ed">${typeOf(x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`).join("")+mv.map(m=>line(m,false)).join("")+`</div>`:"")+
         `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
     }
     return row}).join("")+`</div></section>`;
@@ -5308,6 +5312,11 @@ function chips(){
     $("acctLbl").textContent=form.type==="rec"?"Entra na conta":"Sai da conta";
     const cur=A.some(a=>a.name===form.acct)?form.acct:(A[0]||{}).name;
     $("acctChips").innerHTML=A.map(a=>`<button type="button" class="chip" data-acct="${esc(a.name)}" aria-pressed="${a.name===cur}">${esc(a.name)}</button>`).join("")}
+  {const PE=azList();$("pessoaField").hidden=!PE.length;
+    $("pessoaLbl").textContent=form.type==="rec"?"Pessoa (quem te pagou)":"Pessoa (paguei por ela ou a ela)";
+    $("pessoaChips").innerHTML=[`<button type="button" class="chip" data-pessoa="" aria-pressed="${!form.pessoa}">Nenhuma</button>`,...PE.map(q=>`<button type="button" class="chip" data-pessoa="${esc(q.id)}" aria-pressed="${q.id===form.pessoa}">${esc(q.name)}</button>`)].join("");
+    const sel=PE.find(q=>q.id===form.pessoa);$("pessoaBox").hidden=!sel;
+    if(sel)$("pessoaHint").textContent=form.type==="rec"?`Entra no saldo: ${sel.name} te pagou.`:`Entra no saldo: ${sel.name} te deve (ou paga o que você devia).`}
   const PY=[...PAYS,...bens().map(b=>b.name)];
   $("payChips").innerHTML=PY.map(p=>`<button type="button" class="chip" data-pay="${esc(p)}" aria-pressed="${form.pay===p}">${esc(p)}</button>`).join("");
   $("statusField").classList.toggle("dim",!!benOf({pay:form.pay}));
@@ -5355,13 +5364,13 @@ function openSheet(x){
   closeSheets(true);
   editing=x||null;dupAck=null;mergeInto=null;
   const t=x?typeOf(x):form.type;
-  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||""}:{type:t,cents:0,acct:form.acct||"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
+  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoa:x.pessoa||""}:{type:t,cents:0,acct:form.acct||"",pessoa:"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
   $("desc").value=x?x.desc||"":"";
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();$("pessoaVal").value=x&&x.pv?brl(x.pv):"";
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
@@ -5388,6 +5397,7 @@ $("catChips").addEventListener("keydown",async e=>{if(e.target.id==="catNewIn"&&
 document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target&&e.target.id==="canBuy"){e.preventDefault();canBuySheet()}});
 $("catPickBtn").addEventListener("click",()=>{catNewOpen=false;chips();$("catSheet").hidden=false});
 $("catSheetClose").addEventListener("click",()=>{$("catSheet").hidden=true});
+$("pessoaChips").addEventListener("click",e=>{const b=e.target.closest("[data-pessoa]");if(b){form.pessoa=b.dataset.pessoa;chips()}});
 $("acctChips").addEventListener("click",e=>{const b=e.target.closest("[data-acct]");if(b){form.acct=b.dataset.acct;chips()}});
 $("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false;else form.paid=isPaid(editing)}else if(!editing)form.paid=($("date").value||today())<=today();else if(editing.pay==="Crédito")form.paid=(editing.buy||editing.date)<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
 function splitHint(){const h=$("splitHint");if(!h)return;const v=digits($("splitVal")?.value);h.textContent=v&&form.cents?(v<form.cents?`${form.pay}: ${R(form.cents-v)}`:"maior que o total"):""}
@@ -5405,6 +5415,9 @@ $("sheet").addEventListener("submit",async e=>{
   if($("date").value<MIN_YM+"-01"){err("err","O app começa em setembro/2026.");return}
   const isD=form.type==="desp";
   const base={type:form.type,cents:form.cents,desc:$("desc").value.trim(),cat:form.cat,pay:isD?form.pay:"",date:$("date").value,card:isD&&form.pay==="Crédito"&&form.card&&form.card!=="Outro"?form.card:""};
+  {const pe=form.pessoa&&azList().some(q=>q.id===form.pessoa)?form.pessoa:"";
+    if(pe){base.pessoa=pe;const pv=digits($("pessoaVal")?.value||"");base.pv=pv&&pv<base.cents?pv:0}
+    else if(editing&&editing.pessoa){base.pessoa="";base.pv=0}}
   {const A=acctsR();if(A.length>1&&!(isD&&benOf(base))) base.acct=A.some(a=>a.name===form.acct)?form.acct:A[0].name;else if(editing&&editing.acct) base.acct=""}
   if(isD) base.paid=benOf(base)?true:form.paid;
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}

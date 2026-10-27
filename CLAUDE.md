@@ -706,3 +706,9 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   pílulas com a bolinha da cor do banco, na mesma linha de Todos / A pagar / Pagos / Receitas (`mesFilterBar`, `.mfc`; PC igual).
 - **Lançar** (celular): `#sheet` vira flex em coluna; valor grande no topo (Bricolage 2,9rem), "Importar fatura ou conta (PDF)"
   desce para o fim (`order`) e a linha do Salvar fica grudada embaixo (sticky).
+
+## Pessoas (27/10/2026, pedido dele: "coisas a pagar a minha mãe e ela tem coisas a me pagar")
+- Seção **Pessoas** na Contas (`azSection()`, `#azSec`; dados em `cfg.acertos=[{id,name,moves:[{id,date,cents,desc?,done?}]}]`, `cents > 0` = a pessoa te deve, `< 0` = você deve a ela; "acertar" marca `done`). Não entra como despesa/receita nem em saldos.
+- No lançamento, campo **Pessoa** (`#pessoaField`, só com pessoas criadas): `x.pessoa` (id) e `x.pv` (parte dela em centavos, vazio = tudo). Despesa soma (`azLv`: você pagou por ela ou a ela), receita subtrai (ela te pagou). `azBal` = movimentos em aberto + partes de assinatura dividida (Valor por pessoa, mesmo nome, ainda não paga no mês) + lançamentos ligados.
+- Editar parcela/repetição (`group` fora das "s…" ou `buySeries`): nome, categoria e conta passam para a série toda; valor, data e situação ficam por mês.
+- Mesclar com item da fatura mantém `div` (divisão entre pessoas).
