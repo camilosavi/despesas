@@ -16,6 +16,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap">
 <style>
+/* ===== BASE ÚNICA (27/10/2026): espaço e largura de todas as telas saem destas variáveis; não escrever números soltos de
+   espaçamento nas camadas abaixo. --g-side borda da tela · --g-pad respiro dentro do bloco · --g-gap entre blocos ·
+   --g-top do topo até o 1º bloco · --g-col entre colunas no computador ===== */
+:root{--g-side:12px;--g-pad:16px;--g-gap:12px;--g-top:12px;--g-col:22px}
+@media (min-width:980px){:root{--g-gap:20px;--g-top:24px}}
 /* Layout: app de uma coluna com barra de abas embaixo (Início, Mês, Cartões, Moedas, Ano) e cabeçalho escuro com o número principal de cada aba */
 :root{
   --bg:#F3F5F2; --surface:#FFFFFF; --ink:#13201D; --muted:#5E6E69; --line:#DDE3DF; --zebra:#F7F9F7;
@@ -918,10 +923,10 @@ nav.tabs.onme::before{opacity:0}
 @media (min-width:980px){
   #pCards:has(>.cdwrap){column-count:1!important}
   #mBody:has(>.mes-split){column-count:1!important}
-  .mes-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);column-gap:28px;align-items:start}
+  .mes-split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);column-gap:var(--g-col);align-items:start}
   .mes-side{position:sticky;top:84px}
   .mestab-bar{display:none!important}
-  .cdwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:min-content 1fr;column-gap:22px;align-items:start}
+  .cdwrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:min-content 1fr;column-gap:var(--g-col);align-items:start}
   .cdmain,.cdmain2,.cdside{display:block;min-width:0}
   .cdmain{grid-column:1;grid-row:1}.cdmain2{grid-column:1;grid-row:2;margin-top:14px}.cdside{grid-column:2;grid-row:1/3}
   .htiles{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;overflow:visible!important;margin-inline:0!important;padding:0!important}
@@ -932,7 +937,7 @@ nav.tabs.onme::before{opacity:0}
   .wrap{max-width:var(--pcw);padding:0 var(--pcg) 64px}
   header.top{margin:20px 0 0!important;border-radius:26px!important;padding:22px 28px 24px!important}
   body::before{display:none}
-  #pHome:not([hidden]),#pCards:not([hidden]),#pFx:not([hidden]),#pAno:not([hidden]),#pOrc:not([hidden]),#pMe:not([hidden]),#mBody{column-count:2;column-gap:22px;margin-top:6px}
+  #pHome:not([hidden]),#pCards:not([hidden]),#pFx:not([hidden]),#pAno:not([hidden]),#pOrc:not([hidden]),#pMe:not([hidden]),#mBody{column-count:2;column-gap:var(--g-col);margin-top:0}
   main:not([hidden]){padding-top:18px}
   main section,#mBody>section,#importBox>*{break-inside:avoid;-webkit-column-break-inside:avoid}
   main>section:first-child,#mBody>section:first-child,#pMe>section:first-child{margin-top:0!important}
@@ -958,7 +963,7 @@ nav.tabs.onme::before{opacity:0}
 }
 @media (min-width:1500px){
   .cdwrap{grid-template-columns:minmax(0,2fr) minmax(0,1fr)!important}
-  .cdmain,.cdmain2{column-count:2;column-gap:22px}
+  .cdmain,.cdmain2{column-count:2;column-gap:var(--g-col)}
   #pHome:not([hidden]),#pAno:not([hidden]),#pCards:not([hidden]){column-count:3}
 }
 /* ---------- visual simples (out/2026, pedido dele: "simplificar o visual completo", ideia da tela do Meu Pluggy) ----------
@@ -1000,17 +1005,17 @@ h2 .h2act .lk{padding:0;font-size:.85rem;font-weight:700}
   header.top>.tcard>.split b{font-size:1.35rem}
   #pHome:not([hidden]){column-count:auto!important}
   #pHome .banner{margin-top:0}
-  .hdash{display:grid;gap:26px}
+  .hdash{display:grid;gap:var(--g-gap)}
   .hdash section{margin:0}
-  .htop{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:22px;align-items:stretch}
+  .htop{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:var(--g-gap) var(--g-col);align-items:stretch}
   .htop>section{display:flex;flex-direction:column}
   .htop>section>.card,.htop>section>.hcard{flex:1}
-  #pHome>.hdash:not(:first-child){margin-top:26px}
+  #pHome>.hdash:not(:first-child){margin-top:var(--g-gap)}
   .htop .hcard{display:flex;flex-direction:column;justify-content:flex-start}
   /* sem rolagem num 1440×900: topo mais baixo, linha de baixo com Vence/Benefícios/Euro lado a lado, rodapé numa linha */
   body:has(#pHome:not([hidden])) header.top{padding:16px 28px 18px!important}
   body:has(#pHome:not([hidden])) header.top .label{margin-top:8px}
-  .hdash{gap:20px}.htop{gap:20px}
+  .hdash{gap:var(--g-gap)}.htop{gap:var(--g-gap) var(--g-col)}
   #pHome .homefoot{margin-top:14px!important}
   .wrap{min-height:0!important}
   .fab{right:24px!important;bottom:24px!important;padding:0!important;width:58px!important}.fab span,.fab span#addLbl{display:none!important}.fab b{margin-top:-2px}
@@ -1170,14 +1175,14 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
   #pAno:not([hidden]){column-count:auto!important;display:block}
   #pCards:not([hidden]){column-count:auto!important}
   .folders{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
-  .card-detail-split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);column-gap:28px;align-items:start}
+  .card-detail-split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);column-gap:var(--g-col);align-items:start}
   .ano-subnav{justify-content:flex-start;margin-bottom:22px}
   .ano-ctrl{max-width:480px}
   .ano-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:22px}
-  .ano-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);column-gap:28px;align-items:start}
+  .ano-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);column-gap:var(--g-col);align-items:start}
   .ano-col-main,.ano-col-side{min-width:0}
   .ano-col-side{position:sticky;top:84px}
-  .ano-grid section{margin-top:0;margin-bottom:20px}
+  .ano-grid section{margin-top:0;margin-bottom:var(--g-gap)}
   nav.tabs{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:auto!important;transform:none!important;
     width:auto!important;max-width:none!important;height:64px!important;margin:0!important;border-radius:0!important;
     display:flex!important;align-items:center;gap:6px;
@@ -1303,7 +1308,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
  .mft{flex:0 0 220px!important}
  /* tela do cartão: cartão e limite à esquerda (420 px), fatura e itens à direita */
  /* colunas independentes (26/10/2026): a direita (fatura+itens) ocupa as linhas 1–2 e "Limite do cartão" sobe logo abaixo do cartão, sem buraco */
- .cdwrap{grid-template-columns:minmax(0,420px) minmax(0,1fr)!important;grid-template-rows:none!important;column-gap:28px!important}
+ .cdwrap{grid-template-columns:minmax(0,420px) minmax(0,1fr)!important;grid-template-rows:none!important;column-gap:var(--g-col)!important}
  .cdwrap>.cdcol{display:block;min-width:0}
  .cdcol>.cdmain2,.cdcol>.cdside{margin-top:14px!important}
  .cdwrap .cdhero{display:block;grid-column:1;grid-row:1;min-width:0}
@@ -1332,7 +1337,7 @@ header.top .split span{text-transform:none!important;letter-spacing:0!important;
 header.top .foot:empty{display:none}
 .monthpill{border-radius:999px!important}
 /* seções = blocos */
-.wrap main section,.wrap main section+section,#pHome>section+section,#mBody>section+section,#pAno>section+section{margin-top:12px!important;padding:16px 16px 14px!important;border-top:0!important;border-radius:var(--r)!important;background:var(--blk)!important;border:0!important;box-shadow:none!important}
+.wrap main section,.wrap main section+section,#pHome>section+section,#mBody>section+section,#pAno>section+section{margin-top:var(--g-gap)!important;padding:var(--g-pad) var(--g-pad) 14px!important;border-top:0!important;border-radius:var(--r)!important;background:var(--blk)!important;border:0!important;box-shadow:none!important}
 .wrap main section>h2,.wrap main section>.empty{font-family:var(--serif)!important;font-weight:700!important;font-size:1.02rem!important;letter-spacing:-.015em!important;margin:0 0 10px!important;text-transform:none!important;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .wrap main section>h2 small{font-family:var(--body)!important;font-weight:500;font-size:.8rem;color:var(--muted);margin-left:auto}
 .wrap main section>h2 .h2act,.wrap main section>h2>button,.wrap main section>h2>.lk{margin-left:auto;font-family:var(--body)!important;font-weight:700;font-size:.84rem}
@@ -1361,17 +1366,17 @@ section:has(.canbuy-card){--blk:transparent;padding:0!important}
 .ano-kpi-grid .hcard:nth-child(4){background:color-mix(in srgb,var(--c6) 15%,var(--surface))!important}
 .ano-kpi-grid .hcard b{font-family:var(--serif)!important;font-weight:700!important;letter-spacing:-.03em}
 /* alinhamento: todo texto começa em 28 px e termina em 412 px (bloco em 12 px + 16 px de respiro) */
-header.top{padding:18px 16px!important}
+header.top{padding:18px var(--g-pad)!important}
 .mfp{padding:0 16px!important}
 .mfbar{margin-inline:0!important;padding-inline:0!important}
 .mesw{padding:5px}
 .mesw button{text-align:center}
 .mdh,.mstack{padding-inline:16px!important}
 /* seletor Mês / Ano / Fixos */
-.mesw{display:flex;gap:6px;margin:12px 0 0;padding:5px;border-radius:999px;background:var(--chip)}
+.mesw{display:flex;gap:6px;margin:var(--g-gap) 0 0;padding:5px;border-radius:999px;background:var(--chip)}
 .mesw button{flex:1;border:0;border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:.92rem;padding:10px 0;cursor:pointer;transition:background .18s,color .18s}
 .mesw button.on{background:var(--ink);color:var(--bg)}
-@media (min-width:980px){.mesw{margin-bottom:24px}.mesw~.ano-grid,.mesw~.msearch,.mesw~#mBody{margin-top:0}}
+@media (min-width:980px){.mesw{margin-bottom:var(--g-gap)}.mesw~.ano-grid,.mesw~.msearch,.mesw~#mBody{margin-top:0}}
 /* busca e filtros */
 .msearch{border-radius:999px!important;background:var(--surface)!important;border:0!important;margin-top:12px!important}
 .mfp{border-radius:999px!important}
@@ -1464,7 +1469,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* ---------- Listas sem caixa e Lançar (21/10/2026, continuação do "Cartão no topo"; só celular) ---------- */
 @media (max-width:979px){
   /* Hoje e Mês: listas direto no fundo, título maior, sem bloco colorido (caixinhas e cartões continuam iguais) */
-  #pHome>section:not(:has(.htiles)):not(:has(.banner)):not(:has(.bline)),#mBody>section:not(:has(.htiles)){background:none!important;box-shadow:none!important;padding:0 4px!important;margin-top:24px!important}
+  #pHome>section:not(:has(.htiles)):not(:has(.banner)):not(:has(.bline)),#mBody>section:not(:has(.htiles)){background:none!important;box-shadow:none!important;padding:var(--g-pad) var(--g-pad) 14px!important;margin-top:var(--g-gap)!important}
   #pHome>section>h2,#mBody>section>h2{font-size:1.22rem!important;margin-bottom:6px!important}
   .canbuy-card{background:color-mix(in srgb,var(--ink) 7%,transparent)!important;color:var(--ink)!important}
   .canbuy-card small,.canbuy-card .hint{opacity:.7}
@@ -1530,14 +1535,14 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 @media (min-width:980px){#walMenu{align-items:center}#walMenu .wm-box{margin:0}}
 /* tela do cartão no computador em 3 colunas (out/2026): abaixo de 1200 px a 3ª coluna desce para baixo da fatura */
 @media (min-width:980px){
-  .cdwrap.cd3{grid-template-columns:minmax(0,400px) minmax(0,1fr)!important;column-gap:26px!important;align-items:start}
+  .cdwrap.cd3{grid-template-columns:minmax(0,400px) minmax(0,1fr)!important;column-gap:var(--g-col)!important;align-items:start}
   .cdwrap.cd3>.cdcol:nth-child(1){grid-column:1;grid-row:1/3}
   .cdwrap.cd3>.cdcol:nth-child(2){grid-column:2;grid-row:1}
   .cdwrap.cd3>.cdcol:nth-child(3){grid-column:2;grid-row:2}
   .cdwrap.cd3 .cdcol>.cdmain2:first-child,.cdwrap.cd3 .cdcol>.cdmain2.cdfirst{margin-top:0!important}
 }
 @media (min-width:1200px){
-  .cdwrap.cd3{grid-template-columns:minmax(0,360px) minmax(0,1fr) minmax(0,1fr)!important;column-gap:24px!important}
+  .cdwrap.cd3{grid-template-columns:minmax(0,360px) minmax(0,1fr) minmax(0,1fr)!important;column-gap:var(--g-col)!important}
   .cdwrap.cd3>.cdcol:nth-child(1){grid-column:1;grid-row:1}
   .cdwrap.cd3>.cdcol:nth-child(2){grid-column:2;grid-row:1}
   .cdwrap.cd3>.cdcol:nth-child(3){grid-column:3;grid-row:1}
@@ -1545,13 +1550,13 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* telas do computador em 3 colunas, como a do cartão (out/2026, pedido dele): só a partir de 1200 px; abaixo disso e no celular nada muda */
 @media (min-width:1200px){
   /* Contas e Fixos: as seções correm em 3 colunas (cada seção inteira, sem partir no meio) */
-  .ano-metas-grid,.ano-fixos-grid{display:block!important;column-count:3;column-gap:22px}
+  .ano-metas-grid,.ano-fixos-grid{display:block!important;column-count:3;column-gap:var(--g-col)}
   .ano-metas-grid>.ano-col-main,.ano-metas-grid>.ano-col-side,.ano-fixos-grid>.ano-col-main,.ano-fixos-grid>.ano-col-side{display:contents;position:static}
-  .ano-metas-grid section,.ano-metas-grid .card.contab,.ano-fixos-grid section{break-inside:avoid;margin-top:0;margin-bottom:20px}
+  .ano-metas-grid section,.ano-metas-grid .card.contab,.ano-fixos-grid section{break-inside:avoid;margin-top:0;margin-bottom:var(--g-gap)}
   .ano-metas-grid>*>*,.ano-fixos-grid>*>*{break-inside:avoid}
   .ano-metas-grid>.ano-col-main>:first-child,.ano-fixos-grid>.ano-col-main>:first-child{margin-top:0!important}
   /* Ano: gráfico e resumo à esquerda (2 colunas), próximos meses à direita */
-  .ano-visao-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;column-gap:22px!important}
+  .ano-visao-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;column-gap:var(--g-col)!important}
   .ano-visao-grid>.ano-col-main,.ano-visao-grid>.ano-col-side{display:contents;position:static}
   .ano-visao-grid>.ano-col-main>section:nth-child(1){grid-column:1/3;grid-row:1}
   .ano-visao-grid>.ano-col-main>section:nth-child(2){grid-column:1/3;grid-row:2}
@@ -1562,9 +1567,19 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .mes-main .card.tl{column-count:2;column-gap:26px}
   .mes-main .card.tl>*{break-inside:avoid}
   /* Você: aparência + duas colunas de seções */
-  #pMe:not([hidden]){column-count:3!important;column-gap:22px}
+  #pMe:not([hidden]){column-count:3!important;column-gap:var(--g-col)}
   #pMe>section{break-inside:avoid}
 }
+/* BASE ÚNICA (fim): topo → 1º bloco igual em todas as telas do computador; recuo duplo das caixinhas/dívidas/pessoas no celular;
+   linhas de limite que estouravam a largura em 375 px */
+.limbr{grid-template-columns:minmax(0,1fr)}
+#saveSec .svtot,#saveSec .svrow,#debtSec .svtot,#debtSec .svrow,#azSec .svtot,#azSec .svrow,.wrap main section>.svtot{padding-inline:0!important}
+@media (min-width:980px){#pHome:not([hidden]),#pMes:not([hidden]),#pAno:not([hidden]),#pCards:not([hidden]),#pFx:not([hidden]),#pMe:not([hidden]){margin-top:0!important;padding-top:var(--g-top)!important}
+  #pHome>:first-child,#pMes>:first-child,#pAno>:first-child,#pCards>:first-child,#pFx>:first-child,#pMe>:first-child,#pAno>.mesw:first-child,#pMes>.mesw:first-child{margin-top:0!important}
+  /* entre blocos: só a margem de baixo (sem somar com a de cima); dentro de grade, o espaço é o gap da grade */
+  .wrap main section,.wrap main section+section,#pHome>section+section,#mBody>section+section,#pAno>section+section{margin-top:0!important;margin-bottom:var(--g-gap)!important}
+  .hdash section,.htop>section,.mes-split>*>section:last-child,.ano-visao-grid>*>section:last-child{margin-bottom:0!important}
+  .hdash .htop+.htop,.hdash>*+*{margin-top:0!important}}
 </style>
 
 <div class="wrap">

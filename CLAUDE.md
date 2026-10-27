@@ -328,6 +328,15 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 
 ## Cuidados
 
+- **Base única de espaçamento** (27/10/2026, pedido dele: "muita coisa, tudo bagunçado"; 1ª etapa da reorganização, sem mover nada):
+  variáveis no topo do `<style>`: `--g-side` 12 (borda da tela), `--g-pad` 16 (respiro do bloco), `--g-gap` (12 celular / 20 PC, entre
+  blocos), `--g-top` (12 / 24, do topo até o 1º bloco), `--g-col` 22 (entre colunas no PC). **Não escrever número solto de espaçamento**:
+  usar as variáveis. Regras finais no fim do `<style>` ("BASE ÚNICA (fim)"): no PC os blocos só têm margem de baixo (sem somar com a de
+  cima) e o topo → 1º bloco é igual em todas as telas. Resultado medido: no celular todo título começa em 28 px e o espaço entre blocos é 12 px
+  em todas as telas (Hoje e Mês continuam "sem caixa", mas no mesmo alinhamento); no PC 24 px do topo, 20 px entre blocos, 22 px entre colunas.
+  Caixinhas/Dívidas/Pessoas sem o recuo duplo; `.limbr` não estoura mais em 375 px. Teste: medir as bordas e os espaços de todas as telas
+  em 320, 375, 440 (claro/escuro) e 1440 antes de publicar mudança visual.
+
 - Nunca rode importações/migrações que possam duplicar dados (já aconteceu). Qualquer ajuste
   de dados deve ser idempotente e marcado em `cfg` (ex.: `personal1:"v1"`).
 - Mudanças visuais: testar no tamanho do iPhone antes de publicar, e também em tela pequena (375×667 e 320×568:
