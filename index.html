@@ -1659,6 +1659,23 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #azSec .azmh{margin-top:var(--g-pad);padding:0 0 4px;border-bottom:1px solid var(--line)}
 #azSec .azmt{border-bottom:0;border-top:1px solid var(--line);padding-top:8px}
 @media (max-width:359px){#saveSec .svrow .v,#azSec .azrow .v{font-size:.95rem}#saveSec .svbox .svrow{grid-template-columns:42px minmax(0,1fr) auto;gap:0 10px}#saveSec .svring{--sz:42px}#saveSec .svring>span{inset:3px;font-size:1.1rem}#saveSec .svnm{font-size:1rem}#saveSec .svt1 b{font-size:22px}#azSec .azadd{grid-template-columns:1fr}}
+/* ===== Mês v2 (27/10/2026, print do PC: busca colada nos blocos, caixa tracejada dentro de bloco, cartões em quadradinhos): respiro igual ao resto,
+   mês vazio sem caixa interna e com botão, cartões do Mês em linhas lisas, avisos "Na conta hoje"/"fecha na conta com" sem caixa. Só dentro de #mBody. */
+#mBody>.mes-split,#mBody>section:first-child{margin-top:var(--g-gap)}
+#mBody .mes-empty{align-items:start}
+#mBody .empty{border:0;background:none;padding:var(--g-pad) 0;display:grid;justify-items:start;gap:4px;text-align:left}
+#mBody .empty strong{font-size:1.2rem;margin:0}
+#mBody .empty .btn{margin-top:var(--g-gap);width:auto;padding-inline:var(--g-pad)}
+#mBody .cstrip{display:block;overflow:visible;margin:0;padding:0}
+#mBody .cstrip .ctile{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px var(--g-pad);align-items:center;padding:var(--g-gap) 0;background:none;border:0;border-radius:0;border-top:1px solid var(--line);text-align:left}
+#mBody .cstrip .ctile:first-child{border-top:0}
+#mBody .cstrip .ctile .ch{grid-column:1;grid-row:1}
+#mBody .cstrip .ctile .cv{grid-column:2;grid-row:1;margin:0;text-align:right}
+#mBody .cstrip .ctile .cm{grid-column:1/-1;padding-left:38px}
+#mBody .cstrip .ctile .cl{grid-column:1/-1;margin:4px 0 0 38px}
+#mBody .cstrip .ctile.all{width:100%;grid-template-columns:1fr;place-content:center;min-height:0}
+#mBody .tlbal{background:none;border:0;border-radius:0;padding:4px 0 var(--g-gap);margin-bottom:0;border-bottom:1px solid var(--line)}
+#mBody .tlproj{background:none;border:0;border-radius:0;padding:var(--g-gap) 0 0;border-top:1px solid var(--line)}
 </style>
 
 <div class="wrap">
@@ -3042,7 +3059,7 @@ function renderMes(){
   const paidS=dA.filter(isPaid).reduce((s,x)=>s+amt(x),0), openS=dA.filter(x=>!isPaid(x)).reduce((s,x)=>s+amt(x),0);
   let h="";
   if(!arr.length&&!salVirt(view).length){
-    $("mBody").innerHTML=`<section><div class="empty"><strong>Nada lançado em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}</strong>Toque no + para registrar um gasto ou uma receita.</div></section>`+cardStrip(view);
+    $("mBody").innerHTML=`<div class="mes-split mes-empty"><section><div class="empty"><strong>Nada lançado em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}</strong>Registre um gasto ou uma receita para começar o mês.<button class="btn primary" id="mesEmptyAdd" type="button">+ Lançar</button></div></section>${cardStrip(view)}</div>`;
     return;
   }
   const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0);
@@ -5282,6 +5299,7 @@ document.addEventListener("click",async e=>{
   const smv=t.closest("[data-svmv]"); if(smv){svMvEdit=smv.dataset.svmv;renderAno();setTimeout(()=>{const v=$("mvVal");v&&v.scrollIntoView({block:"center",behavior:"smooth"})},30);return}
   if(t.id==="svDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para excluir";return}
     const b=saves().find(x=>x.id===svOpen);svOpen=null;svSave(saves().filter(x=>x!==b),"Caixinha excluída");return}
+  if(t.closest("#mesEmptyAdd")){$("addBtn")?.click();return}
   const azv=t.closest("[data-azview]"); if(azv){azView=azv.dataset.azview;try{localStorage.setItem("despesas.azView",azView)}catch(e){}renderAno();return}
   const azp=t.closest("[data-azpin]"); if(azp&&azOpen){azSave(azList().map(p=>p.id!==azOpen?p:(p.pin?(({pin:_x,...r})=>r)(p):{...p,pin:true})),"");return}
   const azmv=t.closest("[data-azmove]"); if(azmv&&azOpen){const arr=[...azList()],me=arr.find(p=>p.id===azOpen),g=arr.filter(q=>!!q.pin===!!me.pin),i=g.indexOf(me),j=i+(+azmv.dataset.azmove);
