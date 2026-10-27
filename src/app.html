@@ -1581,6 +1581,53 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #lookSec .thit .thsw{width:100%;max-width:64px}
 #lookSec .thit{text-align:center}
 #lookSec .thit span{display:block;margin-top:6px;font-size:.74rem;line-height:1.15;white-space:nowrap}
+/* ===== Caixinhas v2 (27/10/2026, pedido dele: "tudo dela, ta bagunçado o visual"): cada caixinha é um bloco (.svbox) com ícone, nome, valor, barra e uma linha de situação;
+   aberta, o painel tem seções rotuladas (.svsec). Só #saveSec; dívidas e pessoas seguem como estavam. */
+#saveSec .svtot{padding:var(--g-pad) 0 var(--g-pad)}
+#saveSec .svtot small{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+#saveSec .svts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--g-gap);margin-top:6px}
+#saveSec .svt1{display:grid;gap:2px;margin:0}#saveSec .svt1 span{font-size:13px}#saveSec .svt1 b{font-size:22px;line-height:1.1;white-space:nowrap}
+#saveSec .svtot>span{display:block;margin-top:8px}
+#saveSec .svgrp{padding:var(--g-pad) 0 8px}
+#saveSec .svbox{background:var(--chip);border-radius:20px;padding:0 var(--g-pad);margin-top:var(--g-gap);overflow:hidden}
+#saveSec .svgrp+.svbox{margin-top:0}
+#saveSec .svbox.open{outline:1.5px solid color-mix(in srgb,var(--accent) 45%,transparent)}
+#saveSec .svbox .svrow,#saveSec .svbox .svrow+.svrow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:var(--g-pad) 0!important;border:0}
+#saveSec .svrow .sv-ico{width:40px;height:40px;border-radius:12px;margin:0;font-size:1.3rem;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+#saveSec .svn{display:grid;gap:2px;min-width:0}
+#saveSec .svnm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:700;font-size:1.02rem;line-height:1.2;min-width:0;overflow-wrap:anywhere}
+#saveSec .svnm .sv-won{margin:0}
+#saveSec .svsub{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;font-size:.8rem;color:var(--muted);min-width:0}
+#saveSec .svsub .fi{margin:0 0 0 0;flex:none}
+#saveSec .svsec+.svmv{border-top:0}
+#saveSec .svsub>span{min-width:0}
+#saveSec .svrow .v{font-size:1.08rem;white-space:nowrap}
+#saveSec .svrow .mini{grid-column:1/-1;margin:2px 0 0;height:8px;border-radius:4px;background:color-mix(in srgb,var(--ink) 12%,transparent)}
+#saveSec .svrow .m{grid-column:1/-1;font-size:.8rem;line-height:1.35}
+#saveSec .svbox>.svedit{margin:0 calc(var(--g-pad)*-1);padding:var(--g-pad);background:color-mix(in srgb,var(--ink) 5%,transparent);border-top:1px solid var(--line)}
+#saveSec .svsec{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:var(--g-pad) 0 8px}
+#saveSec .svedit>.svsec:first-child,#saveSec .svedit>.svneed+.svsec,#saveSec .svbanks .svsec{margin-top:0}
+#saveSec .svbanks{margin:0}
+#saveSec .svneed{margin:0 0 var(--g-pad);padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 12%,transparent);font-size:.85rem;line-height:1.4}
+#saveSec .svbk{padding:10px 0}
+#saveSec .svbtns{margin-top:var(--g-gap)}
+#saveSec .svmvs .svmv{padding:10px 0;gap:12px;align-items:center}
+#saveSec .svmvs .svmv>span:first-child{min-width:0}
+#saveSec .svmvs .svmv>span:last-child{white-space:nowrap;display:flex;gap:8px;align-items:center}
+#saveSec .svfoot{margin-top:var(--g-pad);padding-top:var(--g-gap);border-top:1px solid var(--line)}
+#saveSec .svlink,#saveSec .svdel,#saveSec .svmore{padding:0}
+#saveSec .svform{padding:var(--g-pad)!important;margin-bottom:var(--g-gap);border-radius:20px;background:var(--chip)!important}
+#saveSec .svform .svsec{margin-top:0}
+#saveSec .svform .btn.soft,#saveSec .svbox .btn.soft{background:color-mix(in srgb,var(--ink) 10%,transparent)}
+#saveSec .svform .svlab{margin:var(--g-pad) 0 0;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+#saveSec .svform .svlab input,#saveSec .svform .svlab select{margin-top:6px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink)}
+#saveSec .svform .svrow2{margin-top:6px}
+#saveSec .svform .svkinds{margin-bottom:0}
+#saveSec .svform .svchk{margin-top:var(--g-pad)}
+#saveSec .svform .svbtns{margin-top:var(--g-pad)}
+#saveSec .svmvf{padding:var(--g-gap) 0;display:grid;gap:8px}
+#saveSec .svmvf .svrow2,#saveSec .svmvf .svlab{margin:0}
+@media (max-width:359px){#saveSec .svbox{padding:0 12px}#saveSec .svbox>.svedit{margin:0 -12px;padding:12px}#saveSec .svrow .v{font-size:1rem}}
 </style>
 
 <div class="wrap">
@@ -4068,9 +4115,9 @@ function svNeedTxt(b){
 const svFormKind=()=>{if(svForm.kind!==undefined)return svForm.kind;const b=svForm.id?saves().find(x=>x.id===svForm.id)||{}:(svForm.preset||{});return b.kind||(!svForm.id&&b.fxAll?"viagem":"")};
 function svFormHtml(){
   const b=svForm.id?saves().find(x=>x.id===svForm.id)||{}:(svForm.preset||{}), fc=boxFx(b), other=saves().some(x=>x.fxAll&&x.id!==b.id&&boxFx(x)===fc), kind=svFormKind();
-  return `<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><div class="svkinds" role="group" aria-label="Tipo de caixinha">${SV_KINDS.map(K=>`<button type="button" class="svk ${K.k===kind?"on":""}" data-svkind="${K.k}"><span aria-hidden="true">${K.i}</span>${esc(K.n)}</button>`).join("")}</div><input id="svName" maxlength="30" placeholder="Nome (ex.: Reserva, Viagem)" value="${esc(b.name||"")}">
-    <div class="svrow2"><input id="svGoal" inputmode="numeric" placeholder="${svForm.preset?"Meta":"Meta (opcional)"}" value="${b.goal?brl(b.goal):""}"><select id="svGoalCur" aria-label="Moeda da meta"><option value="BRL">R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>
-    <label class="svlab">Banco principal (opcional, cada depósito pode ter o seu)<select id="svBank"><option value="">${b.fxAll&&boxBanks({...b,bank:""}).length?`Onde comprou (${esc(boxBanks({...b,bank:""}).join(" + "))})`:"—"}</option>${[...new Set([...ALL_BANKS(),...(b.bank?[b.bank]:[])])].map(n=>`<option ${n===b.bank?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+  return `<div class="card svedit svform"><div class="svsec">Tipo</div><div class="svkinds" role="group" aria-label="Tipo de caixinha">${SV_KINDS.map(K=>`<button type="button" class="svk ${K.k===kind?"on":""}" data-svkind="${K.k}"><span aria-hidden="true">${K.i}</span>${esc(K.n)}</button>`).join("")}</div><label class="svlab">Nome<input id="svName" maxlength="30" placeholder="Ex.: Reserva, Viagem" value="${esc(b.name||"")}"></label>
+    <div class="svlab">${svForm.preset?"Meta":"Meta (opcional)"}</div><div class="svrow2"><input id="svGoal" inputmode="numeric" placeholder="0,00" aria-label="Meta" value="${b.goal?brl(b.goal):""}"><select id="svGoalCur" aria-label="Moeda da meta"><option value="BRL">R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>
+    <label class="svlab">Banco principal (opcional)<select id="svBank"><option value="">${b.fxAll&&boxBanks({...b,bank:""}).length?`Onde comprou (${esc(boxBanks({...b,bank:""}).join(" + "))})`:"—"}</option>${[...new Set([...ALL_BANKS(),...(b.bank?[b.bank]:[])])].map(n=>`<option ${n===b.bank?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
     <label class="svlab">Até quando (opcional)<input id="svTarget" type="month" value="${esc(b.target||"")}"></label>
     ${fx.length||b.fxAll?`<label class="svchk"><input type="checkbox" id="svFx" ${b.fxAll?"checked":""} ${other?"disabled":""}> Somar as compras de ${FXC[fc].n} da aba Moedas${other?" (já está em outra caixinha)":""}</label>`:""}
     <div class="svbtns"><button class="btn soft" id="svCancel">Cancelar</button><button class="btn primary" id="svCreate">${svForm.id?"Salvar":"Criar"}</button></div></div>`;
@@ -4084,7 +4131,7 @@ function saveSection(){
     h+=svForm?"":`<div class="empty"><strong>Nenhuma caixinha ainda</strong></div>`;
     return h+`</section>`;
   }
-  h+=`<div class="card"><div class="svtot"><small>Total guardado</small>${[[tB,"Em real",R(tB)],[tE,"Em euro",E(tE)],[tU,"Em dólar",M(tU,"USD")]].filter((x,k)=>x[0]||(k===0&&!tE&&!tU)).map(x=>`<div class="svt1"><span>${x[1]}</span><b>${x[2]}</b></div>`).join("")}${looseE||looseU?`<span>+ ${[looseE?E(looseE):"",looseU?M(looseU,"USD"):""].filter(Boolean).join(" e ")} comprados na aba Moedas, fora das caixinhas</span>`:""}</div>`;
+  h+=`<div class="card"><div class="svtot"><small>Total guardado</small><div class="svts">${[[tB,"Em real",R(tB)],[tE,"Em euro",E(tE)],[tU,"Em dólar",M(tU,"USD")]].filter((x,k)=>x[0]||(k===0&&!tE&&!tU)).map(x=>`<div class="svt1"><span>${x[1]}</span><b>${x[2]}</b></div>`).join("")}</div>${looseE||looseU?`<span>+ ${[looseE?E(looseE):"",looseU?M(looseU,"USD"):""].filter(Boolean).join(" e ")} comprados na aba Moedas, fora das caixinhas</span>`:""}</div>`;
   const rowOf=b=>{
       if(svForm&&svForm.id===b.id) return svFormHtml();
       const isFx=b.goalCur&&b.goalCur!=="BRL";
@@ -4093,20 +4140,23 @@ function saveSection(){
       const pct=b.goal?Math.max(0,Math.min(100,svHave(b)/b.goal*100)):0, last=(b.moves||[]).slice(-1)[0];
       const isWon=b.goal&&svHave(b)>=b.goal;
       const bks=boxBanks(b);
-      const meta=[!isFx&&(e||u)?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):"",svGoalTxt(b),svPaceTxt(b),!b.goal&&last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur||b.goalCur||"BRL")}`:""].filter(Boolean).join(" · ")||"sem movimentos";
-      let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="d"><span class="sv-ico">${svIcon(b)}</span>${bks.map(cardBadge).join("")}${esc(b.name)}${isWon?`<span class="sv-won">META BATIDA 🎉</span>`:""}</span><span class="v ${v<0?"neg":""}">${dispVal}</span>${b.goal?`<span class="mini"><i style="width:${pct}%;background:${isFx?"var(--euro)":isWon?"var(--pos)":"var(--accent)"}"></i></span>`:""}<span class="m">${esc(meta)}</span></button>`;
+      const mix=!isFx&&(e||u)?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):"";
+      const have=svHave(b), leftG=b.goal?Math.max(0,b.goal-have):0, mths=b.goal&&b.target?Math.max(0,monthsBetween(curYM(),b.target)):0;
+      const sub=b.goal?[`${Math.round(pct)}% de ${svMoney(b.goal,b.goalCur)}`,mix].filter(Boolean).join(" · "):(mix||"sem meta");
+      const meta=(b.goal?[leftG?`falta ${svMoney(leftG,b.goalCur)}`:"meta batida ✓",leftG&&mths>0?`~${svMoney(Math.ceil(leftG/mths),b.goalCur)}/mês até ${shortMonth(b.target)}`:"",svPaceTxt(b)]:[last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur||b.goalCur||"BRL")}`:"sem movimentos"]).filter(Boolean).join(" · ");
+      let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="sv-ico">${svIcon(b)}</span><span class="svn"><span class="svnm">${esc(b.name)}${isWon?`<span class="sv-won">META BATIDA 🎉</span>`:""}</span><span class="svsub">${bks.map(cardBadge).join("")}<span>${esc(sub)}</span></span></span><span class="v ${v<0?"neg":""}">${dispVal}</span>${b.goal?`<span class="mini"><i style="width:${pct}%;background:${isFx?"var(--euro)":isWon?"var(--pos)":"var(--accent)"}"></i></span>`:""}<span class="m">${esc(meta)}</span></button>`;
       if(svOpen===b.id){
         /* compras da aba Moedas somadas na caixinha (fxAll) também aparecem aqui, com "editar" que abre a compra (26/10/2026) */
         const fxMv=b.fxAll?fx.filter(x=>fxCurOf(x)===boxFx(b)).map(x=>({id:"fx:"+x.id,fxId:x.id,date:x.date||"",cents:fxAmt(x),cur:boxFx(b),brl:x.brl,bank:fxPlaceBank(x.where)||"",where:x.where||""})):[];
         const allMv=[...(b.moves||[]),...fxMv].sort((p,q)=>q.date.localeCompare(p.date)||String(q.id).localeCompare(String(p.id))), mv=svAllMv?allMv:allMv.slice(0,5);
         const pc=svPace(b), need=[pc&&pc.late?`Pela linha reta até ${shortMonth(b.target)}, era para ter ${svMoney(pc.exp,pc.cur)} agora. Para recuperar, guarde ~${svMoney(pc.per,pc.cur)} por mês daqui em diante.`:"",svNeedTxt(b)].filter(Boolean).join(" ");
         const bkRows=svBankRows(b), bkShow=bkRows.length>1||(bkRows[0]&&bkRows[0].bank);
-        row+=`<div class="svedit">${need?`<p class="hint" style="margin:0 0 10px">${esc(need)}</p>`:""}${bkShow?`<div class="svbanks"><small>Onde está o dinheiro</small>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}${esc(r.bank||"Sem banco definido")}</span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
-          (mv.length?`<div style="margin-top:10px">`+mv.map(m=>m.fxId?`<button class="svmv" data-svfx="${esc(m.fxId)}" aria-label="Editar compra de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · comprou${m.brl?` · R$ ${brl(m.brl)} a R$ ${rateTxt(m.brl/m.cents)}`:""}${m.where?` · ${esc(m.where)}`:""}</span><span><span class="pos" style="white-space:nowrap">+ ${svMoney(m.cents,m.cur)}</span> <span class="ed">editar</span></span></button>`:svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
+        row+=`<div class="svedit">${need?`<p class="svneed">${esc(need)}</p>`:""}${bkShow?`<div class="svbanks"><div class="svsec">Onde está o dinheiro</div>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}${esc(r.bank||"Sem banco definido")}</span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svsec">Guardar ou tirar</div><div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
+          (mv.length?`<div class="svmvs"><div class="svsec">Movimentos</div>`+mv.map(m=>m.fxId?`<button class="svmv" data-svfx="${esc(m.fxId)}" aria-label="Editar compra de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · comprou${m.brl?` · R$ ${brl(m.brl)} a R$ ${rateTxt(m.brl/m.cents)}`:""}${m.where?` · ${esc(m.where)}`:""}</span><span><span class="pos" style="white-space:nowrap">+ ${svMoney(m.cents,m.cur)}</span> <span class="ed">editar</span></span></button>`:svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
         `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
-      return row};
+      return `<div class="svbox${svOpen===b.id?" open":""}">${row}</div>`};
   const isF=b=>b.goalCur&&b.goalCur!=="BRL", gR=B.filter(b=>!isF(b)), gF=B.filter(isF);
   const grp=(t,sub,L)=>L.length?`<div class="svgrp"><span>${t}</span><span>${sub}</span></div>`+L.map(rowOf).join(""):"";
   const fSub=[gF.reduce((x,b)=>x+svEur(b),0),gF.reduce((x,b)=>x+svUsd(b),0)];
