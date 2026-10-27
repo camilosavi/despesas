@@ -1496,6 +1496,20 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #walMenu .wm-box button{border:0;background:var(--chip);color:var(--ink);font:inherit;font-weight:700;padding:15px 16px;border-radius:16px;text-align:left}
 #walMenu .wm-box button:active{background:color-mix(in srgb,var(--btn) 25%,var(--chip))}
 @media (min-width:980px){#walMenu{align-items:center}#walMenu .wm-box{margin:0}}
+/* tela do cartão no computador em 3 colunas (out/2026): abaixo de 1200 px a 3ª coluna desce para baixo da fatura */
+@media (min-width:980px){
+  .cdwrap.cd3{grid-template-columns:minmax(0,400px) minmax(0,1fr)!important;column-gap:26px!important;align-items:start}
+  .cdwrap.cd3>.cdcol:nth-child(1){grid-column:1;grid-row:1/3}
+  .cdwrap.cd3>.cdcol:nth-child(2){grid-column:2;grid-row:1}
+  .cdwrap.cd3>.cdcol:nth-child(3){grid-column:2;grid-row:2}
+  .cdwrap.cd3 .cdcol>.cdmain2:first-child,.cdwrap.cd3 .cdcol>.cdmain2.cdfirst{margin-top:0!important}
+}
+@media (min-width:1200px){
+  .cdwrap.cd3{grid-template-columns:minmax(0,360px) minmax(0,1fr) minmax(0,1fr)!important;column-gap:24px!important}
+  .cdwrap.cd3>.cdcol:nth-child(1){grid-column:1;grid-row:1}
+  .cdwrap.cd3>.cdcol:nth-child(2){grid-column:2;grid-row:1}
+  .cdwrap.cd3>.cdcol:nth-child(3){grid-column:3;grid-row:1}
+}
 </style>
 
 <div class="wrap">
@@ -3677,7 +3691,9 @@ function renderCards(){
   {const mainRest=mainA.startsWith(cardHero)?mainA.slice(cardHero.length):mainA, heroH=mainA.startsWith(cardHero)?cardHero:"";
   /* computador: duas colunas independentes (esquerda = cartão + limite…, direita = fatura + itens + mesclar), sem buraco entre blocos de alturas diferentes */
   h=IS_WIDE.matches
-    ?`<div class="cdwrap"><div class="cdcol"><div class="cdhero">${heroH}</div><div class="cdmain2">${h}</div></div><div class="cdcol"><div class="cdmain">${mainRest}</div>${side?`<aside class="cdside">${side}</aside>`:""}</div></div>`
+    ?(()=>{/* 3 colunas (out/2026, pedido dele: "não precisar descer tanto"): cartão + 1ª metade das seções da esquerda | fatura e itens | resto das seções + mesclar */
+      const parts=h.split(/(?=<section)/).filter(x=>x.trim()), k=Math.floor(parts.length/2), h1=parts.slice(0,k).join(""), h2=parts.slice(k).join("");
+      return `<div class="cdwrap cd3"><div class="cdcol"><div class="cdhero">${heroH}</div>${h1?`<div class="cdmain2">${h1}</div>`:""}</div><div class="cdcol"><div class="cdmain">${mainRest}</div></div><div class="cdcol">${h2?`<div class="cdmain2 cdfirst">${h2}</div>`:""}${side?`<aside class="cdside">${side}</aside>`:""}</div></div>`})()
     :`<div class="cdwrap"><div class="cdhero">${heroH}</div><div class="cdmain">${mainRest}</div>${side?`<aside class="cdside">${side}</aside>`:""}<div class="cdmain2">${h}</div></div>`}
   $("pCards").innerHTML=h;
 }
