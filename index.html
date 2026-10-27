@@ -1521,6 +1521,29 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .cdwrap.cd3>.cdcol:nth-child(2){grid-column:2;grid-row:1}
   .cdwrap.cd3>.cdcol:nth-child(3){grid-column:3;grid-row:1}
 }
+/* telas do computador em 3 colunas, como a do cartão (out/2026, pedido dele): só a partir de 1200 px; abaixo disso e no celular nada muda */
+@media (min-width:1200px){
+  /* Contas e Fixos: as seções correm em 3 colunas (cada seção inteira, sem partir no meio) */
+  .ano-metas-grid,.ano-fixos-grid{display:block!important;column-count:3;column-gap:22px}
+  .ano-metas-grid>.ano-col-main,.ano-metas-grid>.ano-col-side,.ano-fixos-grid>.ano-col-main,.ano-fixos-grid>.ano-col-side{display:contents;position:static}
+  .ano-metas-grid section,.ano-metas-grid .card.contab,.ano-fixos-grid section{break-inside:avoid;margin-top:0;margin-bottom:20px}
+  .ano-metas-grid>*>*,.ano-fixos-grid>*>*{break-inside:avoid}
+  .ano-metas-grid>.ano-col-main>:first-child,.ano-fixos-grid>.ano-col-main>:first-child{margin-top:0!important}
+  /* Ano: gráfico e resumo à esquerda (2 colunas), próximos meses à direita */
+  .ano-visao-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;column-gap:22px!important}
+  .ano-visao-grid>.ano-col-main,.ano-visao-grid>.ano-col-side{display:contents;position:static}
+  .ano-visao-grid>.ano-col-main>section:nth-child(1){grid-column:1/3;grid-row:1}
+  .ano-visao-grid>.ano-col-main>section:nth-child(2){grid-column:1/3;grid-row:2}
+  .ano-visao-grid>.ano-col-side>section{grid-column:3;grid-row:1/3}
+  .ano-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  /* Mês: a lista de saídas corre em 2 colunas e as categorias ficam na 3ª */
+  .mes-split{grid-template-columns:minmax(0,2.3fr) minmax(0,1fr)!important}
+  .mes-main .card.tl{column-count:2;column-gap:26px}
+  .mes-main .card.tl>*{break-inside:avoid}
+  /* Você: aparência + duas colunas de seções */
+  #pMe:not([hidden]){column-count:3!important;column-gap:22px}
+  #pMe>section{break-inside:avoid}
+}
 </style>
 
 <div class="wrap">
