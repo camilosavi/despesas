@@ -3646,7 +3646,8 @@ function renderCards(){
     const endNext=L.filter(x=>{const p=parcInfo(x);return p&&p.left===0}).reduce((s,x)=>s+x.cents,0);
     h+=`</section><section><h2>Itens da fatura <small>${L.length}</small></h2><div class="card cardblock">`+L.map(x=>{const p=parcInfo(x);
       const meta=p?`<span class="pill ${p.left===0?"last":""}">${p.i}/${p.n}</span>${segs(p)}<span>${p.left===0?"última parcela":`faltam ${p.left} · até ${shortMonth(p.end)}`}</span>`:`<span class="pill">à vista</span><span>${esc(catOf(x.cat,"desp").n)}</span>`;
-      return `<button class="cline item" data-id="${esc(x.id)}"><span class="d">${esc(cleanDesc(x))}</span><span class="v">${R(x.cents)}</span><span class="meta">${meta}</span></button>`}).join("")+
+      const bt=x.buy?fmtDM(x.buy):"";
+      return `<button class="cline item" data-id="${esc(x.id)}"><span class="d">${esc(cleanDesc(x))}${bt?` <small class="muted">· ${bt}</small>`:""}</span><span class="v">${R(x.cents)}</span><span class="meta">${meta}</span></button>`}).join("")+
       (L.length?"":`<div class="cline"><span class="d" style="color:var(--muted)">Nenhum item descrito ainda</span></div>`)+
       `<div class="cbfoot"><span>Total da fatura</span><b style="color:var(--ink)">${R(tot)}</b></div>`+
       (endNext?`<div class="cbfoot"><span>Termina neste mês</span><span>−${R(endNext)} na próxima</span></div>`:"")+`</div>
