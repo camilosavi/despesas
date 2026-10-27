@@ -1360,7 +1360,7 @@ header.top{padding:18px 16px!important}
 .mesw{display:flex;gap:6px;margin:12px 0 0;padding:5px;border-radius:999px;background:var(--chip)}
 .mesw button{flex:1;border:0;border-radius:999px;background:transparent;color:var(--muted);font:inherit;font-weight:700;font-size:.92rem;padding:10px 0;cursor:pointer;transition:background .18s,color .18s}
 .mesw button.on{background:var(--ink);color:var(--bg)}
-@media (min-width:980px){.mesw~.ano-grid{margin-top:20px}}
+@media (min-width:980px){.mesw{margin-bottom:24px}.mesw~.ano-grid,.mesw~.msearch,.mesw~#mBody{margin-top:0}}
 /* busca e filtros */
 .msearch{border-radius:999px!important;background:var(--surface)!important;border:0!important;margin-top:12px!important}
 .mfp{border-radius:999px!important}
@@ -4155,8 +4155,9 @@ function azSubLines(name){
 /* várias pessoas no mesmo lançamento (x.pessoas=[{id,v?}], v = parte dela em centavos; o antigo x.pessoa/x.pv continua valendo).
    Sem v: uma pessoa só = o valor todo; várias = o que sobra dividido igualmente entre as que ficaram sem valor. */
 const azParts=x=>{const L=x.pessoas&&x.pessoas.length?x.pessoas:(x.pessoa?[{id:x.pessoa,v:x.pv||0}]:[]);
-  const set=L.reduce((s,e)=>s+(e.v||0),0), blank=L.filter(e=>!e.v).length;
-  return L.map(e=>({id:e.id,c:e.v||(L.length===1?x.cents:Math.round(Math.max(0,x.cents-set)/blank))}))};
+  /* x.eu = ele mesmo entra na divisão (x.euV = a parte dele, opcional): o resto se divide também com ele */
+  const eu=!!x.eu&&L.length>0, euV=eu?(x.euV||0):0, set=L.reduce((s,e)=>s+(e.v||0),0)+euV, blank=L.filter(e=>!e.v).length+(eu&&!euV?1:0);
+  return L.map(e=>({id:e.id,c:e.v||(L.length===1&&!eu?x.cents:Math.round(Math.max(0,x.cents-set)/blank))}))};
 const azLinked=p=>items.filter(x=>!genFat(x)&&azParts(x).some(e=>e.id===p.id));
 const azLv=(x,p)=>(azParts(x).find(e=>e.id===p.id)?.c||0)*(typeOf(x)==="rec"?-1:1);
 const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x,p),0)+azPix(p).reduce((s,e)=>s+e.c,0);
@@ -5378,16 +5379,17 @@ function chips(){
     const cur=A.some(a=>a.name===form.acct)?form.acct:(A[0]||{}).name;
     $("acctChips").innerHTML=A.map(a=>`<button type="button" class="chip" data-acct="${esc(a.name)}" aria-pressed="${a.name===cur}">${esc(a.name)}</button>`).join("")}
   {const PE=azList();$("pessoaField").hidden=!PE.length;
-    const rec=form.type==="rec";if(!Array.isArray(form.pessoas))form.pessoas=[];form.pessoas=form.pessoas.filter(id=>PE.some(q=>q.id===id));if(!form.pv)form.pv={};
+    const rec=form.type==="rec";if(!Array.isArray(form.pessoas))form.pessoas=[];form.pessoas=form.pessoas.filter(id=>id==="eu"||PE.some(q=>q.id===id));if(!form.pv)form.pv={};
     $("pessoaLbl").textContent=rec?"Pessoas (quem te pagou)":"Pessoas (paguei por elas ou a elas)";
-    $("pessoaChips").innerHTML=[`<button type="button" class="chip" data-pessoa="" aria-pressed="${!form.pessoas.length}">Nenhuma</button>`,...PE.map(q=>`<button type="button" class="chip" data-pessoa="${esc(q.id)}" aria-pressed="${form.pessoas.includes(q.id)}">${esc(q.name)}</button>`)].join("");
+    $("pessoaChips").innerHTML=[`<button type="button" class="chip" data-pessoa="" aria-pressed="${!form.pessoas.length}">Nenhuma</button>`,`<button type="button" class="chip" data-pessoa="eu" aria-pressed="${form.pessoas.includes("eu")}">Eu</button>`,...PE.map(q=>`<button type="button" class="chip" data-pessoa="${esc(q.id)}" aria-pressed="${form.pessoas.includes(q.id)}">${esc(q.name)}</button>`)].join("");
     const box=$("pessoaBox");box.hidden=!form.pessoas.length;
     const focus=document.activeElement&&document.activeElement.id&&document.activeElement.id.startsWith("pv_")?document.activeElement.id:"";
     if(!box.dataset.k||box.dataset.k!==form.pessoas.join("|")+"|"+rec){box.dataset.k=form.pessoas.join("|")+"|"+rec;
-      box.innerHTML=form.pessoas.map((id,i)=>{const q=PE.find(z=>z.id===id);return `<div class="svrow2" style="grid-template-columns:1fr 120px;align-items:center;gap:8px;margin-bottom:6px"><span>${esc(q.name)}</span><input type="text" id="pv_${i}" inputmode="numeric" placeholder="${form.pessoas.length>1?"parte dela":"tudo"}" value="${form.pv[id]?brl(form.pv[id]):""}" aria-label="Quanto é de ${esc(q.name)}"></div>`}).join("")+
+      box.innerHTML=form.pessoas.map((id,i)=>{const q=id==="eu"?{name:"Eu"}:PE.find(z=>z.id===id);return `<div class="svrow2" style="grid-template-columns:1fr 120px;align-items:center;gap:8px;margin-bottom:6px"><span>${esc(q.name)}</span><input type="text" id="pv_${i}" inputmode="numeric" placeholder="${id==="eu"?"minha parte":form.pessoas.length>1?"parte dela":"tudo"}" value="${form.pv[id]?brl(form.pv[id]):""}" aria-label="Quanto é de ${esc(q.name)}"></div>`}).join("")+
         `<p class="hint" id="pessoaHint" style="margin:6px 0 0"></p>`}
-    if(form.pessoas.length){const n=form.pessoas.length,nm=form.pessoas.map(id=>(PE.find(z=>z.id===id)||{}).name).join(", ");
-      $("pessoaHint").textContent=(rec?`Entra no saldo: ${nm} ${n>1?"pagaram":"te pagou"}.`:`Entra no saldo: ${nm} ${n>1?"te devem":"te deve"} (ou ${n>1?"pagam":"paga"} o que você devia).`)+(n>1?" Sem valor, o resto se divide igual.":"")}}
+    if(form.pessoas.length){const eu=form.pessoas.includes("eu"),oth=form.pessoas.filter(id=>id!=="eu"),n=oth.length,nm=oth.map(id=>(PE.find(z=>z.id===id)||{}).name).join(", ");
+      if(!n) $("pessoaHint").textContent="Escolha também com quem você divide.";
+      else $("pessoaHint").textContent=(rec?`Entra no saldo: ${nm} ${n>1?"pagaram":"te pagou"}.`:`Entra no saldo: ${nm} ${n>1?"te devem":"te deve"} (ou ${n>1?"pagam":"paga"} o que você devia).`)+(eu?" Você entra na divisão: o que não tem valor se divide igual, com você.":n>1?" Sem valor, o resto se divide igual.":"")}}
   const PY=[...PAYS,...bens().map(b=>b.name)];
   $("payChips").innerHTML=PY.map(p=>`<button type="button" class="chip" data-pay="${esc(p)}" aria-pressed="${form.pay===p}">${esc(p)}</button>`).join("");
   $("statusField").classList.toggle("dim",!!benOf({pay:form.pay}));
@@ -5435,7 +5437,7 @@ function openSheet(x){
   closeSheets(true);
   editing=x||null;dupAck=null;mergeInto=null;
   const t=x?typeOf(x):form.type;
-  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoas:azParts(x).map(e=>e.id),pv:Object.fromEntries(azParts(x).filter((e,i)=>((x.pessoas&&x.pessoas.length?x.pessoas[i].v:x.pv)||0)).map(e=>[e.id,e.c]))}:{type:t,cents:0,acct:form.acct||"",pessoas:[],pv:{},cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
+  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoas:[...(x.eu?["eu"]:[]),...azParts(x).map(e=>e.id)],pv:{...(x.eu&&x.euV?{eu:x.euV}:{}),...Object.fromEntries(azParts(x).filter((e,i)=>((x.pessoas&&x.pessoas.length?x.pessoas[i].v:x.pv)||0)).map(e=>[e.id,e.c]))}}:{type:t,cents:0,acct:form.acct||"",pessoas:[],pv:{},cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
   $("desc").value=x?x.desc||"":"";
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
@@ -5488,9 +5490,9 @@ $("sheet").addEventListener("submit",async e=>{
   if($("date").value<MIN_YM+"-01"){err("err","O app começa em setembro/2026.");return}
   const isD=form.type==="desp";
   const base={type:form.type,cents:form.cents,desc:$("desc").value.trim(),cat:form.cat,pay:isD?form.pay:"",date:$("date").value,card:isD&&form.pay==="Crédito"&&form.card&&form.card!=="Outro"?form.card:""};
-  {const ids=(form.pessoas||[]).filter(id=>azList().some(q=>q.id===id));
-    if(ids.length){base.pessoas=ids.map(id=>{const v=(form.pv||{})[id]||0;return v&&v<base.cents?{id,v}:{id}});base.pessoa="";base.pv=0}
-    else if(editing&&(editing.pessoa||(editing.pessoas&&editing.pessoas.length))){base.pessoas=[];base.pessoa="";base.pv=0}}
+  {const ids=(form.pessoas||[]).filter(id=>azList().some(q=>q.id===id)), eu=ids.length&&(form.pessoas||[]).includes("eu"), ev=(form.pv||{}).eu||0;
+    if(ids.length){base.pessoas=ids.map(id=>{const v=(form.pv||{})[id]||0;return v&&v<base.cents?{id,v}:{id}});base.pessoa="";base.pv=0;base.eu=!!eu;base.euV=eu&&ev&&ev<base.cents?ev:0}
+    else if(editing&&(editing.pessoa||(editing.pessoas&&editing.pessoas.length))){base.pessoas=[];base.pessoa="";base.pv=0;base.eu=false;base.euV=0}}
   {const A=acctsR();if(A.length>1&&!(isD&&benOf(base))) base.acct=A.some(a=>a.name===form.acct)?form.acct:A[0].name;else if(editing&&editing.acct) base.acct=""}
   if(isD) base.paid=benOf(base)?true:form.paid;
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}
@@ -5542,8 +5544,8 @@ $("sheet").addEventListener("submit",async e=>{
       if(editing){await store.items.update(editing.id,base);
         /* parcela/repetição: nome, categoria, conta e pessoas valem para a série toda (valor, data e situação são de cada mês) */
         const pt={};["desc","cat","acct"].forEach(k=>{if((base[k]||"")!==(editing[k]||"")) pt[k]=base[k]||""});
-        {const pk=o=>JSON.stringify(azParts(o).map(e=>[e.id,(o.pessoas&&o.pessoas.length?o.pessoas.find(z=>z.id===e.id)?.v:o.pv)||0]));
-         if(pk(base)!==pk(editing)){pt.pessoas=base.pessoas||[];pt.pessoa="";pt.pv=0}}
+        {const pk=o=>JSON.stringify([azParts(o).map(e=>[e.id,(o.pessoas&&o.pessoas.length?o.pessoas.find(z=>z.id===e.id)?.v:o.pv)||0]),!!o.eu,o.euV||0]);
+         if(pk(base)!==pk(editing)){pt.pessoas=base.pessoas||[];pt.pessoa="";pt.pv=0;pt.eu=!!base.eu;pt.euV=base.euV||0}}
         const ser=Object.keys(pt).length?(editing.group&&!/^s/.test(editing.group)?items.filter(y=>y.id!==editing.id&&y.group===editing.group):parcInfo(editing)?buySeries(editing):[]):[];
         for(const y of ser) await store.items.update(y.id,pt);
         toast(ser.length?`Atualizado, e mais ${ser.length} ${ser.length===1?"da série":"da série"}`:editing.paid===false&&base.paid!==false&&base.type==="desp"?"Marcado como pago":"Lançamento atualizado",true)}
