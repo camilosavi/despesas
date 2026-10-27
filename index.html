@@ -3575,6 +3575,8 @@ function itemHTML(x){
 
 /* ---------- aba Cartões ---------- */
 function allCards(){const set=new Set(Object.keys(cfg.cards||{}));items.forEach(x=>{const c=cardOf(x);if(c)set.add(c)});return [...set]}
+/* "Itens da fatura": lista recolhida nos 6 primeiros, com botão para expandir (out/2026, pedido dele) */
+const FAT_N=6, fatOpen=new Set();
 const cardItems=(c,ym)=>items.filter(x=>cardOf(x)===c&&(!ym||x.date.startsWith(ym)));
 const cardTotal=(c,ym)=>cardItems(c,ym).reduce((s,x)=>s+amt(x),0);
 function renderCards(){
@@ -3644,11 +3646,13 @@ function renderCards(){
   if(!all.length) h+=`<div class="empty" style="margin-top:12px"><strong>Nada no ${esc(c)} em ${mn}</strong>Use as setas lá em cima para ver outros meses.</div></section>`;
   else{
     const endNext=L.filter(x=>{const p=parcInfo(x);return p&&p.left===0}).reduce((s,x)=>s+x.cents,0);
-    h+=`</section><section><h2>Itens da fatura <small>${L.length}</small></h2><div class="card cardblock">`+L.map(x=>{const p=parcInfo(x);
+    const fk=c+"|"+view, fOpen=fatOpen.has(fk), fCut=L.length>FAT_N&&!fOpen;
+    h+=`</section><section><h2>Itens da fatura <small>${L.length}</small></h2><div class="card cardblock">`+(fCut?L.slice(0,FAT_N):L).map(x=>{const p=parcInfo(x);
       const meta=p?`<span class="pill ${p.left===0?"last":""}">${p.i}/${p.n}</span>${segs(p)}<span>${p.left===0?"última parcela":`faltam ${p.left} · até ${shortMonth(p.end)}`}</span>`:`<span class="pill">à vista</span><span>${esc(catOf(x.cat,"desp").n)}</span>`;
       const bt=x.buy?fmtDM(x.buy):"";
       return `<button class="cline item" data-id="${esc(x.id)}"><span class="d">${esc(cleanDesc(x))}${bt?` <small class="muted">· ${bt}</small>`:""}</span><span class="v">${R(x.cents)}</span><span class="meta">${meta}</span></button>`}).join("")+
       (L.length?"":`<div class="cline"><span class="d" style="color:var(--muted)">Nenhum item descrito ainda</span></div>`)+
+      (L.length>FAT_N?`<button class="tbtn" data-fatexp="${esc(fk)}" aria-expanded="${fOpen}" style="width:100%;margin:6px 0">${fOpen?"Recolher a fatura":`Expandir a fatura (+${L.length-FAT_N})`}</button>`:"")+
       `<div class="cbfoot"><span>Total da fatura</span><b style="color:var(--ink)">${R(tot)}</b></div>`+
       (endNext?`<div class="cbfoot"><span>Termina neste mês</span><span>−${R(endNext)} na próxima</span></div>`:"")+`</div>
       </section>`;
@@ -5018,6 +5022,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="scrim"&&$("catSheet")&&!$("catSheet").hidden){$("catSheet").hidden=true;return}
   if(t.closest("[data-close]")||t.id==="scrim"){closeSheets();return}
   {const tg=t.closest("[data-oftog]");if(tg){const k=+tg.dataset.oftog;ofOpenAcc.has(k)?ofOpenAcc.delete(k):ofOpenAcc.add(k);render();return}}
+  {const fe=t.closest("[data-fatexp]");if(fe){const k=fe.dataset.fatexp;fatOpen.has(k)?fatOpen.delete(k):fatOpen.add(k);render();return}}
   if(t.id==="ofAll"){ofAutoAll(t);return}
   {const o=t.closest("[data-ofload],[data-offorget],[data-ofimp]");if(o){
     if(o.dataset.ofimp!=null){if(o.dataset.ofnews&&ofView)ofSeen(ofView);ofImport(+o.dataset.ofimp);return}
