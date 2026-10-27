@@ -3526,7 +3526,7 @@ function timeline(ym,arr){
       return `<button class="due tlrow rec virt" data-virt="${esc(x.id)}">${salIco}<span class="d">${esc(x.desc)}</span><span class="v pos">+ ${R(e.cents)}</span><span class="m"><b>${dateTxt}</b> · ${x.fell?`cai ${fmtDM(x.fell)} · `:""}${x.ov?"ajustado por você":"previsto pelos holerites"} <i class="tlcar">›</i></span>${after}</button>`;
     }
     const ico=catIco(x.cat, t);
-    const metaParts=[`<b>${dateTxt}</b>`, rec?(x.fell?`caiu ${fmtDM(x.fell)}`:"")+(x.conv?`${x.fell?" · ":""}convênio ${R(x.conv)}`:""):e.paid?"pago ✓":late?"atrasado":""].filter(Boolean);
+    const metaParts=[`<b>${dateTxt}</b>`, rec?"":buyTxt(x), rec?(x.fell?`caiu ${fmtDM(x.fell)}`:"")+(x.conv?`${x.fell?" · ":""}convênio ${R(x.conv)}`:""):e.paid?"pago ✓":late?"atrasado":""].filter(Boolean);
     return `<button class="due tlrow ${late?"late":""} ${e.paid&&!rec?"done":""} ${rec?"rec":""}" data-id="${esc(x.id)}">${ico}<span class="d">${esc(cleanDesc(x))}</span><span class="v ${rec?"pos":""}">${rec?"+ ":""}${R(e.cents)}</span><span class="m">${metaParts.join(" · ")}</span>${after}</button>`;
   }).join("")+`</div>`;
   if(cur){const day=+now.slice(8), last=lastDay(ym);
@@ -3539,9 +3539,11 @@ function timeline(ym,arr){
     h+=`<section><h2>Pago com ${esc(b.name)} <small>${R(L.reduce((s,x)=>s+x.cents,0))}${ym===curYM()?` · saldo ${R(benBal(b))}`:""}</small></h2><div class="card list">${L.map(itemHTML).join("")}</div></section>`});
   return h;
 }
+/* data da compra (vem do PDF/Open Finance em `buy`); só aparece se for diferente da data da fatura */
+function buyTxt(x){return x.buy&&x.buy!==x.date&&typeOf(x)==="desp"&&!genFat(x)?`compra ${fmtDM(x.buy)}`:""}
 function itemHTML(x){
   const t=typeOf(x),c=catOf(x.cat,t),[,m,d]=x.date.split("-"),p=parcInfo(x);
-  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):""].filter(Boolean).join(" · ");
+  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):""].filter(Boolean).join(" · ");
   return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d">${esc(cleanDesc(x))}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}">${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
 }
 
