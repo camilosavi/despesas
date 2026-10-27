@@ -1592,56 +1592,73 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #lookSec .thit .thsw{width:100%;max-width:64px}
 #lookSec .thit{text-align:center}
 #lookSec .thit span{display:block;margin-top:6px;font-size:.74rem;line-height:1.15;white-space:nowrap}
-/* ===== Caixinhas v2 (27/10/2026, pedido dele: "tudo dela, ta bagunçado o visual"): cada caixinha é um bloco (.svbox) com ícone, nome, valor, barra e uma linha de situação;
-   aberta, o painel tem seções rotuladas (.svsec). Só #saveSec; dívidas e pessoas seguem como estavam. */
-#saveSec .svtot{padding:var(--g-pad) 0 var(--g-pad)}
-#saveSec .svtot small{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-#saveSec .svts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--g-gap);margin-top:6px}
-#saveSec .svt1{display:grid;gap:2px;margin:0}#saveSec .svt1 span{font-size:13px}#saveSec .svt1 b{font-size:22px;line-height:1.1;white-space:nowrap}
+/* ===== Caixinhas v3 + Pessoas v2 (27/10/2026, pedido dele: "redesenha… ainda não ta bom"): sem caixas dentro de caixas. Linha lisa com divisória:
+   caixinha = anel de progresso com o ícone no meio · nome · valor; pessoa = bolinha com a inicial · nome · saldo. Aberta, o painel é plano
+   (seções rotuladas .svsec). Só #saveSec e #azSec. */
+#saveSec,#azSec{--rl:var(--line)}
+#saveSec .svtot,#azSec .svtot{padding:var(--g-pad) 0}
+#saveSec .svtot small,#azSec .svtot small{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+#saveSec .svts{display:flex;flex-wrap:wrap;gap:4px var(--g-pad);align-items:baseline;margin-top:6px}
+#saveSec .svt1{display:flex;gap:8px;align-items:baseline;margin:0}#saveSec .svt1 span{font-size:13px}#saveSec .svt1 b{font-size:26px;line-height:1.1;white-space:nowrap}
 #saveSec .svtot>span{display:block;margin-top:8px}
-#saveSec .svgrp{padding:var(--g-pad) 0 8px}
-#saveSec .svbox{background:var(--chip);border-radius:20px;padding:0 var(--g-pad);margin-top:var(--g-gap);overflow:hidden}
-#saveSec .svgrp+.svbox{margin-top:0}
-#saveSec .svbox.open{outline:1.5px solid color-mix(in srgb,var(--accent) 45%,transparent)}
-#saveSec .svbox .svrow,#saveSec .svbox .svrow+.svrow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:var(--g-pad) 0!important;border:0}
-#saveSec .svrow .sv-ico{width:40px;height:40px;border-radius:12px;margin:0;font-size:1.3rem;background:color-mix(in srgb,var(--ink) 8%,transparent)}
-#saveSec .svn{display:grid;gap:2px;min-width:0}
-#saveSec .svnm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:700;font-size:1.02rem;line-height:1.2;min-width:0;overflow-wrap:anywhere}
+#saveSec .svbox,#saveSec .svbox.open{background:none;border-radius:0;padding:0;margin:0;overflow:visible;outline:0;border-top:1px solid var(--rl)}
+#saveSec .svbox .svrow,#saveSec .svbox .svrow+.svrow,#azSec .azrow{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:0 14px;align-items:center;padding:14px 0!important;border:0;width:100%;background:none;text-align:left}
+#saveSec .svring{--sz:52px;position:relative;width:var(--sz);height:var(--sz);border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 10%,transparent)}
+#saveSec .svring.has{background:conic-gradient(var(--rc) calc(var(--p)*1%),color-mix(in srgb,var(--ink) 12%,transparent) 0)}
+#saveSec .svring>span{position:absolute;inset:4px;border-radius:50%;background:var(--blk,var(--surface));display:grid;place-items:center;font-size:1.35rem;line-height:1}
+#saveSec .svn,#azSec .svn{display:grid;gap:2px;min-width:0}
+#saveSec .svnm,#azSec .svnm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-weight:700;font-size:1.05rem;line-height:1.2;overflow-wrap:anywhere}
 #saveSec .svnm .sv-won{margin:0}
-#saveSec .svsub{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;font-size:.8rem;color:var(--muted);min-width:0}
-#saveSec .svsub .fi{margin:0 0 0 0;flex:none}
-#saveSec .svsec+.svmv{border-top:0}
-#saveSec .svsub>span{min-width:0}
-#saveSec .svrow .v{font-size:1.08rem;white-space:nowrap}
-#saveSec .svrow .mini{grid-column:1/-1;margin:2px 0 0;height:8px;border-radius:4px;background:color-mix(in srgb,var(--ink) 12%,transparent)}
-#saveSec .svrow .m{grid-column:1/-1;font-size:.8rem;line-height:1.35}
-#saveSec .svbox>.svedit{margin:0 calc(var(--g-pad)*-1);padding:var(--g-pad);background:color-mix(in srgb,var(--ink) 5%,transparent);border-top:1px solid var(--line)}
-#saveSec .svsec{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:var(--g-pad) 0 8px}
-#saveSec .svedit>.svsec:first-child,#saveSec .svedit>.svneed+.svsec,#saveSec .svbanks .svsec{margin-top:0}
+#saveSec .svsub,#azSec .svsub{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;font-size:.82rem;color:var(--muted)}
+#saveSec .svsub .fi{margin:0;flex:none}
+#saveSec .svm2{grid-column:2/-1;margin-top:4px;font-size:.78rem;color:var(--muted);line-height:1.35}
+#saveSec .svrow .v,#azSec .azrow .v{font-size:1.08rem;font-weight:700;white-space:nowrap;text-align:right}
+#saveSec .svbox>.svedit,#azSec .svedit{margin:0;padding:0 0 var(--g-pad);background:none;border:0}
+#saveSec .svsec,#azSec .svsec{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:var(--g-pad) 0 8px}
+#saveSec .svedit>.svsec:first-child,#saveSec .svedit>.svneed+.svsec,#saveSec .svbanks .svsec,#azSec .azpanel>.aztools+.svsec{margin-top:0}
 #saveSec .svbanks{margin:0}
 #saveSec .svneed{margin:0 0 var(--g-pad);padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 12%,transparent);font-size:.85rem;line-height:1.4}
 #saveSec .svbk{padding:10px 0}
-#saveSec .svbtns{margin-top:var(--g-gap)}
-#saveSec .svmvs .svmv{padding:10px 0;gap:12px;align-items:center}
-#saveSec .svmvs .svmv>span:first-child{min-width:0}
-#saveSec .svmvs .svmv>span:last-child{white-space:nowrap;display:flex;gap:8px;align-items:center}
-#saveSec .svfoot{margin-top:var(--g-pad);padding-top:var(--g-gap);border-top:1px solid var(--line)}
-#saveSec .svlink,#saveSec .svdel,#saveSec .svmore{padding:0}
-#saveSec .svform{padding:var(--g-pad)!important;margin-bottom:var(--g-gap);border-radius:20px;background:var(--chip)!important}
+#saveSec .svbtns,#azSec .svbtns{margin-top:var(--g-gap)}
+#saveSec .svmvs .svmv,#azSec .svmv{padding:10px 0;gap:12px;align-items:center}
+#saveSec .svmvs .svmv>span:first-child,#azSec .svmv>span:first-child{min-width:0}
+#saveSec .svmvs .svmv>span:last-child,#azSec .svmv>span:last-child{white-space:nowrap;display:flex;gap:8px;align-items:center}
+#saveSec .svsec+.svmv,#azSec .svsec+.svmv,#azSec .azmh+.svmv{border-top:0}
+#saveSec .svfoot,#azSec .svfoot{margin-top:var(--g-pad);padding-top:var(--g-gap);border-top:1px solid var(--line)}
+#saveSec .svlink,#saveSec .svdel,#saveSec .svmore,#azSec .svlink,#azSec .svdel{padding:0}
+#saveSec .svform{padding:var(--g-pad) 0 var(--g-gap)!important;margin:0;border-radius:0;background:none!important;border-top:1px solid var(--rl)}
 #saveSec .svform .svsec{margin-top:0}
-#saveSec .svform .btn.soft,#saveSec .svbox .btn.soft{background:color-mix(in srgb,var(--ink) 10%,transparent)}
 #saveSec .svform .svlab{margin:var(--g-pad) 0 0;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 #saveSec .svform .svlab input,#saveSec .svform .svlab select{margin-top:6px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink)}
 #saveSec .svform .svrow2{margin-top:6px}
 #saveSec .svform .svkinds{margin-bottom:0}
 #saveSec .svform .svchk{margin-top:var(--g-pad)}
 #saveSec .svform .svbtns{margin-top:var(--g-pad)}
+#saveSec .svform .btn.soft,#saveSec .svbox .btn.soft,#azSec .btn.soft{background:color-mix(in srgb,var(--ink) 10%,transparent)}
 #saveSec .svmvf{padding:var(--g-gap) 0;display:grid;gap:8px}
 #saveSec .svmvf .svrow2,#saveSec .svmvf .svlab{margin:0}
-@media (max-width:359px){#saveSec .svbox{padding:0 12px}#saveSec .svbox>.svedit{margin:0 -12px;padding:12px}#saveSec .svrow .v{font-size:1rem}}
-#azSec .azseg{margin:0 0 var(--g-gap);display:grid;grid-template-columns:repeat(3,1fr)}
-#azSec .azord{margin:var(--g-pad) 0 0;padding-bottom:var(--g-gap);border-bottom:1px solid var(--line)}
-#azSec .azord .svlink{padding:0}
+#saveSec .svedit .svlab{margin-top:var(--g-gap)}
+#saveSec .svedit .svrow2+.svlab{margin-top:var(--g-gap)}
+/* pessoas */
+#azSec .azfil{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:0 0 var(--g-gap)}
+#azSec .azfil span{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+#azSec .azfil button{border:0;border-radius:999px;padding:6px 12px;background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--muted);font:inherit;font-size:.84rem;font-weight:600}
+#azSec .azfil button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+#azSec .card>.azrow,#azSec .card>.svedit{border-top:1px solid var(--rl)}
+#azSec .card>.azfil+.azrow{border-top:1px solid var(--rl)}
+#azSec .azav{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:hsl(var(--h) 52% 42%);color:#fff;font-weight:700;font-size:1.15rem;justify-self:start}
+#azSec .azav i{position:absolute;right:-6px;top:-6px;font-style:normal;font-size:.8rem;line-height:1}
+#azSec .azrow{grid-template-columns:44px minmax(0,1fr) auto}
+#azSec .aztools{display:flex;justify-content:space-between;align-items:center;margin:0 0 var(--g-pad)}
+#azSec .aztools span{display:flex;gap:var(--g-pad)}
+#azSec .aztools .svlink{font-size:.95rem}
+#azSec .azadd{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px}
+#azSec .azpixd{margin-top:var(--g-pad);font-size:.84rem;color:var(--muted)}
+#azSec .azpixd summary{cursor:pointer;font-weight:600;padding:4px 0}
+#azSec .azpixd input{margin-top:8px}
+#azSec .azmh{margin-top:var(--g-pad);padding:0 0 4px;border-bottom:1px solid var(--line)}
+#azSec .azmt{border-bottom:0;border-top:1px solid var(--line);padding-top:8px}
+@media (max-width:359px){#saveSec .svrow .v,#azSec .azrow .v{font-size:.95rem}#saveSec .svbox .svrow{grid-template-columns:42px minmax(0,1fr) auto;gap:0 10px}#saveSec .svring{--sz:42px}#saveSec .svring>span{inset:3px;font-size:1.1rem}#saveSec .svnm{font-size:1rem}#saveSec .svt1 b{font-size:22px}#azSec .azadd{grid-template-columns:1fr}}
 </style>
 
 <div class="wrap">
@@ -4166,7 +4183,10 @@ function saveSection(){
       const have=svHave(b), leftG=b.goal?Math.max(0,b.goal-have):0, mths=b.goal&&b.target?Math.max(0,monthsBetween(curYM(),b.target)):0;
       const sub=b.goal?[`${Math.round(pct)}% de ${svMoney(b.goal,b.goalCur)}`,mix].filter(Boolean).join(" · "):(mix||"sem meta");
       const meta=(b.goal?[leftG?`falta ${svMoney(leftG,b.goalCur)}`:"meta batida ✓",leftG&&mths>0?`~${svMoney(Math.ceil(leftG/mths),b.goalCur)}/mês até ${shortMonth(b.target)}`:"",svPaceTxt(b)]:[last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur||b.goalCur||"BRL")}`:"sem movimentos"]).filter(Boolean).join(" · ");
-      let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="sv-ico">${svIcon(b)}</span><span class="svn"><span class="svnm">${esc(b.name)}${isWon?`<span class="sv-won">META BATIDA 🎉</span>`:""}</span><span class="svsub">${bks.map(cardBadge).join("")}<span>${esc(sub)}</span></span></span><span class="v ${v<0?"neg":""}">${dispVal}</span>${b.goal?`<span class="mini"><i style="width:${pct}%;background:${isFx?"var(--euro)":isWon?"var(--pos)":"var(--accent)"}"></i></span>`:""}<span class="m">${esc(meta)}</span></button>`;
+      const rc=isFx?"var(--euro)":isWon?"var(--pos)":"var(--accent)";
+      const sub2=b.goal?[`${Math.round(pct)}%`,leftG?`falta ${svMoney(leftG,b.goalCur)}`:"meta batida ✓",mix].filter(Boolean).join(" · "):(mix||"sem meta");
+      const m2=(b.goal?[leftG&&mths>0?`~${svMoney(Math.ceil(leftG/mths),b.goalCur)}/mês até ${shortMonth(b.target)}`:"",svPaceTxt(b)]:[last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur||b.goalCur||"BRL")}`:"sem movimentos"]).filter(Boolean).join(" · ");
+      let row=`<button class="svrow" data-sv="${esc(b.id)}" aria-expanded="${svOpen===b.id}"><span class="svring ${b.goal?"has":""}" style="--p:${Math.round(pct)};--rc:${rc}"><span>${svIcon(b)}</span></span><span class="svn"><span class="svnm">${esc(b.name)}${isWon?`<span class="sv-won">META BATIDA 🎉</span>`:""}</span><span class="svsub">${bks.map(cardBadge).join("")}<span>${esc(sub2)}</span></span></span><span class="v ${v<0?"neg":""}">${dispVal}</span>${m2?`<span class="svm2">${esc(m2)}</span>`:""}</button>`;
       if(svOpen===b.id){
         /* compras da aba Moedas somadas na caixinha (fxAll) também aparecem aqui, com "editar" que abre a compra (26/10/2026) */
         const fxMv=b.fxAll?fx.filter(x=>fxCurOf(x)===boxFx(b)).map(x=>({id:"fx:"+x.id,fxId:x.id,date:x.date||"",cents:fxAmt(x),cur:boxFx(b),brl:x.brl,bank:fxPlaceBank(x.where)||"",where:x.where||""})):[];
@@ -4180,7 +4200,7 @@ function saveSection(){
       }
       return `<div class="svbox${svOpen===b.id?" open":""}">${row}</div>`};
   const isF=b=>b.goalCur&&b.goalCur!=="BRL", gR=B.filter(b=>!isF(b)), gF=B.filter(isF);
-  const grp=(t,sub,L)=>L.length?`<div class="svgrp"><span>${t}</span><span>${sub}</span></div>`+L.map(rowOf).join(""):"";
+  const grp=(t,sub,L)=>L.map(rowOf).join("");
   const fSub=[gF.reduce((x,b)=>x+svEur(b),0),gF.reduce((x,b)=>x+svUsd(b),0)];
   h+=(gR.length&&gF.length?grp("Em real",R(gR.reduce((x,b)=>x+svBrl(b),0)),gR)+grp("Em outras moedas",[fSub[0]?E(fSub[0]):"",fSub[1]?M(fSub[1],"USD"):""].filter(Boolean).join(" + "),gF):B.map(rowOf).join(""))+`</div><p class="hint expl" style="margin-top:8px">Toque numa caixinha para guardar ou tirar, em R$, € ou US$. Não entra nas despesas do mês.</p></section>`;
   return h;
@@ -4344,14 +4364,15 @@ function azSection(){
   if(azForm) h+=`<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><input id="azName" maxlength="24" placeholder="Nome (ex.: Mãe)"><div class="svbtns"><button class="btn soft" id="azCancel">Cancelar</button><button class="btn primary" id="azCreate">Criar</button></div></div>`;
   if(!L.length) return h+(azForm?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa (ex.: Mãe): dá para escolhê-la ao lançar uma despesa ou receita e ver quanto ela te deve ou você deve a ela.</div>`)+`</section>`;
   const net=L.reduce((s,p)=>s+azBal(p),0);
-  h+=`<div class="card"><div class="svtot"><small>Saldo com todo mundo</small><b class="${net<0?"neg":net>0?"pos":""}">${R(Math.abs(net))}</b><span>${net>0?"te devem":net<0?"você deve":"tudo acertado ✓"}</span></div><div class="seg azseg" role="group" aria-label="Organizar por">${[["mes","Por mês"],["az","A–Z"],["cat","Categoria"]].map(([k,t])=>`<button type="button" data-azview="${k}" aria-pressed="${azView===k}">${t}</button>`).join("")}</div>`+
+  h+=`<div class="card"><div class="svtot"><small>Saldo com todo mundo</small><b class="${net<0?"neg":net>0?"pos":""}">${R(Math.abs(net))}</b><span>${net>0?"te devem":net<0?"você deve":"tudo acertado ✓"}</span></div><div class="azfil" role="group" aria-label="Organizar por"><span>Organizar</span>${[["mes","Por mês"],["az","A–Z"],["cat","Categoria"]].map(([k,t])=>`<button type="button" data-azview="${k}" aria-pressed="${azView===k}">${t}</button>`).join("")}</div>`+
   (b=>[...b.filter(p=>p.pin),...b.filter(p=>!p.pin)])(azView==="az"?[...L].sort((a,b)=>a.name.localeCompare(b.name,"pt",{sensitivity:"base"})):L).map(p=>{
     const b=azBal(p), cm=azMonthSum(p,curYM()), open=azOpen===p.id, nm=esc(p.name);
-    let row=`<button class="svrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="d">${p.pin?"📌 ":""}${nm}</span><span class="v ${b<0?"neg":b>0?"pos":""}">${R(Math.abs(b))}</span><span class="m">${b>0?`${nm} te deve`:b<0?`você deve a ${nm}`:"tudo acertado ✓"}${b&&cm!==b?` · este mês ${cm?R(Math.abs(cm))+(cm<0?" (você deve)":""):"R$ 0,00"}`:""}</span></button>`;
+    const hue=[...p.name].reduce((t,c)=>t+c.charCodeAt(0)*7,0)%360;
+    let row=`<button class="svrow azrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="azav" style="--h:${hue}">${esc((p.name.trim()[0]||"?").toUpperCase())}${p.pin?`<i aria-label="fixada">📌</i>`:""}</span><span class="svn"><span class="svnm">${nm}</span><span class="svsub"><span>${b>0?"te deve":b<0?"você deve":"tudo acertado ✓"}${b&&cm!==b?` · este mês ${cm?R(Math.abs(cm))+(cm<0?" (você deve)":""):"R$ 0,00"}`:""}</span></span></span><span class="v ${b<0?"neg":b>0?"pos":""}">${b?R(Math.abs(b)):"—"}</span></button>`;
     if(open){
       const mv=[...(p.moves||[])].sort((x,y)=>(x.done?1:0)-(y.done?1:0)||y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
       const line=(m,sub)=>`<${sub?"div":`button data-azmv="${esc(m.id)}"`} class="svmv" ${sub?"":`aria-label="Marcar como ${m.done?"não acertado":"acertado"}"`}><span style="${m.done?"text-decoration:line-through;opacity:.55":""}">${esc(m.desc||"Sem descrição")}${sub?"":` · ${fmtDate(m.date)}`}${sub?` · assinatura`:""}${m.done?" · acertado ✓":""}</span><span class="${m.cents<0?"neg":"pos"}" style="${m.done?"opacity:.55":""}">${m.cents<0?"−":"+"} ${R(Math.abs(m.cents))}${sub?"":`<span class="ed">${m.done?"desfazer":"acertar"}</span>`}</span></${sub?"div":"button"}>`;
-      row+=`<div class="svedit"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div><input id="azPixNm" maxlength="60" placeholder="Nome no Pix (ex.: Maria Silva), para achar o que ${nm} já pagou" value="${esc(p.pix||"")}" aria-label="Nome no Pix" style="margin-top:8px">`+
+      row+=`<div class="svedit azpanel"><div class="aztools"><button class="svlink" data-azpin="1">${p.pin?"Soltar do topo":"📌 Fixar no topo"}</button>${azView==="az"?"":`<span><button class="svlink" data-azmove="-1" aria-label="Subir">↑</button><button class="svlink" data-azmove="1" aria-label="Descer">↓</button></span>`}</div><div class="svsec">Novo acerto</div><div class="azadd"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"></div><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div><details class="azpixd"${p.pix?" open":""}><summary>Nome no Pix${p.pix?"":" (para achar o que já pagou)"}</summary><input id="azPixNm" maxlength="60" placeholder="Ex.: Maria Silva" value="${esc(p.pix||"")}" aria-label="Nome no Pix"></details>`+
         (()=>{const MS=azMonths(p);if(!MS.length)return "";
           const fm=v=>`${v<0?"−":"+"} ${R(Math.abs(v))}`, cls=v=>v<0?"neg":v>0?"pos":"";
           const ent=e=>e.k==="pix"?`<button class="svmv" data-azpix="${esc(e.x.id)}"><span style="${e.ign?"text-decoration:line-through;opacity:.55":""}">Pix recebido ✓ · ${fmtDM(e.d)}</span><span class="pos" style="${e.ign?"opacity:.55":""}">${e.ign?"":"− "}${R(e.x.cents)}<span class="ed">${e.ign?"usar":"ignorar"}</span></span></button>`:e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${cls(e.c)}">${fm(e.c)}<span class="ed">${typeOf(e.x)==="rec"?"ela pagou":"lançamento"}</span></span></button>`;
@@ -4361,15 +4382,15 @@ function azSection(){
           const gcat=e=>e.k==="sub"?"Assinaturas":e.k==="pix"?"Pix recebido":e.k==="m"?"Avulso (sem lançamento)":catOf(e.x.cat,typeOf(e.x)).n;
           const grouped=azView==="mes"?null:(()=>{const G={},key=azView==="cat"?gcat:gname;azEntries(p).forEach(e=>{const k=key(e)||"Sem nome",g=(G[k.toLowerCase()]=G[k.toLowerCase()]||{k,L:[]});g.L.push(e)});
             return Object.values(G).sort((a,b)=>a.k.localeCompare(b.k,"pt",{sensitivity:"base"}))})();
-          if(grouped) return `<div style="margin-top:10px">`+grouped.map(g=>{const sum=g.L.reduce((t,e)=>t+e.c,0);
+          if(grouped) return `<div class="svsec">Histórico</div><div>`+grouped.map(g=>{const sum=g.L.reduce((t,e)=>t+e.c,0);
             return `<div class="azmh"><span>${esc(g.k)} · ${g.L.length} ${g.L.length===1?"item":"itens"}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+g.L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<120).map(ent).join("")}).join("")+
             `<div class="azmh azmt"><span>Total</span><span class="${cls(b)}">${b?fm(b):"acertado ✓"}</span></div></div>`;
-          return `<div style="margin-top:10px">`+MS.map(([ym,L])=>{const sum=L.reduce((t,e)=>t+e.c,0);
+          return `<div class="svsec">Histórico</div><div>`+MS.map(([ym,L])=>{const sum=L.reduce((t,e)=>t+e.c,0);
             const rows=L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
             return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+rows}).join("")+
             `<div class="azmh azmt"><span>Total</span><span class="${cls(b)}">${b?fm(b):"acertado ✓"}</span></div></div>`})()+
           (()=>{const LO=azLoose();return LO.length?`<details class="azloose"><summary>Pix recebidos sem pessoa (${LO.length}) · é de ${nm}?</summary>`+LO.map(x=>`<button class="svmv" data-azlink="${esc(x.id)}"><span>${esc(shWho(x))} · ${fmtDM(x.date)}</span><span class="pos">${R(x.cents)}<span class="ed">é de ${nm}</span></span></button>`).join("")+`</details>`:""})()+
-        `<div class="svfoot azord"><button class="svlink" data-azpin="1">${p.pin?"Soltar do topo":"📌 Fixar no topo"}</button>${azView==="az"?"":`<span><button class="svlink" data-azmove="-1" aria-label="Subir">↑ Subir</button> <button class="svlink" data-azmove="1" aria-label="Descer">↓ Descer</button></span>`}</div><div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
+        `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
     }
     return row}).join("")+`</div></section>`;
   return h;
