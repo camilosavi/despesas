@@ -185,6 +185,12 @@ h2 button{text-transform:none;letter-spacing:0;background:none;border:0;color:va
 .ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-weight:700;font-family:var(--display);flex:none}
 .item .t{flex:1;min-width:0}
 .item .d{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .d{display:flex;align-items:center;gap:var(--g-s,8px)}
+.item .d .dn{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.azb{display:inline-flex;flex:none}
+.azb i{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:hsl(var(--h) 52% 42%);color:#fff;font:700 .68rem/1 inherit;font-style:normal;box-shadow:0 0 0 2px var(--bg)}
+.azb i+i{margin-left:-6px}
+.azb i.mais{background:var(--chip);color:var(--ink)}
 .item .m{font-size:.84rem;color:var(--muted)}
 .item .a{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap;text-align:right}
 .tag{display:inline-block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:7px;background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
@@ -3823,12 +3829,18 @@ function timeline(ym,arr){
 }
 /* data da compra (vem do PDF/Open Finance em `buy`); só aparece se for diferente da data da fatura */
 function buyTxt(x){return x.buy&&x.buy!==x.date&&typeOf(x)==="desp"&&!genFat(x)?`compra ${fmtDM(x.buy)}`:""}
+/* bolinhas das pessoas vinculadas (só com 2 ou mais): inicial do nome, cor por nome (mesma da lista de Pessoas), até 3 + "+N" */
+function azBubbles(x){
+  const P=azParts(x);if(P.length<2)return"";
+  const N=P.map(e=>azList().find(q=>q.id===e.id)).filter(Boolean);if(N.length<2)return"";
+  const hue=n=>[...n].reduce((t,c)=>t+c.charCodeAt(0)*7,0)%360;
+  return `<span class="azb" title="${esc(N.map(q=>q.name).join(", "))}">${N.slice(0,3).map(q=>`<i style="--h:${hue(q.name)}">${esc((q.name.trim()[0]||"?").toUpperCase())}</i>`).join("")}${N.length>3?`<i class="mais">+${N.length-3}</i>`:""}</span>`}
 function itemHTML(x){
   const t=typeOf(x),c=catOf(x.cat,t),[,m,d]=x.date.split("-"),p=parcInfo(x);
   /* "Fatura X" com itens lançados no mês vale 0 (só o valor do banco para conferir): não mostra "a pagar" */
   const chk=t==="desp"&&x.cents&&!amt(x);
   const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):""].filter(Boolean).join(" · ");
-  return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d">${esc(cleanDesc(x))}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}"${chk?' style="color:var(--muted)"':""}>${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(chk?`<br><span class="m">conferir</span>`:isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
+  return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d"><span class="dn">${esc(cleanDesc(x))}</span>${azBubbles(x)}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}"${chk?' style="color:var(--muted)"':""}>${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(chk?`<br><span class="m">conferir</span>`:isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
 }
 
 /* ---------- aba Cartões ---------- */
