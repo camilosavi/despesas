@@ -2508,7 +2508,7 @@ function header0(){
       $("bigLabel").textContent=`Saldo ${selCard}`;setBig("R$",benBal(b));
       $("s1l").textContent="Gasto no mês";$("s1").textContent=R(sp);$("s2l").textContent=b.daily?"Por dia útil":"Crédito por mês";$("s2").textContent=b.daily?R(b.daily):b.credit?R(b.credit):"—";
       $("hFoot").textContent=nx?`próximo crédito ${fmtDM(nx)}${b.daily||b.credit?`: ${R(benCreditOn(b,nx))}`:""}`:"";return}
-    const cs=selCard?[selCard]:credCards(), tot=cs.reduce((s,c)=>s+cardTotal(c,view),0);
+    const cs=selCard?[selCard]:credCards(), tot=cs.reduce((s,c)=>s+billTot(c,view),0);
     const L=cs.flatMap(c=>cardItems(c,view)), open=L.filter(x=>!isPaid(x)).reduce((s,x)=>s+amt(x),0);
     $("bigLabel").textContent=selCard?`Fatura ${selCard}`:"Total das faturas";
     setBig("R$",tot);
@@ -3865,7 +3865,7 @@ function renderCards(){
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
   const c=selCard, all=cardItems(c,view), G=all.filter(genFat), L=all.filter(x=>!genFat(x)).sort((a,b)=>(b.buy||b.date).localeCompare(a.buy||a.date)||(b.createdAt||0)-(a.createdAt||0)||b.cents-a.cents);
-  const g=G.reduce((s,x)=>s+x.cents,0), d=L.reduce((s,x)=>s+x.cents,0), tot=L.length?d:g, allPaid=all.length&&all.every(isPaid), mn=MES[+view.slice(5)-1].toLowerCase();
+  const g=G.reduce((s,x)=>s+x.cents,0), d=L.reduce((s,x)=>s+x.cents,0), tot=billTot(c,view), allPaid=all.length&&all.every(isPaid), mn=MES[+view.slice(5)-1].toLowerCase();
   const col=cardColor(c), dd=dueOf(c), dueDate=dd?cardDue(c,view):"", cl=closeOf(c);
   const D=dueDate||`${view}-${pad(lastDay(view))}`, closeDate=closeOfDue(c,D);
   const isClosed=today()>=closeDate;
