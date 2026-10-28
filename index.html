@@ -272,7 +272,13 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surfa
 .ofn{flex:1;min-width:0;overflow-wrap:anywhere}.ofn small{display:block;color:var(--muted);font-size:.78rem}
 .ofrow b{flex:none;font-variant-numeric:tabular-nums}
 .catpill{display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 10px;border-radius:999px;background:var(--chip);font-size:.88rem;font-weight:500}
-.catpill:not(:has(button)){padding-right:12px}
+.catpill{border:0;color:inherit;font-family:inherit}
+.catpill{padding-right:12px}
+.catedit{margin-top:12px;display:grid;gap:10px}
+.catedit input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+.catcols{display:flex;gap:10px;flex-wrap:wrap}
+.catcol{width:32px;height:32px;border-radius:50%;border:2px solid transparent;padding:0}
+.catcol[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg) inset}
 .catpill button{width:24px;height:24px;border:0;border-radius:50%;background:none;color:var(--muted);font-size:1.05rem;line-height:1}
 .catadd{display:grid;grid-template-columns:1fr auto;gap:8px}
 .catadd input,.catnew input,input.limin{width:100%;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
@@ -1945,13 +1951,15 @@ const benNext=b=>{if(!b.day)return "";const ym=curYM(), d=`${ym}-${pad(Math.min(
 const isPaid=x=>typeOf(x)==="rec"||x.paid!==false;
 /* categorias de despesa da pessoa: cfg.cats=[{k:"u_…",n,c}] (criadas) e cfg.catHide=[k] (padrão apagadas).
    Faturas de cartão, Câmbio e Outros não saem (o app depende delas). Apagar move os lançamentos para Outros. */
-const BASE_REC=CATS.rec.slice(), BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
+const BASE_REC=CATS.rec.slice(), BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_LOCK_REC=["sal","divid","rout"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
 function applyCats(){
   const hide=Array.isArray(cfg.catHide)?cfg.catHide:[], mine=Array.isArray(cfg.cats)?cfg.cats:[];
-  CATS.desp=[...BASE_DESP.filter(c=>c.k!=="outros"&&!hide.includes(c.k)),...mine,BASE_DESP.find(c=>c.k==="outros")];
+  const ed=cfg.catEdit&&typeof cfg.catEdit==="object"?cfg.catEdit:{}, ap=c=>ed[c.k]?{...c,...ed[c.k]}:c;
+  CATS.desp=[...BASE_DESP.filter(c=>c.k!=="outros"&&!hide.includes(c.k)),...mine,BASE_DESP.find(c=>c.k==="outros")].map(ap);
   /* receitas: as padrão ficam; as criadas (cfg.catsRec, chave "ur_…") entram antes de "Outras receitas" */
   const mr=Array.isArray(cfg.catsRec)?cfg.catsRec:[];
-  CATS.rec=[...BASE_REC.filter(c=>c.k!=="rout"),...mr,BASE_REC.find(c=>c.k==="rout")];
+  const hr=Array.isArray(cfg.catHideRec)?cfg.catHideRec:[];
+  CATS.rec=[...BASE_REC.filter(c=>c.k!=="rout"&&!hr.includes(c.k)),...mr,BASE_REC.find(c=>c.k==="rout")].map(ap);
 }
 async function addCat(name,type){
   name=(name||"").trim().replace(/\s+/g," ").slice(0,24);if(!name){toast("Digite o nome da categoria.");return null}
@@ -1967,12 +1975,13 @@ async function addCat(name,type){
   await saveCfg({cats:[...mine,c]});applyCats();return c.k;
 }
 async function delCat(k){
-  if(k.startsWith("ur_")){
+  if(k.startsWith("ur_")||(BASE_REC.some(c=>c.k===k)&&!CAT_LOCK_REC.includes(k))){
     const c=catOf(k,"rec"), L=items.filter(x=>x.cat===k);
     if(!confirm(`Apagar a categoria “${c.n}”?${L.length?` ${L.length} ${L.length===1?"lançamento vai":"lançamentos vão"} para Outras receitas.`:""}`)) return;
     for(const x of L) await store.items.update(x.id,{cat:"rout"});
-    await saveCfg({catsRec:(cfg.catsRec||[]).filter(c=>c.k!==k)});
-    applyCats();if(form&&form.cat===k)form.cat="rout";toast("Categoria apagada",true);render();return;
+    if(k.startsWith("ur_")) await saveCfg({catsRec:(cfg.catsRec||[]).filter(c=>c.k!==k)});
+    else await saveCfg({catHideRec:[...new Set([...(cfg.catHideRec||[]),k])]});
+    catEd=null;applyCats();if(form&&form.cat===k)form.cat="rout";toast("Categoria apagada",true);render();return;
   }
   if(CAT_LOCK.includes(k)) return;
   const c=catOf(k,"desp"), L=items.filter(x=>x.cat===k);
@@ -1980,8 +1989,22 @@ async function delCat(k){
   for(const x of L) await store.items.update(x.id,{cat:"outros"});
   if(k.startsWith("u_")) await saveCfg({cats:(cfg.cats||[]).filter(c=>c.k!==k)});
   else await saveCfg({catHide:[...new Set([...(cfg.catHide||[]),k])]});
-  applyCats();if(form&&form.cat===k)form.cat="outros";toast("Categoria apagada",true);render();
+  catEd=null;applyCats();if(form&&form.cat===k)form.cat="outros";toast("Categoria apagada",true);render();
 }
+/* editar nome e cor de qualquer categoria (despesa ou receita, padrão ou criada): cfg.catEdit[k]={n?,c?} (28/10/2026, pedido dele) */
+let catEd=null;
+const CAT_PICK=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)","var(--c8)"];
+function catEditor(t){
+  if(!catEd||catEd.t!==t) return "";
+  const c=catOf(catEd.k,t), lock=t==="rec"?CAT_LOCK_REC.includes(catEd.k):CAT_LOCK.includes(catEd.k), col=catEd.col||c.c;
+  return `<div class="catedit"><input type="text" id="catEdName" maxlength="24" value="${esc(catEd.n??c.n)}" autocomplete="off" enterkeyhint="done" aria-label="Nome da categoria">
+    <div class="catcols" role="group" aria-label="Cor">${CAT_PICK.map(v=>`<button type="button" class="catcol" data-catcol="${v}" aria-pressed="${v===col}" style="background:${v}" aria-label="Cor"></button>`).join("")}</div>
+    <div class="svbtns">${lock?"":`<button type="button" class="btn soft" data-catdel="${esc(catEd.k)}">Apagar</button>`}<button type="button" class="btn soft" id="catEdCancel">Cancelar</button><button type="button" class="btn primary" id="catEdSave">Salvar</button></div></div>`}
+async function catEdSave(){
+  const t=catEd.t, k=catEd.k, c0=catOf(k,t), n=($("catEdName")?.value??catEd.n??c0.n).trim().replace(/\s+/g," ").slice(0,24), col=catEd.col||c0.c;
+  if(!n){toast("Digite o nome da categoria.");return}
+  const dup=(t==="rec"?CATS.rec:CATS.desp).find(c=>c.k!==k&&fold(c.n)===fold(n));if(dup){toast("Já existe uma categoria com esse nome.");return}
+  await saveCfg({catEdit:{...(cfg.catEdit||{}),[k]:{n,c:col}}});catEd=null;applyCats();toast("Categoria salva",true);render()}
 const catOf=(k,t)=>(CATS[t]||CATS.desp).find(c=>c.k===k)||CATS.desp.find(c=>c.k===k)||CATS.rec.find(c=>c.k===k)||(k&&k.startsWith("u_")?{k:"outros",n:"Outros",c:"var(--c8)"}:BASE_DESP.find(c=>c.k===k))||{k,n:"Outros",c:"var(--c8)"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -3142,7 +3165,7 @@ function anoFold(pid="pAno"){
   const P=$(pid), F=FOLD[pid];if(!P||!F) return;const O=foldOpenSet(F.key);
   [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<F.keep||!h)return;
     const tn=[...h.childNodes].find(n=>n.nodeType===3&&n.textContent.trim()), k=(tn?tn.textContent:h.textContent.replace(/^›/,"")).trim().slice(0,30);
-    const force=(sec.id==="salSec"&&salXOpen)||(sec.id==="subSec"&&subEdit)||(sec.id==="syncSec"&&!!(SY.err||syncMeta().errMsg));
+    const force=(sec.id==="salSec"&&salXOpen)||((sec.id==="catSec"||sec.id==="catRecSec")&&catEd)||(sec.id==="subSec"&&subEdit)||(sec.id==="syncSec"&&!!(SY.err||syncMeta().errMsg));
     sec.classList.add("fold");sec.dataset.fold=k;sec.classList.toggle("open",force||O.has(k));
     if(!h.querySelector(".foldcar"))h.insertAdjacentHTML("afterbegin",'<i class="foldcar" aria-hidden="true">›</i>');
     h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",sec.classList.contains("open"))});
@@ -4620,10 +4643,10 @@ function secSection(){
 }
 function renderMe(){
   let h=lookSection()+secSection()+pushSection()+syncSection()+ofSection();
-  h+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${CATS.desp.map(c=>`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}${CAT_LOCK.includes(c.k)?"":`<button data-catdel="${c.k}" aria-label="Apagar ${esc(c.n)}">×</button>`}</span>`).join("")}</div>
+  h+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${CATS.desp.map(c=>`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="desp" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")}</div>${catEditor("desp")}
     <div class="catadd"><input type="text" id="catAddIn" maxlength="24" placeholder="Nova categoria (ex.: Celular)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtn">Criar</button></div>
-    <div class="hint expl">Ao apagar, os lançamentos dela vão para Outros. Faturas de cartão, Câmbio e Outros ficam fixas.</div></div></section>`;
-  h+=`<section id="catRecSec"><h2>Categorias de receita</h2><div class="card rate"><div class="catlist">${CATS.rec.map(c=>`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}${c.k.startsWith("ur_")?`<button data-catdel="${c.k}" aria-label="Apagar ${esc(c.n)}">×</button>`:""}</span>`).join("")}</div>
+    <div class="hint expl">Toque numa categoria para mudar o nome e a cor, ou apagar. Ao apagar, os lançamentos dela vão para Outros. Faturas de cartão, Câmbio e Outros ficam fixas.</div></div></section>`;
+  h+=`<section id="catRecSec"><h2>Categorias de receita</h2><div class="card rate"><div class="catlist">${CATS.rec.map(c=>`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="rec" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")}</div>${catEditor("rec")}
     <div class="catadd"><input type="text" id="catAddInR" maxlength="24" placeholder="Nova categoria (ex.: Freelance)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtnR">Criar</button></div></div></section>`;
   h+=`<section><h2>Backup e exportação</h2><div class="card rate"><div class="${daysSince(cfg.lastBackup)>=7?"warn":"pos"}" style="font-size:.88rem;font-weight:600">${cfg.lastBackup?(daysSince(cfg.lastBackup)===0?"Último backup: hoje ✓":`Último backup: há ${daysSince(cfg.lastBackup)} ${daysSince(cfg.lastBackup)===1?"dia":"dias"}`):"Você ainda não fez nenhum backup"}</div><div class="hint">Backup: arquivo com todos os lançamentos, compras de euro, limites e previstos; guarde no iCloud Drive. Excel: lançamentos de ${shortMonth(curYM())} até ${shortMonth(shiftYM(curYM(),11))}, para abrir numa planilha.</div>
     <div class="row" style="margin:0;flex-wrap:wrap">${downloads?`<button class="btn soft" id="bkExport">Exportar backup</button><button class="btn soft" id="csvBtn">Excel (.csv) · 12 meses</button>`:""}${PWA?`<label class="btn soft" style="text-align:center;cursor:pointer">Importar backup<input type="file" id="bkImport" accept=".json,application/json" hidden></label>`:""}</div></div></section>`;
@@ -5277,6 +5300,10 @@ document.addEventListener("click",async e=>{
   if(t.id==="acCancel"){acDraft=null;rr();return}
   if(t.id==="acSave"){saveAccts();return}
   const cd=t.closest("[data-catdel]"); if(cd){delCat(cd.dataset.catdel);return}
+  {const ce=t.closest("[data-catedit]");if(ce){const same=catEd&&catEd.k===ce.dataset.catedit;catEd=same?null:{k:ce.dataset.catedit,t:ce.dataset.catt};render();if(catEd)setTimeout(()=>$("catEdName")?.focus(),30);return}}
+  {const cc=t.closest("[data-catcol]");if(cc&&catEd){catEd.n=$("catEdName")?.value??catEd.n;catEd.col=cc.dataset.catcol;render();return}}
+  if(t.id==="catEdCancel"){catEd=null;render();return}
+  if(t.id==="catEdSave"){await catEdSave();return}
   if(t.id==="catAddBtnR"){const v=$("catAddInR").value;if(await addCat(v,"rec")){toast("Categoria criada",true);render();setTimeout(()=>$("catRecSec")?.scrollIntoView({block:"start"}),30)}return}
   if(t.id==="catAddBtn"){const v=$("catAddIn").value;if(await addCat(v)){toast("Categoria criada",true);render();setTimeout(()=>$("catSec")?.scrollIntoView({block:"start"}),30)}return}
   if(t.id==="homeEditBtn"){homeEdit=true;renderHome();updateFab();window.scrollTo(0,0);return}
