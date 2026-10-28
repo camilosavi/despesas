@@ -2203,9 +2203,11 @@ const laterSiblings=x=>x.group&&x.parc?items.filter(y=>y.id!==x.id&&y.group===x.
 async function dropWithSeries(x){for(const y of laterSiblings(x)) await store.items.remove(y.id);await store.items.remove(x.id)}
 /* lançamento novo mesclado num que já existe: do importado (fatura/extrato/planilha) fica valor, data e situação do
    banco e entra o nome/categoria que a pessoa deu; do lançado à mão vale o que foi digitado agora */
+/* pessoas vinculadas (e a minha parte) não se perdem ao mesclar: vêm do que foi digitado quando o item do banco não tem */
+const pessoasPatch=(to,from)=>{const o={};if(!(to.pessoas&&to.pessoas.length)&&!to.pessoa){["pessoas","pessoa","pv","eu","euV"].forEach(k=>{if(from[k]!=null&&from[k]!==false&&!(Array.isArray(from[k])&&!from[k].length))o[k]=from[k]})}return o};
 function mergePatchNew(old,n){
   const g=n.group&&!old.group?{group:n.group}:{}, nm=n.desc&&n.desc.trim()?{desc:n.desc}:{};
-  const dv=n.div>=2&&!old.div?{div:n.div}:{};
+  const dv={...(n.div>=2&&!old.div?{div:n.div}:{}),...pessoasPatch(old,n)};
   if(old.imp||old.xls) return {...nm,cat:n.cat,...g,...dv,...(n.parc&&!old.parc?{parc:n.parc}:{})};
   return {...nm,cat:n.cat,cents:n.cents,...(n.card?{card:n.card}:{}),...g,...dv,...(n.parc?{parc:n.parc}:{})};
 }
@@ -2213,13 +2215,13 @@ async function mergePair(a,b){
   const score=x=>(x.imp?4:0)+(x.parc?2:0)+(x.buy?1:0);
   const [keep,drop]=score(b)>score(a)?[b,a]:[a,b];
   if(keep.imp&&!drop.imp){
-    const pt={...(!keep.parc&&drop.parc?{parc:drop.parc}:{}),...(drop.desc&&drop.desc.trim()?{desc:drop.desc}:{}),...(drop.cat&&drop.cat!=="outros"?{cat:drop.cat}:{}),...(drop.div>=2&&!keep.div?{div:drop.div}:{})};
+    const pt={...(!keep.parc&&drop.parc?{parc:drop.parc}:{}),...(drop.desc&&drop.desc.trim()?{desc:drop.desc}:{}),...(drop.cat&&drop.cat!=="outros"?{cat:drop.cat}:{}),...(drop.div>=2&&!keep.div?{div:drop.div}:{}),...pessoasPatch(keep,drop)};
     if(Object.keys(pt).length) await store.items.update(keep.id,pt);
     /* despesa dividida (ex.: Airbnb em 4): a divisão vem junto para o item da fatura e para as parcelas dele */
     if(pt.div) for(const y of buySeries({...keep,...pt})) if(!y.div) await store.items.update(y.id,{div:pt.div});
     await dropWithSeries(drop);return;
   }
-  const patch={};["parc","group","buy","imp","div"].forEach(k=>{if(!keep[k]&&drop[k])patch[k]=drop[k]});
+  const patch={};["parc","group","buy","imp","div"].forEach(k=>{if(!keep[k]&&drop[k])patch[k]=drop[k]});Object.assign(patch,pessoasPatch(keep,drop));
   if(toks(drop.desc).length>toks(keep.desc).length&&!keep.imp) patch.desc=drop.desc;
   if(Object.keys(patch).length) await store.items.update(keep.id,patch);
   await store.items.remove(drop.id);
