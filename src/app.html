@@ -1225,6 +1225,8 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 @media (min-width:980px){
   #pHome .card.list{display:grid;grid-template-columns:1fr 1fr;column-gap:36px}
   #pHome .card.list>.ok{grid-column:1/-1}
+  /* nos quadros de 1/3 do painel não cabe em 2 colunas (cortava nome e valor do "Vence em 10 dias") */
+  #pHome .htop .card.list{display:block}
   .card.banner{max-width:560px}
 }
 
@@ -2726,9 +2728,9 @@ function walCardRows(){
   const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
   if(!cs.length&&!B.length) return "";
   const row=(c,sub,val,neg)=>`<button class="acone cardgo" data-opencard="${esc(c)}">${cardBadge(c)}<span class="t"><b>${esc(c)}</b><span>${sub}</span></span><span class="v ${neg?"neg":""}">${val}</span></button>`;
-  return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=cardTotal(c,bs.ym)+rollAmt(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
+  return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=billTot(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
     const f=k.limit?cardFree(c).free:null;
-    return row(c,[f!=null?`livre ${R(Math.max(0,f))}`:"",due].filter(Boolean).join(" · "),R(tot),f!=null&&f<0)}).join("")+
+    return row(c,[f!=null?(f<0?`passou ${R(-f)} do limite`:`livre ${R(f)}`):"",due].filter(Boolean).join(" · "),R(tot),f!=null&&f<0)}).join("")+
     B.map(b=>{const v=benBal(b), nx=benNext(b);return row(b.name,nx?`crédito ${fmtDM(nx)}`:"vale",R(v),v<0)}).join("");
 }
 function contaBlock(withCards){
@@ -2815,8 +2817,8 @@ function homeBlock(k){
     const lim=cs.reduce((a,c)=>{const L=cardCfg(c).limit;if(!L)return a;a.l+=L;a.u+=L-cardFree(c).free;return a},{l:0,u:0}), pu=lim.l?Math.max(0,Math.min(100,lim.u/lim.l*100)):0;
     const sum=lim.l?`<div class="cdsum pconly"><div class="cdsumtop"><span>${Math.round(pu)}% do limite usado</span><span>Limite ${R(lim.l)}</span></div><div class="mini"><i style="width:${pu}%;background:${pu>=100?"var(--neg)":pu>=80?"var(--warn)":"var(--accent)"}"></i></div><div class="cdsumtop"><span>Usado ${R(lim.u)}</span><span>Livre ${R(Math.max(0,lim.l-lim.u))}</span></div></div>`:"";
     return `<section><h2>Cartões <small>fatura em aberto</small></h2><div class="card">`+sum+cs.map(c=>{
-      const bs=billShown(c,ym), m=bs.ym, tot=cardTotal(c,m)+(bs.from?rollAmt(c,m):0), k=cardCfg(c), due=dueOf(c), paid=!bs.from&&cardItems(c,m).length&&cardItems(c,m).every(isPaid);
-      const meta=[bs.from?`${MES[+bs.from.slice(5)-1].toLowerCase()} paga ✓ · próxima`:"",due?`vence ${fmtDM(cardDue(c,m))}`:bs.from?shortMonth(m):"",k.limit?`livre ${R(cardFree(c).free)}`:"",paid?"paga":""].filter(Boolean).join(" · ").replace("próxima · vence","próxima vence");
+      const bs=billShown(c,ym), m=bs.ym, tot=billTot(c,m), k=cardCfg(c), due=dueOf(c), paid=!bs.from&&cardItems(c,m).length&&cardItems(c,m).every(isPaid);
+      const meta=[bs.from?`${bs.none?"":MES[+bs.from.slice(5)-1].toLowerCase()+" paga ✓ · "}próxima`:"",due?`vence ${fmtDM(cardDue(c,m))}`:bs.from?shortMonth(m):"",k.limit?(cardFree(c).free<0?`${R(-cardFree(c).free)} acima`:`livre ${R(cardFree(c).free)}`):"",paid?"paga":""].filter(Boolean).join(" · ").replace("próxima · vence","próxima vence");
       return `<button class="cardrow" data-opencard="${esc(c)}" data-ym="${m}">${cardBadge(c)}<span><b>${esc(c)}</b></span><b class="${paid?"pos":""}">${R(tot)}</b><span class="m">${esc(meta)||"sem lançamentos"}${limTag(c)}</span><span class="m" style="text-align:right">›</span></button>`}).join("")+`</div></section>`;
   }
   if(k==="euro"){
@@ -2908,8 +2910,9 @@ function hojeCards(){
     </button>`;
   };
   const T=cs.map(c=>{const k=cardCfg(c);
-    if(k.limit){const f=cardFree(c).free, u=Math.max(0,Math.min(100,(k.limit-f)/k.limit*100));return tile(c,"livre",R(Math.max(0,f)),u,`de ${R(k.limit)}`,f<0)}
-    const bs=billShown(c,ym);return tile(c,"fatura",R(cardTotal(c,bs.ym)),null,dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym))});
+    if(k.limit){const f=cardFree(c).free, u=Math.max(0,Math.min(100,(k.limit-f)/k.limit*100));return f<0?tile(c,"passou",R(-f),u,`de ${R(k.limit)}`,true):tile(c,"livre",R(f),u,`de ${R(k.limit)}`)}
+    /* mesmo total das outras telas: sem o que foi para a próxima fatura, com o que veio da anterior */
+    const bs=billShown(c,ym), bv=billTot(c,bs.ym);return tile(c,"fatura",R(bv),null,dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym))});
   B.forEach(b=>{const v=benBal(b), nx=benNext(b);T.push(tile(b.name,"saldo",R(v),null,nx?`crédito ${fmtDM(nx)}`:"vale",v<0))});
   return `<section><h2>Cartões <button data-gocards="1">Ver todos</button></h2><div class="htiles">${T.join("")}</div></section>`;
 }
@@ -3383,10 +3386,12 @@ let tlOpen=new Set(), catOpen=new Set();
 /* faixa de cartões no topo do Mês: fatura do mês de cada um; tocar abre o cartão nesse mês */
 /* fatura do mês já paga → mostra a próxima que tem valor (pedido dele, out/2026). Volta {ym, from} (from = mês pago) */
 function billShown(c,ym){
-  const L=cardItems(c,ym).filter(x=>!rollYM(x)), paid=(L.length?L.every(isPaid):true)&&!rollAmt(c,ym);
+  /* mês sem nada que conte aqui (vazio, ou tudo não pago já foi para a próxima fatura) não é "paga ✓":
+     mostra a próxima com none (antes aparecia "out paga ✓" com a fatura de outubro sem pagar) */
+  const L=cardItems(c,ym).filter(x=>!rollYM(x)), rv=rollAmt(c,ym), none=!L.length&&!rv, paid=none||L.every(isPaid)&&!rv;
   if(!paid) return {ym,from:null};
   {const d=cardDue(c,ym);if(d&&d>=today()) return {ym,from:null}} /* só passa para a próxima se a fatura já venceu (pedido dele, 15/10/2026) */
-  for(let i=1;i<=12;i++){const m=shiftYM(ym,i);if(cardTotal(c,m)||rollAmt(c,m)) return {ym:m,from:ym}}
+  for(let i=1;i<=12;i++){const m=shiftYM(ym,i);if(cardTotal(c,m)||rollAmt(c,m)) return {ym:m,from:ym,none}}
   return {ym,from:null};
 }
 function cardStrip(ym){
@@ -3394,8 +3399,8 @@ function cardStrip(ym){
   const t=cs.map(c=>{
     if(isBen(c)){const b=bens().find(x=>x.name===c);if(!b)return "";const v=benBal(b);
       return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${ym}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv ${v<0?"neg":""}">${R(v)}</span><span class="cm">saldo do vale</span></button>`}
-    if(ym===curYM()){const bs=billShown(c,ym);if(bs.from){const m=bs.ym, v=cardTotal(c,m)+rollAmt(c,m), k=cardCfg(c), pct=k.limit?Math.min(limPct(c),100):0, d=cardDue(c,m);
-      return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${m}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv">${R(v)}</span><span class="cm ok">${MES[+ym.slice(5)-1].toLowerCase()} paga ✓ · próxima ${d?"vence "+fmtDM(d):shortMonth(m)}</span>${k.limit?`<span class="cl" title="${Math.round(pct)}% do limite"><i style="width:${pct}%;background:${pct>=100?"var(--neg)":pct>=80?"var(--warn)":k.color||"var(--accent)"}"></i></span>`:""}</button>`}}
+    if(ym===curYM()){const bs=billShown(c,ym);if(bs.from){const m=bs.ym, v=billTot(c,m), k=cardCfg(c), pct=k.limit?Math.min(limPct(c),100):0, d=cardDue(c,m);
+      return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${m}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv">${R(v)}</span><span class="cm ok">${bs.none?"":MES[+ym.slice(5)-1].toLowerCase()+" paga ✓ · "}próxima ${d?"vence "+fmtDM(d):shortMonth(m)}</span>${k.limit?`<span class="cl" title="${Math.round(pct)}% do limite"><i style="width:${pct}%;background:${pct>=100?"var(--neg)":pct>=80?"var(--warn)":k.color||"var(--accent)"}"></i></span>`:""}</button>`}}
     const L0=cardItems(c,ym), gone=L0.filter(x=>rollYM(x)), L=L0.filter(x=>!rollYM(x)), rv=rollAmt(c,ym), v=L.reduce((s,x)=>s+amt(x),0)+rv, due=cardDue(c,ym), paid=L.length&&L.every(isPaid)&&!rv, late=!paid&&v&&due&&due<today();
     if(!L.length&&!rv&&gone.length) return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${ym}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv">${R(gone.reduce((s,x)=>s+amt(x),0))}</span><span class="cm late">não paga · foi para ${shortMonth(rollYM(gone[0]))}</span></button>`;
     const k=cardCfg(c), pct=k.limit?Math.min(limPct(c),100):0, col=k.color||"var(--accent)";
@@ -3473,8 +3478,11 @@ async function syncNow(manual){
   if(!syncOn()||SY.busy||store!==local)return;
   SY.busy=true;SY.err="";renderSyncBits();
   try{
-    const base=syncBase(), first=!base, loc=snapState();
-    const R=rowsToState(await sbGetAll()), rem={items:R.items,fx:R.fx,cfg:R.cfg,prefs:R.prefs}, remDev=R.dev, remDel=R.del;
+    const loc=snapState(), rows=await sbGetAll();
+    /* nuvem sem nenhuma linha (tabela recriada/limpa) com base antiga: tratar como 1ª vez e reenviar o que está aqui.
+       Antes a base dizia "nada mudou aqui" e a junção apagava todos os lançamentos do aparelho */
+    const base=rows.length?syncBase():null, first=!base;
+    const R=rowsToState(rows), rem={items:R.items,fx:R.fx,cfg:R.cfg,prefs:R.prefs}, remDev=R.dev, remDel=R.del;
     /* mexeram nos dados enquanto a nuvem respondia: não grava a foto velha por cima, tenta de novo daqui a pouco */
     if(stab(snapState())!==stab(loc)){SY.busy=false;renderSyncBits();syncSoon();return}
     const old=Date.now()-180*864e5, dl={};[remDel,syDel()].forEach(o=>Object.entries(o||{}).forEach(([k,t])=>{if(t>old&&!(dl[k]>=t))dl[k]=t}));
@@ -3824,6 +3832,8 @@ function allCards(){const set=new Set(Object.keys(cfg.cards||{}));items.forEach(
 const FAT_N=6, fatOpen=new Set();
 const cardItems=(c,ym)=>items.filter(x=>cardOf(x)===c&&(!ym||x.date.startsWith(ym)));
 const cardTotal=(c,ym)=>cardItems(c,ym).reduce((s,x)=>s+amt(x),0);
+/* valor da fatura como o banco cobra: sem o que não foi pago e passou para a próxima, com o que veio da anterior */
+const billTot=(c,ym)=>cardItems(c,ym).filter(x=>!rollYM(x)).reduce((s,x)=>s+amt(x),0)+rollAmt(c,ym);
 function renderCards(){
   if(document.activeElement&&(document.activeElement.classList.contains("limin")||/^bn(Bal|Credit|Day)$/.test(document.activeElement.id))) return;
   if(!selCard){
