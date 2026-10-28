@@ -600,11 +600,8 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
     e-mail que já existe com "confirmar e-mail" ligado vem 200 com `identities` vazio → "já tem conta". Mensagens: `over_email_send_rate_limit`
     (limite de e-mails do Supabase, causa comum de "não deixa criar conta"), 5xx com texto do servidor. **Esqueci a senha** (`authForgot` →
     `/auth/v1/recover`; o link volta com `type=recovery` → `newPassForm`/`authSetPw`, PUT `/auth/v1/user`). `authGo.busy` evita toque duplo.
-    **Formas de entrar** (Você → Conta e sincronização, `idHtml`/`idLoad`/`idLink`/`idSavePw`): lê `/auth/v1/user` (`app_metadata.providers`) e mostra E-mail e senha / Google / Apple com ✓; "Vincular" chama `GET /auth/v1/user/identities/authorize` (precisa de *Allow manual linking* ligado no Supabase) e volta pelo `SB_BACK`; "Criar/Trocar senha" = PUT `/auth/v1/user`. Sem desvincular. O Supabase também junta sozinho contas com o mesmo e-mail verificado.
-    **Entrar com a Apple** (27/10/2026, `#auApple`): mesmo fluxo do Google (`/auth/v1/authorize?provider=apple`, volta pelo `SB_BACK`); precisa do provedor Apple ligado no Supabase (Services ID, Team ID, Key ID e chave .p8 da conta Apple Developer).
-    **Botão da Apple só aparece com a Apple ligada** (28/10/2026, `sbProvLoad`/`provOk`/`provApply`): o app lê `/auth/v1/settings` (público, só
-    `apikey`) e guarda em `despesas.sbProv`; Apple fica escondida até `external.apple` ser `true` (na tela de login e em "Formas de entrar").
-    Google some só se o Supabase disser `false`. Ligou a Apple no Supabase → o botão aparece sozinho, sem publicar nada.
+    **Formas de entrar** (Você → Conta e sincronização, `idHtml`/`idLoad`/`idLink`/`idSavePw`): lê `/auth/v1/user` (`app_metadata.providers`) e mostra E-mail e senha / Google com ✓; "Vincular" chama `GET /auth/v1/user/identities/authorize` (precisa de *Allow manual linking* ligado no Supabase) e volta pelo `SB_BACK`; "Criar/Trocar senha" = PUT `/auth/v1/user`. Sem desvincular. O Supabase também junta sozinho contas com o mesmo e-mail verificado.
+    **Sem Apple** (28/10/2026, decisão dele: exige Apple Developer Program pago, US$ 99/ano; "não vou ligar"): botão e código da Apple foram removidos; só e-mail/senha e Google. Não recolocar sem ele pedir.
   - URL do projeto e chave *publishable* (`SB_URL`, `SB_KEY`) ficam no código (públicas por desenho). **Nunca** senha do banco, `service_role`
     ou chave secreta do Google no repositório.
   - **Tabela** `sync_rows` (esquema em `supabase/sync.sql`, ele roda uma vez no SQL Editor): `user_id`, `kind`, `id`, `data` ({"v": valor}),

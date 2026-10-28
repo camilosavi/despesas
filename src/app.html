@@ -3545,19 +3545,18 @@ function syncStateHtml(){const mt=syncMeta(), pend=syncPend();
   return `${head}<div class="src">${mt.at?`Conferido ${whenAgo(mt.at)}`:""}${last?` · ${last}`:""}${s&&s.email?`<br>${esc(s.email)}`:""}</div>`}
 const whenAgo=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?"agora":m<60?`há ${m} min`:m<1440?`há ${Math.round(m/60)} h`:`em ${new Date(t).toLocaleDateString("pt-BR")}`};
 let syncSetup=null;
-/* formas de entrar vinculadas à conta (e-mail e senha, Google, Apple): lê /auth/v1/user; vincular usa o "manual linking" do Supabase */
+/* formas de entrar vinculadas à conta (e-mail e senha, Google): lê /auth/v1/user; vincular usa o "manual linking" do Supabase */
 let ID={prov:null,at:0,msg:"",pw:false,busy:false};
-const IDN=k=>({email:["E-mail e senha",""],google:["Google",AU_G],apple:["Apple",AU_A]})[k];
+const IDN=k=>({email:["E-mail e senha",""],google:["Google",AU_G]})[k];
 function idHtml(){
   if(!ID.prov)return `<div class="src">Carregando as formas de entrar…</div>`;
-  const rows=["email","google","apple"].filter(k=>k==="email"||ID.prov.includes(k)||provOk(k)).map(k=>{const has=ID.prov.includes(k), nm=IDN(k)[0];
+  const rows=["email","google"].map(k=>{const has=ID.prov.includes(k), nm=IDN(k)[0];
     return `<div class="row" style="margin:0;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><span style="display:flex;align-items:center;gap:8px">${k==="email"?"✉️":IDN(k)[1]}<span><b>${nm}</b>${has?` <span class="pos">vinculado ✓</span>`:""}</span></span>
       ${k!=="email"&&has?"":`<button class="btn soft" style="width:auto;padding:8px 14px" data-idgo="${k}" ${ID.busy?"disabled":""}>${k==="email"?(has?"Trocar senha":"Criar senha"):"Vincular"}</button>`}</div>`}).join("");
   const pw=ID.pw?`<div style="display:grid;gap:8px;margin-top:8px"><input type="password" id="idPw" autocomplete="new-password" placeholder="Senha nova (6 ou mais)" aria-label="Senha nova"><button class="btn primary" id="idPwSave">Salvar senha</button></div>`:"";
   return rows+pw+(ID.msg?`<div class="src" role="alert" style="margin-top:6px">${esc(ID.msg)}</div>`:"")}
 function idRender(){const el=$("idBox");if(el)el.innerHTML=idHtml()}
 async function idLoad(force){
-  sbProvLoad();
   if(!syncOn()||ID.busy||(!force&&ID.prov&&Date.now()-ID.at<6e4))return;
   try{const t=await sbTok(), r=await fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_KEY,Authorization:"Bearer "+t}});if(!r.ok)throw 0;
     const u=await r.json(), am=u.app_metadata||{}, L=new Set([...(am.providers||[]),am.provider,...(u.identities||[]).map(i=>i.provider)].filter(Boolean));
@@ -3592,7 +3591,6 @@ const SB_BACK=(()=>{const p=new URLSearchParams(location.hash.slice(1)), q=new U
   history.replaceState(null,"",location.pathname);
   if(er)return {err:er.replace(/\+/g," ")};
   return {at,rt:p.get("refresh_token")||"",exp:+p.get("expires_in")||3600,rec:p.get("type")==="recovery"}})();
-const AU_A=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M16.4 12.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.700 2.400 2.900 2.300 1.200 0 1.600-.7 3-.7s1.800.7 3 .7 2-1.100 2.800-2.200c.9-1.300 1.200-2.500 1.300-2.600-.1 0-2.500-1-2.500-3.800zM14.100 5.600c.6-.8 1.100-1.800.9-2.900-.9 0-2 .6-2.700 1.400-.6.700-1.100 1.800-1 2.800 1 .1 2.100-.5 2.800-1.300z"/></svg>`;
 const AU_G=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.5-2.7c-1 .7-2.2 1-3.8 1-2.9 0-5.3-2-6.2-4.6H2.1v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14c-.2-.7-.4-1.3-.4-2s.1-1.4.4-2V7.2H2.1a11 11 0 0 0 0 9.6z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.1 7.2L5.8 10c.9-2.6 3.3-4.6 6.2-4.6z"/></svg>`;
 function showAuth(msg,isErr){
   const el=$("auth");if(!el||!PWA)return;
@@ -3607,20 +3605,8 @@ function showAuth(msg,isErr){
       <button type="button" class="ab sec" id="auForgot" style="background:none;border:0;opacity:.8;font-size:.9rem">Esqueci a senha</button>
       <div class="au-or"><span>ou</span></div>
       <button type="button" class="ab sec" id="auGoogle">${AU_G}Entrar com o Google</button>
-      <button type="button" class="ab sec" id="auApple">${AU_A}Entrar com a Apple</button>
     </form>`}
-  provApply();sbProvLoad();authMsg(msg||"",isErr)}
-/* quais provedores estão ligados no Supabase (/auth/v1/settings, público): o botão da Apple só aparece depois que a Apple for
-   configurada lá (antes dava erro ao tocar). Fica guardado no aparelho para a tela de login não piscar. */
-const SB_PROV_K="despesas.sbProv";
-const sbProv=()=>{try{return JSON.parse(lsGet(SB_PROV_K)||"null")}catch(e){return null}};
-const provOk=k=>{const p=sbProv();return k==="apple"?!!(p&&p.apple):!(p&&p[k]===false)};
-function provApply(){["auGoogle","auApple"].forEach(id=>{const b=$(id);if(b)b.style.display=provOk(id==="auApple"?"apple":"google")?"":"none"});
-  const o=document.querySelector(".au-or");if(o)o.style.display=provOk("google")||provOk("apple")?"":"none";if(typeof idRender==="function")idRender()}
-async function sbProvLoad(){
-  if(sbProvLoad.at&&Date.now()-sbProvLoad.at<6e4)return;sbProvLoad.at=Date.now();
-  try{const r=await fetch(SB_URL+"/auth/v1/settings",{headers:{apikey:SB_KEY}});if(!r.ok)return;const e=(await r.json()).external||{};
-    const n={apple:!!e.apple,google:!!e.google}, o=sbProv()||{};lsSet(SB_PROV_K,JSON.stringify(n));if(o.apple!==n.apple||o.google!==n.google)provApply()}catch(e){}}
+  authMsg(msg||"",isErr)}
 function authMsg(t,isErr){const m=$("auMsg");if(m){m.textContent=t||"";m.classList.toggle("err",!!isErr)}}
 function hideAuth(){const el=$("auth");el.hidden=true;el.innerHTML="";if($("lock").hidden)document.body.style.overflow=""}
 function authErr(e){const m=String(e&&e.message||""), c=e&&e.code||"";
@@ -3638,7 +3624,7 @@ async function authGo(create){
   if(!/^\S+@\S+\.\S+$/.test(em)){authMsg("Digite um e-mail válido.",true);return}
   if(pw.length<6){authMsg("A senha precisa de 6 ou mais caracteres.",true);return}
   if(authGo.busy)return;authGo.busy=true;
-  const bt=[$("auIn"),$("auNew"),$("auGoogle"),$("auApple")];bt.forEach(b=>b.disabled=true);authMsg("");
+  const bt=[$("auIn"),$("auNew"),$("auGoogle")];bt.forEach(b=>b.disabled=true);authMsg("");
   try{
     if(create){const j=await sbAuth("signup?redirect_to="+encodeURIComponent(G_REDIR),{email:em,password:pw});
       /* e-mail que já tem conta: com "confirmar e-mail" ligado o Supabase devolve 200 sem sessão e sem identidades */
@@ -3681,7 +3667,7 @@ $("auth").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)
   if(t.id==="auNew"){const pi=$("auPass");if(pi)pi.setAttribute("autocomplete","new-password");authGo(true)}
   else if(t.id==="auForgot")authForgot();
   else if(t.id==="auSetPw")authSetPw();
-  else if(t.id==="auGoogle"||t.id==="auApple"){const ap=t.id==="auApple";authMsg(ap?"Abrindo a Apple…":"Abrindo o Google…");location.href=SB_URL+"/auth/v1/authorize?provider="+(ap?"apple":"google")+"&redirect_to="+encodeURIComponent(G_REDIR)}});
+  else if(t.id==="auGoogle"){authMsg("Abrindo o Google…");location.href=SB_URL+"/auth/v1/authorize?provider=google&redirect_to="+encodeURIComponent(G_REDIR)}});
 /* arrastar um lançamento para a esquerda: marca como pago (ou volta para a pagar). Só despesas, fora de benefício. */
 let swipeJust=false;
 (function(){
