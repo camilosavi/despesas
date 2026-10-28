@@ -3165,7 +3165,7 @@ function anoFold(pid="pAno"){
   const P=$(pid), F=FOLD[pid];if(!P||!F) return;const O=foldOpenSet(F.key);
   [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<F.keep||!h)return;
     const tn=[...h.childNodes].find(n=>n.nodeType===3&&n.textContent.trim()), k=(tn?tn.textContent:h.textContent.replace(/^›/,"")).trim().slice(0,30);
-    const force=(sec.id==="salSec"&&salXOpen)||((sec.id==="catSec"||sec.id==="catRecSec")&&catEd)||(sec.id==="subSec"&&subEdit)||(sec.id==="syncSec"&&!!(SY.err||syncMeta().errMsg));
+    const force=(sec.id==="salSec"&&salXOpen)||((sec.id==="catSec"||sec.id==="catRecSec")&&catEd)||(sec.id==="subSec"&&subEdit)||(sec.id==="syncSec"&&!!(SY.err||syncMeta().errMsg))||(sec.id==="ofSec"&&!!drvTok()&&!ofReady());
     sec.classList.add("fold");sec.dataset.fold=k;sec.classList.toggle("open",force||O.has(k));
     if(!h.querySelector(".foldcar"))h.insertAdjacentHTML("afterbegin",'<i class="foldcar" aria-hidden="true">›</i>');
     h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",sec.classList.contains("open"))});
@@ -3632,6 +3632,48 @@ function syncSection(){
 /* ---------- entrar, criar conta, Google, sair ---------- */
 const G_REDIR=location.origin+location.pathname.replace(/index\.html$/,"");
 /* volta do Google (pelo Supabase): token no endereço (#access_token=…&refresh_token=…); roda antes de tudo e limpa o endereço */
+/* Trazer o Open Finance do app antigo (28/10/2026): o app antigo guardava endereço e chave do Worker, criptografados com a senha de
+   sincronização, na pasta escondida do app no Google Drive (appDataFolder). Aqui só LÊ esse arquivo (escopo drive.appdata). A volta do Google
+   leva state "drv." para não confundir com o login do Supabase. O token vale ~1 h e fica só na sessão. */
+const DRV_CLIENT="770349175007-u1d2c54ce78ssqf10mqomhmro0saukgg.apps.googleusercontent.com", DRV_FILE="despesas-sync.json";
+const DRV_BACK=(()=>{const p=new URLSearchParams(location.hash.slice(1));if(!(p.get("state")||"").startsWith("drv."))return null;
+  let want="";try{want=localStorage.getItem("despesas.drvstate")||"";localStorage.removeItem("despesas.drvstate")}catch(e){}
+  history.replaceState(null,"",location.pathname);
+  const at=p.get("access_token");
+  if(!at||!want||p.get("state")!==want)return {err:p.get("error")==="access_denied"?"Google: acesso negado.":"Não deu para entrar no Google. Tente de novo."};
+  try{sessionStorage.setItem("despesas.drvtok",JSON.stringify({t:at,e:Date.now()+((+p.get("expires_in")||3600)-120)*1e3}))}catch(e){}
+  return {ok:true}})();
+const drvTok=()=>{try{const o=JSON.parse(sessionStorage.getItem("despesas.drvtok")||"null");return o&&Date.now()<o.e?o.t:""}catch(e){return ""}};
+function drvGo(){
+  const st="drv."+Math.random().toString(36).slice(2)+Date.now().toString(36);
+  try{localStorage.setItem("despesas.drvstate",st)}catch(e){}
+  const q=new URLSearchParams({client_id:DRV_CLIENT,redirect_uri:G_REDIR,response_type:"token",scope:"https://www.googleapis.com/auth/drive.appdata",include_granted_scopes:"true",state:st,prompt:"consent"});
+  location.href="https://accounts.google.com/o/oauth2/v2/auth?"+q;
+}
+async function drvImport(pass){
+  const tok=drvTok();if(!tok)return "Entre no Google de novo.";
+  const g=async u=>{const r=await fetch(u,{headers:{Authorization:"Bearer "+tok}});
+    if(r.status===401){try{sessionStorage.removeItem("despesas.drvtok")}catch(e){}throw new Error("expirou")}
+    if(!r.ok)throw new Error("http "+r.status);return r};
+  try{
+    const q=encodeURIComponent(`name='${DRV_FILE}'`);
+    const l=await (await g(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=${q}&fields=files(id)&orderBy=modifiedTime desc`)).json();
+    const id=l.files&&l.files[0]&&l.files[0].id;if(!id)return "Não achei o arquivo de sincronização do app antigo nesta conta do Google.";
+    const j=JSON.parse(await (await g(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`)).text());
+    if(!j||j.app!=="minhas-despesas-sync")throw new Error("formato");
+    const ub=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
+    const km=await crypto.subtle.importKey("raw",new TextEncoder().encode(pass),"PBKDF2",false,["deriveKey"]);
+    const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:ub(j.salt),iterations:250000,hash:"SHA-256"},km,{name:"AES-GCM",length:256},false,["decrypt"]);
+    let pt;try{pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub(j.iv)},key,ub(j.ct))}catch(e){throw new Error("senha")}
+    const d=JSON.parse(new TextDecoder().decode(pt)), pr=d.prefs||(d.data&&d.data.prefs)||{};
+    let c=null;try{c=JSON.parse(pr["despesas.of"]||"null")}catch(e){}
+    if(!c||!c.url||!c.key)return "O arquivo abriu, mas não tem Open Finance salvo.";
+    ofSet({url:c.url,key:c.key,...(c.items&&c.items.length?{items:c.items}:{})});
+    try{sessionStorage.removeItem("despesas.drvtok")}catch(e){}
+    return c.items&&c.items.length?"Open Finance trazido do app antigo ✓":"Servidor trazido ✓ (falta conectar o banco)";
+  }catch(e){const m=e.message||"";
+    return m==="senha"?"Senha de sincronização errada.":m==="expirou"?"O login do Google expirou. Entre de novo.":m==="formato"?"O arquivo do Drive não é do app antigo.":"Não deu: "+(m||"erro")}
+}
 const SB_BACK=(()=>{const p=new URLSearchParams(location.hash.slice(1)), q=new URLSearchParams(location.search);
   const at=p.get("access_token"), er=p.get("error_description")||q.get("error_description");
   if(!at&&!er)return null;
@@ -5134,7 +5176,10 @@ function ofSection(){
   if(!ofReady()||ofOpen) return head+`<div class="hint">Puxa conta e cartão direto do banco, pelo Meu Pluggy. Precisa de um servidor seu (instruções em <b>tools/pluggy-worker.js</b> no GitHub do app). O endereço e a chave ficam só neste aparelho (não vão para a nuvem); em outro aparelho, preencha de novo.</div>
     <input id="ofUrl" class="limin" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Endereço do servidor (…workers.dev)" value="${esc(c.url||"")}">
     <input id="ofKeyIn" type="password" class="limin" autocomplete="off" placeholder="Chave do servidor (APP_KEY)" value="${esc(c.key||"")}">
-    <div class="row" style="margin:0">${ofOpen?`<button class="btn soft" id="ofCancel">Cancelar</button>`:""}<button class="btn primary" id="ofSave">Salvar servidor</button></div></div></section>`;
+    <div class="row" style="margin:0">${ofOpen?`<button class="btn soft" id="ofCancel">Cancelar</button>`:""}<button class="btn primary" id="ofSave">Salvar servidor</button></div>
+    <div class="hint" style="margin:12px 0 4px">Tinha no app antigo? Traga o endereço e a chave do arquivo que ele guardava no seu Google Drive (só leitura).</div>
+    ${drvTok()?`<input id="ofDrvPass" type="password" class="limin" autocomplete="off" placeholder="Senha de sincronização do app antigo"><div class="row" style="margin:0"><button class="btn soft" id="ofDrvGo">Trazer do Drive</button></div>`
+      :`<div class="row" style="margin:0"><button class="btn soft" id="ofDrvAuth">Trazer do Google Drive</button></div>`}</div></section>`;
   const L=c.items||[];
   let h=head+(L.length?L.map(i=>`<div class="ofitem"><div><b>${esc(i.name)}</b><div class="hint" style="margin:0">conectado em ${fmtDM(String(i.at).slice(0,10))}</div></div>
       <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn soft" data-ofload="${esc(i.id)}">${ofView&&ofView.id===i.id?"Buscar de novo":"Ver dados"}</button><button class="btn soft" data-offorget="${esc(i.id)}">Esquecer</button></div></div>`).join("")
@@ -5464,6 +5509,10 @@ document.addEventListener("click",async e=>{
     case "pushOn":pushOn(t);break;
     case "ofSave":ofSaveSrv();break;
     case "ofCancel":ofOpen=false;render();break;
+    case "ofDrvAuth":drvGo();break;
+    case "ofDrvGo":{const pw=($("ofDrvPass")?.value||"").trim();if(!pw){toast("Digite a senha de sincronização.");break}
+      const b=$("ofDrvGo");b.disabled=true;b.textContent="Lendo…";
+      drvImport(pw).then(m=>{toast(m,/✓/.test(m));render()}).catch(()=>{b.disabled=false});break}
     case "ofEdit":ofOpen=true;render();break;
     case "ofConnect":ofConnect(t);break;
     case "ofCopy":ofCopy();break;
@@ -7672,6 +7721,7 @@ document.addEventListener("visibilitychange",()=>{
 if(PWA&&window.crypto&&crypto.subtle&&!(authData()&&(sessionStorage.getItem("despesas.unlocked")||pcUnlocked()))) lockApp();
 else setTimeout(gResume,600);
 if(PWA){if(SB_BACK)sbFinish(SB_BACK);else if(!sbSes())showAuth()}
+if(PWA&&DRV_BACK)setTimeout(()=>{try{go("pMe");toast(DRV_BACK.ok?"Google ok ✓ Digite a senha de sincronização.":DRV_BACK.err)}catch(e){}},900);
 
 /* ---------- métricas anônimas (GoatCounter): só contagens, nunca valores, nomes ou lançamentos ---------- */
 const GC_CODE="camilosavi";  // conta GoatCounter (painel: camilosavi.goatcounter.com); vazio = desligado
