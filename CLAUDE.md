@@ -282,12 +282,18 @@ card?, parc?:"i/n", group?, createdAt}`
   + dourado `#C9A25A`/`#D9B66F` do logo "Um Tostão"; botões dourados com texto marinho; fundo/superfícies azulados no escuro). Sem tema salvo
   vale o Tostão (`applyTheme`/`lookSection`); o verde antigo continua escolhível ("Verde"). Tela da senha mostra o logo (`tostao-logo.png`,
   `.lk-logo`) no lugar do "R$". Ícones do app (`icon-180/192/512.png`, `icon-maskable-512.png`), `theme-color` e manifest vêm do logo (`build_pwa.py`).
+- **Removido em 28/10/2026:** `painel.html`, `.github/workflows/painel.yml` e `tools/painel-fetch.mjs` (sobras do app antigo, a pedido dele).
 - **Nome do app = "Um Tostão"** (21/10/2026, pedido dele): título, manifest, nome na Tela de Início, tela da senha, barra do PC, imagem do resumo e aviso padrão. O nome "Minhas Despesas" só sobra em textos internos (diagnóstico, comentários).
 - **Ícones com nome novo** (`tostao-180/192/512.png`, `tostao-maskable-512.png`): o iPhone guarda o ícone da Tela de Início por endereço e só troca ao remover e adicionar o app de novo; nome novo força baixar o ícone certo. Os `icon-*.png` ficam só por compatibilidade.
 - **Ícone da Tela de Início embutido** (`ICON180` no `build_pwa.py`): o `apple-touch-icon` vai como data URI dentro do `index.html`, para o iPhone não depender de baixar outro arquivo (apareceu a letra "U" no lugar do logo). A cor da barra de status (`theme-color`) fica marinho enquanto a senha está na tela e volta ao tema ao destravar.
 - **Tela da senha fixa no marinho/dourado** (21/10/2026, pedido dele, print com tema Café ficando marrom ao lado do logo): `.lock` redefine
   `--head/--btn/--accent` e fundo em degradê radial, logo 112 px com aro dourado, "MINHAS DESPESAS" em caixa alta pequena, teclado e bolinhas
   com toque dourado. Não segue o tema escolhido (o logo é marinho).
+- **Valor da fatura nas listas** (28/10/2026, revisão): `billTot(c,ym)` = itens do mês que não foram para a próxima + `rollAmt`; usar em
+  todo lugar que mostra o valor de uma fatura (Hoje, Contas, Início do PC, faixa do Mês). `billShown` devolve `none` quando o mês não tem
+  nada que conte (vazio ou tudo rolado): aí mostra só "próxima vence…", sem "<mês> paga ✓". Cartão acima do limite mostra quanto passou
+  ("passou R$ X" / "R$ X acima"), nunca "livre R$ 0,00" ou livre negativo. "Fatura X" que vale 0 (há itens no mês) aparece cinza com
+  "conferir" na lista, não "a pagar". No PC o "Vence em 10 dias" (quadro de 1/3) é uma coluna só.
 - **Fatura paga → mostra a próxima** (`billShown`, out/2026, pedido dele): no Início (bloco Cartões, "fatura em aberto") e na
   faixa do Mês atual, cartão com a fatura do mês toda paga mostra a próxima com valor ("out paga ✓ · próxima vence dd/mm",
   abre naquele mês).
@@ -596,11 +602,16 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
     `/auth/v1/recover`; o link volta com `type=recovery` → `newPassForm`/`authSetPw`, PUT `/auth/v1/user`). `authGo.busy` evita toque duplo.
     **Formas de entrar** (Você → Conta e sincronização, `idHtml`/`idLoad`/`idLink`/`idSavePw`): lê `/auth/v1/user` (`app_metadata.providers`) e mostra E-mail e senha / Google / Apple com ✓; "Vincular" chama `GET /auth/v1/user/identities/authorize` (precisa de *Allow manual linking* ligado no Supabase) e volta pelo `SB_BACK`; "Criar/Trocar senha" = PUT `/auth/v1/user`. Sem desvincular. O Supabase também junta sozinho contas com o mesmo e-mail verificado.
     **Entrar com a Apple** (27/10/2026, `#auApple`): mesmo fluxo do Google (`/auth/v1/authorize?provider=apple`, volta pelo `SB_BACK`); precisa do provedor Apple ligado no Supabase (Services ID, Team ID, Key ID e chave .p8 da conta Apple Developer).
+    **Botão da Apple só aparece com a Apple ligada** (28/10/2026, `sbProvLoad`/`provOk`/`provApply`): o app lê `/auth/v1/settings` (público, só
+    `apikey`) e guarda em `despesas.sbProv`; Apple fica escondida até `external.apple` ser `true` (na tela de login e em "Formas de entrar").
+    Google some só se o Supabase disser `false`. Ligou a Apple no Supabase → o botão aparece sozinho, sem publicar nada.
   - URL do projeto e chave *publishable* (`SB_URL`, `SB_KEY`) ficam no código (públicas por desenho). **Nunca** senha do banco, `service_role`
     ou chave secreta do Google no repositório.
   - **Tabela** `sync_rows` (esquema em `supabase/sync.sql`, ele roda uma vez no SQL Editor): `user_id`, `kind`, `id`, `data` ({"v": valor}),
     PK (user_id, kind, id), RLS por `auth.uid()`. `kind`: `i` lançamento, `f` compra de moeda, `c` chave do cfg, `p` foto/tema, `d` lápide,
     `m` (id `dev`) = quem enviou por último. Sem a tabela: erro claro na seção ("rodar supabase/sync.sql") e a seção abre sozinha.
+  - **Nuvem vazia não apaga o aparelho** (28/10/2026, achado na revisão): se `sbGetAll` volta sem nenhuma linha (tabela recriada/limpa), a base
+    antiga é ignorada e vira 1ª sincronização (reenvia tudo). Antes a base dizia "nada mudou aqui" e a junção apagava todos os lançamentos.
   - **`syncNow`** (mesma junção em 3 vias de antes, só o transporte mudou): lê todas as linhas (`sbGetAll`, páginas de 1000), junta com a base
     `despesas.sbBase` (hash por item/chave; quem mudou desde a base vence; os dois → este aparelho; 1ª vez → nuvem), grava só o que
     mudou (`sbUp` em lotes, `sbDel` por `kind`+ids) e atualiza base, lápides (`despesas.syncDel`, 180 dias) e `syncMeta`. Roda 3 s depois de
@@ -668,7 +679,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - Parágrafos só explicativos (`.hint`) ganharam a classe `expl` (some com `!important`): não escrever texto de apoio novo; só aviso que muda o que fazer (atraso, falta de saldo, conferência).
 - Listas: sem categoria/forma de pagamento sob o nome (o ícone já mostra); fica só status (atrasado, vence hoje, pago ✓, parcela). "sobra/fica R$" por linha só aparece quando **falta** (vermelho). Sem a frase no topo do Hoje/Planejar/Você (`hFoot` vazio).
 - `+` fica redondo ao lado da barra em qualquer celular (≤ 979 px), não só nas telas pequenas. Vidro da barra com mais tinta e desfoque 20px.
-- PC: "Vence em 10 dias" em 2 colunas; caixinha vazia vira "Criar uma caixinha"; pedido de nome de usuário com 1 linha de aviso (mantida de propósito: é o aviso do que o Camilo vê).
+- PC: "Vence em 10 dias" em 2 colunas só fora do painel (no quadro de 1/3 do `.htop` é 1 coluna, 28/10/2026); caixinha vazia vira "Criar uma caixinha"; pedido de nome de usuário com 1 linha de aviso (mantida de propósito: é o aviso do que o Camilo vê).
 
 ## Redesenho visual (19/10/2026, pedido dele: "não to feliz com o visual")
 - **Híbrido Papel + Blocos**: Fraunces (`--serif`) só em números grandes, títulos de seção e dia; topo vira bloco flutuante arredondado com névoa (degradê vertical do `--head`); seções em blocos arredondados sem borda e sem linhas entre elas. Cards dos cartões (`.htile`) mantêm o degradê/brilho na cor do cartão.

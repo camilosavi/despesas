@@ -2599,7 +2599,6 @@ function backupBanner(){
   const nd=daysSince(cfg.lastBackup);
   /* novo app (out/2026): no celular o lembrete é uma linha só */
   return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Nenhum backup ainda":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
-  return `<section><div class="card banner"><strong>Hora do backup</strong><p>${nd===Infinity?"Você ainda não fez nenhum backup.":`Seu último backup foi há ${nd} dias.`} ${syncOn()?"Seus dados já estão na sua conta; o arquivo é uma cópia extra.":"Os dados ficam só neste iPhone; salve o arquivo no iCloud Drive para não perder nada."}</p><div class="row"><button class="btn soft" id="bkLater">Depois</button><button class="btn primary" id="bkExport">Fazer backup</button></div></div></section>`;
 }
 
 /* ---------- "quem está usando": nome de usuário, só com permissão ---------- */
@@ -3006,10 +3005,6 @@ function catsBlockHtml(arr, dA, tot, byC){
 
 /* ===== Mês redesenhado (teste): versão 1 "Dia a dia" e 2 "Categorias primeiro" ===== */
 const MESV=()=>{try{return localStorage.getItem("despesas.mesV")||"2"}catch(e){return "2"}};
-function mesStats(arr){
-  const rec=sumT(arr,"rec"), desp=sumT(arr,"desp"), sob=rec-desp;
-  return `<div class="mstats"><div><span>Entrou</span><b class="pos">${R(rec)}</b></div><div><span>Saiu</span><b>${R(desp)}</b></div><div><span>Sobra</span><b class="${sob<0?"neg":""}">${R(sob)}</b></div></div>`;
-}
 function mesStack(byC,tot){
   if(!tot) return "";
   const ks=Object.keys(byC).filter(k=>byC[k]).sort((a,b)=>byC[b]-byC[a]), top=ks.slice(0,3);
@@ -3132,7 +3127,6 @@ function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)
    recolhidas mostrando só o título com o total; tocar abre. Lembra o que ficou aberto (despesas.anoOpen, só no aparelho). */
 const FOLD={pAno:{keep:3,key:"despesas.anoOpen"},pMe:{keep:0,key:"despesas.meOpen"}};
 const foldOpenSet=k=>{try{return new Set(JSON.parse(lsGet(k)||"[]"))}catch(e){return new Set()}};
-const anoOpenSet=()=>foldOpenSet("despesas.anoOpen");
 /* Você (out/2026, visual simples): igual ao Ano, tudo recolhido (Aparência também) */
 function anoFold(pid="pAno"){
   const P=$(pid), F=FOLD[pid];if(!P||!F) return;const O=foldOpenSet(F.key);
@@ -3567,13 +3561,14 @@ let ID={prov:null,at:0,msg:"",pw:false,busy:false};
 const IDN=k=>({email:["E-mail e senha",""],google:["Google",AU_G],apple:["Apple",AU_A]})[k];
 function idHtml(){
   if(!ID.prov)return `<div class="src">Carregando as formas de entrar…</div>`;
-  const rows=["email","google","apple"].map(k=>{const has=ID.prov.includes(k), nm=IDN(k)[0];
+  const rows=["email","google","apple"].filter(k=>k==="email"||ID.prov.includes(k)||provOk(k)).map(k=>{const has=ID.prov.includes(k), nm=IDN(k)[0];
     return `<div class="row" style="margin:0;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)"><span style="display:flex;align-items:center;gap:8px">${k==="email"?"✉️":IDN(k)[1]}<span><b>${nm}</b>${has?` <span class="pos">vinculado ✓</span>`:""}</span></span>
       ${k!=="email"&&has?"":`<button class="btn soft" style="width:auto;padding:8px 14px" data-idgo="${k}" ${ID.busy?"disabled":""}>${k==="email"?(has?"Trocar senha":"Criar senha"):"Vincular"}</button>`}</div>`}).join("");
   const pw=ID.pw?`<div style="display:grid;gap:8px;margin-top:8px"><input type="password" id="idPw" autocomplete="new-password" placeholder="Senha nova (6 ou mais)" aria-label="Senha nova"><button class="btn primary" id="idPwSave">Salvar senha</button></div>`:"";
   return rows+pw+(ID.msg?`<div class="src" role="alert" style="margin-top:6px">${esc(ID.msg)}</div>`:"")}
 function idRender(){const el=$("idBox");if(el)el.innerHTML=idHtml()}
 async function idLoad(force){
+  sbProvLoad();
   if(!syncOn()||ID.busy||(!force&&ID.prov&&Date.now()-ID.at<6e4))return;
   try{const t=await sbTok(), r=await fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_KEY,Authorization:"Bearer "+t}});if(!r.ok)throw 0;
     const u=await r.json(), am=u.app_metadata||{}, L=new Set([...(am.providers||[]),am.provider,...(u.identities||[]).map(i=>i.provider)].filter(Boolean));
@@ -3625,7 +3620,18 @@ function showAuth(msg,isErr){
       <button type="button" class="ab sec" id="auGoogle">${AU_G}Entrar com o Google</button>
       <button type="button" class="ab sec" id="auApple">${AU_A}Entrar com a Apple</button>
     </form>`}
-  authMsg(msg||"",isErr)}
+  provApply();sbProvLoad();authMsg(msg||"",isErr)}
+/* quais provedores estão ligados no Supabase (/auth/v1/settings, público): o botão da Apple só aparece depois que a Apple for
+   configurada lá (antes dava erro ao tocar). Fica guardado no aparelho para a tela de login não piscar. */
+const SB_PROV_K="despesas.sbProv";
+const sbProv=()=>{try{return JSON.parse(lsGet(SB_PROV_K)||"null")}catch(e){return null}};
+const provOk=k=>{const p=sbProv();return k==="apple"?!!(p&&p.apple):!(p&&p[k]===false)};
+function provApply(){["auGoogle","auApple"].forEach(id=>{const b=$(id);if(b)b.style.display=provOk(id==="auApple"?"apple":"google")?"":"none"});
+  const o=document.querySelector(".au-or");if(o)o.style.display=provOk("google")||provOk("apple")?"":"none";if(typeof idRender==="function")idRender()}
+async function sbProvLoad(){
+  if(sbProvLoad.at&&Date.now()-sbProvLoad.at<6e4)return;sbProvLoad.at=Date.now();
+  try{const r=await fetch(SB_URL+"/auth/v1/settings",{headers:{apikey:SB_KEY}});if(!r.ok)return;const e=(await r.json()).external||{};
+    const n={apple:!!e.apple,google:!!e.google}, o=sbProv()||{};lsSet(SB_PROV_K,JSON.stringify(n));if(o.apple!==n.apple||o.google!==n.google)provApply()}catch(e){}}
 function authMsg(t,isErr){const m=$("auMsg");if(m){m.textContent=t||"";m.classList.toggle("err",!!isErr)}}
 function hideAuth(){const el=$("auth");el.hidden=true;el.innerHTML="";if($("lock").hidden)document.body.style.overflow=""}
 function authErr(e){const m=String(e&&e.message||""), c=e&&e.code||"";
@@ -3833,8 +3839,10 @@ function timeline(ym,arr){
 function buyTxt(x){return x.buy&&x.buy!==x.date&&typeOf(x)==="desp"&&!genFat(x)?`compra ${fmtDM(x.buy)}`:""}
 function itemHTML(x){
   const t=typeOf(x),c=catOf(x.cat,t),[,m,d]=x.date.split("-"),p=parcInfo(x);
+  /* "Fatura X" com itens lançados no mês vale 0 (só o valor do banco para conferir): não mostra "a pagar" */
+  const chk=t==="desp"&&x.cents&&!amt(x);
   const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):""].filter(Boolean).join(" · ");
-  return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d">${esc(cleanDesc(x))}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}">${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
+  return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d">${esc(cleanDesc(x))}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}"${chk?' style="color:var(--muted)"':""}>${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(chk?`<br><span class="m">conferir</span>`:isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
 }
 
 /* ---------- aba Cartões ---------- */
@@ -4050,10 +4058,6 @@ function startLiveRates(){
 }
 const hhmm=r=>r&&r.at&&r.at.length>=16?r.at.slice(11,16):"";
 const whenTxt=r=>{if(!r)return"";const d=fmtDate(r.date),t=hhmm(r);return t?`${d} ${t}`:d};
-function usdLine(cur){
-  const o=cur==="USD"?"EUR":"USD", u=rateFor(o);if(!u) return "";
-  return `<div class="usd"><span>${FXC[o].N} · ${whenTxt(u)}</span><span>R$ <b>${r4(u.rate)}</b></span></div>`;
-}
 function rateFor(cur){
   if(cur!=="USD") return currentRate();
   const u=sharedUsd;return u&&u.rate?{rate:+u.rate,date:u.date||"",at:u.at||"",src:u.source||"cotação comercial"}:null;
@@ -4064,18 +4068,6 @@ function currentRate(){
 }
 const r4=v=>v.toLocaleString("pt-BR",{minimumFractionDigits:4,maximumFractionDigits:4});
 const fmtDate=d=>{if(!d)return"";const[y,m,dd]=d.split("-");return d===today()?"hoje":`${dd}/${m}/${y.slice(2)}`};
-function rateCard(s){
-  const r=rateFor(s.cur), F=FXC[s.cur];
-  if(!r) return `<div class="card rate"><div class="top"><div><b>Cotação do ${F.n}</b><div class="src">Ainda não deu para buscar a cotação. Confira a internet e toque em Atualizar.</div></div><button class="tbtn" id="rateRefresh">Atualizar</button></div></div>`;
-  const avg=s.amt?s.paid/s.amt:0, diff=avg?r.rate-avg:0;
-  const cost=Math.round(s.left*r.rate);
-  const cmpTxt=!avg?"":Math.abs(diff)<0.00005?"igual ao seu preço médio":diff<0?`${r4(-diff)} abaixo do seu preço médio · bom dia para comprar`:`${r4(diff)} acima do seu preço médio`;
-  return `<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">${r.at&&r.date===today()?`<i class="live" aria-hidden="true"></i>`:""}${F.N} ${whenTxt(r)}</span><div class="val"><small>R$</small>${r4(r.rate)}</div><div class="src">${esc(r.src)}${r.date&&r.date!==today()?` · de ${fmtDate(r.date)}`:""}</div></div><button class="tbtn" id="rateRefresh">Atualizar</button></div>
-    ${cmpTxt?`<div class="${diff<0?"pos":diff>0?"warn":""}" style="font-size:.88rem;font-weight:600">${cmpTxt}</div>`:""}
-    <div class="cmp"><div><span>${F.sym} 100 hoje</span><b>${R(Math.round(100*r.rate*100))}</b></div>${s.c.goal?`<div><span>O que falta (${M(s.left,s.cur)})</span><b>≈ ${R(cost)}</b></div>`:`<div><span>Seus ${F.sym} hoje</span><b>≈ ${R(Math.round(s.amt*r.rate))}</b></div>`}</div>
-    <div class="hint expl">A cotação comercial é de referência; no app o valor vem um pouco acima por causa do spread e do IOF. Atualiza sozinha a cada 5 min.</div>
-    ${usdLine(s.cur)}</div>`;
-}
 function renderFx(){
   /* novo app (out/2026, ele: "ficou bem ruim a parte das moedas"): cotação numa linha, compras como lista (igual ao
      resto do app), sem tabela e sem repetir a meta da caixinha (ela fica no topo) */
@@ -4098,7 +4090,6 @@ function renderFx(){
 /* ---------- dinheiro guardado: caixinhas em cfg.save (R$ e € juntos; não entram como despesa do mês)
    {id,name,goal?,goalCur:"BRL"|"EUR"|"USD",target?:"AAAA-MM",fxAll?:true (soma as compras da aba Moedas na moeda da caixinha),moves:[{id,date,cents,cur?:"EUR"|"USD"}]} */
 const saves=()=>Array.isArray(cfg.save)?cfg.save:[];
-const fxEurAll=()=>fxSum("EUR");
 /* fxAll soma as compras da moeda da caixinha: meta em US$ soma dólar; meta em € ou R$ soma euro (como antes) */
 const boxFx=b=>b.goalCur==="USD"?"USD":"EUR";
 const svAmt=(b,cur)=>(b.moves||[]).filter(m=>(m.cur||"BRL")===cur).reduce((s,m)=>s+m.cents,0)+(b.fxAll&&cur!=="BRL"&&boxFx(b)===cur?fxSum(cur):0);
@@ -4106,10 +4097,8 @@ const svBrl=b=>svAmt(b,"BRL"), svEur=b=>svAmt(b,"EUR"), svUsd=b=>svAmt(b,"USD");
 const rateNum=cur=>{const r=rateFor(cur);return r&&r.rate?r.rate:0};
 const svRate=()=>rateNum("EUR");
 const svBal=b=>svBrl(b)+Math.round(svEur(b)*rateNum("EUR"))+Math.round(svUsd(b)*rateNum("USD"));
-const svTotal=()=>saves().reduce((s,b)=>s+svBal(b),0);
 const svHave=b=>{const g=b.goalCur;if(g!=="EUR"&&g!=="USD")return svBal(b);const r=rateNum(g);return r?Math.round(svBal(b)/r):svAmt(b,g)};
 const fxBoxFor=cur=>saves().find(b=>b.fxAll&&boxFx(b)===cur);
-const fxBox=()=>fxBoxFor("EUR");
 const svMoney=(c,cur)=>M(c,cur);
 const boxAvatar=n=>{
   const s=(n||"").toLowerCase();
@@ -4154,12 +4143,6 @@ function svAcField(id,cur){
 }
 const svBankVal=(selId,newId)=>{const v=$(selId)?.value||"";return v==="__new"?($(newId)?.value||"").trim().slice(0,30):v};
 let svOpen=null, svForm=null, svMvEdit=null, svAllMv=false;
-function svGoalTxt(b){
-  if(!b.goal) return "";
-  const have=svHave(b), left=Math.max(0,b.goal-have), pct=Math.round(Math.max(0,Math.min(1,have/b.goal))*100);
-  const months=b.target?Math.max(0,monthsBetween(curYM(),b.target)):0;
-  return [`${pct}% de ${svMoney(b.goal,b.goalCur)}`,left?`falta ${svMoney(left,b.goalCur)}`:"meta batida ✓",left&&months>0?`~${svMoney(Math.ceil(left/months),b.goalCur)}/mês até ${shortMonth(b.target)}`:""].filter(Boolean).join(" · ");
-}
 /* quanto a sobra prevista do mês cobre do que a caixinha precisa por mês (só caixinha com meta e mês-alvo) */
 /* no ritmo? compara o guardado com uma linha reta do 1º movimento até o mês-alvo (out/2026) */
 function svPace(b){
