@@ -1788,7 +1788,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 <form class="sheet" id="sheet" hidden autocomplete="off">
   <div class="grip"></div>
   <h3><span id="sheetTitle">Novo lançamento</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar fatura ou conta (PDF)</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
+  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar PDF ou print</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
   <div class="seg" id="typeSeg"><button type="button" data-type="desp">Despesa</button><button type="button" data-type="rec">Receita</button></div>
   <div class="amount"><span>R$</span><input id="amt" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
   <div class="field"><label for="desc">Descrição</label><input type="text" id="desc" placeholder="Ex.: mercado, fatura Inter, salário" maxlength="80"></div>
@@ -3254,7 +3254,7 @@ const HELP={
   pFx:["Moedas",["Registre compras de euro ou dólar: o app calcula o preço médio e quanto valem hoje.","A cotação atualiza sozinha; uma caixinha com meta pode somar essas compras."]],
   pAno:["Ano",["Os próximos meses mostram quanto entra, sai e fica na conta.","Caixinhas guardam dinheiro com meta e mês-alvo (e dizem se está no ritmo).","Salário previsto aprende com seus holerites; ali também dá para prever aumento, 13º e férias.","Assinaturas e Contas divididas mostram quem já te pagou a parte e têm botão para cobrar no WhatsApp."]],
   pMe:["Você",["Aparência, senha e Face ID, avisos de vencimento, categorias e backup.","Seus dados ficam na sua conta e em cada aparelho em que você entrou. Faça backup de vez em quando (o app lembra).","Importar planilha traz o que você controlava no Excel."]],
-  lanc:["Lançamento",["Despesa ou receita, valor, categoria e forma de pagamento.","No Crédito o app põe na fatura certa sozinho. “Parcelar ou repetir” cria os meses seguintes.","“Dividir com outras pessoas” marca quanto é a sua parte; os Pix de volta entram em Contas divididas.","“Importar fatura ou conta” lê PDF ou OFX do banco."]]
+  lanc:["Lançamento",["Despesa ou receita, valor, categoria e forma de pagamento.","No Crédito o app põe na fatura certa sozinho. “Parcelar ou repetir” cria os meses seguintes.","“Dividir com outras pessoas” marca quanto é a sua parte; os Pix de volta entram em Contas divididas.","“Importar PDF ou print” lê PDF ou OFX do banco e o print de um comprovante (Pix, transferência, boleto)."]]
 };
 function helpLink(k){return HELP[k]?`<div class="toolbar helpbar" style="justify-content:center;margin:22px 0 4px"><button class="tbtn" data-help="${k}">Como funciona esta tela</button></div>`:""}
 function helpSheet(k){
@@ -4010,7 +4010,7 @@ function renderCards(){
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
       return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${acctOf(c)?`saldo ${R(acctOf(c).cents)} · `:""}${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
-      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar fatura ou conta (PDF)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
+      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
@@ -5650,7 +5650,7 @@ document.addEventListener("change",e=>{
   if(e.target.classList&&e.target.classList.contains("xlsany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();openXls(f);return}
   if(e.target.closest&&e.target.closest("#xlsSheet")){xlSync(e.target);return}
   if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";closeSheets();readMany(F);return}
-  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else readInvoice(f,true);return}
+  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else if(/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name))readShot(f);else readInvoice(f,true);return}
   if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
 });
@@ -5743,7 +5743,7 @@ function dateHint(){const h=$("dateHint");if(!h) return;const d=$("date").value;
   h.textContent=t;h.hidden=!t}
 function chips(){
   setTimeout(dateHint,0);
-  const pl=$("pdfAnyLbl");if(pl)pl.textContent=form.type==="rec"?"Importar holerite (PDF)":"Importar fatura ou conta (PDF)";
+  const pl=$("pdfAnyLbl");if(pl)pl.textContent=form.type==="rec"?"Importar holerite ou print":"Importar PDF ou print";
   $("typeSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.type===form.type));
   $("paidSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",(b.dataset.paid==="1")===form.paid));
   const curCat=catOf(form.cat,form.type);
@@ -5813,7 +5813,7 @@ function applyRule(){
 }
 function openSheet(x){
   closeSheets(true);
-  editing=x||null;dupAck=null;mergeInto=null;
+  editing=x||null;dupAck=null;mergeInto=null;shotAuto=null;
   const t=x?typeOf(x):form.type;
   form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoas:[...(x.eu?["eu"]:[]),...azParts(x).map(e=>e.id)],pv:{...(x.eu&&x.euV?{eu:x.euV}:{}),...Object.fromEntries(azParts(x).filter((e,i)=>((x.pessoas&&x.pessoas.length?x.pessoas[i].v:x.pv)||0)).map(e=>[e.id,e.c]))}}:{type:t,cents:0,acct:form.acct||"",pessoas:[],pv:{},cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
@@ -5834,7 +5834,7 @@ function toast(t,ok){const el=$("toast");el.hidden=true;el.classList.toggle("ok"
   void el.offsetWidth;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
 function err(id,t){$(id).className="err";$(id).textContent=t}
 
-$("typeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(b&&b.dataset.type!==form.type){form.type=b.dataset.type;form.cat=form.type==="desp"?"alim":CATS[form.type][0].k;chips();applyRule()}});
+$("typeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(b&&b.dataset.type!==form.type){const sa=shotAuto&&$("desc").value===shotAuto[form.type];if(sa)$("desc").value=shotAuto[b.dataset.type];form.type=b.dataset.type;form.cat=sa?(form.type==="desp"?"outros":"rout"):form.type==="desp"?"alim":CATS[form.type][0].k;chips();applyRule()}});
 $("paidSeg").addEventListener("click",e=>{const b=e.target.closest("[data-paid]");if(b){form.paid=b.dataset.paid==="1";chips()}});
 $("amt").addEventListener("input",e=>{form.cents=digits(e.target.value);setAmt();repHint()});
 $("rep").addEventListener("change",repHint);$("until").addEventListener("change",repHint);
@@ -6260,7 +6260,7 @@ function parseSantander(pages,all){
 /* o que o app já sabe ler (mostrado na lista de cartões e na tela Você) — manter em dia quando calibrar um layout novo */
 const READS=[["Faturas de cartão","Inter, Nubank, Santander, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
-  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
+  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Print de comprovante","Pix, transferência ou boleto (imagem): valor, data e nome; você escolhe Despesa ou Receita"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
 const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint expl" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
 /* PicPay (out/2026, fatura de uma amiga do Camilo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
    colunas, "DD/MM  ESTABELECIMENTO  valor" (sem R$; negativo = pagamento/crédito), um bloco por cartão (titular e "final XXXX");
@@ -6441,12 +6441,15 @@ async function pastePdf(){
     for(const it of await navigator.clipboard.read()){
       const ty=it.types.find(x=>/pdf/i.test(x));
       if(ty){const b=await it.getType(ty);closeSheets();readInvoice(new File([b],"colado.pdf",{type:"application/pdf"}),true);return}
+      const im=it.types.find(x=>/^image\//i.test(x));
+      if(im){const b=await it.getType(im);readShot(new File([b],"print",{type:im}));return}
     }
-    toast("Não achei PDF copiado. No iPhone só dá para colar texto e imagem; use Importar.");
+    toast("Não achei PDF nem print copiado. Use Importar.");
   }catch(e){toast("O aparelho não liberou colar aqui. Use Importar.")}
 }
-document.addEventListener("paste",e=>{const f=[...((e.clipboardData&&e.clipboardData.files)||[])].find(x=>/pdf/i.test(x.type));
-  if(f){e.preventDefault();closeSheets();readInvoice(f,true)}});
+document.addEventListener("paste",e=>{const fs=[...((e.clipboardData&&e.clipboardData.files)||[])], f=fs.find(x=>/pdf/i.test(x.type));
+  if(f){e.preventDefault();closeSheets();readInvoice(f,true);return}
+  const im=fs.find(x=>/^image\//i.test(x.type));if(im&&!(e.target&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName))){e.preventDefault();readShot(im)}});
 /* fatura de banco conhecido → cartão com o mesmo nome (cria o cartão se ainda não existe) */
 async function bankCard(bank){
   const cs=credCards(), b=bank.toLowerCase(), f=cs.find(c=>c.toLowerCase()===b)||cs.find(c=>c.toLowerCase().includes(b)||b.includes(c.toLowerCase()));
@@ -6628,6 +6631,91 @@ function openPassagem(p){
   $("err").textContent=`Li a ${p.reserva?"reserva":"passagem"}: ${R(p.cents)}${p.go?`, ida em ${fmtDM(p.go)}/${p.go.slice(0,4)}`:""}${p.sumOk?"":" (confira o total)"}.`
     +(p.reserva&&p.until?` Ainda não emitida: o prazo é ${fmtDM(p.until)}${p.untilHm?` às ${p.untilHm}`:""}.`:"")
     +(p.maxP?` O PDF mostra parcelamento em até ${p.maxP}x.`:"")+" Escolha como vai pagar e em quantas parcelas.";
+}
+/* ---------- print de comprovante (Pix, transferência, boleto) ----------
+   29/10/2026, pedido dele: "manter no importar e uma opção de receita ou despesa". A imagem é lida no próprio aparelho
+   (Tesseract.js, português, ~7 MB na 1ª vez, depois fica no cache do navegador). Calibrado com o comprovante de Pix do
+   Santander ("Valor do pagamento", "Para"/"De", "Data do pagamento"); rótulos de Inter/Nubank/Itaú/boleto entram pelo mesmo jeito
+   (rótulo numa linha, valor na seguinte, ou "Rótulo: valor"). Abre o lançamento novo preenchido: ele escolhe Despesa/Receita. */
+const SHOT_MON={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+function parseShot(text){
+  const L=String(text||"").split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean);
+  const F=L.map(s=>fold(s).replace(/[:.]+$/,"").trim());
+  const money=s=>{const m=/R\$\s*(-?\d{1,3}(?:[.\s]\d{3})*,\d{2})/i.exec(s)||/^(-?\d{1,3}(?:\.\d{3})*,\d{2})$/.exec(s.trim());return m?Number(m[1].replace(/[-.\s]/g,"").replace(",","")):null};
+  const dateOf=s=>{let m=/(\d{2})\/(\d{2})\/(\d{4})/.exec(s);if(m)return `${m[3]}-${m[2]}-${m[1]}`;
+    m=/(\d{1,2})\s*(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)\w*\.?\s*(?:de\s+)?(\d{4})/i.exec(fold(s));
+    return m?`${m[3]}-${String(SHOT_MON[m[2]]).padStart(2,"0")}-${m[1].padStart(2,"0")}`:""};
+  /* rótulo → valor: "Rótulo: valor" na mesma linha ou a próxima linha que não é outro rótulo */
+  const LAB=/^(nome|cpf|cnpj|cpf\/cnpj|chave(?: pix)?|institui[cç][aã]o|banco|ag[eê]ncia|conta|tipo de conta|dados d[oa] .*)$/;
+  const after=(re,ok)=>{const RE=new RegExp("^(?:"+re.source+")$"), IN=new RegExp("^(?:"+re.source+")(?:\\s*:\\s*|\\s+)(.+)$");
+    for(let i=0;i<L.length;i++){const f=F[i], m=IN.exec(f);
+      if(m){const v=L[i].slice(L[i].length-m[1].length);if(ok(v))return v}
+      if(RE.test(f)) for(let j=i+1;j<Math.min(L.length,i+4);j++){if(ok(L[j]))return L[j];if(!LAB.test(F[j]))break}}
+    return ""};
+  const isName=s=>/\p{L}{3}/u.test(s)&&!money(s)&&!/\d{2}\/\d{2}\/\d{4}/.test(s)&&!LAB.test(fold(s).replace(/[:.]+$/,""));
+  const vLine=after(/valor(?: do pagamento| da transferencia| transferido| pago| enviado| recebido| do pix| total)?|total(?: pago)?|quantia/,s=>money(s)!=null);
+  let cents=vLine?money(vLine):null;
+  if(cents==null){const all=L.map(money).filter(v=>v!=null&&v>0);cents=all.length?all[0]:null}
+  if(!cents||cents<=0) return null;
+  const dLine=after(/data(?: do pagamento| da transacao| da transferencia| e hora(?: da transacao)?| de pagamento| do pix)?|pago em|realizad[oa] em/,s=>!!dateOf(s));
+  const date=dateOf(dLine)||dateOf(L.find(s=>dateOf(s))||"");
+  /* quem recebe e quem paga: rótulo direto ou "Nome" dentro da seção (Dados do recebedor / Destino / Origem…) */
+  const sec=(head,lab)=>{let v=after(lab,isName);if(v)return v;
+    const i=F.findIndex(f=>head.test(f));if(i<0)return "";
+    for(let j=i+1;j<Math.min(L.length,i+5);j++){if(/^nome$/.test(F[j])&&L[j+1]&&isName(L[j+1]))return L[j+1];const m=/^nome\s*:?\s*(.+)$/i.exec(L[j]);if(m&&isName(m[1]))return m[1]}
+    return ""};
+  const clean=s=>titleCase(s.replace(/^[\d.\-\/\s*]+/,"").trim()).replace(/ (De|Da|Do|Dos|Das|E)(?= )/g,m=>m.toLowerCase()).replace(/ (Ltda|Me|Eireli|S\.?a\.?)$/,m=>m.toUpperCase());
+  const to=sec(/^(dados d[oa] (recebedor|favorecido|destinatario|beneficiario)|destino|quem recebeu|recebedor)$/,/para|recebedor|favorecido|destinatario|beneficiario|quem recebeu|enviado para|pago para/);
+  const from=sec(/^(dados d[oa] (pagador|remetente|origem)|origem|quem pagou|pagador)$/,/de|pagador|remetente|quem pagou|enviado por|pago por/);
+  const flat=fold(L.join(" "));
+  const kind=/boleto|codigo de barras|linha digitavel/.test(flat)&&!/\bpix\b/.test(flat)?"Boleto":/\bpix\b/.test(flat)?"Pix":/\bted\b/.test(flat)?"TED":/\bdoc\b/.test(flat)?"DOC":"Transferência";
+  const recv=/pix recebido|transferencia recebida|voce recebeu|comprovante de recebimento/.test(flat);
+  const sent=/pix enviado|transferencia enviada|voce (enviou|pagou|transferiu)/.test(flat);
+  return {cents,date,to:to?clean(to):"",from:from?clean(from):"",kind,recv,sent};
+}
+/* o nome é dele? primeiro nome igual e mais um sobrenome (o banco corta nomes longos) */
+function shotIsMe(n){const me=fold(myName()).split(/\s+/).filter(w=>w.length>2), w=fold(n).split(/\s+/).filter(x=>x.length>2);
+  if(!me.length||!w.length||me[0]!==w[0]) return false;
+  return me.length<2||w.length<2||me.slice(1).some(t=>w.slice(1).some(x=>x===t||(x.length>=3&&t.startsWith(x))))}
+var shotAuto=null; /* descrição automática de cada tipo: troca junto quando ele muda Despesa/Receita */
+function loadOcr(){
+  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(!navigator.onLine) return Promise.reject(new Error("offline"));
+  return loadOcr.p||(loadOcr.p=new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+    sc.onload=()=>ok(window.Tesseract);sc.onerror=()=>{loadOcr.p=null;no(new Error("offline"))};document.head.appendChild(sc)}));
+}
+async function readShot(file){
+  toast("Lendo o print…");
+  let w=null;
+  try{
+    const img=await new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);ok(im)};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("img"))};im.src=u});
+    /* print do celular é pequeno: ampliar ajuda o leitor (largura ~1200, sem passar de ~8 MP) */
+    let k=Math.min(4,Math.max(1,1200/img.naturalWidth));k=Math.min(k,Math.sqrt(8e6/(img.naturalWidth*img.naturalHeight)));
+    const cv=document.createElement("canvas");cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);
+    const cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.imageSmoothingQuality="high";cx.drawImage(img,0,0,cv.width,cv.height);
+    const T=await loadOcr();
+    w=await T.createWorker("por",1,{langPath:"https://cdn.jsdelivr.net/npm/@tesseract.js-data/por/4.0.0"});
+    const r=await w.recognize(cv);
+    const s=parseShot(r.data.text);
+    if(!s){toast("Não achei o valor nesse print. Mande o print inteiro do comprovante.");return}
+    openShot(s);
+  }catch(e){toast(e&&e.message==="offline"?"Sem internet para carregar o leitor de print.":e&&e.message==="img"?"Não consegui abrir essa imagem.":"Não consegui ler esse print.")}
+  finally{if(w)w.terminate().catch(()=>{})}
+}
+function openShot(s){
+  const meFrom=s.from&&shotIsMe(s.from), meTo=s.to&&shotIsMe(s.to);
+  const type=meTo&&!meFrom||s.recv&&!s.sent?"rec":"desp";
+  const sure=meFrom||meTo||s.recv||s.sent;
+  form.type=type;closeSheets();openSheet();
+  shotAuto={desp:s.kind==="Boleto"?`Boleto${s.to?" "+s.to:""}`:`${s.kind}${s.to?" para "+s.to:""}`,rec:`${s.kind}${s.from?" de "+s.from:""}`};
+  form.type=type;form.cat=type==="desp"?"outros":"rout";form.cents=s.cents;setAmt();
+  form.pay=s.kind==="Boleto"?"Boleto":"Pix";
+  $("desc").value=shotAuto[type];
+  if(s.date){$("date").value=s.date;dateTouched=true;form.paid=s.date<=today()}
+  chips();applyRule();if(typeof dateHint==="function")dateHint();
+  $("err").className="err info";
+  $("err").textContent=`Li o print: ${R(s.cents)}${s.date?` em ${fmtDM(s.date)}`:""}${s.from&&s.to?`, de ${s.from} para ${s.to}`:""}.`+(sure?"":" Escolha se é Despesa ou Receita.");
+  setTimeout(()=>$("amt").blur(),80);
 }
 /* holerite (demonstrativo de pagamento): líquido, data do crédito e eventos → uma receita para conferir */
 function parseHolerite(pages){

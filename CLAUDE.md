@@ -172,6 +172,14 @@ card?, parc?:"i/n", group?, createdAt}`
   total) → folha "Conta X" (Casa e contas, data = vencimento, débito automático vira pago). Vencimento antes de out/2026 = só informativo.
   Botão "Colar" ao lado (`pastePdf`, `navigator.clipboard.read` procurando tipo PDF) + evento `paste` com arquivo PDF.
   No iPhone o Safari normalmente só entrega texto/imagem da área de transferência; aí avisa para usar Importar.
+- **Print de comprovante** (29/10/2026, pedido dele: "manter no importar e uma opção do tipo receita ou despesa"): os inputs `.pdfany`
+  gerais (lançamento e lista de cartões, rótulo "Importar PDF ou print") aceitam `image/*`; "Colar" e o evento `paste` também pegam imagem.
+  `readShot` amplia a imagem num canvas (~1200 px de largura) e lê com **Tesseract.js 5.1.1** (jsdelivr; dados `@tesseract.js-data/por/4.0.0`,
+  ~7 MB na 1ª vez, depois no IndexedDB). `parseShot` (rótulo na linha e valor na seguinte, ou "Rótulo: valor"): valor, data, Para/De
+  (ou "Nome" dentro de Destino/Origem/Dados do recebedor…), Pix/TED/DOC/Boleto. Calibrado com comprovante de Pix do Santander.
+  `openShot` abre o lançamento novo preenchido (cat Outros/Outras receitas, pagamento Pix ou Boleto, data do comprovante).
+  Tipo: Receita se "Para" é ele (`shotIsMe`, nome do `myName()`) ou o texto diz "Pix recebido"; senão Despesa, e se nada indica pede
+  "Escolha se é Despesa ou Receita". Trocar o tipo troca a descrição automática ("Pix para X" ↔ "Pix de Y", `shotAuto`).
 - **O que o app já lê** (`READS`/`readsBox()`, na lista de cartões e na tela Você → Importar planilha; também no README): manter em dia
   sempre que calibrar um layout novo.
 - **Pagamento de fatura no extrato dá baixa** (out/2026, `billPaidBy`): cartão pelo texto (Realize/Renner → Renner, Pan →
