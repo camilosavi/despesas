@@ -1482,10 +1482,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .mfc{display:flex;align-items:center;gap:7px}
   .mfc i{width:9px;height:9px;border-radius:50%;flex:none}
   .mfp.on{background:var(--ink)!important;color:var(--bg)!important}
-  /* Lançar: valor grande no topo, importar e salvar embaixo */
+  /* Lançar: importar no topo (pedido dele, 29/10/2026), valor grande e salvar embaixo */
   #sheet:not([hidden]){display:flex;flex-direction:column}
   #sheet>*{flex:none}
-  #sheet #pdfAnyRow{order:5;margin-top:6px}
+  #sheet>.grip,#sheet>h3{order:-2}#sheet #pdfAnyRow{order:-1;margin:2px 0 12px}
   #sheet #err{order:6}#sheet #lancHelp{order:7}
   #sheet>.row:last-child{order:8;position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom,0px));margin:6px -16px calc(-18px - env(safe-area-inset-bottom,0px));padding:10px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--surface);z-index:2}
   #sheet .amount{margin:14px 0 10px;border:0!important;padding:0}

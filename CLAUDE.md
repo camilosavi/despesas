@@ -752,7 +752,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Listas sem caixa** (celular): no Hoje e no Mês as seções ficam direto no fundo (título 1,22rem); quadros de cartões, faixas e
   caixinhas continuam como estavam. "Posso comprar?" virou faixa discreta. No Mês, os quadros de cartões do filtro viraram
   pílulas com a bolinha da cor do banco, na mesma linha de Todos / A pagar / Pagos / Receitas (`mesFilterBar`, `.mfc`; PC igual).
-- **Lançar** (celular): `#sheet` vira flex em coluna; valor grande no topo (Bricolage 2,9rem), "Importar fatura ou conta (PDF)"
+- **Lançar** (celular): `#sheet` vira flex em coluna; "Importar PDF ou print" fica no topo, logo abaixo do título (29/10/2026, pedido dele); valor grande no topo (Bricolage 2,9rem), "Importar fatura ou conta (PDF)"
   desce para o fim (`order`) e a linha do Salvar fica grudada embaixo (sticky).
 
 ## Pessoas (27/10/2026, pedido dele: "coisas a pagar a minha mãe e ela tem coisas a me pagar")
