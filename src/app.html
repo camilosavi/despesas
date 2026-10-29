@@ -1520,17 +1520,44 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .lk-link{color:#E9D3A3}
 .lk-msg.err{color:#F2A99C}
 @media (max-height:760px){.lk-logo{width:84px;height:84px}.lk-brand{gap:10px}.lock{padding-top:calc(18px + env(safe-area-inset-top,0px))}}
-/* tela de login (conta no Supabase): mesma paleta da tela da senha */
-.auth{z-index:110}
-.au-box{width:100%;max-width:340px;margin:auto 0;display:grid;gap:12px}
-.au-box input{font:inherit;font-size:1.05rem;padding:15px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--head-ink);width:100%;box-sizing:border-box}
-.au-box input::placeholder{color:var(--head-muted)}
-.au-box .lk-msg{margin:0;min-height:1.3em}
+/* tela de login (conta no Supabase): mesma paleta da tela da senha. 28/10/2026: abas, Google em cima, senha com olho, força da senha, e-mail enviado */
+.auth{z-index:110;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+.auth .lk-logo{width:76px;height:76px}.auth .lk-brand{font-size:1.2rem;gap:10px;flex:none}
+.au-box{width:100%;max-width:360px;margin:22px 0 0;display:grid;gap:12px;align-content:start}
+.au-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.07)}
+.au-tabs button{border:1px solid transparent;background:none;color:var(--head-muted);font:inherit;font-weight:600;font-size:.98rem;padding:10px;border-radius:11px}
+.au-tabs button.on{background:rgba(201,162,90,.2);border-color:rgba(201,162,90,.5);color:var(--head-ink)}
+.au-head{margin:2px 0 2px}.au-h{margin:0;padding:0;background:none;border:0;font-family:inherit;font-size:1.35rem;font-weight:700;line-height:1.2;text-transform:none;color:var(--head-ink);letter-spacing:0}.au-h:before,.au-h:after{content:none!important}
+.au-sub{margin:5px 0 0;color:var(--head-muted);font-size:.92rem;line-height:1.4}.au-sub b{color:var(--head-ink);word-break:break-all}
+.au-f{display:grid;gap:6px}.au-f>span:first-child{font-size:.8rem;font-weight:600;color:var(--head-muted);letter-spacing:.02em}
+.au-box input{font:inherit;font-size:1.05rem;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--head-ink);width:100%;box-sizing:border-box}
+.au-box input::placeholder{color:var(--head-muted);opacity:.7}
+.au-box input:focus{outline:0;border-color:#C9A25A;box-shadow:0 0 0 3px rgba(201,162,90,.22)}
+.au-box input.bad{border-color:#F2A99C;box-shadow:0 0 0 3px rgba(242,169,156,.18)}
+.au-pw{position:relative;display:block}.au-pw input{padding-right:52px}
+.au-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:44px;height:44px;border:0;background:none;color:var(--head-muted);display:flex;align-items:center;justify-content:center;border-radius:12px}
+.au-eye:active{color:#E9D3A3}
+.au-row{display:flex;justify-content:flex-end;margin:-4px 0 -2px}
+.au-link{border:0;background:none;color:#E9D3A3;font:inherit;font-size:.92rem;font-weight:600;padding:6px 2px;text-decoration:underline;text-underline-offset:3px;justify-self:center}
+.au-row .au-link{justify-self:end}
+.au-back{justify-self:start;border:0;background:none;color:#E9D3A3;font:inherit;font-weight:600;font-size:.98rem;padding:4px 2px}
+.au-str{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:-4px}
+.au-str i{height:4px;border-radius:2px;background:rgba(255,255,255,.14)}
+.au-str small{grid-column:1/-1;font-size:.78rem;color:var(--head-muted);margin-top:2px}
+.au-str[data-l="1"] i:nth-child(-n+1){background:#F2A99C}.au-str[data-l="2"] i:nth-child(-n+2){background:#E9C98A}
+.au-str[data-l="3"] i:nth-child(-n+3){background:#C9A25A}.au-str[data-l="4"] i:nth-child(-n+4){background:#8FD3A0}
+.au-box .lk-msg{margin:0;min-height:1.3em;font-size:.92rem;line-height:1.35}
 .au-box .ab{display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:14px;padding:15px;font:inherit;font-weight:700;font-size:1rem;background:var(--btn);color:var(--btn-ink)}
 .au-box .ab.sec{background:none;border:1px solid rgba(255,255,255,.2);color:var(--head-ink)}
-.au-box .ab:disabled{opacity:.5}
+.au-box .ab:disabled,.au-box .au-link:disabled,.au-tabs button:disabled{opacity:.55}
+.au-box .ab.busy:after{content:"";width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-top-color:transparent;animation:auspin .7s linear infinite}
+@keyframes auspin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.au-box .ab.busy:after{animation-duration:2s}}
 .au-or{display:flex;align-items:center;gap:12px;color:var(--head-muted);font-size:.8rem}
 .au-or:before,.au-or:after{content:"";flex:1;height:1px;background:rgba(255,255,255,.16)}
+.au-sent{text-align:center;display:grid;gap:10px;justify-items:center}
+.au-ico{width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(201,162,90,.14);color:#E9D3A3;box-shadow:0 0 0 1px rgba(201,162,90,.45)}
+@media (max-height:700px){.auth .lk-logo{width:56px;height:56px}.au-box{gap:10px;margin-top:14px}}
 #walMenu{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center}
 #walMenu .wm-bg{position:absolute;inset:0;background:rgba(0,0,0,.35)}
 #walMenu .wm-box{position:relative;width:min(420px,100%);margin:0 12px calc(96px + env(safe-area-inset-bottom,0px));background:var(--surface);color:var(--ink);border-radius:24px;padding:14px;display:grid;gap:8px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
@@ -3670,23 +3697,49 @@ const SB_BACK=(()=>{const p=new URLSearchParams(location.hash.slice(1)), q=new U
   if(er)return {err:er.replace(/\+/g," ")};
   return {at,rt:p.get("refresh_token")||"",exp:+p.get("expires_in")||3600,rec:p.get("type")==="recovery"}})();
 const AU_G=`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M22.5 12.2c0-.8-.1-1.5-.2-2.2H12v4.2h5.9a5 5 0 0 1-2.2 3.3v2.7h3.5c2.1-1.9 3.3-4.7 3.3-8z"/><path fill="#34A853" d="M12 23c3 0 5.5-1 7.3-2.7l-3.5-2.7c-1 .7-2.2 1-3.8 1-2.9 0-5.3-2-6.2-4.6H2.1v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.8 14c-.2-.7-.4-1.3-.4-2s.1-1.4.4-2V7.2H2.1a11 11 0 0 0 0 9.6z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3.1.6 4.2 1.7l3.1-3.1A11 11 0 0 0 2.1 7.2L5.8 10c.9-2.6 3.3-4.6 6.2-4.6z"/></svg>`;
+/* Login e criar conta (28/10/2026): abas Entrar | Criar conta, Google em cima, senha com olho, força da senha, confirmação,
+   tela "confira seu e-mail" com reenviar, recuperar senha. Modos: in, new, forgot, sent, newpw (AU.mode). */
+const AU={mode:"in",email:"",kind:"signup",cool:0,tm:0};
+const AU_EMAIL_OK=x=>/^\S+@\S+\.\S+$/.test(x);
+const AU_EYE=`<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const AU_EYE_OFF=AU_EYE.replace("</svg>",`<path d="M3 3l18 18"/></svg>`);
+const AU_MAIL=`<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3.5 7.5l8.5 6 8.5-6"/></svg>`;
+function auStrength(p){if(p.length<6)return 0;let n=1;if(p.length>=8)n++;if(/[a-zA-Z]/.test(p)&&/\d/.test(p))n++;if(p.length>=12||(p.length>=10&&/[^a-zA-Z0-9]/.test(p)))n++;return Math.min(n,4)}
+const AU_STR_T=["Muito curta","Fraca","Razoável","Boa","Forte"];
+function auPwField(id,label,ac,ph){return `<label class="au-f"><span>${label}</span><span class="au-pw"><input type="password" id="${id}" autocomplete="${ac}" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="${ph}"><button type="button" class="au-eye" data-aueye="${id}" aria-label="Mostrar senha" tabindex="-1">${AU_EYE}</button></span></label>`}
+function auEmailField(mode){return `<label class="au-f"><span>E-mail</span><input type="email" id="auEmail" autocomplete="${mode==="new"?"email":"username"}" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="voce@email.com" value="${esc(AU.email)}"></label>`}
+function auStrBox(){return `<div class="au-str" id="auStr" data-l="0"><i></i><i></i><i></i><i></i><small id="auStrT">Mínimo de 6 caracteres. Melhor: 8 ou mais, com letras e números.</small></div>`}
+function authView(mode){
+  const f=$("auForm");if(!f)return;AU.mode=mode;f.dataset.mode=mode;clearInterval(AU.tm);
+  const tabs=`<div class="au-tabs" role="tablist"><button type="button" role="tab" data-aumode="in" class="${mode==="in"?"on":""}" aria-selected="${mode==="in"}">Entrar</button><button type="button" role="tab" data-aumode="new" class="${mode==="new"?"on":""}" aria-selected="${mode==="new"}">Criar conta</button></div>`;
+  const google=`<button type="button" class="ab sec" id="auGoogle">${AU_G}${mode==="new"?"Continuar com o Google":"Entrar com o Google"}</button><div class="au-or"><span>ou com e-mail</span></div>`;
+  if(mode==="in")f.innerHTML=`${tabs}<div class="au-head"><div class="au-h" role="heading" aria-level="2">Bem-vindo de volta</div><p class="au-sub">Entre para ver suas contas em qualquer aparelho.</p></div>${google}
+    ${auEmailField("in")}${auPwField("auPass","Senha","current-password","Sua senha")}
+    <div class="au-row"><button type="button" class="au-link" id="auForgot">Esqueci a senha</button></div>
+    <div class="lk-msg" id="auMsg" role="alert"></div><button type="submit" class="ab" id="auGo">Entrar</button>`;
+  else if(mode==="new")f.innerHTML=`${tabs}<div class="au-head"><div class="au-h" role="heading" aria-level="2">Crie sua conta</div><p class="au-sub">É grátis. Seus lançamentos ficam guardados e iguais no celular e no computador.</p></div>${google}
+    ${auEmailField("new")}${auPwField("auPass","Senha","new-password","Crie uma senha")}${auStrBox()}${auPwField("auPass2","Repita a senha","new-password","Digite a senha de novo")}
+    <div class="lk-msg" id="auMsg" role="alert"></div><button type="submit" class="ab" id="auGo">Criar conta</button>`;
+  else if(mode==="forgot")f.innerHTML=`<button type="button" class="au-back" id="auBack">‹ Voltar</button><div class="au-head"><div class="au-h" role="heading" aria-level="2">Recuperar a senha</div><p class="au-sub">Digite o e-mail da sua conta. Enviamos um link para você criar uma senha nova.</p></div>
+    ${auEmailField("in")}<div class="lk-msg" id="auMsg" role="alert"></div><button type="submit" class="ab" id="auGo">Enviar o link</button>`;
+  else if(mode==="sent"){const rec=AU.kind==="recover";
+    f.innerHTML=`<div class="au-sent"><div class="au-ico">${AU_MAIL}</div><div class="au-h" role="heading" aria-level="2">${rec?"Link enviado":"Confira seu e-mail"}</div>
+      <p class="au-sub">${rec?"Se":"Enviamos um link para"} <b>${esc(AU.email)}</b>${rec?" tem conta, o link para criar a senha nova já foi enviado.":"."} Abra o e-mail e toque no link${rec?"":": você já entra direto"}. Não chegou? Veja o spam.</p></div>
+      <div class="lk-msg" id="auMsg" role="alert"></div>
+      <button type="button" class="ab" id="auToIn">${rec?"Voltar para entrar":"Já confirmei, entrar"}</button>
+      <button type="button" class="ab sec" id="auResend">Reenviar e-mail</button>
+      <button type="button" class="au-link" id="auOther">Usar outro e-mail</button>`;auTick()}
+  else if(mode==="newpw")f.innerHTML=`<div class="au-head"><div class="au-h" role="heading" aria-level="2">Crie sua senha nova</div><p class="au-sub">Depois de salvar, você já entra no app.</p></div>
+    ${auPwField("auPass","Senha nova","new-password","Senha nova")}${auStrBox()}<div class="lk-msg" id="auMsg" role="alert"></div><button type="submit" class="ab" id="auGo">Salvar e entrar</button>`}
+function auTick(){clearInterval(AU.tm);const f=()=>{const b=$("auResend");if(!b){clearInterval(AU.tm);return}const n=Math.ceil((AU.cool-Date.now())/1e3);
+    if(n>0){b.disabled=true;b.textContent="Reenviar em "+n+"s"}else{b.disabled=false;b.textContent="Reenviar e-mail";clearInterval(AU.tm)}};f();AU.tm=setInterval(f,1000)}
 function showAuth(msg,isErr){
   const el=$("auth");if(!el||!PWA)return;
   if(el.hidden||!$("auForm")){el.hidden=false;document.body.style.overflow="hidden";
-    el.innerHTML=`<div class="lk-brand"><img class="lk-logo" src="tostao-logo.png" alt="Um Tostão">Um Tostão</div>
-    <form class="au-box" id="auForm" novalidate>
-      <input type="email" id="auEmail" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="E-mail" aria-label="E-mail">
-      <input type="password" id="auPass" autocomplete="current-password" placeholder="Senha" aria-label="Senha">
-      <div class="lk-msg" id="auMsg" role="alert"></div>
-      <button type="submit" class="ab" id="auIn">Entrar</button>
-      <button type="button" class="ab sec" id="auNew">Criar conta</button>
-      <button type="button" class="ab sec" id="auForgot" style="background:none;border:0;opacity:.8;font-size:.9rem">Esqueci a senha</button>
-      <div class="au-or"><span>ou</span></div>
-      <button type="button" class="ab sec" id="auGoogle">${AU_G}Entrar com o Google</button>
-    </form>`}
+    el.innerHTML=`<div class="lk-brand"><img class="lk-logo" src="tostao-logo.png" alt="Um Tostão">Um Tostão</div><form class="au-box" id="auForm" novalidate></form>`;authView("in")}
   authMsg(msg||"",isErr)}
 function authMsg(t,isErr){const m=$("auMsg");if(m){m.textContent=t||"";m.classList.toggle("err",!!isErr)}}
-function hideAuth(){const el=$("auth");el.hidden=true;el.innerHTML="";if($("lock").hidden)document.body.style.overflow=""}
+function hideAuth(){const el=$("auth");clearInterval(AU.tm);AU.mode="in";AU.email="";el.hidden=true;el.innerHTML="";if($("lock").hidden)document.body.style.overflow=""}
 function authErr(e){const m=String(e&&e.message||""), c=e&&e.code||"";
   return /invalid_credentials/.test(c)||/invalid login/i.test(m)?"E-mail ou senha incorretos.":
     /user_already_exists/.test(c)||/already registered/i.test(m)?"Esse e-mail já tem conta. Toque em Entrar.":
@@ -3697,36 +3750,48 @@ function authErr(e){const m=String(e&&e.message||""), c=e&&e.code||"";
     /signup_disabled/.test(c)?"O cadastro está desativado no Supabase.":
     /signup.*(disabled|not allowed)/i.test(m)?"O cadastro está desativado no Supabase.":
     !e||e.status==null?"Sem conexão. Tente de novo.":e.status>=500?"O servidor falhou"+(m&&!/^http/.test(m)?" ("+m+")":"")+". Tente de novo em instantes.":m||"Não deu para entrar."}
+function auBad(id,msg){const i=$(id);if(i){i.classList.add("bad");i.focus()}authMsg(msg,true)}
+function auBusy(on,txt){const b=$("auGo");if(!b)return;b.disabled=on;b.classList.toggle("busy",on);
+  if(on){b.dataset.t=b.textContent;b.textContent=txt}else if(b.dataset.t){b.textContent=b.dataset.t}
+  document.querySelectorAll("#auForm .ab.sec,#auForm .au-link,#auForm .au-tabs button").forEach(x=>x.disabled=on)}
 async function authGo(create){
-  const em=($("auEmail").value||"").trim().toLowerCase(), pw=$("auPass").value||"";
-  if(!/^\S+@\S+\.\S+$/.test(em)){authMsg("Digite um e-mail válido.",true);return}
-  if(pw.length<6){authMsg("A senha precisa de 6 ou mais caracteres.",true);return}
-  if(authGo.busy)return;authGo.busy=true;
-  const bt=[$("auIn"),$("auNew"),$("auGoogle")];bt.forEach(b=>b.disabled=true);authMsg("");
+  const em=($("auEmail").value||"").trim().toLowerCase(), pw=$("auPass").value||"";AU.email=em;
+  if(!AU_EMAIL_OK(em)){auBad("auEmail","Digite um e-mail válido, como voce@email.com.");return}
+  if(pw.length<6){auBad("auPass","A senha precisa de 6 ou mais caracteres.");return}
+  if(create&&pw!==($("auPass2").value||"")){auBad("auPass2","As senhas não conferem.");return}
+  if(authGo.busy)return;authGo.busy=true;authMsg("");auBusy(true,create?"Criando conta…":"Entrando…");
   try{
     if(create){const j=await sbAuth("signup?redirect_to="+encodeURIComponent(G_REDIR),{email:em,password:pw});
       /* e-mail que já tem conta: com "confirmar e-mail" ligado o Supabase devolve 200 sem sessão e sem identidades */
       if(!j.access_token&&Array.isArray((j.user||j).identities)&&!(j.user||j).identities.length)throw sbErr("already registered",422,"user_already_exists");
-      if(!j.access_token){authMsg("Conta criada. Abra o link que chegou no seu e-mail (veja o spam) e depois toque em Entrar.");bt.forEach(b=>b.disabled=false);return}sbSave(toSes(j))}
+      if(!j.access_token){AU.kind="signup";AU.cool=Date.now()+45000;authView("sent");return}sbSave(toSes(j))}
     else sbSave(toSes(await sbAuth("token?grant_type=password",{email:em,password:pw})));
     hideAuth();afterLogin()
-  }catch(e){authMsg(authErr(e),true);bt.forEach(b=>{if(b.isConnected)b.disabled=false})}
-  finally{authGo.busy=false}}
+  }catch(e){
+    if(create&&(e.code==="user_already_exists"||/already registered/i.test(e.message||""))){authView("in");authMsg("Esse e-mail já tem conta. Entre com a senha, ou toque em \"Esqueci a senha\".",true);const pi=$("auPass");if(pi)pi.focus()}
+    else authMsg(authErr(e),true)}
+  finally{authGo.busy=false;auBusy(false)}}
 async function authForgot(){
-  const em=($("auEmail").value||"").trim().toLowerCase();
-  if(!/^\S+@\S+\.\S+$/.test(em)){authMsg("Digite seu e-mail acima e toque de novo.",true);return}
-  authMsg("Enviando…");
-  try{await sbAuth("recover?redirect_to="+encodeURIComponent(G_REDIR),{email:em});authMsg("Se esse e-mail tem conta, o link para criar a senha nova já foi enviado.")}
-  catch(e){authMsg(authErr(e),true)}}
+  const em=($("auEmail").value||"").trim().toLowerCase();AU.email=em;
+  if(!AU_EMAIL_OK(em)){auBad("auEmail","Digite o e-mail da sua conta.");return}
+  if(authForgot.busy)return;authForgot.busy=true;authMsg("");auBusy(true,"Enviando…");
+  try{await sbAuth("recover?redirect_to="+encodeURIComponent(G_REDIR),{email:em});AU.kind="recover";AU.cool=Date.now()+45000;authView("sent")}
+  catch(e){authMsg(authErr(e),true)}finally{authForgot.busy=false;auBusy(false)}}
+async function authResend(){
+  if(Date.now()<AU.cool||authResend.busy)return;authResend.busy=true;authMsg("");
+  try{if(AU.kind==="signup")await sbAuth("resend?redirect_to="+encodeURIComponent(G_REDIR),{type:"signup",email:AU.email});
+    else await sbAuth("recover?redirect_to="+encodeURIComponent(G_REDIR),{email:AU.email});
+    AU.cool=Date.now()+45000;authMsg("Enviado de novo ✓");auTick()}
+  catch(e){authMsg(authErr(e),true)}finally{authResend.busy=false}}
 /* volta do link "esqueci a senha": já entra e pede a senha nova */
-function newPassForm(){showAuth("");const f=$("auForm");if(!f)return;
-  f.innerHTML=`<div class="lk-msg" style="margin-bottom:6px">Crie sua senha nova</div><input type="password" id="auPass" autocomplete="new-password" placeholder="Senha nova" aria-label="Senha nova"><div class="lk-msg" id="auMsg" role="alert"></div><button type="button" class="ab" id="auSetPw">Salvar e entrar</button>`}
+function newPassForm(){showAuth("");authView("newpw")}
 async function authSetPw(){
-  const pw=$("auPass").value||"";if(pw.length<6){authMsg("A senha precisa de 6 ou mais caracteres.",true);return}
+  const pw=$("auPass").value||"";if(pw.length<6){auBad("auPass","A senha precisa de 6 ou mais caracteres.");return}
+  if(authSetPw.busy)return;authSetPw.busy=true;auBusy(true,"Salvando…");
   try{const t=await sbTok();const r=await fetch(SB_URL+"/auth/v1/user",{method:"PUT",headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
     const j=await r.json().catch(()=>({}));if(!r.ok)throw sbErr(j.msg||j.message||"http "+r.status,r.status,j.error_code||j.code);
     hideAuth();toast("Senha nova salva.",true);afterLogin()}
-  catch(e){authMsg(authErr(e),true)}}
+  catch(e){authMsg(authErr(e),true)}finally{authSetPw.busy=false;auBusy(false)}}
 function afterLogin(){syncMetaSet({errAt:0,errMsg:""});render();renderSyncBits();setTimeout(()=>syncNow(true),300)}
 async function sbFinish(b){
   showAuth(b.err?(/expired|invalid/i.test(b.err)?"O link venceu ou já foi usado. Peça outro.":"Não deu para entrar: "+b.err):"Entrando…",!!b.err);if(b.err)return;
@@ -3740,11 +3805,20 @@ async function sbSignOut(){
   try{await fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+((sbSes()||{}).at||"")}})}catch(e){}
   try{Object.keys(localStorage).filter(k=>k.startsWith("despesas.")).forEach(k=>localStorage.removeItem(k));sessionStorage.clear()}catch(e){}
   location.reload()}
-$("auth").addEventListener("submit",e=>{e.preventDefault();authGo(false)});
+$("auth").addEventListener("submit",e=>{e.preventDefault();const m=AU.mode;
+  if(m==="in")authGo(false);else if(m==="new")authGo(true);else if(m==="forgot")authForgot();else if(m==="newpw")authSetPw()});
+$("auth").addEventListener("input",e=>{const t=e.target;if(!t.matches||!t.matches("#auForm input"))return;
+  t.classList.remove("bad");const m=$("auMsg");if(m&&m.classList.contains("err"))authMsg("");
+  if(t.id==="auPass"){const b=$("auStr");if(b){const n=auStrength(t.value);b.dataset.l=n;$("auStrT").textContent=t.value?AU_STR_T[n]:"Mínimo de 6 caracteres. Melhor: 8 ou mais, com letras e números."}}});
+$("auth").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="auEmail"&&$("auPass")){e.preventDefault();$("auPass").focus()}});
 $("auth").addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;
-  if(t.id==="auNew"){const pi=$("auPass");if(pi)pi.setAttribute("autocomplete","new-password");authGo(true)}
-  else if(t.id==="auForgot")authForgot();
-  else if(t.id==="auSetPw")authSetPw();
+  if(t.dataset.aumode){const ei=$("auEmail");if(ei)AU.email=ei.value.trim();authView(t.dataset.aumode)}
+  else if(t.dataset.aueye){const i=$(t.dataset.aueye);if(!i)return;const show=i.type==="password";i.type=show?"text":"password";
+    t.innerHTML=show?AU_EYE_OFF:AU_EYE;t.setAttribute("aria-label",show?"Esconder senha":"Mostrar senha")}
+  else if(t.id==="auForgot"){const ei=$("auEmail");if(ei)AU.email=ei.value.trim();authView("forgot")}
+  else if(t.id==="auBack"||t.id==="auToIn"){authView("in")}
+  else if(t.id==="auOther"){AU.email="";authView(AU.kind==="recover"?"forgot":"new")}
+  else if(t.id==="auResend")authResend();
   else if(t.id==="auGoogle"){authMsg("Abrindo o Google…");location.href=SB_URL+"/auth/v1/authorize?provider=google&redirect_to="+encodeURIComponent(G_REDIR)}});
 /* arrastar um lançamento para a esquerda: marca como pago (ou volta para a pagar). Só despesas, fora de benefício. */
 let swipeJust=false;
