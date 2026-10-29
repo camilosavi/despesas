@@ -4108,7 +4108,7 @@ function renderCards(){
       d>g?`<div class="warn" style="font-size:.88rem;font-weight:600">Lançado passa ${R(d-g)} do banco. Confira algum item ou atualize o valor.</div>`:
       `<div class="pos" style="font-size:.88rem;font-weight:600">Bate com o banco ✓</div>`;
     const st2="";
-    fb=`<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Total da fatura${allPaid?" · paga":""}</span><div class="val ${allPaid?"pos":""}"><small>R$</small>${brl(tot)}</div><div class="src">${L.length} ${L.length===1?"item lançado":"itens lançados"}${g?` · banco ${R(g)}`:""}</div></div><button class="tbtn" id="fatEdit">${g?"Editar valor":"Informar valor"}</button></div>${status}${st2}</div>`;
+    fb=`<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Total da fatura${allPaid?" · paga":""}</span><div class="val ${allPaid?"pos":""}"><small>R$</small>${brl(g&&L.length?g:tot)}</div><div class="src">${g&&L.length?`valor do banco · lançado ${R(tot)} em ${L.length} ${L.length===1?"item":"itens"}`:`${L.length} ${L.length===1?"item lançado":"itens lançados"}`}</div></div><button class="tbtn" id="fatEdit">${g?"Editar valor":"Informar valor"}</button></div>${status}${st2}</div>`;
   }
   {const ri=rolledIn(c,view), rv=ri.reduce((s,x)=>s+amt(x),0), gn=cardItems(c,view).filter(x=>rollYM(x)), to=gn.length?rollYM(gn[0]):null;
     if(rv) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">+ ${R(rv)} da fatura de ${[...new Set(ri.map(x=>shortMonth(x.date.slice(0,7))))].join(", ")} que não foi paga: o banco cobra nesta. Conta no saldo deste mês.</div>`;
@@ -4130,7 +4130,7 @@ function renderCards(){
       return `<button class="cline item" data-id="${esc(x.id)}"><span class="d">${esc(cleanDesc(x))}${azBubbles(x)}${bt?` <small class="muted">· ${bt}</small>`:""}</span><span class="v">${R(x.cents)}</span><span class="meta">${meta}</span></button>`}).join("")+
       (L.length?"":`<div class="cline"><span class="d" style="color:var(--muted)">Nenhum item descrito ainda</span></div>`)+
       (L.length>FAT_N?`<button class="tbtn" data-fatexp="${esc(fk)}" aria-expanded="${fOpen}" style="width:100%;margin:6px 0">${fOpen?"Recolher a fatura":`Expandir a fatura (+${L.length-FAT_N})`}</button>`:"")+
-      `<div class="cbfoot"><span>Total da fatura</span><b style="color:var(--ink)">${R(tot)}</b></div>`+
+      `<div class="cbfoot"><span>${g?"Soma do lançado":"Total da fatura"}</span><b style="color:var(--ink)">${R(tot)}</b></div>`+
       (endNext?`<div class="cbfoot"><span>Termina neste mês</span><span>−${R(endNext)} na próxima</span></div>`:"")+`</div>
       </section>`;
   }
