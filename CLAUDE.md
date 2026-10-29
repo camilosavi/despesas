@@ -802,6 +802,11 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   aparece "Alterar só a parcela i/n ou todas?" (`serAck`: "one" = só esta, nada passa para as outras; "all" = tudo isso vai para a série).
   Situação e data continuam por mês. Trocar cartão/forma numa série mantém cada parcela no mês dela (com cartão: dia do vencimento dele,
   `dueDateOf`; `buy` fica). Sem mudança desse tipo, salva direto. Também: `#untilField[hidden]` some de verdade (aparecia "Repetir até" vazio).
+- **Direção com a pessoa** (29/10/2026, pedido dele: "tenho despesas pra pagar pra ela… controle de quanto estão me pagando e quanto estou
+  pagando"): na despesa, cada pessoa marcada tem "<Nome> me deve" | "Eu pago a <Nome>" (`data-podir`, `form.po`) → `pessoas[i].o=1`.
+  `azLv`: com `o`, despesa não paga = −parte (você deve), paga = 0 (acertado); sem `o`, como antes (despesa +, receita −). A despesa com `o`
+  continua sendo gasto dele (conta no mês e no saldo). Pessoa aberta mostra `.azsum`: "<Nome> te deve" (soma +), "Você deve a <Nome>" (soma −)
+  e "Este mês: você pagou X · <Nome> pagou Y". Histórico: "você paga" / "pago ✓". Rótulo do campo virou "Pessoas (com quem é)".
 - **Histórico da pessoa abre o lançamento** (29/10/2026, pedido dele: "aqui não consigo editar"): as linhas de lançamento no histórico da pessoa
   (`.svmv[data-id]`) abrem o formulário de edição como nas outras listas (com a pergunta "só esta ou todas" se for série).
 - **Bolinhas nas listas** (28/10/2026, pedido dele): lançamento com 2+ pessoas vinculadas mostra ao lado do nome bolinhas com a inicial de cada uma (`azBubbles`, mesma cor por nome da lista de Pessoas, até 3 + "+N", nome completo no `title`). Com 1 pessoa só, nada aparece.
