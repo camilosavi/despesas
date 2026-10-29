@@ -2844,7 +2844,7 @@ function walCardRows(){
   const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
   if(!cs.length&&!B.length) return "";
   const row=(c,sub,val,neg)=>`<button class="acone cardgo" data-opencard="${esc(c)}">${cardBadge(c)}<span class="t"><b>${esc(c)}</b><span>${sub}</span></span><span class="v ${neg?"neg":""}">${val}</span></button>`;
-  return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=billTot(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
+  return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=billShow(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
     const f=k.limit?cardFree(c).free:null;
     return row(c,[f!=null?(f<0?`passou ${R(-f)} do limite`:`livre ${R(f)}`):"",due].filter(Boolean).join(" · "),R(tot),f!=null&&f<0)}).join("")+
     B.map(b=>{const v=benBal(b), nx=benNext(b);return row(b.name,nx?`crédito ${fmtDM(nx)}`:"vale",R(v),v<0)}).join("");
@@ -2933,7 +2933,7 @@ function homeBlock(k){
     const lim=cs.reduce((a,c)=>{const L=cardCfg(c).limit;if(!L)return a;a.l+=L;a.u+=L-cardFree(c).free;return a},{l:0,u:0}), pu=lim.l?Math.max(0,Math.min(100,lim.u/lim.l*100)):0;
     const sum=lim.l?`<div class="cdsum pconly"><div class="cdsumtop"><span>${Math.round(pu)}% do limite usado</span><span>Limite ${R(lim.l)}</span></div><div class="mini"><i style="width:${pu}%;background:${pu>=100?"var(--neg)":pu>=80?"var(--warn)":"var(--accent)"}"></i></div><div class="cdsumtop"><span>Usado ${R(lim.u)}</span><span>Livre ${R(Math.max(0,lim.l-lim.u))}</span></div></div>`:"";
     return `<section><h2>Cartões <small>fatura em aberto</small></h2><div class="card">`+sum+cs.map(c=>{
-      const bs=billShown(c,ym), m=bs.ym, tot=billTot(c,m), k=cardCfg(c), due=dueOf(c), paid=!bs.from&&cardItems(c,m).length&&cardItems(c,m).every(isPaid);
+      const bs=billShown(c,ym), m=bs.ym, tot=billShow(c,m), k=cardCfg(c), due=dueOf(c), paid=!bs.from&&cardItems(c,m).length&&cardItems(c,m).every(isPaid);
       const meta=[bs.from?`${bs.none?"":MES[+bs.from.slice(5)-1].toLowerCase()+" paga ✓ · "}próxima`:"",due?`vence ${fmtDM(cardDue(c,m))}`:bs.from?shortMonth(m):"",k.limit?(cardFree(c).free<0?`${R(-cardFree(c).free)} acima`:`livre ${R(cardFree(c).free)}`):"",paid?"paga":""].filter(Boolean).join(" · ").replace("próxima · vence","próxima vence");
       return `<button class="cardrow" data-opencard="${esc(c)}" data-ym="${m}">${cardBadge(c)}<span><b>${esc(c)}</b></span><b class="${paid?"pos":""}">${R(tot)}</b><span class="m">${esc(meta)||"sem lançamentos"}${limTag(c)}</span><span class="m" style="text-align:right">›</span></button>`}).join("")+`</div></section>`;
   }
@@ -3028,7 +3028,7 @@ function hojeCards(){
   const T=cs.map(c=>{const k=cardCfg(c);
     if(k.limit){const f=cardFree(c).free, u=Math.max(0,Math.min(100,(k.limit-f)/k.limit*100));return f<0?tile(c,"passou",R(-f),u,`de ${R(k.limit)}`,true):tile(c,"livre",R(f),u,`de ${R(k.limit)}`)}
     /* mesmo total das outras telas: sem o que foi para a próxima fatura, com o que veio da anterior */
-    const bs=billShown(c,ym), bv=billTot(c,bs.ym);return tile(c,"fatura",R(bv),null,dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym))});
+    const bs=billShown(c,ym), bv=billShow(c,bs.ym);return tile(c,"fatura",R(bv),null,dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym))});
   B.forEach(b=>{const v=benBal(b), nx=benNext(b);T.push(tile(b.name,"saldo",R(v),null,nx?`crédito ${fmtDM(nx)}`:"vale",v<0))});
   return `<section><h2>Cartões <button data-gocards="1">Ver todos</button></h2><div class="htiles">${T.join("")}</div></section>`;
 }
@@ -3526,7 +3526,7 @@ function cardStrip(ym){
   const t=cs.map(c=>{
     if(isBen(c)){const b=bens().find(x=>x.name===c);if(!b)return "";const v=benBal(b);
       return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${ym}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv ${v<0?"neg":""}">${R(v)}</span><span class="cm">saldo do vale</span></button>`}
-    if(ym===curYM()){const bs=billShown(c,ym);if(bs.from){const m=bs.ym, v=billTot(c,m), k=cardCfg(c), pct=k.limit?Math.min(limPct(c),100):0, d=cardDue(c,m);
+    if(ym===curYM()){const bs=billShown(c,ym);if(bs.from){const m=bs.ym, v=billShow(c,m), k=cardCfg(c), pct=k.limit?Math.min(limPct(c),100):0, d=cardDue(c,m);
       return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${m}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv">${R(v)}</span><span class="cm ok">${bs.none?"":MES[+ym.slice(5)-1].toLowerCase()+" paga ✓ · "}próxima ${d?"vence "+fmtDM(d):shortMonth(m)}</span>${k.limit?`<span class="cl" title="${Math.round(pct)}% do limite"><i style="width:${pct}%;background:${pct>=100?"var(--neg)":pct>=80?"var(--warn)":k.color||"var(--accent)"}"></i></span>`:""}</button>`}}
     const L0=cardItems(c,ym), gone=L0.filter(x=>rollYM(x)), L=L0.filter(x=>!rollYM(x)), rv=rollAmt(c,ym), v=L.reduce((s,x)=>s+amt(x),0)+rv, due=cardDue(c,ym), paid=L.length&&L.every(isPaid)&&!rv, late=!paid&&v&&due&&due<today();
     if(!L.length&&!rv&&gone.length) return `<button class="ctile" data-opencard="${esc(c)}" data-ym="${ym}"><span class="ch">${cardBadge(c)}<span>${esc(c)}</span></span><span class="cv">${R(gone.reduce((s,x)=>s+amt(x),0))}</span><span class="cm late">não paga · foi para ${shortMonth(rollYM(gone[0]))}</span></button>`;
