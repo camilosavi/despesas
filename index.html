@@ -1761,6 +1761,9 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .azsum small{display:block;color:var(--muted);font-size:.78rem}.azsum b{font-size:1.15rem;font-variant-numeric:tabular-nums}
 .azsum p{grid-column:1/-1;margin:0;font-size:.84rem;color:var(--muted)}
 .seg.podir{margin:0 0 10px}.seg.podir button{font-size:.84rem;padding:7px 6px}
+/* quadros de cartão: rótulo escondido, linha de baixo (vence · limite) em texto simples, sem caixa */
+.htile .htl:not(.htsub){display:none!important}
+.htile .htl.htsub{display:block!important;margin:auto 0 0!important;padding:0!important;border:0!important;background:none!important;border-radius:0!important}
 </style>
 
 <div class="wrap">
@@ -3042,10 +3045,12 @@ function hojeCards(){
       ${best?`<span class="ht-best">★ Melhor dia</span>`:""}
     </button>`;
   };
-  const T=cs.map(c=>{const k=cardCfg(c);
-    if(k.limit){const f=cardFree(c).free, u=Math.max(0,Math.min(100,(k.limit-f)/k.limit*100));return f<0?tile(c,"passou",R(-f),u,`de ${R(k.limit)}`,true):tile(c,"livre",R(f),u,`de ${R(k.limit)}`)}
-    /* mesmo total das outras telas: sem o que foi para a próxima fatura, com o que veio da anterior */
-    const bs=billShown(c,ym), bv=billShow(c,bs.ym);return tile(c,"fatura",R(bv),null,dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym))});
+  /* todo cartão mostra a mesma coisa: valor da fatura grande; embaixo vencimento e limite (livre ou acima) */
+  const T=cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), bv=billShow(c,bs.ym);
+    const dv=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
+    if(k.limit){const f=cardFree(c).free, u=Math.max(0,Math.min(100,(k.limit-f)/k.limit*100));
+      return tile(c,"fatura",R(bv),u,`${dv}<br>${f<0?`<span class="limwarn over">${R(-f)} acima do limite</span>`:`livre ${R(f)}`}`)}
+    return tile(c,"fatura",R(bv),null,dv)});
   B.forEach(b=>{const v=benBal(b), nx=benNext(b);T.push(tile(b.name,"saldo",R(v),null,nx?`crédito ${fmtDM(nx)}`:"vale",v<0))});
   return `<section><h2>Cartões <button data-gocards="1">Ver todos</button></h2><div class="htiles">${T.join("")}</div></section>`;
 }
