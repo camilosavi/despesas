@@ -2224,7 +2224,14 @@ function amtMap(){
   if(_amtFor===items) return _amtMap;
   const has=new Set(),M=new Map(),key=x=>cardOf(x)+"|"+(x.date||"").slice(0,7);
   items.forEach(x=>{if(cardOf(x)&&!genFat(x))has.add(key(x))});
-  items.forEach(x=>{if(genFat(x))M.set(x.id,has.has(key(x))?0:(x.cents||0))});
+  /* valor do banco informado + itens lançados: a fatura vale a diferença que falta (pedido dele, 29/10/2026: todo lugar mostra o valor do
+     banco). Base = itens do mês que ficam nele + os de faturas anteriores não pagas que vieram para ele (o banco cobra junto). */
+  const G=new Map();items.forEach(x=>{if(genFat(x)&&has.has(key(x))){const k=key(x);if(!G.has(k))G.set(k,[]);G.get(k).push(x)}});
+  if(G.size){const base=new Map(), add=(k,v)=>base.set(k,(base.get(k)||0)+v);
+    items.forEach(x=>{if(!cardOf(x)||genFat(x))return;const k=key(x);let ry=null;try{ry=rollYM(x)}catch(e){}
+      if(!ry){if(G.has(k))add(k,x.cents||0)}else{const k2=cardOf(x)+"|"+ry;if(G.has(k2)&&!rollGone(x,ry))add(k2,x.cents||0)}});
+    for(const [k,L] of G){const g=L.reduce((t,x)=>t+(x.cents||0),0), d=Math.max(0,g-(base.get(k)||0));L.forEach((x,i)=>M.set(x.id,i?0:d))}}
+  items.forEach(x=>{if(genFat(x)&&!M.has(x.id))M.set(x.id,has.has(key(x))?0:(x.cents||0))});
   _amtFor=items;_amtMap=M;return M;
 }
 /* ---------- parecidos: mesmo tipo, mesmo cartão (ou nenhum), mesmo mês, mesmo valor e (mesma parcela ou nome em comum ou data perto) */
@@ -2626,15 +2633,14 @@ function header0(){
       $("s1l").textContent="Gasto no mês";$("s1").textContent=R(sp);$("s2l").textContent=b.daily?"Por dia útil":"Crédito por mês";$("s2").textContent=b.daily?R(b.daily):b.credit?R(b.credit):"—";
       $("hFoot").textContent=nx?`próximo crédito ${fmtDM(nx)}${b.daily||b.credit?`: ${R(benCreditOn(b,nx))}`:""}`:"";return}
     const cs=selCard?[selCard]:credCards(), tot=cs.reduce((s,c)=>s+billTot(c,view),0);
-    const L=cs.flatMap(c=>cardItems(c,view)), open=L.filter(x=>!isPaid(x)).reduce((s,x)=>s+amt(x),0);
+    const L=cs.flatMap(c=>cardItems(c,view)), open=L.filter(x=>!isPaid(x)&&!rollYM(x)).reduce((s,x)=>s+amt(x),0)+cs.reduce((s,c)=>s+rollAmt(c,view),0);
     $("bigLabel").textContent=selCard?`Fatura ${selCard}`:"Total das faturas";
-    const bk=selCard?billBank(selCard,view):0, allP=L.length&&L.every(isPaid);
-    setBig("R$",bk||tot);
+    setBig("R$",tot);
     $("s1l").textContent=selCard?"Vencimento":"Cartões";
     $("s1").textContent=selCard?(dueOf(selCard)?fmtDM(cardDue(selCard,view)):"—"):String(cs.filter(c=>cardTotal(c,view)).length);
-    $("s2l").textContent="A pagar";$("s2").textContent=R(bk&&!allP?bk:open);
+    $("s2l").textContent="A pagar";$("s2").textContent=R(open);
     const nx=cs.reduce((s,c)=>s+cardTotal(c,shiftYM(view,1)),0);
-    {const t0=bk||tot;$("hFoot").textContent=`próximo mês: ${R(nx)}${t0?` (${nx<=t0?"−":"+"} ${R(Math.abs(t0-nx))})`:""}`}
+    {const t0=tot;$("hFoot").textContent=`próximo mês: ${R(nx)}${t0?` (${nx<=t0?"−":"+"} ${R(Math.abs(t0-nx))})`:""}`}
     return;
   }
   $("period").textContent=isYear?String(year):monthLabel(view);
@@ -4067,8 +4073,7 @@ const FAT_N=6, fatOpen=new Set();
 const cardItems=(c,ym)=>items.filter(x=>cardOf(x)===c&&(!ym||x.date.startsWith(ym)));
 const cardTotal=(c,ym)=>cardItems(c,ym).reduce((s,x)=>s+amt(x),0);
 /* valor da fatura como o banco cobra: sem o que não foi pago e passou para a próxima, com o que veio da anterior */
-const billBank=(c,ym)=>{const A=cardItems(c,ym);if(!A.some(x=>!genFat(x)))return 0;return A.filter(genFat).reduce((s,x)=>s+x.cents,0)}; /* valor do banco editado (pedido dele: mostra no lugar da soma) */
-const billShow=(c,ym)=>billBank(c,ym)||billTot(c,ym);
+const billShow=(c,ym)=>billTot(c,ym); /* o valor do banco informado já entra no amt() da "Fatura X" (diferença que falta lançar) */
 const billTot=(c,ym)=>cardItems(c,ym).filter(x=>!rollYM(x)).reduce((s,x)=>s+amt(x),0)+rollAmt(c,ym);
 function renderCards(){
   if(document.activeElement&&(document.activeElement.classList.contains("limin")||/^bn(Bal|Credit|Day)$/.test(document.activeElement.id))) return;
@@ -4088,7 +4093,7 @@ function renderCards(){
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
   const c=selCard, all=cardItems(c,view), G=all.filter(genFat), L=all.filter(x=>!genFat(x)).sort((a,b)=>(b.buy||b.date).localeCompare(a.buy||a.date)||(b.createdAt||0)-(a.createdAt||0)||b.cents-a.cents);
-  const g=G.reduce((s,x)=>s+x.cents,0), d=L.reduce((s,x)=>s+x.cents,0), tot=billTot(c,view), allPaid=all.length&&all.every(isPaid), mn=MES[+view.slice(5)-1].toLowerCase();
+  const g=G.reduce((s,x)=>s+x.cents,0), d=L.reduce((s,x)=>s+x.cents,0), tot=billTot(c,view)-G.reduce((t,x)=>t+(rollYM(x)?0:amt(x)),0), allPaid=all.length&&all.every(isPaid), mn=MES[+view.slice(5)-1].toLowerCase();
   const col=cardColor(c), dd=dueOf(c), dueDate=dd?cardDue(c,view):"", cl=closeOf(c);
   const D=dueDate||`${view}-${pad(lastDay(view))}`, closeDate=closeOfDue(c,D);
   const isClosed=today()>=closeDate;
@@ -4097,7 +4102,7 @@ function renderCards(){
     <div class="phys-chip"></div>
     <div class="phys-brand"><span>${esc(c)}</span></div>
     <div class="phys-meta">
-      <div><small>FATURA DE ${esc(shortMonth(view)).toUpperCase()}</small><b>${R(g&&L.length?g:tot)}</b></div>
+      <div><small>FATURA DE ${esc(shortMonth(view)).toUpperCase()}</small><b>${R(billTot(c,view))}</b></div>
       <div style="text-align:right"><small>VENCIMENTO</small><b>${dueDate?fmtDM(dueDate):"—"}</b></div>
     </div>
   </div>
@@ -4122,7 +4127,7 @@ function renderCards(){
       tot>g?`<div class="warn" style="font-size:.88rem;font-weight:600">Lançado passa ${R(tot-g)} do banco. Confira algum item ou atualize o valor.</div>`:
       `<div class="pos" style="font-size:.88rem;font-weight:600">Bate com o banco ✓</div>`;
     const st2="";
-    fb=`<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Total da fatura${allPaid?" · paga":""}</span><div class="val ${allPaid?"pos":""}"><small>R$</small>${brl(g&&L.length?g:tot)}</div><div class="src">${g&&L.length?`valor do banco · lançado ${R(d)} em ${L.length} ${L.length===1?"item":"itens"}${rollAmt(c,view)?` + ${R(rollAmt(c,view))} da anterior`:""}`:`${L.length} ${L.length===1?"item lançado":"itens lançados"}`}</div></div><button class="tbtn" id="fatEdit">${g?"Editar valor":"Informar valor"}</button></div>${status}${st2}</div>`;
+    fb=`<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Total da fatura${allPaid?" · paga":""}</span><div class="val ${allPaid?"pos":""}"><small>R$</small>${brl(billTot(c,view))}</div><div class="src">${g&&L.length?`valor do banco · lançado ${R(d)} em ${L.length} ${L.length===1?"item":"itens"}${rollAmt(c,view)?` + ${R(rollAmt(c,view))} da anterior`:""}`:`${L.length} ${L.length===1?"item lançado":"itens lançados"}`}</div></div><button class="tbtn" id="fatEdit">${g?"Editar valor":"Informar valor"}</button></div>${status}${st2}</div>`;
   }
   {const ri=rolledIn(c,view), rv=ri.reduce((s,x)=>s+amt(x),0), gn=cardItems(c,view).filter(x=>rollYM(x)), to=gn.length?rollYM(gn[0]):null;
     if(rv) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">+ ${R(rv)} da fatura de ${[...new Set(ri.map(x=>shortMonth(x.date.slice(0,7))))].join(", ")} que não foi paga: o banco cobra nesta. Conta no saldo deste mês.</div>`;
