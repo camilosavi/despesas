@@ -2019,7 +2019,7 @@ async function delCat(k){
   catEd=null;applyCats();if(form&&form.cat===k)form.cat="outros";toast("Categoria apagada",true);render();
 }
 /* editar nome e cor de qualquer categoria (despesa ou receita, padrão ou criada): cfg.catEdit[k]={n?,c?} (28/10/2026, pedido dele) */
-let catEd=null;
+let catEd=null, subKillArm=null;
 const CAT_PICK=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)","var(--c8)"];
 function catEditor(t){
   if(!catEd||catEd.t!==t) return "";
@@ -5529,8 +5529,14 @@ document.addEventListener("click",async e=>{
   if(t.id==="subOff"){subSave(true);return}
   if(t.id==="subCancel"){subEdit=null;render();return}
   if(t.id==="subBack"){const o={...(cfg.subOff||{})};delete o[subEdit];saveCfg({subOff:o}).then(()=>{toast("Assinatura reativada",true);render()}).catch(()=>toast("Não deu para salvar."));return}
-  if(t.id==="subKill"){const name=subEdit,nm=shiftYM(curYM(),1);t.disabled=true;
-    (async()=>{try{const del=items.filter(x=>subOf(x)===name&&!isPaid(x)&&(x.date||"").slice(0,7)>=nm);
+  if(t.id==="subKill"){const name=subEdit,nm=shiftYM(curYM(),1);
+    const del=items.filter(x=>subOf(x)===name&&!isPaid(x)&&(x.date||"").slice(0,7)>=nm);
+    /* 2 toques: o 1º mostra quantos lançamentos futuros vão ser apagados; o 2º (em até 5 s) cancela de verdade */
+    if(subKillArm!==name){subKillArm=name;t.classList.add("danger");
+      t.textContent=del.length?`Apagar ${del.length} ${del.length===1?"lançamento futuro":"lançamentos futuros"}? Toque de novo`:"Toque de novo para cancelar";
+      setTimeout(()=>{if(subKillArm===name){subKillArm=null;if(t.isConnected){t.classList.remove("danger");t.textContent="Cancelada"}}},5000);return}
+    subKillArm=null;t.disabled=true;
+    (async()=>{try{
       await saveCfg({subOff:{...(cfg.subOff||{}),[name]:nm}});for(const x of del) await store.items.remove(x.id);
       subEdit=null;toast(`${name} cancelada a partir de ${shortMonth(nm)}`+(del.length?` (${del.length} ${del.length===1?"lançamento apagado":"lançamentos apagados"})`:""),true);render()}catch(e){t.disabled=false;toast("Não deu para cancelar. Tente de novo.")}})();return}
   if(t.id==="ofNo"){if(ofView)ofSeen(ofView);ofNews=null;render();return}
