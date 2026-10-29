@@ -406,6 +406,8 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - Caixinhas aceitam meta e movimentos em R$, € ou US$ (`svAmt(b,cur)`, `rateNum(cur)`). `fxAll` soma as compras da moeda
   da caixinha (`boxFx`: meta em US$ → dólar; € ou R$ → euro, como antes); uma caixinha por moeda.
 - Caixinha com meta e mês-alvo mostra quanto a sobra prevista do mês cobre do que precisa guardar (`svNeedTxt`).
+- **Meta em €/US$ conta só essa moeda** (29/10/2026, pedido dele: "não converti, e não é certeza que a conversão vai ficar nesse valor"):
+  `svHave` = `svAmt(b, goalCur)`; R$ guardado na caixinha **não** vira € pela cotação do dia. O R$ aparece à parte na linha ("+ R$ X em real").
 
 ## Leitura
 

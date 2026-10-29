@@ -4319,7 +4319,8 @@ const svBrl=b=>svAmt(b,"BRL"), svEur=b=>svAmt(b,"EUR"), svUsd=b=>svAmt(b,"USD");
 const rateNum=cur=>{const r=rateFor(cur);return r&&r.rate?r.rate:0};
 const svRate=()=>rateNum("EUR");
 const svBal=b=>svBrl(b)+Math.round(svEur(b)*rateNum("EUR"))+Math.round(svUsd(b)*rateNum("USD"));
-const svHave=b=>{const g=b.goalCur;if(g!=="EUR"&&g!=="USD")return svBal(b);const r=rateNum(g);return r?Math.round(svBal(b)/r):svAmt(b,g)};
+/* meta em €/US$: conta só o que já está nessa moeda; R$ guardado não vira € pela cotação do dia (pedido dele, 29/10/2026: "não converti") */
+const svHave=b=>{const g=b.goalCur;if(g!=="EUR"&&g!=="USD")return svBal(b);return svAmt(b,g)};
 const fxBoxFor=cur=>saves().find(b=>b.fxAll&&boxFx(b)===cur);
 const svMoney=(c,cur)=>M(c,cur);
 const boxAvatar=n=>{
@@ -4420,7 +4421,7 @@ function saveSection(){
       const pct=b.goal?Math.max(0,Math.min(100,svHave(b)/b.goal*100)):0, last=(b.moves||[]).slice(-1)[0];
       const isWon=b.goal&&svHave(b)>=b.goal;
       const bks=boxBanks(b);
-      const mix=!isFx&&(e||u)?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):"";
+      const mix=!isFx&&(e||u)?[svBrl(b)?R(svBrl(b)):"",e?E(e):"",u?M(u,"USD"):""].filter(Boolean).join(" + "):isFx?[svBrl(b)?`+ ${R(svBrl(b))} em real`:"",b.goalCur!=="EUR"&&e?`+ ${E(e)}`:"",b.goalCur!=="USD"&&u?`+ ${M(u,"USD")}`:""].filter(Boolean).join(" "):"";
       const have=svHave(b), leftG=b.goal?Math.max(0,b.goal-have):0, mths=b.goal&&b.target?Math.max(0,monthsBetween(curYM(),b.target)):0;
       const sub=b.goal?[`${Math.round(pct)}% de ${svMoney(b.goal,b.goalCur)}`,mix].filter(Boolean).join(" · "):(mix||"sem meta");
       const meta=(b.goal?[leftG?`falta ${svMoney(leftG,b.goalCur)}`:"meta batida ✓",leftG&&mths>0?`~${svMoney(Math.ceil(leftG/mths),b.goalCur)}/mês até ${shortMonth(b.target)}`:"",svPaceTxt(b)]:[last?`último: ${last.cents<0?"tirou":"guardou"} ${svMoney(Math.abs(last.cents),last.cur||b.goalCur||"BRL")}`:"sem movimentos"]).filter(Boolean).join(" · ");
