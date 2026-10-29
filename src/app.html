@@ -1727,6 +1727,9 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .shn small{color:var(--muted);font-size:.8rem}.shn em{font-style:normal}
 .shv{white-space:nowrap;font-variant-numeric:tabular-nums}.shv.pos{color:var(--pos,var(--accent))}
 .shseg{grid-column:2/-1}.shseg button{padding:6px 10px;font-size:.82rem}
+/* Mês: Recentes / A–Z e Ver todos */
+.mesord{margin:-2px 0 10px}.mesord .mfp{height:32px!important;padding:0 14px!important;font-size:.84rem}
+.mesmore{display:block;margin:10px auto 0}
 </style>
 
 <div class="wrap">
@@ -2446,7 +2449,6 @@ const segs=p=>p.n<=12?`<span class="segs">${Array.from({length:p.n},(_,k)=>`<i c
 const inMonth=ym=>items.filter(x=>(x.date||"").startsWith(ym));
 const sumT=(arr,t)=>arr.filter(x=>typeOf(x)===t&&!(t==="desp"&&benOf(x))).reduce((s,x)=>s+amt(x),0);
 const byCat=(arr,t)=>{const o={};arr.filter(x=>typeOf(x)===t).forEach(x=>o[x.cat]=(o[x.cat]||0)+amt(x));return o};
-const sorted=arr=>[...arr].sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
 /* aba Moedas: compras de euro (padrão, campo eur) e de dólar (cur:"USD", campo usd). Moeda vista fica no aparelho. */
 const FXC={EUR:{sym:"€",n:"euro",N:"Euro",pl:"euros"},USD:{sym:"US$",n:"dólar",N:"Dólar",pl:"dólares"}};
 const fxCurOf=x=>x.cur==="USD"?"USD":"EUR";
@@ -3086,10 +3088,21 @@ function mesV1(arr,dA,byC,tot){
     (open.length?`<section><h2>A pagar <small>${R(openS)}</small></h2><div class="card list">${open.map(itemHTML).join("")}</div></section>`:"")+
     (done.length?`<section><h2>Já movimentado</h2>${mesDays(done)}</section>`:"");
 }
+/* lista de lançamentos do Mês: "Recentes" pelo dia em que aconteceu (compra `buy`, salário `fell`, senão a data) e pela hora em
+   que foi lançado; "A–Z" pelo nome (29/10/2026, pedido dele: "não era pra estar do mais recente pro mais antigo? põe filtro de A–Z").
+   Antes ordenava pela data do lançamento, que na compra de cartão é o vencimento da fatura, então as compras ficavam fora de ordem. */
+let mesAll=false;
+const mesOrd=()=>{try{return localStorage.getItem("despesas.mesOrd")==="az"?"az":"rec"}catch(e){return "rec"}};
+const whenOf=x=>x.buy||x.fell||x.date;
+const sortRecent=L=>[...L].sort((a,b)=>whenOf(b).localeCompare(whenOf(a))||(b.createdAt||0)-(a.createdAt||0));
+const sortAZ=L=>[...L].sort((a,b)=>fold(cleanDesc(a)).localeCompare(fold(cleanDesc(b)),"pt")||whenOf(b).localeCompare(whenOf(a)));
 function mesV2(arr,dA,byC,tot){
-  const all=sorted(arr.filter(x=>!benOf(x))), more=all.length>8;
+  const o=mesOrd(), base=arr.filter(x=>!benOf(x)), all=o==="az"?sortAZ(base):sortRecent(base), N=8, show=mesAll?all:all.slice(0,N);
+  const chip=(k,t)=>`<button type="button" class="mfp ${o===k?"on":""}" data-mesord="${k}" aria-pressed="${o===k}">${t}</button>`;
   return catsBlockHtml(arr,dA,tot,byC)+
-    `<section><h2>Últimos lançamentos <small>${all.length}</small></h2><div class="card list">${all.slice(0,8).map(itemHTML).join("")}</div></section>`;
+    `<section><h2>Lançamentos <small>${all.length}</small></h2><div class="mfrow mesord">${chip("rec","Recentes")}${chip("az","A–Z")}</div>
+    <div class="card list">${show.map(itemHTML).join("")}</div>
+    ${all.length>N?`<button type="button" class="tbtn mesmore" data-mesall="1">${mesAll?"Mostrar menos":`Ver todos (${all.length})`}</button>`:""}</section>`;
 }
 
 let mesF="all";
@@ -5395,6 +5408,8 @@ document.addEventListener("click",async e=>{
     try{if(!L.every(isPaid)){for(const x of L){if(!isPaid(x)) await store.items.update(x.id,paidPatch(true))}toast("Fatura marcada como paga",true)}
       view=shiftYM(view,1);render();slideIn($(tab),1)}catch(e){toast("Não deu para salvar. Tente de novo.")}})();return}
   const mf=t.closest("[data-mesf]"); if(mf){const k=mf.dataset.mesf;mesF=(k===mesF||k==="all")?"all":k;renderMes();cardTheme(mesF.startsWith("card:")?mesF.slice(5):null);return}
+  {const mo=t.closest("[data-mesord]");if(mo){try{localStorage.setItem("despesas.mesOrd",mo.dataset.mesord)}catch(e){}renderMes();return}
+   if(t.closest("[data-mesall]")){mesAll=!mesAll;renderMes();return}}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
   const msw=t.closest("[data-msw]"); if(msw){const k=msw.dataset.msw;if(k==="mes")go("pMes");else{anoSubTab=k;lsSet("despesas.anoTab",k);go("pAno")}return}
   const at=t.closest("[data-anotab]"); if(at){anoSubTab=at.dataset.anotab;lsSet("despesas.anoTab",anoSubTab);renderAno();return}
