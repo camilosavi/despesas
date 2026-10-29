@@ -2345,6 +2345,8 @@ const dueShift=d=>0;
 const dueDateOf=(d,ym)=>{const m=shiftYM(ym,dueShift(d));return `${m}-${pad(Math.min(d,lastDay(m)))}`};
 const cardDue=(c,ym)=>dueOf(c)?dueDateOf(dueOf(c),ym):"";
 /* fechamento: dia salvo na importação ("Data de corte"/"fechamento") ou estimado pelo vencimento */
+/* melhor dia de compra = dia seguinte ao fechamento (29/10/2026, pedido dele: "fica mais fácil de entender"); fechamento 31 = último dia do mês */
+const bestDayOf=cl=>cl>=31?1:cl+1, closeFromBest=b=>b<=1?31:b-1;
 const closeOf=c=>+(((cfg.cards||{})[c]||{}).close)||0;
 function closeOfDue(c,D){const dd=+D.slice(8), cl=closeOf(c);
   if(cl){const m=cl<dd?D.slice(0,7):shiftYM(D.slice(0,7),-1);return `${m}-${pad(Math.min(cl,lastDay(m)))}`}
@@ -2418,8 +2420,8 @@ function limitBox(c){
   const k=cardCfg(c), used=cardUsed(c);
   if(limEditing||!k.limit) return `<div class="card rate"><div><b>Limite do ${esc(c)}</b><div class="src">Veja no app do banco e preencha. O “livre” é opcional, serve para conferir se falta lançar alguma compra.</div></div>
     <div class="two"><div class="field" style="margin:0"><label for="limTot">Limite total</label><input id="limTot" class="limin" inputmode="numeric" value="${k.limit?brl(k.limit):""}" placeholder="R$ 0,00"></div><div class="field" style="margin:0"><label for="limFree">Livre no banco hoje</label><input id="limFree" class="limin" inputmode="numeric" value="${k.bankFree!=null?brl(k.bankFree):""}" placeholder="opcional"></div></div>
-    <div class="two" style="margin-top:10px"><div class="field" style="margin:0"><label for="limDue">Dia do vencimento</label><input id="limDue" class="limin" inputmode="numeric" maxlength="2" value="${k.due||""}" placeholder="ex.: 2"></div><div class="field" style="margin:0"><label for="limClose">Dia do fechamento</label><input id="limClose" class="limin" inputmode="numeric" maxlength="2" value="${k.close||""}" placeholder="opcional"></div></div>
-    <div class="hint expl">O vencimento define em qual mês a fatura conta; o fechamento decide em que fatura cai cada compra nova. Ao importar uma fatura, o banco pode ajustar os dois.</div>
+    <div class="two" style="margin-top:10px"><div class="field" style="margin:0"><label for="limDue">Dia do vencimento</label><input id="limDue" class="limin" inputmode="numeric" maxlength="2" value="${k.due||""}" placeholder="ex.: 2"></div><div class="field" style="margin:0"><label for="limClose">Melhor dia de compra</label><input id="limClose" class="limin" inputmode="numeric" maxlength="2" value="${k.close?bestDayOf(k.close):""}" placeholder="opcional"></div></div>
+    <div class="hint expl">O vencimento define em qual mês a fatura conta; o melhor dia de compra (dia seguinte ao fechamento) decide em que fatura cai cada compra nova. Ao importar uma fatura, o banco pode ajustar os dois.</div>
     <div class="row" style="margin:0">${k.limit?`<button class="btn soft" id="limCancel">Cancelar</button>`:""}<button class="btn primary" id="limSave">Salvar</button></div></div>`;
   const F=cardFree(c), free=F.free, usedE=k.limit-free, pct=Math.max(0,Math.min(100,usedE/k.limit*100));
   let rec="";
@@ -2434,7 +2436,7 @@ function limitBox(c){
 async function saveLimit(){
   const lim=digits($("limTot").value), fr=$("limFree").value.trim()?digits($("limFree").value):null;
   const day=id=>{const v=($(id)?.value||"").trim();if(!v)return 0;const n=parseInt(v,10);return n>=1&&n<=31?n:-1};
-  const due=day("limDue"), close=day("limClose");
+  const due=day("limDue"), best=day("limClose"), close=best>0?closeFromBest(best):best; /* o campo mostra o melhor dia de compra; guarda o fechamento (dia anterior) */
   if(due<0||close<0){toast("O dia vai de 1 a 31.");return}
   if(!lim&&!due&&!close){toast("Digite o limite total ou o dia do vencimento.");return}
   const cur={...(cfg.cards||{})};const old={...(cur[selCard]||{})};delete old.bankFree;delete old.bankAt;delete old.bankAtTs;

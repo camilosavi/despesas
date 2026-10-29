@@ -421,6 +421,9 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Compras com benefício ficam pagas, entram nas categorias mas **não** em `sumT` nem na linha do tempo; o Mês mostra
   "Pago com <cartão>" e o Início tem o bloco `bens` (só aparece se houver).
 - **Editar lançamento de cartão** (21/10/2026, `editBill`): trocar de cartão ou passar para/de Crédito refaz a fatura a partir da data da compra (`buy`): Pix→Crédito vai para o vencimento, Crédito→Pix volta para a data da compra, cartão A→B usa o vencimento de B. Data mexida à mão em item que já era de cartão vale como digitada. O aviso "Entra na fatura…" aparece também ao editar. Parcelas/repetição em cartão com vencimento dia 30 ou 31 não viram "último dia do mês" (`endOfMonth` só sem cartão).
+- **Melhor dia de compra** (29/10/2026, pedido dele: "fica mais fácil de entender"): no editor do limite o campo "Dia do fechamento" virou
+  "Melhor dia de compra" (`#limClose`). Mostra `bestDayOf(close)` (fechamento + 1; 31 → 1) e salva `closeFromBest` (dia − 1; 1 → 31 = último
+  dia do mês). `cfg.cards[c].close` continua sendo o fechamento; nada mais mudou.
 - **"+" dentro do cartão** (21/10/2026, `cardBuyDate`): o mês que se vê é o do vencimento da fatura, então a data padrão da compra não é o dia 1º dele (caía na fatura seguinte): é hoje, se hoje cabe naquele ciclo ou a fatura já fechou; fatura futura → 1º dia do ciclo dela. Cartão sem vencimento: como antes.
 - **Pagar com duas formas** ("+ Pagar com duas formas" no lançamento novo, só "Só uma vez"): cria 2 lançamentos com o mesmo
   `group` ("s…"), a 2ª parte com outra forma (e cartão, se Crédito); o resto fica na forma principal.
