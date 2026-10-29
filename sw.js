@@ -1,4 +1,4 @@
-const C="despesas-d98e60cb", RT="despesas-runtime";
+const C="despesas-06096ef2", RT="despesas-runtime";
 const ASSETS=["./","index.html","manifest.webmanifest","tostao-180.png","tostao-192.png","tostao-512.png","tostao-logo.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==RT&&x!=="despesas-av").map(x=>caches.delete(x)))));self.clients.claim()});
@@ -14,7 +14,7 @@ self.addEventListener("fetch",e=>{
       fetch(req,{cache:"no-cache"}).then(r=>{if(r&&r.ok){const cp=r.clone();caches.open(C).then(c=>c.put(req,cp))}clearTimeout(t);if(done)return;if(r&&r.ok)fin(r);else fromCache(req).then(c=>fin(c||r))})
         .catch(()=>{clearTimeout(t);fromCache(req).then(c=>fin(c||Response.error()))});
     }));
-  } else if(/fonts\.g|cdnjs\.cloudflare\.com/.test(u.hostname)){
+  } else if(/fonts\.g|cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net/.test(u.hostname)){
     // fontes e leitor de PDF: cache que não some a cada versão
     e.respondWith(caches.open(RT).then(c=>c.match(req).then(r=>r||fetch(req).then(res=>{if(res&&(res.ok||res.type==="opaque"))c.put(req,res.clone());return res}))));
   }

@@ -46,7 +46,7 @@ self.addEventListener("fetch",e=>{{
       fetch(req,{{cache:"no-cache"}}).then(r=>{{if(r&&r.ok){{const cp=r.clone();caches.open(C).then(c=>c.put(req,cp))}}clearTimeout(t);if(done)return;if(r&&r.ok)fin(r);else fromCache(req).then(c=>fin(c||r))}})
         .catch(()=>{{clearTimeout(t);fromCache(req).then(c=>fin(c||Response.error()))}});
     }}));
-  }} else if(/fonts\\.g|cdnjs\\.cloudflare\\.com/.test(u.hostname)){{
+  }} else if(/fonts\\.g|cdnjs\\.cloudflare\\.com|cdn\\.jsdelivr\\.net/.test(u.hostname)){{
     // fontes e leitor de PDF: cache que não some a cada versão
     e.respondWith(caches.open(RT).then(c=>c.match(req).then(r=>r||fetch(req).then(res=>{{if(res&&(res.ok||res.type==="opaque"))c.put(req,res.clone());return res}}))));
   }}

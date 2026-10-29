@@ -180,6 +180,14 @@ card?, parc?:"i/n", group?, createdAt}`
   `openShot` abre o lançamento novo preenchido (cat Outros/Outras receitas, pagamento Pix ou Boleto, data do comprovante).
   Tipo: Receita se "Para" é ele (`shotIsMe`, nome do `myName()`) ou o texto diz "Pix recebido"; senão Despesa, e se nada indica pede
   "Escolha se é Despesa ou Receita". Trocar o tipo troca a descrição automática ("Pix para X" ↔ "Pix de Y", `shotAuto`).
+  **Mais do print** (29/10/2026, pedido dele: "pode realizar todos"): `shotOcr` faz 2ª passada no modo 11 (texto solto) quando a 1ª
+  pula uma linha (aconteceu com o valor sozinho na linha) e junta os campos. `shotEntry` monta os dois tipos; Pix recebido que bate
+  com assinatura/conta dividida (`subShareOf`/`divShareOf`) vira "<nome> (divisão) · Fulano" (cat `divid`), como no extrato.
+  Cada lançamento leva `imp:"shot:<data>|<hora>|<valor>|<para>|<de>"` e `paidAt`/`createdAt` = hora do comprovante; `shotDup` avisa
+  "já foi lançado" (mesmo `imp`) ou "parece já lançado" (mesmo valor/tipo, sem cartão, ±1 dia). **Vários prints** (inputs `.pdfany`
+  gerais com `multiple`): `readShots` lê com um leitor só e abre `shotsRender` no `diagSheet` (caixa por item, Despesa/Receita por
+  item `data-shtype`, já lançados desmarcados, repetidos no lote saem) → `shotsAdd`. Offline: o `sw.js` guarda `cdn.jsdelivr.net`
+  no cache de runtime (script, worker e wasm); os dados de idioma ficam no IndexedDB do Tesseract.
 - **O que o app já lê** (`READS`/`readsBox()`, na lista de cartões e na tela Você → Importar planilha; também no README): manter em dia
   sempre que calibrar um layout novo.
 - **Pagamento de fatura no extrato dá baixa** (out/2026, `billPaidBy`): cartão pelo texto (Realize/Renner → Renner, Pan →

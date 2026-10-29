@@ -1728,6 +1728,16 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* selos de banco na linha da caixinha */
 #saveSec .svsub .fi{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 4px;border-radius:6px;font-family:var(--display);font-weight:700;letter-spacing:-.01em;line-height:1;font-size:calc(.64rem * var(--k,1));box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
 #saveSec .svsub .fi+.fi{margin-left:0}
+/* prints lidos (vários de uma vez) */
+.shlist{display:grid;gap:0}
+.shrow{display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.shrow:first-child{border-top:0}
+.shrow.off .shn,.shrow.off .shv{opacity:.5}
+.shck input{width:20px;height:20px;accent-color:var(--btn,var(--accent))}
+.shn{min-width:0}.shn b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.shn small{color:var(--muted);font-size:.8rem}.shn em{font-style:normal}
+.shv{white-space:nowrap;font-variant-numeric:tabular-nums}.shv.pos{color:var(--pos,var(--accent))}
+.shseg{grid-column:2/-1}.shseg button{padding:6px 10px;font-size:.82rem}
 </style>
 
 <div class="wrap">
@@ -1788,7 +1798,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 <form class="sheet" id="sheet" hidden autocomplete="off">
   <div class="grip"></div>
   <h3><span id="sheetTitle">Novo lançamento</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar PDF ou print</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
+  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar PDF ou print</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
   <div class="seg" id="typeSeg"><button type="button" data-type="desp">Despesa</button><button type="button" data-type="rec">Receita</button></div>
   <div class="amount"><span>R$</span><input id="amt" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
   <div class="field"><label for="desc">Descrição</label><input type="text" id="desc" placeholder="Ex.: mercado, fatura Inter, salário" maxlength="80"></div>
@@ -4010,7 +4020,7 @@ function renderCards(){
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
       return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${acctOf(c)?`saldo ${R(acctOf(c).cents)} · `:""}${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
-      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
+      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
@@ -5492,6 +5502,9 @@ document.addEventListener("click",async e=>{
   {const hv=t.closest("[data-holv]");if(hv){holView(hv.dataset.holv);return}}
   {const ho=t.closest("[data-holopen]");if(ho){const r=(cfg.hol||{})[ho.dataset.holopen];if(r)openHolerite(holFromRec(r));return}}
   {const h2=t.closest("[data-holopen2]");if(h2){const h=holBatch[+h2.dataset.holopen2];if(h)openHolerite(h);return}}
+  {const st=t.closest("[data-shtype]");if(st&&shots){const[i,ty]=st.dataset.shtype.split("|"),r=shots.L[+i];if(r&&r.type!==ty){r.type=ty;r.on=!shotDup(r.E,ty)}shotsRender();return}
+   const so=t.closest("[data-shon]");if(so&&shots){const r=shots.L[+so.dataset.shon];if(r){r.on=so.checked;shotsRender()}return}
+   if(t.closest("#shotsAdd")){t.closest("#shotsAdd").disabled=true;shotsAdd();return}}
   {const h1=t.closest("[data-holone]");if(h1){const h=holBatch[+h1.dataset.holone];if(h){h1.disabled=true;holLaunch([h])}return}}
   if(t.id==="holAll"){t.disabled=true;holLaunch(holBatch);return}
   if(t.id==="holMore"){holAll=!holAll;render();return}
@@ -5649,7 +5662,7 @@ document.addEventListener("change",e=>{
   if(e.target.id==="bkImport"&&e.target.files[0]){importBackup(e.target.files[0]);return}
   if(e.target.classList&&e.target.classList.contains("xlsany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();openXls(f);return}
   if(e.target.closest&&e.target.closest("#xlsSheet")){xlSync(e.target);return}
-  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";closeSheets();readMany(F);return}
+  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";closeSheets();const im=F.filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name));if(im.length){if(im.length<F.length)toast("Com prints, os PDFs vão um por vez.");im.length===1?readShot(im[0]):readShots(im)}else readMany(F);return}
   if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else if(/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name))readShot(f);else readInvoice(f,true);return}
   if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
@@ -5813,7 +5826,7 @@ function applyRule(){
 }
 function openSheet(x){
   closeSheets(true);
-  editing=x||null;dupAck=null;mergeInto=null;shotAuto=null;
+  editing=x||null;dupAck=null;mergeInto=null;shotAuto=null;shotImp=null;shotTs=0;
   const t=x?typeOf(x):form.type;
   form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoas:[...(x.eu?["eu"]:[]),...azParts(x).map(e=>e.id)],pv:{...(x.eu&&x.euV?{eu:x.euV}:{}),...Object.fromEntries(azParts(x).filter((e,i)=>((x.pessoas&&x.pessoas.length?x.pessoas[i].v:x.pv)||0)).map(e=>[e.id,e.c]))}}:{type:t,cents:0,acct:form.acct||"",pessoas:[],pv:{},cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
@@ -5834,7 +5847,7 @@ function toast(t,ok){const el=$("toast");el.hidden=true;el.classList.toggle("ok"
   void el.offsetWidth;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
 function err(id,t){$(id).className="err";$(id).textContent=t}
 
-$("typeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(b&&b.dataset.type!==form.type){const sa=shotAuto&&$("desc").value===shotAuto[form.type];if(sa)$("desc").value=shotAuto[b.dataset.type];form.type=b.dataset.type;form.cat=sa?(form.type==="desp"?"outros":"rout"):form.type==="desp"?"alim":CATS[form.type][0].k;chips();applyRule()}});
+$("typeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(b&&b.dataset.type!==form.type){const sa=shotAuto&&$("desc").value===shotAuto[form.type];if(sa)$("desc").value=shotAuto[b.dataset.type];form.type=b.dataset.type;form.cat=sa?(shotAuto.cat||{})[form.type]||(form.type==="desp"?"outros":"rout"):form.type==="desp"?"alim":CATS[form.type][0].k;chips();applyRule()}});
 $("paidSeg").addEventListener("click",e=>{const b=e.target.closest("[data-paid]");if(b){form.paid=b.dataset.paid==="1";chips()}});
 $("amt").addEventListener("input",e=>{form.cents=digits(e.target.value);setAmt();repHint()});
 $("rep").addEventListener("change",repHint);$("until").addEventListener("change",repHint);
@@ -5928,7 +5941,8 @@ $("sheet").addEventListener("submit",async e=>{
         for(const y of ser) await store.items.update(y.id,pt);
         toast(ser.length?`Atualizado, e mais ${ser.length} ${ser.length===1?"da série":"da série"}`:editing.paid===false&&base.paid!==false&&base.type==="desp"?"Marcado como pago":"Lançamento atualizado",true)}
       else if(mergeInto){await store.items.update(mergeInto.id,mergePatchNew(mergeInto,base));toast("Mesclado com o lançamento que já existia",true)}
-      else{await store.items.add({...base,createdAt:now});toast("Lançamento salvo",true)}
+      else{if(shotImp){base.imp=shotImp;if(shotTs){if(base.paidAt)base.paidAt=shotTs}}
+        await store.items.add({...base,createdAt:shotImp&&shotTs?shotTs:now});toast("Lançamento salvo",true)}
     } else {
       const n=Number(rep.slice(1)), group="g"+now, isP=rep[0]==="p";
       const each=isP?Math.floor(base.cents/n):base.cents, rest=isP?base.cents-each*n:0;
@@ -6260,7 +6274,7 @@ function parseSantander(pages,all){
 /* o que o app já sabe ler (mostrado na lista de cartões e na tela Você) — manter em dia quando calibrar um layout novo */
 const READS=[["Faturas de cartão","Inter, Nubank, Santander, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
-  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Print de comprovante","Pix, transferência ou boleto (imagem): valor, data e nome; você escolhe Despesa ou Receita"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
+  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Print de comprovante","Pix, transferência ou boleto (imagem, um ou vários): valor, data e nome; você escolhe Despesa ou Receita"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
 const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint expl" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
 /* PicPay (out/2026, fatura de uma amiga do Camilo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
    colunas, "DD/MM  ESTABELECIMENTO  valor" (sem R$; negativo = pagamento/crédito), um bloco por cartão (titular e "final XXXX");
@@ -6634,11 +6648,14 @@ function openPassagem(p){
 }
 /* ---------- print de comprovante (Pix, transferência, boleto) ----------
    29/10/2026, pedido dele: "manter no importar e uma opção de receita ou despesa". A imagem é lida no próprio aparelho
-   (Tesseract.js, português, ~7 MB na 1ª vez, depois fica no cache do navegador). Calibrado com o comprovante de Pix do
-   Santander ("Valor do pagamento", "Para"/"De", "Data do pagamento"); rótulos de Inter/Nubank/Itaú/boleto entram pelo mesmo jeito
-   (rótulo numa linha, valor na seguinte, ou "Rótulo: valor"). Abre o lançamento novo preenchido: ele escolhe Despesa/Receita. */
+   (Tesseract.js, português, ~7 MB na 1ª vez; os dados ficam no IndexedDB e o script/wasm no cache do app, então depois
+   funciona sem internet). Calibrado com o comprovante de Pix do Santander ("Valor do pagamento", "Para"/"De", "Data do
+   pagamento"); rótulos de Inter/Nubank/Itaú/boleto entram pelo mesmo jeito (rótulo numa linha e valor na seguinte, ou
+   "Rótulo: valor"). Um print abre o lançamento novo preenchido; vários abrem a conferência (`shotsSheet`).
+   Cada lançamento guarda `imp:"shot:<data>|<hora>|<valor>|<para>|<de>"` para avisar se o mesmo comprovante já foi lançado.
+   Pix recebido que bate com assinatura/conta dividida vira "<nome> (divisão) · Fulano" (cat divid), igual ao extrato. */
 const SHOT_MON={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
-function parseShot(text){
+function parseShot(text,partial){
   const L=String(text||"").split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean);
   const F=L.map(s=>fold(s).replace(/[:.]+$/,"").trim());
   const money=s=>{const m=/R\$\s*(-?\d{1,3}(?:[.\s]\d{3})*,\d{2})/i.exec(s)||/^(-?\d{1,3}(?:\.\d{3})*,\d{2})$/.exec(s.trim());return m?Number(m[1].replace(/[-.\s]/g,"").replace(",","")):null};
@@ -6656,7 +6673,7 @@ function parseShot(text){
   const vLine=after(/valor(?: do pagamento| da transferencia| transferido| pago| enviado| recebido| do pix| total)?|total(?: pago)?|quantia/,s=>money(s)!=null);
   let cents=vLine?money(vLine):null;
   if(cents==null){const all=L.map(money).filter(v=>v!=null&&v>0);cents=all.length?all[0]:null}
-  if(!cents||cents<=0) return null;
+  if(!(cents>0)){if(!partial)return null;cents=0}
   const dLine=after(/data(?: do pagamento| da transacao| da transferencia| e hora(?: da transacao)?| de pagamento| do pix)?|pago em|realizad[oa] em/,s=>!!dateOf(s));
   const date=dateOf(dLine)||dateOf(L.find(s=>dateOf(s))||"");
   /* quem recebe e quem paga: rótulo direto ou "Nome" dentro da seção (Dados do recebedor / Destino / Origem…) */
@@ -6671,51 +6688,130 @@ function parseShot(text){
   const kind=/boleto|codigo de barras|linha digitavel/.test(flat)&&!/\bpix\b/.test(flat)?"Boleto":/\bpix\b/.test(flat)?"Pix":/\bted\b/.test(flat)?"TED":/\bdoc\b/.test(flat)?"DOC":"Transferência";
   const recv=/pix recebido|transferencia recebida|voce recebeu|comprovante de recebimento/.test(flat);
   const sent=/pix enviado|transferencia enviada|voce (enviou|pagou|transferiu)/.test(flat);
-  return {cents,date,to:to?clean(to):"",from:from?clean(from):"",kind,recv,sent};
+  /* hora do comprovante (separa dois Pix iguais no mesmo dia) */
+  const hm=(/\b([01]\d|2[0-3])[:h]([0-5]\d)(?::[0-5]\d)?\b/.exec(L.filter(s=>dateOf(s)).join(" "))||/\b([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\b/.exec(L.join(" "))||[]).slice(1,3).join(":");
+  return {cents,date,hm,to:to?clean(to):"",from:from?clean(from):"",kind,recv,sent};
 }
 /* o nome é dele? primeiro nome igual e mais um sobrenome (o banco corta nomes longos) */
 function shotIsMe(n){const me=fold(myName()).split(/\s+/).filter(w=>w.length>2), w=fold(n).split(/\s+/).filter(x=>x.length>2);
   if(!me.length||!w.length||me[0]!==w[0]) return false;
   return me.length<2||w.length<2||me.slice(1).some(t=>w.slice(1).some(x=>x===t||(x.length>=3&&t.startsWith(x))))}
-var shotAuto=null; /* descrição automática de cada tipo: troca junto quando ele muda Despesa/Receita */
+const shotSlug=t=>fold(t).replace(/[^a-z0-9]+/g,"").slice(0,24);
+/* comprovante → lançamento (os dois tipos prontos; o escolhido vem em `type`) */
+function shotEntry(s){
+  const meFrom=s.from&&shotIsMe(s.from), meTo=s.to&&shotIsMe(s.to);
+  const type=meTo&&!meFrom||s.recv&&!s.sent?"rec":"desp", sure=!!(meFrom||meTo||s.recv||s.sent);
+  const sd=s.kind!=="Boleto"&&(subShareOf(s.cents,s.from)||divShareOf(s.cents));
+  const desc={desp:s.kind==="Boleto"?`Boleto${s.to?" "+s.to:""}`:`${s.kind}${s.to?" para "+s.to:""}`,
+    rec:sd?`${sd.name} (divisão${sd.k>1?` ×${sd.k}`:""})${s.from?" · "+s.from:""}`:`${s.kind}${s.from?" de "+s.from:""}`};
+  const cat={desp:catLearnGet("desp",desc.desp)||"outros",rec:sd?"divid":catLearnGet("rec",desc.rec)||"rout"};
+  const ts=s.date?new Date(`${s.date}T${s.hm||"12:00"}:00`).getTime():0;
+  const imp=`shot:${s.date}|${s.hm}|${s.cents}|${shotSlug(s.to)}|${shotSlug(s.from)}`;
+  return {s,type,sure,desc,cat,ts,imp,pay:s.kind==="Boleto"?"Boleto":"Pix"};
+}
+/* já lançado? mesmo comprovante (imp) ou mesmo valor e tipo, sem cartão, até 1 dia de diferença (ex.: veio do extrato) */
+function shotDup(E,type){
+  const byImp=items.find(x=>x.imp===E.imp);if(byImp) return {x:byImp,same:true};
+  if(!E.s.date) return null;
+  const t0=new Date(E.s.date+"T12:00").getTime();
+  const x=items.find(x=>typeOf(x)===(type||E.type)&&!cardOf(x)&&closeC(x.cents,E.s.cents)&&[x.date,x.fell,x.buy].some(d=>d&&Math.abs(new Date(d+"T12:00").getTime()-t0)<=864e5));
+  return x?{x,same:false}:null;
+}
+var shotAuto=null, shotImp=null, shotTs=0; /* descrição automática de cada tipo e dados do comprovante aberto no formulário */
 function loadOcr(){
   if(window.Tesseract) return Promise.resolve(window.Tesseract);
-  if(!navigator.onLine) return Promise.reject(new Error("offline"));
   return loadOcr.p||(loadOcr.p=new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
-    sc.onload=()=>ok(window.Tesseract);sc.onerror=()=>{loadOcr.p=null;no(new Error("offline"))};document.head.appendChild(sc)}));
+    sc.onload=()=>ok(window.Tesseract);sc.onerror=()=>{loadOcr.p=null;sc.remove();no(new Error("offline"))};document.head.appendChild(sc)}));
 }
+const OCR_LANG="https://cdn.jsdelivr.net/npm/@tesseract.js-data/por/4.0.0";
+async function shotCanvas(file){
+  const img=await new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);ok(im)};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("img"))};im.src=u});
+  /* print do celular é pequeno: ampliar ajuda o leitor (largura ~1200, sem passar de ~8 MP) */
+  let k=Math.min(4,Math.max(1,1200/img.naturalWidth));k=Math.min(k,Math.sqrt(8e6/(img.naturalWidth*img.naturalHeight)));
+  const cv=document.createElement("canvas");cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);
+  const cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.imageSmoothingQuality="high";cx.drawImage(img,0,0,cv.width,cv.height);
+  return cv;
+}
+/* leitura com 2ª passada: o modo padrão às vezes pula uma linha curta (ex.: só o valor); o modo "texto solto" (11)
+   pega o que faltou e os campos são juntados */
+async function shotOcr(w,cv){
+  const a=parseShot((await w.recognize(cv)).data.text,true);
+  if(a&&a.cents&&a.date&&(a.to||a.from)) return a;
+  await w.setParameters({tessedit_pageseg_mode:"11"});
+  let b=null;try{b=parseShot((await w.recognize(cv)).data.text,true)}finally{await w.setParameters({tessedit_pageseg_mode:"3"})}
+  const m={...(b||{}),...Object.fromEntries(Object.entries(a||{}).filter(([k,v])=>v))};
+  return m.cents>0?m:null;
+}
+const shotErr=e=>e&&e.message==="offline"?"Sem internet para carregar o leitor de print (só na 1ª vez).":e&&e.message==="img"?"Não consegui abrir essa imagem.":"Não consegui ler esse print.";
 async function readShot(file){
   toast("Lendo o print…");
   let w=null;
   try{
-    const img=await new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);ok(im)};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("img"))};im.src=u});
-    /* print do celular é pequeno: ampliar ajuda o leitor (largura ~1200, sem passar de ~8 MP) */
-    let k=Math.min(4,Math.max(1,1200/img.naturalWidth));k=Math.min(k,Math.sqrt(8e6/(img.naturalWidth*img.naturalHeight)));
-    const cv=document.createElement("canvas");cv.width=Math.round(img.naturalWidth*k);cv.height=Math.round(img.naturalHeight*k);
-    const cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.imageSmoothingQuality="high";cx.drawImage(img,0,0,cv.width,cv.height);
-    const T=await loadOcr();
-    w=await T.createWorker("por",1,{langPath:"https://cdn.jsdelivr.net/npm/@tesseract.js-data/por/4.0.0"});
-    const r=await w.recognize(cv);
-    const s=parseShot(r.data.text);
+    const cv=await shotCanvas(file), T=await loadOcr();
+    w=await T.createWorker("por",1,{langPath:OCR_LANG});
+    const s=await shotOcr(w,cv);
     if(!s){toast("Não achei o valor nesse print. Mande o print inteiro do comprovante.");return}
-    openShot(s);
-  }catch(e){toast(e&&e.message==="offline"?"Sem internet para carregar o leitor de print.":e&&e.message==="img"?"Não consegui abrir essa imagem.":"Não consegui ler esse print.")}
+    openShot(shotEntry(s));
+  }catch(e){toast(shotErr(e))}
   finally{if(w)w.terminate().catch(()=>{})}
 }
-function openShot(s){
-  const meFrom=s.from&&shotIsMe(s.from), meTo=s.to&&shotIsMe(s.to);
-  const type=meTo&&!meFrom||s.recv&&!s.sent?"rec":"desp";
-  const sure=meFrom||meTo||s.recv||s.sent;
+function openShot(E){
+  const s=E.s, type=E.type;
   form.type=type;closeSheets();openSheet();
-  shotAuto={desp:s.kind==="Boleto"?`Boleto${s.to?" "+s.to:""}`:`${s.kind}${s.to?" para "+s.to:""}`,rec:`${s.kind}${s.from?" de "+s.from:""}`};
-  form.type=type;form.cat=type==="desp"?"outros":"rout";form.cents=s.cents;setAmt();
-  form.pay=s.kind==="Boleto"?"Boleto":"Pix";
-  $("desc").value=shotAuto[type];
+  shotAuto={...E.desc,cat:E.cat};shotImp=E.imp;shotTs=E.ts&&E.ts<=Date.now()?E.ts:0;
+  form.type=type;form.cat=E.cat[type];form.cents=s.cents;setAmt();
+  form.pay=E.pay;
+  $("desc").value=E.desc[type];
   if(s.date){$("date").value=s.date;dateTouched=true;form.paid=s.date<=today()}
   chips();applyRule();if(typeof dateHint==="function")dateHint();
-  $("err").className="err info";
-  $("err").textContent=`Li o print: ${R(s.cents)}${s.date?` em ${fmtDM(s.date)}`:""}${s.from&&s.to?`, de ${s.from} para ${s.to}`:""}.`+(sure?"":" Escolha se é Despesa ou Receita.");
+  const d=shotDup(E);
+  $("err").className=d?"err":"err info";
+  $("err").textContent=d?`Esse comprovante ${d.same?"já foi lançado":"parece já lançado"}: “${cleanDesc(d.x)}”, ${R(d.x.cents)} em ${fmtDM(d.x.date)}.`
+    :`Li o print: ${R(s.cents)}${s.date?` em ${fmtDM(s.date)}`:""}${s.from&&s.to?`, de ${s.from} para ${s.to}`:""}.`+(E.sure?"":" Escolha se é Despesa ou Receita.");
   setTimeout(()=>$("amt").blur(),80);
+}
+/* ---------- vários prints de uma vez: lê um por um com o mesmo leitor e abre a conferência ---------- */
+let shots=null;
+async function readShots(files){
+  let w=null;const ok=[],bad=[];
+  try{
+    const T=await loadOcr();toast(`Lendo ${files.length} prints…`);
+    w=await T.createWorker("por",1,{langPath:OCR_LANG});
+    for(let i=0;i<files.length;i++){toast(`Lendo ${i+1} de ${files.length}…`);
+      try{const s=await shotOcr(w,await shotCanvas(files[i]));if(s)ok.push(shotEntry(s));else bad.push(files[i].name||`print ${i+1}`)}
+      catch(e){bad.push(files[i].name||`print ${i+1}`)}}
+  }catch(e){toast(shotErr(e));return}
+  finally{if(w)w.terminate().catch(()=>{})}
+  if(!ok.length){toast("Não achei o valor em nenhum desses prints.");return}
+  /* o mesmo comprovante duas vezes no lote: fica só um */
+  const seen=new Set(), L=ok.filter(E=>!seen.has(E.imp)&&seen.add(E.imp));
+  shots={L:L.map(E=>({E,type:E.type,on:!shotDup(E)})),bad,rep:ok.length-L.length};
+  $("toast").hidden=true;shotsRender();
+}
+function shotsRender(){
+  const S=shots;if(!S) return;
+  const rows=S.L.map((r,i)=>{const E=r.E,s=E.s,d=shotDup(E,r.type);
+    return `<div class="shrow${r.on?"":" off"}"><label class="shck"><input type="checkbox" data-shon="${i}" ${r.on?"checked":""} aria-label="Lançar este"></label>
+      <span class="shn"><b>${esc(E.desc[r.type])}</b><small>${s.date?fmtDM(s.date):"sem data"}${s.hm?" · "+s.hm:""}${d?` · <em class="warn">${d.same?"já lançado":"parece já lançado"}</em>`:E.sure?"":" · confira o tipo"}</small></span>
+      <b class="shv ${r.type==="rec"?"pos":""}">${r.type==="rec"?"+":"−"} ${R(s.cents)}</b>
+      <span class="seg shseg" style="margin:0"><button type="button" data-shtype="${i}|desp" aria-pressed="${r.type==="desp"}">Despesa</button><button type="button" data-shtype="${i}|rec" aria-pressed="${r.type==="rec"}">Receita</button></span></div>`}).join("");
+  const n=S.L.filter(r=>r.on).length;
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Prints lidos</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <p class="hint" style="margin:0 0 10px">${S.L.length} ${S.L.length===1?"comprovante":"comprovantes"}${S.rep?` · ${S.rep} repetido${S.rep>1?"s":""} no lote`:""}${S.bad.length?` · ${S.bad.length} sem valor reconhecido`:""}</p>
+  <div class="shlist">${rows}</div>
+  <button type="button" class="btn primary" id="shotsAdd" style="width:100%;margin-top:12px" ${n?"":"disabled"}>${n?`Lançar ${n===1?"1 comprovante":n+" comprovantes"}`:"Nada marcado"}</button>`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
+async function shotsAdd(){
+  const S=shots;if(!S) return;const L=S.L.filter(r=>r.on);if(!L.length) return;
+  let n=0,last=null;
+  try{for(const r of L){const E=r.E,s=E.s,t=r.type,date=s.date||today(),isD=t==="desp",ts=E.ts&&E.ts<=Date.now()?E.ts:Date.now();
+      const x={type:t,desc:E.desc[t],cat:E.cat[t],cents:s.cents,date,pay:isD?E.pay:"",imp:E.imp,createdAt:ts+n};
+      if(isD){x.paid=date<=today();if(x.paid)x.paidAt=ts}
+      if(!isD){const sh=salShift(x.cat,x.date);if(sh){x.date=sh.date;x.fell=sh.fell}}
+      await store.items.add(x);n++;last=x.date}
+    shots=null;closeSheets();if(last)view=last.slice(0,7);go("pMes");toast(`${n} ${n===1?"lançamento":"lançamentos"} pelos prints`,true)}
+  catch(e){toast(`Parou no meio (${n} lançados). Confira e tente de novo.`)}
 }
 /* holerite (demonstrativo de pagamento): líquido, data do crédito e eventos → uma receita para conferir */
 function parseHolerite(pages){
