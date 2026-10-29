@@ -4107,11 +4107,11 @@ function renderCards(){
   else{
     const status=!g?`<div class="hint expl">O total é a soma do que você lançou. Se quiser, informe o valor do banco para conferir.</div>`:
       !L.length?`<div class="hint">Nenhum item lançado ainda: vale o valor do banco. Quando você lançar itens, o total passa a ser a soma deles.</div>`:
-      g>d?`<div class="warn" style="font-size:.88rem;font-weight:600">Falta lançar ${R(g-d)} para bater com o banco</div>`:
-      d>g?`<div class="warn" style="font-size:.88rem;font-weight:600">Lançado passa ${R(d-g)} do banco. Confira algum item ou atualize o valor.</div>`:
+      g>tot?`<div class="warn" style="font-size:.88rem;font-weight:600">Falta lançar ${R(g-tot)} para bater com o banco</div>`:
+      tot>g?`<div class="warn" style="font-size:.88rem;font-weight:600">Lançado passa ${R(tot-g)} do banco. Confira algum item ou atualize o valor.</div>`:
       `<div class="pos" style="font-size:.88rem;font-weight:600">Bate com o banco ✓</div>`;
     const st2="";
-    fb=`<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Total da fatura${allPaid?" · paga":""}</span><div class="val ${allPaid?"pos":""}"><small>R$</small>${brl(g&&L.length?g:tot)}</div><div class="src">${g&&L.length?`valor do banco · lançado ${R(d)} em ${L.length} ${L.length===1?"item":"itens"}`:`${L.length} ${L.length===1?"item lançado":"itens lançados"}`}</div></div><button class="tbtn" id="fatEdit">${g?"Editar valor":"Informar valor"}</button></div>${status}${st2}</div>`;
+    fb=`<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Total da fatura${allPaid?" · paga":""}</span><div class="val ${allPaid?"pos":""}"><small>R$</small>${brl(g&&L.length?g:tot)}</div><div class="src">${g&&L.length?`valor do banco · lançado ${R(d)} em ${L.length} ${L.length===1?"item":"itens"}${rollAmt(c,view)?` + ${R(rollAmt(c,view))} da anterior`:""}`:`${L.length} ${L.length===1?"item lançado":"itens lançados"}`}</div></div><button class="tbtn" id="fatEdit">${g?"Editar valor":"Informar valor"}</button></div>${status}${st2}</div>`;
   }
   {const ri=rolledIn(c,view), rv=ri.reduce((s,x)=>s+amt(x),0), gn=cardItems(c,view).filter(x=>rollYM(x)), to=gn.length?rollYM(gn[0]):null;
     if(rv) fb+=`<div class="hint warn" style="margin-top:8px;font-weight:600">+ ${R(rv)} da fatura de ${[...new Set(ri.map(x=>shortMonth(x.date.slice(0,7))))].join(", ")} que não foi paga: o banco cobra nesta. Conta no saldo deste mês.</div>`;
