@@ -5432,7 +5432,7 @@ document.addEventListener("click",async e=>{
   const t=e.target;
   const fg=t.closest("[data-fxgo]"); if(fg){fxCur=fg.dataset.fxgo;lsSet("despesas.fxCur",fxCur);go("pFx");return}
   const fr=t.closest(".fxrow"); if(fr){openFx(fx.find(x=>x.id===fr.dataset.fx));return}
-  const it=t.closest(".item,.tlrow,tr.click,td.c"); if(it&&it.dataset.id&&!swipeJust){openSheet(items.find(i=>i.id===it.dataset.id));return}
+  const it=t.closest(".item,.tlrow,tr.click,td.c,.svmv[data-id]"); if(it&&it.dataset.id&&!swipeJust){const x=items.find(i=>i.id===it.dataset.id);if(x){openSheet(x);return}}
   if(t.closest("#hAv,#tabAv")){go("pMe");return}
   if(t.closest("#hBell")){avSheet();return}
   const avr=t.closest("[data-av]"); if(avr){const e=avLog().find(x=>x.k===avr.dataset.av);avGo(e&&e.go);return}
