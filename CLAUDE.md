@@ -768,6 +768,11 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   que já é o bloco clicável do Início/Ano (o nome colidiu e quebrou os blocos; por isso `.tcard`).
 - Cor: `--hc` = cor do cartão de verdade (setada no `cardTheme`, que agora inclui `--hc`); sem cartão, `--head` do tema.
   Hoje e Contas usam a cor da 1ª conta (`accts()[0].name`), e o título do Hoje é o nome dela.
+- **Cartão do topo personalizável** (29/10/2026, pedido dele: "era pra usar o visual do cartão, mas que isso fosse personalizável"):
+  `cfg.homeCard={name?, color?}` (`homeCardName`/`homeCardCol`): nome vazio = nome da 1ª conta (ou "Hoje"); cor vazia = cor da 1ª conta (como
+  antes), "theme" = cor do tema, "#rrggbb" = escolhida (`cardTheme` aceita cor hex). Vale para Hoje e Contas (título de Contas não muda).
+  Abre tocando no título do Hoje no celular (`#ptitle.hcedit`) ou em Você → Aparência → "Cartão do topo" (`homeCardSheet`, no `diagSheet`:
+  nome, "Da conta X" / "Do tema", 12 cores + cores dos bancos dele + cor livre); cada toque salva na hora (`homeCardSet`, sincroniza).
 - Linha do tempo embaixo do cartão: `#hTl` (`hTlSet(steps,pct)`, `hTlUpdate()` chamado pelo `header()`, que agora embrulha o `header0()`).
   Hoje: Hoje / próximos 2 vencimentos do mês / Dia N. Mês: Dia 1 / Hoje / Dia N. Tela do cartão: Aberta / Fecha / Vence (`closeOf`).
   Contas, Ano, Fixos, Você: sem linha do tempo.

@@ -1737,6 +1737,13 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .calrow .cn b{display:block;font-weight:600}.calrow .cn small{color:var(--muted);font-size:.8rem}
 .calrow .cb{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 @media (max-width:520px){.calrow{grid-template-columns:1fr}.calrow .cb{justify-content:flex-start}}
+/* cartão do topo personalizável */
+#ptitle.hcedit{cursor:pointer}
+.hcgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.hcsw{aspect-ratio:1;border-radius:14px;border:0;background:var(--c,linear-gradient(135deg,#f59e0b,#ec4899,#6366f1));box-shadow:inset 0 0 0 1px rgba(255,255,255,.15);position:relative;overflow:hidden;padding:0}
+.hcsw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.hcsw.free input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.hcopts{gap:8px;flex-wrap:wrap}
 </style>
 
 <div class="wrap">
@@ -2323,17 +2330,18 @@ const mixHex=(h,t,k)=>{const a=hexRgb(h),b=hexRgb(t);return "#"+a.map((v,i)=>Mat
 const lumHex=h=>{const[r,g,b]=hexRgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*r+.7152*g+.0722*b};
 const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==="dark":matchMedia("(prefers-color-scheme: dark)").matches};
 function cardTheme(c){
+  const CC=c&&/^#[0-9a-f]{6}$/i.test(c)?c:null;
   const st=document.documentElement.style, K=["--hc","--accent","--accent-ink","--head","--head-muted","--btn","--btn-ink","--bg","--surface","--zebra","--line","--chip"];
   if(!c){K.forEach(k=>st.removeProperty(k));return}
-  let col=cardColor(c);const dk=isDark();
+  const ccol=()=>CC||cardColor(c);let col=ccol();const dk=isDark();
   if(dk){for(let i=0;i<6&&lumHex(col)<.22;i++)col=mixHex(col,"#ffffff",.25)}else{for(let i=0;i<6&&lumHex(col)>.32;i++)col=mixHex(col,"#000000",.2)}
-  st.setProperty("--hc",cardColor(c));st.setProperty("--accent",col);st.setProperty("--accent-ink",lumHex(col)>.4?"#13201D":"#FFFFFF");st.setProperty("--btn","var(--accent)");st.setProperty("--btn-ink","var(--accent-ink)");
-  const hd=mixHex(cardColor(c),"#000000",dk?.7:.55);st.setProperty("--head",hd);st.setProperty("--head-muted",mixHex(hd,"#ffffff",.6));
+  st.setProperty("--hc",ccol());st.setProperty("--accent",col);st.setProperty("--accent-ink",lumHex(col)>.4?"#13201D":"#FFFFFF");st.setProperty("--btn","var(--accent)");st.setProperty("--btn-ink","var(--accent-ink)");
+  const hd=mixHex(ccol(),"#000000",dk?.7:.55);st.setProperty("--head",hd);st.setProperty("--head-muted",mixHex(hd,"#ffffff",.6));
   /* tela inteira na cor do cartão (fundo, blocos e linhas puxados para a cor) */
   ["--bg","--surface","--zebra","--line","--chip"].forEach(k=>st.removeProperty(k));
   const pr=document.createElement("div");pr.style.cssText="position:absolute;visibility:hidden";document.body.appendChild(pr);
   const base=k=>{pr.style.background="var("+k+")";return getComputedStyle(pr).backgroundColor};
-  const tint=[["--bg",dk?.16:.10],["--surface",dk?.2:.12],["--zebra",dk?.22:.14],["--line",dk?.3:.2],["--chip",dk?.3:.18]].map(([k,a])=>[k,"color-mix(in srgb,"+cardColor(c)+" "+Math.round(a*100)+"%,"+base(k)+")"]);
+  const tint=[["--bg",dk?.16:.10],["--surface",dk?.2:.12],["--zebra",dk?.22:.14],["--line",dk?.3:.2],["--chip",dk?.3:.18]].map(([k,a])=>[k,"color-mix(in srgb,"+ccol()+" "+Math.round(a*100)+"%,"+base(k)+")"]);
   pr.remove();tint.forEach(([k,v])=>st.setProperty(k,v));
 }
 const dueOf=c=>+(((cfg.cards||{})[c]||{}).due)||0;
@@ -2483,6 +2491,27 @@ function setBig(sym,cents){
   const step=t=>{const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);show(Math.round(from+(cents-from)*e));if(k<1)setBig.raf=requestAnimationFrame(step)};
   setBig.raf=requestAnimationFrame(step);
 }
+/* cartão do topo do Hoje/Contas personalizável (29/10/2026, pedido dele: "era pra usar o visual do cartão, mas que fosse
+   personalizável"). cfg.homeCard={name?, color?}: color "" = cor da 1ª conta (como antes), "theme" = cor do tema, "#rrggbb" = escolhida.
+   Nome vazio = nome da 1ª conta (ou "Hoje"). Tocar no título do Hoje (celular) ou em Você → Aparência abre `homeCardSheet`. */
+const homeCard=()=>cfg.homeCard||{};
+const homeCardCol=()=>{const h=homeCard();if(h.color==="theme")return null;if(/^#/.test(h.color||""))return h.color;return acctsR().length?acctsR()[0].name:null};
+const homeCardName=()=>{const h=homeCard();return (h.name||"").trim()||(acctsR().length&&acctsR()[0].name)||"Hoje"};
+const HC_COLORS=["#14203A","#C9A25A","#1F6F5C","#0F766E","#2E4A8B","#5B2A86","#7A1F3D","#BE185D","#C2410C","#B45309","#334155","#111111"];
+function homeCardSheet(){
+  const h=homeCard(), a0=acctsR().length?acctsR()[0].name:"", cur=h.color||"";
+  const own=[...new Set([...acctsR().map(a=>a.name),...credCards()])].map(n=>cardColor(n)).filter(c=>/^#/.test(c)&&!HC_COLORS.includes(c.toUpperCase())&&!HC_COLORS.includes(c));
+  const sw=(c,lbl)=>`<button type="button" class="hcsw" data-hccol="${c}" style="--c:${c}" aria-label="${esc(lbl||c)}" aria-pressed="${cur.toLowerCase()===c.toLowerCase()}"></button>`;
+  closeSheets(true);$("toast").hidden=true;
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Cartão do topo</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <div class="field"><label for="hcName">Nome no cartão</label><input type="text" id="hcName" maxlength="24" placeholder="${esc(a0||"Hoje")}" value="${esc(h.name||"")}" autocomplete="off"></div>
+  <div class="field"><span class="lbl">Cor</span>
+    <div class="row hcopts" style="margin:0 0 10px">${a0?`<button type="button" class="mfp ${!cur?"on":""}" data-hccol="">Da conta ${esc(a0)}</button>`:""}<button type="button" class="mfp ${cur==="theme"?"on":""}" data-hccol="theme">Do tema</button></div>
+    <div class="hcgrid">${[...HC_COLORS,...own].map(c=>sw(c)).join("")}<label class="hcsw free" aria-label="Escolher qualquer cor" style="${/^#/.test(cur)&&![...HC_COLORS,...own].some(c=>c.toLowerCase()===cur.toLowerCase())?`--c:${cur}`:""}"><input type="color" id="hcFree" value="${/^#/.test(cur)?cur:"#2E4A8B"}"></label></div></div>
+  <p class="hint" style="margin:4px 0 0">Vale para o Hoje e para Contas. O cartão de cada banco continua com a cor dele.</p>`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
+async function homeCardSet(p){const h={...homeCard(),...p};if(!h.name)delete h.name;if(!h.color)delete h.color;await saveCfg({homeCard:Object.keys(h).length?h:null});header()}
 function hTlSet(steps,pct){const el=$("hTl");if(!steps||!steps.length){el.hidden=true;el.innerHTML="";return}
   el.hidden=false;const w=Math.max(0,Math.min(100,pct||0));
   el.innerHTML=`<div class="htlin"><i class="htln"></i><i class="htlp" style="width:calc((100% - 40px)*${w/100})"></i>${steps.map(t=>`<div class="htls ${t.st}"><span>${esc(t.t)}</span><i></i></div>`).join("")}</div>`}
@@ -2511,9 +2540,9 @@ function header0(){
   const wal=tab==="pAno"&&anoSubTab==="metas", isYear=tab==="pAno"&&!wal, isFx=tab==="pFx", isHome=tab==="pHome";
   const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
-  cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:!IS_WIDE.matches&&(isHome||wal)&&acctsR().length?acctsR()[0].name:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
+  cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:!IS_WIDE.matches&&(isHome||wal)?homeCardCol():tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
   const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:wal?"Contas":"Ano",pOrc:"Orçamento",pMe:"Você"};
-  $("ptitle").textContent=tab==="pHome"&&acctsR().length&&acctsR()[0].name?acctsR()[0].name:titles[tab]||"";
+  $("ptitle").textContent=tab==="pHome"?homeCardName():titles[tab]||"";$("ptitle").classList.toggle("hcedit",tab==="pHome"&&!IS_WIDE.matches);
   const sub=tab==="pCards"||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
   if(sub) $("backLbl").textContent=tab==="pFx"?"Contas":tab==="pCards"&&!selCard?"Contas":backTo==="pMes"?"Mês":backTo==="pHome"?"Hoje":"Contas";
@@ -3937,6 +3966,7 @@ function lookSection(){
     ${G("Cor do app",`<div class="thgrid">${["tostao","verde","meianoite","bordo","petroleo","oliva","cafe","ameixa","azul","roxo","laranja","rosa","grafite"].map(sw).join("")}
       ${userPhoto()&&pc?it("foto",`<button class="thsw photo" data-theme-pick="foto" style="background-image:url('${userPhoto()}')" aria-label="Tema da cor da sua foto" aria-pressed="${cur==="foto"}"></button>`,"Sua foto"):""}
       ${it("livre",`<span class="thsw free" role="button" aria-label="Escolher qualquer cor" aria-pressed="${cur==="livre"}" style="${cur==="livre"?`background:${fc}`:""}"><input type="color" id="themeFree" value="${fc}"></span>`,"Cor livre")}</div>`)}
+    ${G("Cartão do topo",`<button type="button" class="tbtn" id="hcOpen">Nome e cor do cartão do Hoje ›</button>`)}
     <div class="hint expl">A foto aparece na barra das abas e na tela de entrada.${syncOn()?" Foto e tema vão junto na sincronização.":" Foto e tema ficam só neste aparelho."}</div></div></section>`;
 }
 function timeline(ym,arr){
@@ -5428,6 +5458,9 @@ document.addEventListener("click",async e=>{
   const hm=t.closest("[data-hmove]"); if(hm){if(!hm.disabled)moveHome(hm.dataset.hmove,+hm.dataset.dir);return}
   if(t.classList&&t.classList.contains("pdfpaste")){pastePdf();return}
   if(t.id==="diagCopy"){copyDiag();return}
+  if(t.closest("#ptitle.hcedit")){homeCardSheet();return}
+  if(t.id==="hcOpen"){homeCardSheet();return}
+  {const hc=t.closest("[data-hccol]");if(hc){homeCardSet({color:hc.dataset.hccol}).then(()=>{if(!$("diagSheet").hidden)homeCardSheet()});return}}
   if(t.id==="calibSend"){calibSend(t);return}
   {const cc=t.closest("[data-calcopy],[data-caldone],[data-caldel]");if(cc){const d=cc.dataset;calibAct(d.calcopy?"copy":d.caldone?"done":"del",d.calcopy||d.caldone||d.caldel,cc);return}}
   const pk=t.closest("[data-pickcard]");if(pk&&pendingInv){const c=pk.dataset.pickcard,r=pendingInv;pendingInv=null;openImport(c,r);imp.onDone=()=>{selCard=c;go("pCards")};return}
@@ -5696,6 +5729,8 @@ document.addEventListener("input",e=>{
   if(id==="svVal"||id==="svRt") svEqHint();
   if(id==="fxEur"||id==="fxBrl"||id==="fxRt") fxCalc(id==="fxEur"?"eur":id==="fxBrl"?"brl":"rt");
   if(id==="fxWhere") fxPlaceChips();
+  if(id==="hcName"){clearTimeout(homeCardSet.t);const v=e.target.value;homeCardSet.t=setTimeout(()=>homeCardSet({name:v.trim()}),400)}
+  if(id==="hcFree"){clearTimeout(homeCardSet.c);const v=e.target.value;e.target.parentElement.style.setProperty("--c",v);homeCardSet.c=setTimeout(()=>homeCardSet({color:v}),250)}
   if(id==="themeFree"){lsSet("despesas.themeColor",e.target.value);lsSet("despesas.theme","livre");applyTheme()}
 });
 
