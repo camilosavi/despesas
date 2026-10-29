@@ -1744,6 +1744,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .hcsw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
 .hcsw.free input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .hcopts{gap:8px;flex-wrap:wrap}
+#untilField[hidden]{display:none!important}
 </style>
 
 <div class="wrap">
@@ -2070,7 +2071,7 @@ const rate4=(brlC,eurC)=>eurC?(brlC/eurC).toLocaleString("pt-BR",{minimumFractio
 const MIN_YM="2026-09", MIN_YEAR=+MIN_YM.slice(0,4);
 let cfgLoaded=false, items=[], fx=[], cfg={}, tab="pHome", view=curYM()<MIN_YM?MIN_YM:curYM(), year=new Date().getFullYear();
 let F={months:6,q:""};
-let editing=null, dupAck=null, mergeInto=null, fxEditing=null, form={type:"desp",cents:0,cat:"cartao",pay:"Pix",paid:true};
+let serAck=null, editing=null, dupAck=null, mergeInto=null, fxEditing=null, form={type:"desp",cents:0,cat:"cartao",pay:"Pix",paid:true};
 const budgets=()=>cfg.budgets||{};
 const expected=()=>cfg.expected||[];
 
@@ -3209,6 +3210,8 @@ function renderMes(){
    (de uma parcela, ou da compra inteira) vira "<nome> (divisão) · Fulano" (cat divid). O total do mês continua cheio
    (sai inteiro da conta/cartão; a devolução entra como receita). */
 const divKey=x=>learnK("desp",cleanDesc(x));
+/* outros lançamentos da mesma série (repetição/parcelas com `group`, fora o "Pagar com duas formas", ou parcelas da mesma compra) */
+function editSeries(x){return x.group&&!/^s/.test(x.group)?items.filter(y=>y.id!==x.id&&y.group===x.group):parcInfo(x)?buySeries(x):[]}
 function buySeries(x){
   const p=parcInfo(x), c=cardOf(x);
   return items.filter(y=>y.id!==x.id&&typeOf(y)==="desp"&&(x.group?y.group===x.group:p&&parcInfo(y)&&parcInfo(y).n===p.n&&cardOf(y)===c&&divKey(y)===divKey(x)&&closeC(y.cents,x.cents)));
@@ -5876,7 +5879,7 @@ function applyRule(){
 }
 function openSheet(x){
   closeSheets(true);
-  editing=x||null;dupAck=null;mergeInto=null;shotAuto=null;shotImp=null;shotTs=0;
+  editing=x||null;dupAck=null;mergeInto=null;shotAuto=null;shotImp=null;shotTs=0;serAck=null;
   const t=x?typeOf(x):form.type;
   form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||"",pessoas:[...(x.eu?["eu"]:[]),...azParts(x).map(e=>e.id)],pv:{...(x.eu&&x.euV?{eu:x.euV}:{}),...Object.fromEntries(azParts(x).filter((e,i)=>((x.pessoas&&x.pessoas.length?x.pessoas[i].v:x.pv)||0)).map(e=>[e.id,e.c]))}}:{type:t,cents:0,acct:form.acct||"",pessoas:[],pv:{},cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
@@ -5973,13 +5976,31 @@ $("sheet").addEventListener("submit",async e=>{
       return;
     }
   }
+  /* série (parcelas ou repetição): pergunta se muda só esta ou todas (29/10/2026, pedido dele: lançamento cobrado da mãe, não dele) */
+  const serL=editing&&$("rep").value==="1"?editSeries(editing):[];
+  /* só pergunta se mudou algo que pode valer para a série (nome, categoria, conta, pessoas, pagamento, cartão, valor, divisão) */
+  const serChg=serL.length&&(["desc","cat","acct","pay"].some(k=>(base[k]||"")!==(editing[k]||""))||(base.card||"")!==(cardOf(editing)||"")||base.cents!==editing.cents||(base.div||0)!==(editing.div||0)
+    ||JSON.stringify(azParts(base).map(e=>e.id))!==JSON.stringify(azParts(editing).map(e=>e.id)));
+  if(serL.length&&!serChg&&!serAck) serAck="one";
+  if(serL.length&&!serAck){
+    const p=parcInfo(editing), what=p?`a parcela ${p.i}/${p.n}`:"este mês";
+    $("err").className="err info";$("err").innerHTML=`Este lançamento faz parte de ${p?`uma compra em ${p.n} parcelas`:`uma série de ${serL.length+1} meses`}. Alterar só ${what} ou todas?<div class="row" style="margin:8px 0 0"><button type="button" class="btn soft" id="serOne">Só ${p?"esta parcela":"este mês"}</button><button type="button" class="btn primary" id="serAll">Todas (${serL.length+1})</button></div>`;
+    $("serOne").onclick=()=>{serAck="one";$("sheet").requestSubmit()};
+    $("serAll").onclick=()=>{serAck="all";$("sheet").requestSubmit()};
+    $("err").scrollIntoView({block:"center"});
+    return;
+  }
+  /* parcela/mês de série que troca de cartão ou de forma de pagamento continua no mês dela (antes ia para a fatura da data da compra) */
+  if(serL.length&&isD&&((base.pay||"")!==(editing.pay||"")||(base.card||"")!==(cardOf(editing)||""))){
+    const nc=base.pay==="Crédito"?base.card:"", dd=nc?dueOf(nc):0;
+    if(nc&&dd){base.date=dueDateOf(dd,editing.date.slice(0,7));base.buy=editing.buy||editing.date}else{base.date=editing.date;base.buy=""}}
   $("saveBtn").disabled=true;
   try{
     let rep=$("rep").value;const now=Date.now(), until=rep==="u"?$("until").value:"";
     if(rep==="u"){const n=until?monthsSpan(base.date.slice(0,7),until):0;
       if(n<1||n>120){err("err",!until?"Escolha até que mês repetir.":n<1?"O mês final tem que ser igual ou depois da data.":"No máximo 10 anos.");$("saveBtn").disabled=false;return}
       rep="m"+n}
-    if(editing&&(base.div||0)!==(editing.div||0)) for(const y of buySeries(editing)) await store.items.update(y.id,{div:base.div||0});
+    if(editing&&serAck!=="one"&&(base.div||0)!==(editing.div||0)) for(const y of buySeries(editing)) await store.items.update(y.id,{div:base.div||0});
     if(editing&&base.cat&&editing.cat!==base.cat) catLearnSet(base.type||typeOf(editing),cleanDesc({...editing,...base}),base.cat);
     if(rep==="1"){
       if(editing){await store.items.update(editing.id,base);
@@ -5987,8 +6008,18 @@ $("sheet").addEventListener("submit",async e=>{
         const pt={};["desc","cat","acct"].forEach(k=>{if((base[k]||"")!==(editing[k]||"")) pt[k]=base[k]||""});
         {const pk=o=>JSON.stringify([azParts(o).map(e=>[e.id,(o.pessoas&&o.pessoas.length?o.pessoas.find(z=>z.id===e.id)?.v:o.pv)||0]),!!o.eu,o.euV||0]);
          if(pk(base)!==pk(editing)){pt.pessoas=base.pessoas||[];pt.pessoa="";pt.pv=0;pt.eu=!!base.eu;pt.euV=base.euV||0}}
-        const ser=Object.keys(pt).length?(editing.group&&!/^s/.test(editing.group)?items.filter(y=>y.id!==editing.id&&y.group===editing.group):parcInfo(editing)?buySeries(editing):[]):[];
-        for(const y of ser) await store.items.update(y.id,pt);
+        /* "Todas": também forma de pagamento, cartão, valor e divisão; cada parcela fica no mês dela (com cartão novo, no vencimento dele) */
+        if(serAck==="all"){
+          if((base.pay||"")!==(editing.pay||""))pt.pay=base.pay||"";
+          if((base.card||"")!==(cardOf(editing)||""))pt.card=base.card||"";
+          if(base.cents!==editing.cents)pt.cents=base.cents;
+          if(base.type==="desp"&&(base.div||0)!==(editing.div||0))pt.div=base.div||0;}
+        const ser=serAck==="one"?[]:Object.keys(pt).length?editSeries(editing):[];
+        for(const y of ser){const q={...pt};
+          if(("card" in q||"pay" in q)&&typeOf(y)==="desp"){const nc=(q.pay||y.pay)==="Crédito"?(q.card!=null?q.card:cardOf(y)):"", dd=nc?dueOf(nc):0;
+            if(nc&&dd){q.date=dueDateOf(dd,y.date.slice(0,7));q.buy=y.buy||y.date;q.paid=isPaid(y)&&q.date<=today()}
+            else if(!nc&&y.buy&&cardOf(y)){q.buy=""}}
+          await store.items.update(y.id,q)}
         toast(ser.length?`Atualizado, e mais ${ser.length} ${ser.length===1?"da série":"da série"}`:editing.paid===false&&base.paid!==false&&base.type==="desp"?"Marcado como pago":"Lançamento atualizado",true)}
       else if(mergeInto){await store.items.update(mergeInto.id,mergePatchNew(mergeInto,base));toast("Mesclado com o lançamento que já existia",true)}
       else{if(shotImp){base.imp=shotImp;if(shotTs){if(base.paidAt)base.paidAt=shotTs}}
