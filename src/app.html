@@ -6265,7 +6265,7 @@ function parseSantander(pages,all){
 /* o que o app já sabe ler (mostrado na lista de cartões e na tela Você) — manter em dia quando calibrar um layout novo */
 const READS=[["Faturas de cartão","Inter, Nubank, Santander, Pan, PicPay e Renner/Realize"],["Extrato da conta","Inter (atualiza o saldo na conta e lança entradas e saídas)"],
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
-  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Print de comprovante","Pix, transferência ou boleto (imagem, um ou vários): valor, data e nome; você escolhe Despesa ou Receita"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
+  ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Print de comprovante","Pix, transferência ou boleto (imagem, um ou vários): valor, data e nome; você escolhe Despesa ou Receita"],["Print da fatura no app do banco","lista de compras (nome, valor e data), um ou vários prints rolando a tela; calibrado com o app da Renner"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
 const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint expl" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
 /* PicPay (out/2026, fatura de uma amiga do Camilo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
    colunas, "DD/MM  ESTABELECIMENTO  valor" (sem R$; negativo = pagamento/crédito), um bloco por cartão (titular e "final XXXX");
@@ -6683,6 +6683,46 @@ function parseShot(text,partial){
   const hm=(/\b([01]\d|2[0-3])[:h]([0-5]\d)(?::[0-5]\d)?\b/.exec(L.filter(s=>dateOf(s)).join(" "))||/\b([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?\b/.exec(L.join(" "))||[]).slice(1,3).join(":");
   return {cents,date,hm,to:to?clean(to):"",from:from?clean(from):"",kind,recv,sent};
 }
+/* print da lista de lançamentos de um cartão (app do banco: "NOME  R$ x" e, na linha de baixo, "dd/mm  tipo da compra";
+   29/10/2026, calibrado com o app da Renner). 2+ linhas assim → vira importação de fatura (`openImport`), com a mesma conferência
+   do PDF. Sem ano: o do dia de hoje (ou o anterior, se a data ficaria mais de 1 mês no futuro). */
+const SHOT_SKIP=/^(total|saldo|limite|fatura|valor|pagamento (?:de fatura|recebido|efetuado)|pgto)/i;
+function parseShotList(text){
+  const L=String(text||"").split(/\r?\n/).map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean);
+  const t0=today(), y0=+t0.slice(0,4), rows=[];
+  const dOf=s=>{const m=/^(\d{2})\/(\d{2})(?:\/(\d{2,4}))?\b/.exec(s);if(!m||+m[2]<1||+m[2]>12||+m[1]<1||+m[1]>31)return null;
+    let y=m[3]?(m[3].length===2?2000+ +m[3]:+m[3]):y0, d=`${y}-${m[2]}-${m[1]}`;if(!m[3]&&d>addDays(t0,31))d=`${y-1}-${m[2]}-${m[1]}`;return {d,rest:s.slice(m[0].length).trim()}};
+  for(let i=0;i<L.length;i++){
+    const m=/(-|−)?\s*R\$\s*(-|−)?\s*(\d{1,3}(?:\.\d{3})*,\d{2})\s*$/.exec(L[i]);if(!m) continue;
+    let name=L[i].slice(0,m.index).trim(), dd=dOf(name), rest="";
+    if(dd){name=dd.rest;rest=""}else{for(let j=i+1;j<=i+2&&j<L.length;j++){const x=dOf(L[j]);if(x){dd=x;rest=x.rest;break}if(/R\$\s*\d/.test(L[j]))break}}
+    name=name.replace(/[-–·|]+$/,"").trim();
+    if(!dd||!/\p{L}{2}/u.test(name)||SHOT_SKIP.test(fold(name))) continue;
+    let cents=Number(m[3].replace(/\./g,"").replace(",",""));
+    if(m[1]||m[2]||/estorno|cr[eé]dito|devolu/i.test(name+" "+rest)) cents=-cents;
+    const pm=/parc(?:ela)?\.?\s*(\d{1,2})\s*(?:de|\/)\s*(\d{1,2})/i.exec(rest+" "+name)||/\b(\d{1,2})\s*de\s*(\d{1,2})\b/.exec(rest);
+    const shop=name.replace(/\s*parc(?:ela)?\.?\s*\d{1,2}\s*(?:de|\/)\s*\d{1,2}.*$/i,"").trim();
+    rows.push({date:dd.d,desc:pm&&+pm[2]>1&&+pm[1]<=+pm[2]?parcTag(shop,+pm[1],+pm[2]):shop,shop,cents});
+  }
+  return rows.filter(r=>r.cents>0).length>=2?rows:null;
+}
+const SHOT_BANKS=[[/renner|realize/i,"Renner"],[/nubank|nu pagamentos/i,"Nubank"],[/picpay/i,"PicPay"],[/santander/i,"Santander"],[/\binter\b/i,"Inter"],[/\bpan\b/i,"Pan"]];
+/* vários prints da mesma lista (rolando a tela) se sobrepõem: junta guardando, de cada compra igual, o maior número de vezes que ela aparece num print */
+function shotListMerge(lists){
+  const cnt=new Map(), out=[];
+  for(const rows of lists){const here=new Map();
+    for(const r of rows){const k=`${r.date}|${r.cents}|${fold(r.desc)}`;here.set(k,(here.get(k)||0)+1);if(here.get(k)>(cnt.get(k)||0)){cnt.set(k,here.get(k));out.push(r)}}}
+  return out.sort((a,b)=>b.date.localeCompare(a.date));
+}
+async function openShotCard(rows,text){
+  const bank=(SHOT_BANKS.find(([re])=>re.test(text||""))||[])[1]||"";
+  const r={bank,due:"",rows,total:null,close:0,pfx:"print-"};
+  $("toast").hidden=true;
+  const here=tab==="pCards"&&selCard&&credCards().includes(selCard)?selCard:null;
+  const card=here||(bank?await bankCard(bank):credCards().length===1?credCards()[0]:null);
+  if(!card){pickCard(r);return}
+  openImport(card,r);imp.onDone=()=>{selCard=card;backTo=tab==="pCards"?"pCards":tab;go("pCards")};
+}
 /* o nome é dele? primeiro nome igual e mais um sobrenome (o banco corta nomes longos) */
 function shotIsMe(n){const me=fold(myName()).split(/\s+/).filter(w=>w.length>2), w=fold(n).split(/\s+/).filter(x=>x.length>2);
   if(!me.length||!w.length||me[0]!==w[0]) return false;
@@ -6725,8 +6765,8 @@ async function shotCanvas(file){
 }
 /* leitura com 2ª passada: o modo padrão às vezes pula uma linha curta (ex.: só o valor); o modo "texto solto" (11)
    pega o que faltou e os campos são juntados */
-async function shotOcr(w,cv){
-  const a=parseShot((await w.recognize(cv)).data.text,true);
+async function shotOcr(w,cv,t1){
+  const a=parseShot(t1!=null?t1:(await w.recognize(cv)).data.text,true);
   if(a&&a.cents&&a.date&&(a.to||a.from)) return a;
   await w.setParameters({tessedit_pageseg_mode:"11"});
   let b=null;try{b=parseShot((await w.recognize(cv)).data.text,true)}finally{await w.setParameters({tessedit_pageseg_mode:"3"})}
@@ -6740,7 +6780,9 @@ async function readShot(file){
   try{
     const cv=await shotCanvas(file), T=await loadOcr();
     w=await T.createWorker("por",1,{langPath:OCR_LANG});
-    const s=await shotOcr(w,cv);
+    const t1=(await w.recognize(cv)).data.text, list=parseShotList(t1);
+    if(list){await openShotCard(list,t1);return}
+    const s=await shotOcr(w,cv,t1);
     if(!s){toast("Não achei o valor nesse print. Mande o print inteiro do comprovante.");return}
     openShot(shotEntry(s));
   }catch(e){toast(shotErr(e))}
@@ -6764,15 +6806,18 @@ function openShot(E){
 /* ---------- vários prints de uma vez: lê um por um com o mesmo leitor e abre a conferência ---------- */
 let shots=null;
 async function readShots(files){
-  let w=null;const ok=[],bad=[];
+  let w=null;const ok=[],bad=[],lists=[];let ltext="";
   try{
     const T=await loadOcr();toast(`Lendo ${files.length} prints…`);
     w=await T.createWorker("por",1,{langPath:OCR_LANG});
     for(let i=0;i<files.length;i++){toast(`Lendo ${i+1} de ${files.length}…`);
-      try{const s=await shotOcr(w,await shotCanvas(files[i]));if(s)ok.push(shotEntry(s));else bad.push(files[i].name||`print ${i+1}`)}
+      try{const cv=await shotCanvas(files[i]), t1=(await w.recognize(cv)).data.text, list=parseShotList(t1);
+        if(list){lists.push(list);ltext+=t1+"\n";continue}
+        const s=await shotOcr(w,cv,t1);if(s)ok.push(shotEntry(s));else bad.push(files[i].name||`print ${i+1}`)}
       catch(e){bad.push(files[i].name||`print ${i+1}`)}}
   }catch(e){toast(shotErr(e));return}
   finally{if(w)w.terminate().catch(()=>{})}
+  if(lists.length){await openShotCard(shotListMerge(lists),ltext);if(ok.length)setTimeout(()=>toast(`${ok.length} ${ok.length===1?"comprovante ficou":"comprovantes ficaram"} de fora: mande separado da fatura.`),400);return}
   if(!ok.length){toast("Não achei o valor em nenhum desses prints.");return}
   /* o mesmo comprovante duas vezes no lote: fica só um */
   const seen=new Set(), L=ok.filter(E=>!seen.has(E.imp)&&seen.add(E.imp));
@@ -7590,8 +7635,8 @@ function openImport(card,r){
   const dueYM=r.due?r.due.slice(0,7):guessDueYM(card,r.rows);
   const dd=r.due?+r.due.slice(8):dueOf(card)||10, bill=shiftYM(dueYM,-dueShift(dd));
   const debits=r.rows.filter(x=>x.cents>0), credits=r.rows.filter(x=>x.cents<0);
-  const tag="fatura-"+(r.due||bill);
-  imp={card,due:r.due,bank:r.bank,total:r.total,close:r.close||0,bill,guess:!r.due,again:items.some(x=>cardOf(x)===card&&x.imp===tag),future:true,replace:true,paid:!!r.due&&r.due<today(),
+  const tag=(r.pfx||"fatura-")+(r.due||bill);
+  imp={card,pfx:r.pfx||"",due:r.due,bank:r.bank,total:r.total,close:r.close||0,bill,guess:!r.due,again:items.some(x=>cardOf(x)===card&&x.imp===tag),future:true,replace:true,paid:!!r.due&&r.due<today(),
     rows:debits.map((x,i)=>({...x,...invoiceEntry(x),i,on:true})),credits};
   /* fatura anterior parcelada: o crédito do valor financiado ("VL FAT EF") sai do mês anterior, que já conta esse valor
      inteiro, e volta nas parcelas desta fatura em diante (senão conta duas vezes) */
@@ -7655,7 +7700,7 @@ function impRender(){
   <h3><span>Fatura ${esc(imp.card)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   <div class="imphead"><b>${R(tot)} em ${imp.rows.length} lançamentos</b><span class="hint">${imp.total!=null?(Math.abs(imp.total-tot)<=2?`bate com o total do banco ✓ · `:`<span class="warn">banco diz ${R(imp.total)}</span> · `):""}${imp.due?`vence ${dd}/${dm}/${dy}${imp.credits.length||(imp.bank&&imp.bank!==imp.card)?" · ":""}`:""}${imp.bank&&imp.bank!==imp.card?`<span class="warn">parece fatura do ${esc(imp.bank)}</span> · `:""}${imp.credits.length?`${imp.credits.length===1?"pagamento anterior ignorado":"pagamentos anteriores ignorados"} (${R(-imp.credits.reduce((s,x)=>s+x.cents,0))})`:""}</span></div>
   ${imp.again?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 8px">Esta fatura já foi importada antes. O que já está lançado aparece como “já lançado”.</p>`:""}
-  ${imp.guess?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 8px">Não achei o vencimento no PDF: escolhi o mês pela data das compras. Confira abaixo.</p>`:""}
+  ${imp.guess?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 8px">Não achei o vencimento ${imp.pfx?"no print":"no PDF"}: escolhi o mês pela data das compras. Confira abaixo.</p>`:""}
   <div class="field" style="margin-bottom:8px"><label for="impBill">Entra na fatura de</label><select id="impBill">${months.map(m=>`<option value="${m}" ${m===imp.bill?"selected":""}>${monthLabel(m)}</option>`).join("")}</select></div>
   <div class="ilist">${imp.rows.map(r=>{const[,m,d]=r.date.split("-");
     return `<label class="irow ${r.on?"":"off"}"><input type="checkbox" data-imp="${r.i}" ${r.on?"checked":""}><span class="d">${esc(r.name)}</span><span class="v">${R(r.cents)}</span><span class="m">${d}/${m} · ${esc(catOf(r.cat,"desp").n)}${r.parc?` · parcela ${r.parc}`:""}${imp.pre?(r.later?` · lança ${r.later} ${r.later===1?"parcela":"parcelas"} que ${r.later===1?"vence":"vencem"} de ${shortMonth(MIN_DUE.slice(0,7))} em diante`:` · só informativo`):""}${r.dup?` · já lançado como “${esc(cleanDesc(items.find(x=>x.id===r.match)||{}))}”, vai mesclar`:""}</span></label>`}).join("")}</div>
@@ -7667,7 +7712,7 @@ function impRender(){
   ${imp.fin>0&&!imp.pre&&!imp.finDone&&shiftYM(imp.bill,-1)>=MIN_YM?`<label class="check"><input type="checkbox" id="impFin" ${imp.finOn?"checked":""}> Tirar ${R(imp.fin)} de ${monthLabel(shiftYM(imp.bill,-1)).split(" ")[0].toLowerCase()}: a fatura de lá foi parcelada e esse valor volta nas parcelas</label>`:""}
   ${fut.length&&!imp.pre?`<label class="check"><input type="checkbox" id="impFuture" ${imp.future?"checked":""}> Lançar também as próximas parcelas (${fut.length} ${fut.length===1?"compra parcelada":"compras parceladas"})</label>`:""}
   ${gen.length&&!imp.pre?`<label class="check"><input type="checkbox" id="impReplace" ${imp.replace?"checked":""}> Apagar o lançamento genérico “${esc(gen[0].desc)}” (${R(gen.reduce((s,x)=>s+x.cents,0))}), para não contar em dobro</label>`:""}
-  <button type="button" class="linkbtn" id="diagOpen">Algo não bateu com o PDF? Copiar diagnóstico</button>
+  ${imp.pfx?"":`<button type="button" class="linkbtn" id="diagOpen">Algo não bateu com o PDF? Copiar diagnóstico</button>`}
   <p class="err" id="impErr"></p>
   <div class="row"><button type="submit" class="btn primary" ${(imp.pre?nPre:on.length||imp.rows.some(r=>r.match))?"":"disabled"}>${imp.pre?`Lançar ${nPre} ${nPre===1?"parcela":"parcelas"}`:on.length?`Adicionar ${on.length} (${R(sel)})`:""}${on.length&&imp.rows.some(r=>!r.on&&r.match)?" + ":""}${imp.rows.some(r=>!r.on&&r.match)?`mesclar ${imp.rows.filter(r=>!r.on&&r.match).length}`:""}</button></div>`;
 }
@@ -7688,7 +7733,7 @@ $("impSheet").addEventListener("submit",async e=>{
   e.preventDefault();
   const on=imp.rows.filter(r=>r.on), mg=imp.rows.filter(r=>!r.on&&r.match);if(!on.length&&!mg.length) return;
   const btn=e.target.querySelector("button[type=submit]");btn.disabled=true;
-  const now=Date.now(), tag="fatura-"+(imp.due||imp.bill), card=imp.card;
+  const now=Date.now(), tag=(imp.pfx||"fatura-")+(imp.due||imp.bill), card=imp.card;
   const ex=items.filter(x=>cardOf(x)===card);
   const add=[], upd=[];
   if(imp.pre) on.forEach((r,k)=>{const g="g"+now+"_"+k;

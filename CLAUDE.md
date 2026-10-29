@@ -188,6 +188,12 @@ card?, parc?:"i/n", group?, createdAt}`
   gerais com `multiple`): `readShots` lê com um leitor só e abre `shotsRender` no `diagSheet` (caixa por item, Despesa/Receita por
   item `data-shtype`, já lançados desmarcados, repetidos no lote saem) → `shotsAdd`. Offline: o `sw.js` guarda `cdn.jsdelivr.net`
   no cache de runtime (script, worker e wasm); os dados de idioma ficam no IndexedDB do Tesseract.
+- **Print da fatura no app do banco** (29/10/2026, pedido dele com print da lista da Renner: "ler vários lançamentos?"): `parseShotList`
+  acha linhas "NOME  R$ x" com a data "dd/mm" na linha de baixo (ou na mesma, antes do nome); 2+ compras → `openShotCard` → `openImport`
+  (mesma conferência do PDF: parecidos, categorias, assinaturas, mês pela data das compras com `guessDueYM`). Cartão: o aberto na tela,
+  o banco achado no texto (`SHOT_BANKS`), o único cartão de crédito, ou `pickCard`. Vários prints rolando a tela: `shotListMerge` junta sem
+  repetir (conta de cada compra igual = o máximo visto num print). Tag `imp:"print-<mês>"` (`r.pfx`/`imp.pfx`), para o PDF da mesma fatura
+  depois não aparecer como "já importada"; parcela "Parcela i de n" vira `parcTag`; "-R$"/estorno entra negativo. Sem diagnóstico de PDF.
 - **O que o app já lê** (`READS`/`readsBox()`, na lista de cartões e na tela Você → Importar planilha; também no README): manter em dia
   sempre que calibrar um layout novo.
 - **Pagamento de fatura no extrato dá baixa** (out/2026, `billPaidBy`): cartão pelo texto (Realize/Renner → Renner, Pan →
