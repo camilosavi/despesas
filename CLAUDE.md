@@ -194,6 +194,14 @@ card?, parc?:"i/n", group?, createdAt}`
   o banco achado no texto (`SHOT_BANKS`), o único cartão de crédito, ou `pickCard`. Vários prints rolando a tela: `shotListMerge` junta sem
   repetir (conta de cada compra igual = o máximo visto num print). Tag `imp:"print-<mês>"` (`r.pfx`/`imp.pfx`), para o PDF da mesma fatura
   depois não aparecer como "já importada"; parcela "Parcela i de n" vira `parcTag`; "-R$"/estorno entra negativo. Sem diagnóstico de PDF.
+- **Faturas para calibrar** (29/10/2026, pedido dele: "amigos lancem de bancos que você não tem… me avisar e jogar a fatura aqui"):
+  com login, o diagnóstico (`openDiag`) e o "De qual cartão é?" (`pickCard`, só PDF) têm **"Enviar o formato…"** (`#calibSend`, `calibSend`):
+  POST em `calib` só com `diagText(true)` (como o diagnóstico, mais todos os dígitos do conteúdo viram 9; posições x/y ficam). Não reenvia o
+  mesmo formato (`despesas.calibSent`, hash). Esquema em `supabase/calib.sql` (ele roda uma vez, trocando SEU_EMAIL): qualquer logado só
+  insere; quem está em `calib_admins` lê/edita/apaga. `calibLoad` (4 s depois de destravar, e ao abrir Você) descobre se é admin
+  (`calib_admins`), busca as últimas 50 e avisa por toast as novas (`despesas.calibSeen` = maior id já copiado). Tela Você → seção
+  `calibSection` "Faturas para calibrar" (só para admin): Copiar (cola no Claude), Feito/Reabrir (`done`), Apagar (2 toques).
+  Nada de e-mail nem uid dele no repositório. Sem a tabela, ninguém vê a seção e o envio diz "ainda não está ligado no servidor".
 - **O que o app já lê** (`READS`/`readsBox()`, na lista de cartões e na tela Você → Importar planilha; também no README): manter em dia
   sempre que calibrar um layout novo.
 - **Pagamento de fatura no extrato dá baixa** (out/2026, `billPaidBy`): cartão pelo texto (Realize/Renner → Renner, Pan →

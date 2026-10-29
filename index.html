@@ -1741,6 +1741,13 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* Mês: Recentes / A–Z e Ver todos */
 .mesord{margin:-2px 0 10px}.mesord .mfp{height:32px!important;padding:0 14px!important;font-size:.84rem}
 .mesmore{display:block;margin:10px auto 0}
+/* faturas para calibrar */
+.callist{display:grid}
+.calrow{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.calrow:first-child{border-top:0}.calrow.done .cn{opacity:.55}
+.calrow .cn b{display:block;font-weight:600}.calrow .cn small{color:var(--muted);font-size:.8rem}
+.calrow .cb{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:520px){.calrow{grid-template-columns:1fr}.calrow .cb{justify-content:flex-start}}
 </style>
 
 <div class="wrap">
@@ -4783,7 +4790,7 @@ function secSection(){
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn soft" id="lockNow">Bloquear app</button>${bioCapable?`<button class="btn soft" id="bioToggle">${authData().bio?"Desativar "+esc(bioN()):"Ativar "+esc(bioN())}</button>`:""}</div></div></section>`;
 }
 function renderMe(){
-  let h=lookSection()+secSection()+pushSection()+syncSection()+ofSection();
+  let h=lookSection()+secSection()+pushSection()+syncSection()+ofSection()+calibSection();
   h+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${CATS.desp.map(c=>`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="desp" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")}</div>${catEditor("desp")}
     <div class="catadd"><input type="text" id="catAddIn" maxlength="24" placeholder="Nova categoria (ex.: Celular)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtn">Criar</button></div>
     <div class="hint expl">Toque numa categoria para mudar o nome e a cor, ou apagar. Ao apagar, os lançamentos dela vão para Outros. Faturas de cartão, Câmbio e Outros ficam fixas.</div></div></section>`;
@@ -4800,7 +4807,7 @@ function renderMe(){
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn danger" id="wipeLanc">Zerar lançamentos e saldo</button>${u?`<button class="btn soft" id="undoLanc">Desfazer (${u.items.length})</button>`:""}</div></div></section>`}
   h+=`<section><h2>Zerar tudo</h2><div class="card rate"><div class="hint expl">Apaga lançamentos, cartões, compras de euro, caixinhas e configurações deste aparelho e volta à tela de boas-vindas. A senha e ${BIO.f?"a":"o"} ${esc(bioN())} continuam. Fica uma cópia de segurança aqui no aparelho: na tela de boas-vindas dá para desfazer.</div>
     <div class="row" style="margin:0"><button class="btn danger" id="wipeAll">Zerar tudo</button></div></div></section>`;
-  $("pMe").innerHTML=h;anoFold("pMe");idLoad();
+  $("pMe").innerHTML=h;anoFold("pMe");idLoad();if(CAL.admin===null)calibLoad(true);
 }
 /* zerar um mês do cartão: apaga os lançamentos do cartão nesse mês e as parcelas seguintes das mesmas compras; dá para desfazer */
 const ZM_KEY="despesas.antesZerarMes";
@@ -5432,6 +5439,8 @@ document.addEventListener("click",async e=>{
   const hm=t.closest("[data-hmove]"); if(hm){if(!hm.disabled)moveHome(hm.dataset.hmove,+hm.dataset.dir);return}
   if(t.classList&&t.classList.contains("pdfpaste")){pastePdf();return}
   if(t.id==="diagCopy"){copyDiag();return}
+  if(t.id==="calibSend"){calibSend(t);return}
+  {const cc=t.closest("[data-calcopy],[data-caldone],[data-caldel]");if(cc){const d=cc.dataset;calibAct(d.calcopy?"copy":d.caldone?"done":"del",d.calcopy||d.caldone||d.caldel,cc);return}}
   const pk=t.closest("[data-pickcard]");if(pk&&pendingInv){const c=pk.dataset.pickcard,r=pendingInv;pendingInv=null;openImport(c,r);imp.onDone=()=>{selCard=c;go("pCards")};return}
   if(t.id==="diagOpen"){openDiag();return}
   if(t.id==="bnEdit"){benEditing=true;renderCards();setTimeout(()=>$("bnBal")?.focus(),40);return}
@@ -6496,6 +6505,7 @@ function pickCard(r){
   closeSheets(true);$("toast").hidden=true;
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>De qual cartão é?</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   <p class="hint" style="margin:0 0 12px">Li ${r.rows.length} lançamentos, mas não reconheci o banco.</p>
+  ${!r.pfx&&lastPdf&&syncOn()?`<button type="button" class="btn soft" id="calibSend" style="width:100%;margin:0 0 12px">${calibSent()?"Formato já enviado ✓":"Banco não reconhecido · enviar o formato para melhorar o leitor"}</button>`:""}
   ${cs.length?cs.map(c=>`<button type="button" class="btn soft pdfrow" data-pickcard="${esc(c)}" style="width:100%;border-left:6px solid ${cardColor(c)}">${esc(c)}</button>`).join(""):`<p class="err">Crie o cartão primeiro (aba Cartões → +).</p>`}`;
   $("scrim").hidden=$("diagSheet").hidden=false;
 }
@@ -7620,15 +7630,16 @@ function diagTok(w){
   if(/bancointer|inter\.co|bancopan/.test(n)||DIAG_KEEP.has(n)) return w;
   return w.replace(/\d/g,"#").replace(/\p{Lu}/gu,"X").replace(/\p{Ll}/gu,"x");
 }
-function diagText(){
+function diagText(safe){
+  const N9=t=>safe?String(t).replace(/\d/g,"9"):t;
   const{pages,res,err:e,info:f}=lastPdf, all=pages.map(p=>p.items.map(i=>i.s).join(" ")).join(" ").replace(/\s+/g," ");
   const out=[`Minhas Despesas · diagnóstico de fatura · ${pages.length} pág.`,
     `detecta: inter=${/Banco Inter|bancointer|inter\.co\//i.test(all)?1:0} pan=${/Banco Pan\b|bancopan/i.test(all)?1:0} renner=${/Realize|Renner/i.test(all)?1:0} picpay=${/PicPay/i.test(all)?1:0}`,
     f?`arquivo: ${f.tipo} ${f.kb} KB (${f.bytes} bytes) · início "${f.head}" · hex ${f.hex} · %PDF em ${f.off} (${f.ver}) · startxref=${f.startxref} · fim "${f.fim}" · pdf=${f.pdf} · senha pedida=${f.senha||0} · proteção=${f.enc} · %%EOF=${f.eof} objstm=${f.objstm} xrefstm=${f.xrefstm} · produtor=${f.producer}`:"arquivo: ?",
     `leitor: pdf.js ${PDFJS&&PDFJS.version||"?"} · ${navigator.userAgent.replace(/^Mozilla\/5\.0 /,"").slice(0,90)}`,
-    res?`leitura: banco=${res.bank||"?"} vence=${res.due||"?"} itens=${res.rows.length} soma=${R(res.rows.reduce((s,r)=>s+r.cents,0))}`:`erro: ${e||"?"}`];
+    res?`leitura: banco=${res.bank||"?"} vence=${N9(res.due||"?")} itens=${res.rows.length} soma=${N9(R(res.rows.reduce((s,r)=>s+r.cents,0)))}`:`erro: ${e||"?"}`];
   pages.forEach((pg,n)=>{out.push(`--- página ${n+1} (${Math.round(pg.w)}x${Math.round(pg.h)})`);
-    pdfLines(pg).forEach(l=>out.push(`${Math.round(l.t)}| `+l.cells.map(c=>`${Math.round(c.x)}:${c.s.split(/\s+/).map(diagTok).join(" ")}`).join(" ¦ ")))});
+    pdfLines(pg).forEach(l=>out.push(`${Math.round(l.t)}| `+l.cells.map(c=>`${Math.round(c.x)}:${N9(c.s.split(/\s+/).map(diagTok).join(" "))}`).join(" ¦ ")))});
   return out.join("\n");
 }
 function openDiag(msg){
@@ -7639,7 +7650,8 @@ function openDiag(msg){
   ${msg?`<p class="err" style="margin:0 0 8px">${esc(msg)}</p>`:""}
   <p class="hint expl" style="margin:0 0 10px">Copie e cole no Claude para ele ajustar o leitor. Nomes (lojas, o seu) viram “Xxxx” e números longos (CPF, código de barras) viram “#”. Datas e valores ficam: o leitor precisa deles.</p>
   <textarea id="diagTxt" class="diagtxt" readonly rows="12">${esc(diagText())}</textarea>
-  <div class="row"><button type="button" class="btn primary" id="diagCopy">Copiar diagnóstico</button></div>`;
+  <div class="row"><button type="button" class="btn primary" id="diagCopy">Copiar diagnóstico</button></div>
+  ${syncOn()?`<button type="button" class="btn soft" id="calibSend" style="width:100%;margin-top:8px">${calibSent()?"Formato já enviado ✓":"Enviar o formato para melhorar o leitor"}</button><p class="hint" style="margin:6px 0 0">Vai só a estrutura, sem nomes nem números (tudo vira X e 9).</p>`:""}`;
   $("scrim").hidden=$("diagSheet").hidden=false;$("diagSheet").scrollTop=0;
 }
 async function copyDiag(){
@@ -7647,6 +7659,57 @@ async function copyDiag(){
   try{await navigator.clipboard.writeText(ta.value);toast("Copiado. Cole no Claude.")}
   catch(e){ta.focus();ta.setSelectionRange(0,ta.value.length);let ok=false;try{ok=document.execCommand("copy")}catch(_){}
     toast(ok?"Copiado. Cole no Claude.":"Selecione o texto e copie.")}
+}
+/* ---------- faturas para calibrar (29/10/2026, pedido dele: "amigos lançam de bancos que você não tem… me avisar e jogar a fatura
+   aqui pra leitura"). Quem tem login toca em "Enviar o formato" no diagnóstico: vai para a tabela `calib` do Supabase só a estrutura
+   mascarada (`diagText(true)`: letras → X, números → 9). Só quem está em `calib_admins` lê (esquema em supabase/calib.sql); para ele
+   a tela Você mostra "Faturas para calibrar" com Copiar / Feito / Apagar e um aviso ao abrir o app quando chega algo novo. ---------- */
+const calHash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=(h*33^t.charCodeAt(i))>>>0;return h.toString(36)};
+const calSentL=()=>{try{return JSON.parse(lsGet("despesas.calibSent")||"[]")}catch(e){return []}};
+function calibSent(){try{return lastPdf&&calSentL().includes(calHash(diagText(true)))}catch(e){return false}}
+async function calibSend(btn){
+  if(!lastPdf||!syncOn()) return;
+  const diag=diagText(true), h=calHash(diag);
+  if(calSentL().includes(h)){toast("Esse formato já foi enviado.");return}
+  btn.disabled=true;btn.textContent="Enviando…";
+  try{await sbApi("POST","calib",{bank:(lastPdf.res&&lastPdf.res.bank)||null,kind:"pdf",diag},"return=minimal");
+    lsSet("despesas.calibSent",JSON.stringify([...calSentL(),h].slice(-50)));btn.textContent="Formato enviado ✓";toast("Enviado. Obrigado!",true)}
+  catch(e){btn.disabled=false;btn.textContent="Enviar o formato para melhorar o leitor";
+    toast(/calib|42P01|PGRST20/i.test((e&&e.message||"")+(e&&e.code||""))?"Envio ainda não está ligado no servidor.":"Não deu para enviar. Tente de novo.")}
+}
+const CAL={admin:null,rows:null,err:""};
+async function calibLoad(re){
+  if(!syncOn()) return;
+  try{
+    if(CAL.admin===null){const a=await sbApi("GET","calib_admins?select=user_id&limit=1");CAL.admin=!!(a&&a.length)}
+    if(!CAL.admin) return;
+    const prev=JSON.stringify((CAL.rows||[]).map(r=>[r.id,r.done]));
+    CAL.rows=(await sbApi("GET","calib?select=id,created_at,bank,kind,done,diag&order=created_at.desc&limit=50"))||[];CAL.err="";
+    const open=CAL.rows.filter(r=>!r.done), seen=+lsGet("despesas.calibSeen")||0, nw=open.filter(r=>+r.id>seen);
+    if(nw.length&&!re){toast(`${nw.length} ${nw.length===1?"fatura nova":"faturas novas"} para calibrar · tela Você`);}
+    if(tab==="pMe"&&JSON.stringify(CAL.rows.map(r=>[r.id,r.done]))!==prev) renderMe();
+  }catch(e){if(CAL.admin===null)CAL.admin=false;else CAL.err="Não deu para carregar."}
+}
+function calibSection(){
+  if(!CAL.admin) return "";
+  const R0=CAL.rows||[], open=R0.filter(r=>!r.done);
+  const row=r=>{const d=new Date(r.created_at), n=(r.diag||"").split("\n").length;
+    return `<div class="calrow${r.done?" done":""}"><span class="cn"><b>${esc(r.bank||"Banco não reconhecido")}</b><small>${pad(d.getDate())}/${pad(d.getMonth()+1)} ${pad(d.getHours())}:${pad(d.getMinutes())} · ${n} ${n===1?"linha":"linhas"}${r.done?" · feito ✓":""}</small></span>
+      <span class="cb"><button type="button" class="tbtn go" data-calcopy="${r.id}">Copiar</button><button type="button" class="tbtn" data-caldone="${r.id}">${r.done?"Reabrir":"Feito"}</button><button type="button" class="tbtn" data-caldel="${r.id}">Apagar</button></span></div>`};
+  return `<section id="calSec"><h2>Faturas para calibrar <small>${open.length?open.length+(open.length===1?" nova":" novas"):"nada novo"}</small></h2><div class="card rate">
+    ${CAL.err?`<p class="err" style="margin:0">${esc(CAL.err)}</p>`:""}
+    ${R0.length?`<div class="callist">${R0.map(row).join("")}</div>`:`<p class="hint" style="margin:0">Quando um amigo enviar o formato de um banco que o app não lê, aparece aqui. Copie e cole no Claude.</p>`}</div></section>`;
+}
+async function calibAct(kind,id,btn){
+  const r=(CAL.rows||[]).find(x=>String(x.id)===String(id));if(!r) return;
+  if(kind==="copy"){try{await navigator.clipboard.writeText(r.diag);toast("Copiado. Cole no Claude.",true)}catch(e){toast("Não deu para copiar.")}
+    const top=Math.max(+lsGet("despesas.calibSeen")||0,+r.id);lsSet("despesas.calibSeen",String(top));return}
+  try{
+    if(kind==="done"){await sbApi("PATCH",`calib?id=eq.${r.id}`,{done:!r.done},"return=minimal");r.done=!r.done}
+    if(kind==="del"){if(!btn.classList.contains("sure")){btn.classList.add("sure");btn.textContent="Toque de novo";return}
+      await sbApi("DELETE",`calib?id=eq.${r.id}`,null,"return=minimal");CAL.rows=CAL.rows.filter(x=>x!==r)}
+    renderMe();
+  }catch(e){toast("Não deu. Tente de novo.")}
 }
 /* sem vencimento no PDF: estima pela compra à vista mais recente e pelo dia de vencimento do cartão (fecha ~8 dias antes) */
 function guessDueYM(card,rows){
@@ -7939,7 +8002,7 @@ async function bioUnlock(auto){
 }
 function lockApp(){const a=authData();lk={...lk,mode:a?(a.bio?"bio":"enter"):"name",pin:"",first:"",name:a?a.name:""};$("lock").hidden=false;{const m=document.querySelector('meta[name="theme-color"]');if(m)m.content="#14203A"}document.body.style.overflow="hidden";lockRender();if(a&&a.bio)setTimeout(()=>bioUnlock(true),350)}
 let gResumed=false;
-function gResume(){if(gResumed)return;gResumed=true;renderSyncBits();setTimeout(()=>syncNow(false),300)}
+function gResume(){if(gResumed)return;gResumed=true;renderSyncBits();setTimeout(()=>syncNow(false),300);setTimeout(()=>calibLoad(false),4000)}
 function unlock(){setTimeout(gResume,50);if(IS_PC)lsSet("despesas.unlockAt",String(Date.now()));$("lock").hidden=true;applyTheme();document.body.style.overflow="";lk.pin="";sessionStorage.setItem("despesas.unlocked","1")}
 function greet(){const h=new Date().getHours();return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"}
 function lockRender(msg="",isErr=false){
