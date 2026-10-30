@@ -1,4 +1,4 @@
-const C="despesas-082230f3", RT="despesas-runtime";
+const C="despesas-64b77dd7", RT="despesas-runtime";
 const ASSETS=["./","index.html","manifest.webmanifest","tostao-180.png","tostao-192.png","tostao-512.png","tostao-logo.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(ASSETS)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C&&x!==RT&&x!=="despesas-av").map(x=>caches.delete(x)))));self.clients.claim()});

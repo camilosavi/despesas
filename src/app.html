@@ -124,6 +124,7 @@ header.top{background:linear-gradient(180deg, var(--head) 0%, color-mix(in srgb,
 .titlerow{display:flex;align-items:center;gap:10px;min-height:40px}
 .titlerow h1{font-family:var(--display);font-weight:700;font-size:1.35rem;margin:0;letter-spacing:-.01em;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .backbtn{display:flex;align-items:center;gap:4px;background:var(--head-ink);color:var(--head);border:0;border-radius:999px;padding:8px 14px 8px 10px;font-weight:700;font-size:.92rem;flex:none}
+.backbtn[hidden],#hBell[hidden]{display:none!important}
 .backbtn span:first-child{font-size:1.25rem;line-height:1;margin-top:-2px}
 .monthpill{display:inline-flex;align-items:center;gap:2px;margin-top:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:3px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .monthpill button{background:none;border:0;color:var(--head-ink);width:36px;height:32px;border-radius:10px;font-size:1.15rem;display:grid;place-items:center}
@@ -2086,8 +2087,8 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .dwbox .sb svg{width:1.3em;height:1.3em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
   .dwbox .sb.on{background:var(--btn);color:var(--btn-ink)}
   #hBell{display:none!important}
-  body:has(#pAno[data-nav][data-nav][data-nav]) .tcard #ptitle{display:block!important}
-  body:has(#pAno[data-nav]) #backBtn{display:none!important}
+  body:has(#pAno[data-sect][data-sect][data-sect]) .tcard #ptitle{display:block!important}
+  body:has(#pAno[data-sect]) #backBtn{display:none!important}
   body:has(#pAno[data-f]) #mpill{display:none!important}
 }
 @media (min-width:980px){.drawer,#tabMore{display:none!important}}
@@ -2257,7 +2258,7 @@ const pwaDownloads={save:async({filename,data})=>{
 }};
 const CATS={
  desp:[{k:"cartao",n:"Faturas de cartão",c:"var(--c5)"},{k:"interc",n:"Intercâmbio",c:"var(--c3)"},{k:"euro",n:"Câmbio (€/US$)",c:"var(--euro)"},{k:"cidad",n:"Cidadania",c:"var(--c6)"},{k:"alim",n:"Alimentação",c:"var(--c1)"},{k:"merc",n:"Mercado",c:"var(--c2)"},{k:"transp",n:"Transporte",c:"var(--c7)"},{k:"casa",n:"Casa e contas",c:"var(--c7)"},{k:"lazer",n:"Lazer",c:"var(--c4)"},{k:"esporte",n:"Esporte",c:"var(--c1)"},{k:"saude",n:"Saúde",c:"var(--c5)"},{k:"compras",n:"Compras",c:"var(--c6)"},{k:"educ",n:"Educação",c:"var(--c3)"},{k:"assin",n:"Assinaturas",c:"var(--c4)"},{k:"outros",n:"Outros",c:"var(--c8)"}],
- rec:[{k:"sal",n:"Salário",c:"var(--c1)"},{k:"extra",n:"Aulas / bicos",c:"var(--c7)"},{k:"caixa",n:"Saldo anterior",c:"var(--c8)"},{k:"rend",n:"Rendimentos",c:"var(--c3)"},{k:"divid",n:"Divisões",c:"var(--c7)"},{k:"rout",n:"Outras receitas",c:"var(--c8)"}]
+ rec:[{k:"sal",n:"Salário",c:"var(--c1)"},{k:"d13",n:"13º salário",c:"var(--c4)"},{k:"extra",n:"Aulas / bicos",c:"var(--c7)"},{k:"caixa",n:"Saldo anterior",c:"var(--c8)"},{k:"rend",n:"Rendimentos",c:"var(--c3)"},{k:"divid",n:"Divisões",c:"var(--c7)"},{k:"rout",n:"Outras receitas",c:"var(--c8)"}]
 };
 const ICO={
  cartao:'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18M7 15h4"/>',
@@ -2280,7 +2281,8 @@ const ICO={
  caixa:'<rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v10h14V9M10 13h4"/>',
  rend:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
  divid:'<circle cx="8" cy="8.5" r="2.8"/><circle cx="16.5" cy="8.5" r="2.8"/><path d="M3 19.5c0-3 2.3-5 5-5s5 2 5 5M11.5 19.5c0-3 2.3-5 5-5s5 2 5 5"/>',
- rout:'<path d="M12 5v14M5 12h14"/>'
+ rout:'<path d="M12 5v14M5 12h14"/>',
+ d13:'<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 9h18M12 9v11M12 9c-1.5-3.5-5.5-3.5-5.5-1.5S10 9 12 9zM12 9c1.5-3.5 5.5-3.5 5.5-1.5S14 9 12 9z"/>'
 };
 const catIco=(k,t)=>{const c=catOf(k,t);return `<span class="ico cat" style="--cc:${c.c}" aria-hidden="true"><svg viewBox="0 0 24 24">${ICO[c.k]||(c.k.startsWith("u_")?'<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3-8.7 8.7z"/><circle cx="8" cy="8" r="1.4"/>':ICO[t==="rec"?"rout":"outros"])}</svg></span>`};
 const PAYS=["Pix","Débito","Crédito","Dinheiro","Boleto"];
@@ -2295,7 +2297,21 @@ const bens=()=>Object.entries(cfg.cards||{}).filter(([,c])=>c.kind==="ben").map(
    Move uma vez cada lançamento (marca dm1 no item, então não move de novo nem com 2 aparelhos sincronizando). */
 let _dm1=false,_itemsIn=false;
 /* compras no Crédito lançadas à mão que ficaram "pagas" numa fatura que ainda não venceu → a pagar (uma vez, cfg.credPaid1) */
-let _cp1=false;
+let _cp1=false, _d13=false;
+/* 13º separado do salário (30/10/2026, pedido dele: "holerite de 13 não entre como salário fixo, pq desbalanceia"):
+   receitas de 13º lançadas como Salário viram a categoria própria d13; holerite de 13º guardado como folha (k "sal") vira d131/d132 */
+async function migrate13(){
+  if(_d13||!cfgLoaded||!_itemsIn||cfg.d13m==="v1") return;_d13=true;
+  try{
+    for(const x of items){if(typeOf(x)==="rec"&&x.cat==="sal"&&(/holerite-.*-13/.test(x.imp||"")||/\b13|d[ée]cimo/i.test(x.desc||"")))await store.items.update(x.id,{cat:"d13"})}
+    const H={...(cfg.hol||{})};let ch=false;
+    Object.entries(H).forEach(([id,r])=>{if(!r||r.k!=="sal")return;const P=(r.ev||[]).filter(e=>e.s==="p");
+      const is=/13/.test(r.kind||"")||P.some(e=>is13ev(e.d))&&!P.some(e=>/HORAS NORMAIS|SALARIO (?:MENSAL|BASE|NORMAL)|^SALARIO$|DIAS TRABALHADOS/.test(fold(e.d).toUpperCase()));
+      if(!is)return;const t=(r.kind||"")+" "+P.map(e=>fold(e.d).toUpperCase()).join(" "), two=/2\s*[ªa]|PARC\.?\s*0?2\b|SEGUNDA/i.test(t), k=two?"d132":"d131";
+      delete H[id];H[`${r.ref}|${k}`]={...r,k,kind:/^13/.test(r.kind||"")?r.kind:`13º salário (${two?2:1}ª parcela)`};ch=true});
+    await saveCfg({d13m:"v1",...(ch?{hol:H}:{})});
+  }catch(e){_d13=false}
+}
 async function migrateCredPaid1(){
   if(_cp1||!cfgLoaded||!_itemsIn||cfg.credPaid1==="v1") return;_cp1=true;
   try{const t=today();
@@ -2345,7 +2361,7 @@ const benNext=b=>{if(!b.day)return "";const ym=curYM(), d=`${ym}-${pad(Math.min(
 const isPaid=x=>typeOf(x)==="rec"||x.paid!==false;
 /* categorias de despesa da pessoa: cfg.cats=[{k:"u_…",n,c}] (criadas) e cfg.catHide=[k] (padrão apagadas).
    Faturas de cartão, Câmbio e Outros não saem (o app depende delas). Apagar move os lançamentos para Outros. */
-const BASE_REC=CATS.rec.slice(), BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_LOCK_REC=["sal","divid","rout"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
+const BASE_REC=CATS.rec.slice(), BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_LOCK_REC=["sal","d13","divid","rout"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
 function applyCats(){
   const hide=Array.isArray(cfg.catHide)?cfg.catHide:[], mine=Array.isArray(cfg.cats)?cfg.cats:[];
   const ed=cfg.catEdit&&typeof cfg.catEdit==="object"?cfg.catEdit:{}, ap=c=>ed[c.k]?{...c,...ed[c.k]}:c;
@@ -2480,7 +2496,7 @@ async function initStore(){
     }
   }catch(e){}
   let loaded=0;
-  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;if(first)animIn();render();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
+  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1();migrate13()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;if(first)animIn();render();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();migrate13();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
   note(store.synced?"Salvo na sua conta Claude — igual no iPhone e no computador.":PWA?"Salvo neste iPhone. Faça um backup de vez em quando.":"Salvo só neste navegador.");
   if(PWA){
     try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -2759,7 +2775,7 @@ function billDate(c,buy){const dd=dueOf(c);if(!c||!dd||!buy) return buy;
   for(let j=0;j<4;j++){const ym=shiftYM(buy.slice(0,7),j), D=`${ym}-${pad(Math.min(dd,lastDay(ym)))}`;if(buy<=closeOfDue(c,D)) return D}
   return buy}
 /* salário que cai no fim do mês (dia 25 em diante) é dinheiro do mês seguinte: conta no dia 1º, guarda o dia que caiu */
-const salShift=(cat,date)=>cat==="sal"&&+date.slice(8)>=25?{date:shiftYM(date.slice(0,7),1)+"-01",fell:date}:null;
+const salShift=(cat,date)=>(cat==="sal"||cat==="d13")&&+date.slice(8)>=25?{date:shiftYM(date.slice(0,7),1)+"-01",fell:date}:null;
 const fmtDM=s=>s?s.slice(8)+"/"+s.slice(5,7):"";
 let selCard=null, backTo="pMes", limEditing=false, fatEditing=false;
 const cardCfg=c=>({...((cfg.cards||{})[c]||{})});
@@ -3070,8 +3086,8 @@ function header0(){
       $("hFoot").textContent=[rec?`de ${R(rec)} que entrou · ${sob>=0?"sobra":"falta"} ${R(Math.abs(sob))}`:"nada entrou ainda",...parts.filter(t=>/orçamento/.test(t))].join(" · ")}
   } else {
     const cur=curYM(), M=[0,1,2,3,4,5].map(i=>shiftYM(cur,i)), V=M.map(endBal), last=M[5], mx=Math.max(1,...V.map(v=>Math.abs(v)));
-    $("bigLabel").textContent=`${hasAcc()?"Na conta no fim":"Saldo acumulado no fim"} de ${monthLabel(last).split(" ")[0].toLowerCase()}`;setBig("R$",V[5]);
-    $("s1l").textContent=`Fim de ${monthLabel(cur).split(" ")[0].toLowerCase()}`;$("s1").textContent=R(V[0]);
+    $("bigLabel").textContent=`${hasAcc()?"Na conta em":"Saldo em"} ${shortMonth(last).toLowerCase()}`;setBig("R$",V[5]);
+    $("s1l").textContent=`Fim de ${MES[+cur.slice(5)-1].toLowerCase()}`;$("s1").textContent=R(V[0]);
     $("s2l").textContent="Salário previsto";$("s2").textContent=salPrevOn()?"ligado":"desligado";
     if(!IS_WIDE.matches){document.querySelector("header.top .split").hidden=true;$("hBar").hidden=false;
       $("hBar").innerHTML=`<div class="hbchart">${M.map((m,i)=>`<span class="${i?"":"now"} ${V[i]<0?"neg":""}"><i style="height:${Math.max(6,Math.abs(V[i])/mx*64).toFixed(0)}px"></i><small>${MES[+m.slice(5)-1].toLowerCase()}</small></span>`).join("")}</div>`;
@@ -5942,7 +5958,7 @@ function render(){
   if((tab==="pAno"&&anoSubTab!=="metas")||tab==="pMe") anoFold(tab);
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();nwSnap();sbMark();dcKeyAll();
-  {const P=$("pAno");if(P){const k=navSel||(tab==="pAno"&&anoSubTab==="metas"?"pWal":"");const f={pWal:"C",metas:"M",debts:"D",subs:"S"}[k];if(f&&tab==="pAno")P.dataset.f=f;else delete P.dataset.f;if(tab==="pAno"&&navSel)P.dataset.nav=navSel;else delete P.dataset.nav}}
+  {const P=$("pAno");if(P){const k=navSel||(tab==="pAno"&&anoSubTab==="metas"?"pWal":"");const f={pWal:"C",metas:"M",debts:"D",subs:"S"}[k];if(f&&tab==="pAno")P.dataset.f=f;else delete P.dataset.f;if(tab==="pAno"&&navSel)P.dataset.sect=navSel;else delete P.dataset.sect}}
 }
 /* ---------- Patrimônio (29/10/2026): em R$ = contas + guardado − dívidas − limite usado dos cartões. € e US$ ficam à parte, sem converter.
    cfg.nw = {"AAAA-MM": centavos}: o app regrava o mês atual quando o valor muda, então o valor do último dia vira o fechamento do mês. ---------- */
@@ -6094,7 +6110,7 @@ document.addEventListener("click",async e=>{
   {const mo=t.closest("[data-mesord]");if(mo){try{localStorage.setItem("despesas.mesOrd",mo.dataset.mesord)}catch(e){}renderMes();return}
    if(t.closest("[data-mesall]")){mesAll=!mesAll;renderMes();return}}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
-  const msw=t.closest("[data-msw]"); if(msw){const k=msw.dataset.msw;if(k==="mes")go("pMes");else{anoSubTab=k;lsSet("despesas.anoTab",k);go("pAno")}return}
+  const msw=t.closest("[data-msw]"); if(msw){const k=msw.dataset.msw;if(k==="mes")go("pMes");else{const keep=navSel==="rel";anoSubTab=k;lsSet("despesas.anoTab",k);go("pAno");if(keep){navSel="rel";render()}}return}
   const at=t.closest("[data-anotab]"); if(at){anoSubTab=at.dataset.anotab;lsSet("despesas.anoTab",anoSubTab);renderAno();return}
   if(t.closest("[data-catall]")){mesSubTab="cats";renderMes();setTimeout(()=>$("catAllSec")?.scrollIntoView({block:"start"}),30);return}
   const co=t.closest("[data-catopen]"); if(co){const k=co.dataset.catopen;catOpen.has(k)?catOpen.delete(k):catOpen.add(k);renderMes();return}
@@ -7704,6 +7720,9 @@ function parseHolerite(pages){
   const P=ev.filter(e=>e.side==="p"), big=P.slice().sort((a,b)=>b.cents-a.cents)[0], bd=big?fold(big.desc).toUpperCase():"";
   let kind="Salário";
   if(/13/.test(bd)&&/SAL|13O|13º/.test(bd)) kind="13º salário"+(/PARC\.?\s*0?1\b|1A PARC/.test(bd)?" (1ª parcela)":/PARC\.?\s*0?2\b|2A PARC/.test(bd)?" (2ª parcela)":"");
+  else if(P.some(e=>is13ev(e.desc))&&!P.some(e=>/HORAS NORMAIS|SALARIO (?:MENSAL|BASE|NORMAL)|^SALARIO$|DIAS TRABALHADOS/.test(fold(e.desc).toUpperCase()))){
+    const t=fold(flat).toUpperCase()+" "+P.map(e=>fold(e.desc).toUpperCase()).join(" ");
+    kind="13º salário"+(/PARC\.?\s*0?1\b|1A\s*PARC|PRIMEIRA PARC|ADIANT/.test(t)?" (1ª parcela)":/PARC\.?\s*0?2\b|2A\s*PARC|SEGUNDA PARC/.test(t)?" (2ª parcela)":"")}
   else if(/FERIAS/.test(bd)) kind="Férias";
   else if(/ADIANT/.test(bd)&&!P.some(e=>/HORAS NORMAIS|SALARIO/.test(fold(e.desc).toUpperCase()))) kind="Adiantamento";
   let ref=null;if(mr){const m=/(\d{1,2})\s*\/\s*(\d{4})/.exec(mr);ref=`${m[2]}-${String(m[1]).padStart(2,"0")}`}
@@ -7727,6 +7746,8 @@ function parseHolerite(pages){
   if(!cp) conv=null; else if(!conv) conv={cents:cp.cents,n:0,from:"",to:""};
   return {kind,cents:liq,date,ref:ref||date.slice(0,7),emp:emp?titleCase(emp):"",tp,td,ev,conv,check:tp!=null&&td!=null?tp-td===liq:null};
 }
+/* evento de 13º: "13º SALÁRIO", "1ª PARC. 13 SAL", "DÉCIMO TERCEIRO"… */
+const is13ev=d=>{const t=fold(d).toUpperCase();return /DECIMO TERCEIRO/.test(t)||/\b13/.test(t)&&/SAL|13O|13º|PARC|ADIANT/.test(t)};
 let hol=null;
 /* ---------- salário previsto (out/2026, pedido dele: "igual assinatura, uma ideia do salário base que vai vir") ----------
    Cada holerite lido (folha ou adiantamento, mesmo os antigos, antes de MIN_YM) fica em cfg.hol (só eventos e totais).
@@ -7788,7 +7809,7 @@ function salAdj(P,ref){
 /* extras previstos: 2ª parcela do 13º em 20/12 e o terço de férias no mês escolhido. cfg.salX={d13?: valor à mão, fer?: "AAAA-MM"} */
 function sal13(P,y){
   const X=cfg.salX||{};if(X.d13) return X.d13;
-  const first=items.filter(x=>typeOf(x)==="rec"&&x.cat==="sal"&&/\b13/.test(x.desc||"")&&(x.date||"").startsWith(y+"-")&&!/2/.test((/parcela.*?(\d)/i.exec(x.desc||"")||[])[1]||"")).reduce((s,x)=>s+x.cents,0);
+  const first=items.filter(x=>typeOf(x)==="rec"&&(x.cat==="d13"||x.cat==="sal"&&/\b13/.test(x.desc||""))&&(x.date||"").startsWith(y+"-")&&!/2/.test((/parcela.*?(\d)/i.exec(x.desc||"")||[])[1]||"")).reduce((s,x)=>s+x.cents,0);
   const fp=P.fp||0;return Math.max(0,Math.round(fp-(first||fp/2)-fp*P.rate));
 }
 const salFer=P=>Math.round((P.fp||0)/3*(1-P.rate));
@@ -7811,13 +7832,13 @@ let soId=null;
 async function salOvSet(id,v){const O={...(cfg.salOv||{})};if(v==null)delete O[id];else O[id]=v;await saveCfg({salOv:O});closeSheets();render()}
 function salVirt(ym){
   if(ym<curYM()||!salPrevOn()) return [];
-  const P=salPlanC(), now=today(), out=[], R0=items.filter(x=>typeOf(x)==="rec"&&x.cat==="sal"&&(x.date||"").startsWith(ym));
+  const P=salPlanC(), now=today(), out=[], R0=items.filter(x=>typeOf(x)==="rec"&&(x.cat==="sal"||x.cat==="d13")&&(x.date||"").startsWith(ym));
   /* adiantamento real = nome com adiant/adto/vale ou receita de salário caída entre os dias 10 e 20 (qualquer nome) */
   const isAdv=x=>/adiant|adto|\bvale\b/i.test(fold(x.desc||""))||(!/13|f[ée]rias/i.test(fold(x.desc||""))&&+(x.date||"").slice(8)>=10&&+(x.date||"").slice(8)<=20);
-  const hasAdv=R0.some(isAdv), hasSal=R0.some(x=>!isAdv(x)&&!/13|f[ée]rias/i.test(fold(x.desc||"")));
+  const hasAdv=R0.some(x=>x.cat==="sal"&&isAdv(x)), hasSal=R0.some(x=>x.cat==="sal"&&!isAdv(x)&&!/13|f[ée]rias/i.test(fold(x.desc||"")));
   const A=salAdj(P,ym), B=salAdj(P,shiftYM(ym,-1));
   if(P.adv&&!hasAdv){const d=`${ym}-15`;if(d>=now)out.push({id:"_sp_adv_"+ym,virt:1,type:"rec",cat:"sal",desc:A.up?"Adiantamento (previsto, com aumento)":"Adiantamento (previsto)",cents:A.adv,date:d})}
-  if(ym.endsWith("-12")&&!R0.some(x=>/\b13/.test(x.desc||""))){const d=`${ym}-20`, v=sal13(P,ym.slice(0,4));if(d>=now&&v>0)out.push({id:"_sp_13_"+ym,virt:1,type:"rec",cat:"sal",desc:"13º salário, 2ª parcela (previsto)",cents:v,date:d})}
+  if(ym.endsWith("-12")&&!R0.some(x=>x.cat==="d13"||/\b13/.test(x.desc||""))){const d=`${ym}-20`, v=sal13(P,ym.slice(0,4));if(d>=now&&v>0)out.push({id:"_sp_13_"+ym,virt:1,type:"rec",cat:"d13",desc:"13º salário, 2ª parcela (previsto)",cents:v,date:d})}
   {const X=cfg.salX||{};if(X.fer===ym&&!R0.some(x=>/f[ée]rias/i.test(x.desc||""))){const d=`${ym}-01`, v=salFer(P);if(v>0&&`${ym}-${pad(lastDay(ym))}`>=now)out.push({id:"_sp_fer_"+ym,virt:1,type:"rec",cat:"sal",desc:"Terço de férias (previsto)",cents:v,date:d<now?now:d})}}
   const v=cfg.salPrev==="base"?B.base:B.avg;
   if(v>0&&!hasSal){const pm=shiftYM(ym,-1), fell=`${pm}-${pad(P.fell==="last"?lastDay(pm):Math.min(P.fell,lastDay(pm)))}`;
@@ -7880,7 +7901,7 @@ function holDup(h){
   const key=`holerite-${h.ref}-${h.kind}`;
   const same=items.find(x=>x.imp===key);if(same) return {x:same,same:true};
   const ym=(salShift("sal",h.date)||h).date.slice(0,7), n=fold(h.kind).toLowerCase();
-  const x=items.find(x=>typeOf(x)==="rec"&&x.date.slice(0,7)===ym&&(fold(cleanDesc(x)).toLowerCase()===n||closeC(x.cents,h.cents)&&(x.cat==="sal"||nameSim(x.desc,h.kind)>=.5)));
+  const x=items.find(x=>typeOf(x)==="rec"&&x.date.slice(0,7)===ym&&(fold(cleanDesc(x)).toLowerCase()===n||closeC(x.cents,h.cents)&&((x.cat==="sal"||x.cat==="d13")||nameSim(x.desc,h.kind)>=.5)));
   return x?{x,same:false}:null;
 }
 /* blocos de um holerite (convênio, aviso de conta que não bate, proventos e descontos): usado ao importar e ao rever os lidos */
@@ -7909,7 +7930,7 @@ function openHolerite(h){
 /* a receita que o holerite vira (a mesma ao lançar um, vários de uma vez ou trocar) */
 function holData(h,desc,date){
   const sh=salShift("sal",date);
-  return {type:"rec",desc,cat:"sal",cents:h.cents,date:sh?sh.date:date,...(sh?{fell:sh.fell}:{}),pay:"",card:"",imp:`holerite-${h.ref}-${h.kind}`,...(h.conv?{conv:h.conv.cents,...(h.conv.by&&h.conv.by.length?{convBy:h.conv.by.map(b=>({k:b.k,cents:b.cents,n:b.n}))}:{})}:{})};
+  return {type:"rec",desc,cat:/^13/.test(h.kind||"")?"d13":"sal",cents:h.cents,date:sh?sh.date:date,...(sh?{fell:sh.fell}:{}),pay:"",card:"",imp:`holerite-${h.ref}-${h.kind}`,...(h.conv?{conv:h.conv.cents,...(h.conv.by&&h.conv.by.length?{convBy:h.conv.by.map(b=>({k:b.k,cents:b.cents,n:b.n}))}:{})}:{})};
 }
 async function addHolerite(swapId){
   const h=hol;if(!h) return;
@@ -8101,7 +8122,7 @@ function xlCard(label){
 const xlHas=k=>CATS.desp.some(c=>c.k===k);
 function xlCat(label,type){
   const t=fold(label);
-  if(type==="rec") return /salari|adiant|ferias|\b13|decimo|holerite|folha|plr/.test(t)?"sal":/aula|bico|freela|extra|venda|servic|comiss/.test(t)?"extra":
+  if(type==="rec") return /\b13|decimo/.test(t)?"d13":/salari|adiant|ferias|holerite|folha|plr/.test(t)?"sal":/aula|bico|freela|extra|venda|servic|comiss/.test(t)?"extra":
     /caixa|saldo|sobrou|anterior/.test(t)?"caixa":/rend|juros|dividend|cdb|poupanc|tesouro/.test(t)?"rend":"rout";
   const own=CATS.desp.find(c=>fold(c.n)===t.trim());if(own) return own.k;
   if(xlCard(label)) return "cartao";
