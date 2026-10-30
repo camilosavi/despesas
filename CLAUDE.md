@@ -886,3 +886,10 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **PC encolhe pela altura da janela** (30/10/2026, ele: "pra encaixar tudo eu teria que estar com zoom em 50%"): `html{font-size:clamp(11px,min(.42vw+8.4px,2.1vh),26px)}`
   (antes só pela largura), então em janela baixa tudo diminui junto em vez de passar da tela. Visão geral: `min-height:28em`, linhas `minmax(8.5em,1fr)`,
   Fluxo sem altura mínima própria. Medido sem rolar em 1366×560, 1280×600, 1280×800, 1440×900, 1536×650, 1920×950 e 1920×1080.
+- **Revisão de alinhamento das telas** (30/10/2026, ele: "várias telas todas desalinhadas", print da faixa "Pode avisar o Camilo…"):
+  faixa de nome de usuário (`.ushare`) em pilha: título, texto, campo e botões do mesmo tamanho lado a lado (no celular dividem a largura);
+  estilos das Faturas/Últimas compras do cartão (`.dsub2/.dfat/.dfr/.dst/.dcr/.dcmp`) valem em todo `.dcard` (na lista "Seus cartões" o texto
+  saía embolado porque o CSS era só do Início); "Adicionar cartão" alinhado em cima; tela **Você**: no PC sumiam o seletor de ano e "Na conta em…"
+  que deviam estar escondidos (`header.top [hidden]{display:none!important}` e `.bigrow:not([hidden])` na regra do PC), nome/foto do topo
+  apareciam brancos no fundo claro (agora `--ink`), e o menu lateral não acende "Visão geral" na tela Você (`navCur` → "pMe"); "+" escondido
+  quando `hidden`; Assinaturas sem nenhuma mostra um aviso em vez de tela vazia; valor das "Parcelas dos meses seguintes" sem quebrar.

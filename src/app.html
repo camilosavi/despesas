@@ -1951,7 +1951,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   /* faixa de cima compacta em todas as telas (menos a Visão geral) */
   body:not(:has(#pHome:not([hidden]))) header.top{padding:.7em 1.2em!important;margin-top:1em!important}
   body:not(:has(#pHome:not([hidden]))) header.top .tcard{display:flex;flex-wrap:wrap;align-items:center;gap:.5em 1.4em}
-  body:not(:has(#pHome:not([hidden]))) header.top .bigrow{display:flex!important;align-items:baseline;gap:.8em;margin:0!important}
+  body:not(:has(#pHome:not([hidden]))) header.top .bigrow:not([hidden]){display:flex!important;align-items:baseline;gap:.8em;margin:0!important}
   body:not(:has(#pHome:not([hidden]))) header.top .bigrow .label,body:not(:has(#pHome:not([hidden]))) header.top .label{display:inline!important;margin:0!important}
   body:not(:has(#pHome:not([hidden]))) header.top .big{font-size:clamp(1.4rem,2.2vw,2.2rem)!important}
   body:not(:has(#pHome:not([hidden]))) header.top .foot,body:not(:has(#pHome:not([hidden]))) header.top .hint{display:none!important}
@@ -2165,16 +2165,17 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #pHome .dleg li{grid-template-columns:.6em 1fr auto;font-size:.82rem}#pHome .dleg em{display:none}
 #pHome .dtv{display:grid;justify-items:end;gap:.1em}#pHome .dtv small{color:var(--muted);font-size:.74rem}#pHome .dtv b{font-size:.9rem;font-variant-numeric:tabular-nums}
 #pHome .dtn b{font-size:.88rem}
-#pHome .dsub2{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;font-weight:700;margin-top:.4em;padding-top:.6em;border-top:1px solid var(--line)}
-#pHome .dsub2 em{font-style:normal;font-weight:500;color:var(--muted)}#pHome .dsub2 em b{color:var(--ink)}
-#pHome .dfat,#pHome .dcmp{display:grid}
-#pHome .dfr{display:grid;grid-template-columns:1fr auto auto;gap:.8em;align-items:center;padding:.35em .5em;border-radius:.5em;font-size:.82rem}
-#pHome .dfr.cur{background:var(--chip)}#pHome .dfr b{font-variant-numeric:tabular-nums;min-width:5.5em;text-align:right}
-#pHome .dst{font-style:normal;font-size:.72rem;font-weight:600;padding:.15em .6em;border-radius:99px;background:var(--chip);color:var(--muted)}
-#pHome .dst.ok{color:var(--pos);background:color-mix(in srgb,var(--pos) 14%,transparent)}#pHome .dst.late{color:var(--neg);background:color-mix(in srgb,var(--neg) 12%,transparent)}
-#pHome .dst.open{color:var(--ink);background:var(--chip)}
-#pHome .dcr{display:flex;justify-content:space-between;align-items:center;gap:.8em;padding:.45em .5em;border-bottom:1px solid var(--line);font-size:.82rem}
-#pHome .dcr:last-child{border-bottom:0}#pHome .dcr>span{display:grid;min-width:0}#pHome .dcr>span b{overflow:hidden;text-overflow:ellipsis}#pHome .dcr small{color:var(--muted);font-size:.72rem}#pHome .dcr>b{font-variant-numeric:tabular-nums}
+.dcard .dsub2{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;font-weight:700;margin-top:.4em;padding-top:.6em;border-top:1px solid var(--line)}
+.dcard .dsub2 em{font-style:normal;font-weight:500;color:var(--muted)}.dcard .dsub2 em b{color:var(--ink)}
+.dcard .dfat,.dcard .dcmp{display:grid}
+.dcard .dfat,.dcard .dcmp,.dcard .dsub2{width:100%;min-width:0}
+.dcard .dfr{display:grid;grid-template-columns:1fr auto auto;gap:.8em;align-items:center;padding:.35em .5em;border-radius:.5em;font-size:.82rem}
+.dcard .dfr.cur{background:var(--chip)}.dcard .dfr b{font-variant-numeric:tabular-nums;min-width:5.5em;text-align:right}
+.dcard .dst{font-style:normal;font-size:.72rem;font-weight:600;padding:.15em .6em;border-radius:99px;background:var(--chip);color:var(--muted)}
+.dcard .dst.ok{color:var(--pos);background:color-mix(in srgb,var(--pos) 14%,transparent)}.dcard .dst.late{color:var(--neg);background:color-mix(in srgb,var(--neg) 12%,transparent)}
+.dcard .dst.open{color:var(--ink);background:var(--chip)}
+.dcard .dcr{display:flex;justify-content:space-between;align-items:center;gap:.8em;padding:.45em .5em;border-bottom:1px solid var(--line);font-size:.82rem}
+.dcard .dcr:last-child{border-bottom:0}.dcard .dcr>span{display:grid;min-width:0}.dcard .dcr>span b{overflow:hidden;text-overflow:ellipsis}.dcard .dcr small{color:var(--muted);font-size:.72rem}.dcard .dcr>b{font-variant-numeric:tabular-nums}
 #pHome .dcard .mini{display:none!important}
 @media (max-width:979px){#pHome .d-cartoes .dsub2,#pHome .d-cartoes .dfat,#pHome .d-cartoes .dcmp{display:flex!important}#pHome .dfat,#pHome .dcmp{flex-direction:column}#pHome .dsub2{display:flex!important}}
 @media (min-width:980px){
@@ -2211,6 +2212,20 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #pHome .d-cartoes .dcards{touch-action:pan-x pan-y;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;align-items:flex-start}
 #pHome .dcard{align-content:start;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 #pHome .dcard:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:1em}
+/* faixa "Pode avisar o Camilo…" alinhada (30/10/2026): título, texto, campo e botões um embaixo do outro, botões do mesmo tamanho */
+.card.banner.ushare{display:block!important;padding:16px 18px!important}
+.ushare>strong{display:block;margin-bottom:4px}.ushare>p{margin:0 0 12px}
+.ushare .field{max-width:24em;margin:0!important}
+.ushare .row{display:flex!important;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+.ushare .row .btn{flex:0 0 auto;min-width:9em;white-space:nowrap;margin:0}
+@media (max-width:520px){.ushare .row .btn{flex:1 1 0;min-width:0}.ushare .field{max-width:none}}
+/* lista "Seus cartões" no PC: quadro "Adicionar cartão" em cima, alinhado aos cartões; valor das parcelas sem quebrar */
+.folders:has(.dcard){align-items:start}
+.folders .foladd{align-self:start!important}
+.limbr b,.limbr strong{white-space:nowrap}
+/* atributo hidden vale sempre no topo (30/10/2026: na tela Você o PC mostrava o seletor de ano e "Na conta em…" que deviam estar escondidos) */
+#addBtn[hidden],.fab[hidden],header.top [hidden],header.top .bigrow[hidden],header.top #mpill[hidden],header.top .split[hidden]{display:none!important}
+#meHead .nm{color:var(--ink)!important}#meHead .label{color:var(--muted)!important}#meHead .av{background:var(--chip);color:var(--ink)}
 </style>
 
 <div class="wrap">
@@ -2932,7 +2947,7 @@ function limBreak(c){
     return `<div class="hlrow"><span>Fatura de ${shortMonth(m)}${late?` <small class="warn">venceu ${fmtDM(d)}</small>`:` <small class="muted">vence ${fmtDM(d)}</small>`}</span><b>${R(by[m])}</b>${late?`<button class="tbtn" data-paidbill="${esc(c)}|${m}">Já paguei</button>`:""}</div>`}).join("")+
     (futV?(()=>{const S={};usedItems(c).filter(x=>fut.includes((x.date||"").slice(0,7))).forEach(x=>{const k=x.group||cleanDesc(x);(S[k]=S[k]||{n:cleanDesc(x),v:0,q:0}).v+=amt(x);S[k].q++});
       const L=Object.values(S).sort((p,q)=>q.v-p.v);
-      return `<details class="hldet" style="margin:4px 0 0"><summary style="display:flex;justify-content:space-between;gap:10px"><span>Parcelas dos meses seguintes <small class="muted">${fut.length} ${fut.length===1?"mês":"meses"}</small></span><b style="color:var(--ink)">${R(futV)}</b></summary>${L.map(e=>`<div class="hlrow"><span>${esc(e.n)} <small class="muted">${e.q} ${e.q===1?"parcela":"parcelas"}</small></span><b>${R(e.v)}</b></div>`).join("")}</details>`})():"")+`</div>`;
+      return `<details class="hldet" style="margin:4px 0 0"><summary style="display:flex;justify-content:space-between;gap:10px"><span>Parcelas dos meses seguintes <small class="muted">${fut.length} ${fut.length===1?"mês":"meses"}</small></span><b style="color:var(--ink);white-space:nowrap">${R(futV)}</b></summary>${L.map(e=>`<div class="hlrow"><span>${esc(e.n)} <small class="muted">${e.q} ${e.q===1?"parcela":"parcelas"}</small></span><b>${R(e.v)}</b></div>`).join("")}</details>`})():"")+`</div>`;
 }
 /* cartão também é conta: saldo informado por cartão (usa a mesma lista cfg.accts do "Saldo na conta" do Hoje) */
 const acctOf=c=>accts().find(a=>a.name===c);
@@ -3272,7 +3287,7 @@ const personPath=()=>`pessoa/${userName()}/${deviceTag()}`;
 let userEditing=false;
 function userForm(title,lead){
   const sug=userName()||userSlug(authData()&&authData().name);
-  return `<section><div class="card banner"><strong>${title}</strong><p>${lead}</p>
+  return `<section><div class="card banner ushare"><strong>${title}</strong><p>${lead}</p>
     <div class="field" style="margin:0"><label for="userIn">Nome de usuário</label><input type="text" id="userIn" class="limin" maxlength="20" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="ex.: joao.silva" value="${esc(sug)}"><span class="hint expl">Letras, números, ponto ou _.</span></div>
     <div class="row">${userEditing?`<button class="btn soft" id="userCancel">Cancelar</button>`:`<button class="btn soft" id="shareNo">Prefiro não</button>`}<button class="btn primary" id="shareYes">${userEditing?"Salvar":"Pode avisar"}</button></div></div></section>`;
 }
@@ -3616,7 +3631,7 @@ function sidebarHtml(){
   return `<span class="sbbrand"><img src="tostao-logo.png" alt="Um Tostão"></span><div class="sbgrp"><small>Menu principal</small>${NAVS.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Planejamento</small>${NAVP.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Análises</small>${NAVA.map(x=>b(...x)).join("")}</div><button class="sb sbmin-b" data-sbmin title="Recolher ou abrir o menu" aria-label="Recolher ou abrir o menu"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Recolher menu</span></button>`;
 }
 let navSel=null;
-const navCur=()=>navSel||(tab==="pHome"?"pHome":tab==="pMes"?"pMes":tab==="pCards"||tab==="pFx"?"pCards":tab==="pAno"&&anoSubTab==="metas"?"pWal":tab==="pAno"?"rel":"pHome");
+const navCur=()=>navSel||(tab==="pMe"?"pMe":tab==="pHome"?"pHome":tab==="pMes"?"pMes":tab==="pCards"||tab==="pFx"?"pCards":tab==="pAno"&&anoSubTab==="metas"?"pWal":tab==="pAno"?"rel":"pHome");
 function navGo(k){
   navSel=null;
   if(k==="pMe"){go("pMe");return}
@@ -5603,7 +5618,7 @@ function renderAno(){
     <div class="toolbar"><button class="tbtn" id="exAdd">Adicionar previsto</button></div></section>`;
 
     h += `<div class="ano-grid ano-fixos-grid">
-      <div class="ano-col-main"><div class="gX">${salSection()}${holSection()}</div><div class="gS">${subSection()}</div></div>
+      <div class="ano-col-main"><div class="gX">${salSection()}${holSection()}</div><div class="gS">${subSection()||`<section><h2>Assinaturas</h2><div class="card"><p class="dempty" style="margin:0">Nenhuma assinatura nos últimos meses. Lançamentos na categoria Assinaturas (ou Netflix, Spotify, YouTube…) aparecem aqui.</p></div></section>`}</div></div>
       <div class="ano-col-side"><div class="gS">${recurSection()}</div><div class="gX">${prevSec}${feeYear(year)}</div></div>
     </div>`;
   }
