@@ -578,12 +578,12 @@ body{background:var(--bg);min-height:100vh;min-height:100dvh}
 @keyframes grow{from{transform:scaleX(0)}}
 @keyframes growy{from{transform:scaleY(0)}}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}}
-.anim main:not([hidden])>section,.anim main:not([hidden])>.msearch{animation:rise .42s cubic-bezier(.2,.8,.2,1) both}
-.anim main:not([hidden])>section:nth-of-type(2){animation-delay:.04s}.anim main:not([hidden])>section:nth-of-type(3){animation-delay:.08s}
-.anim main:not([hidden])>section:nth-of-type(4){animation-delay:.12s}.anim main:not([hidden])>section:nth-of-type(n+5){animation-delay:.16s}
-.anim .bar i,.anim .mini i,.anim .prog i,.anim .frow .b i,.anim .minicats{transform-origin:left;animation:grow .8s cubic-bezier(.2,.8,.2,1) both}
-.anim .spark i{transform-origin:bottom;animation:growy .6s cubic-bezier(.2,.8,.2,1) both}
-.anim svg rect.bar-r{transform-box:fill-box;transform-origin:bottom;animation:growy .7s cubic-bezier(.2,.8,.2,1) both}
+/* 30/10/2026 (pedido dele: "muita coisa pula"): a tela inteira entra de uma vez (animIn, Web Animations no painel, não
+   reinicia se a tela for redesenhada no meio); antes cada seção subia sozinha e só onde a seção era filha direta do painel
+   (no PC quase nada animava e no celular cada bloco chegava num tempo). As barras crescem junto, mais curtas. */
+.anim .bar i,.anim .mini i,.anim .prog i,.anim .frow .b i,.anim .minicats{transform-origin:left;animation:grow .5s cubic-bezier(.2,.8,.2,1) both}
+.anim .spark i{transform-origin:bottom;animation:growy .45s cubic-bezier(.2,.8,.2,1) both}
+.anim svg rect.bar-r{transform-box:fill-box;transform-origin:bottom;animation:growy .5s cubic-bezier(.2,.8,.2,1) both}
 /* toast com check */
 .toast.ok{display:flex;align-items:center;gap:8px}
 .toast svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
@@ -2529,7 +2529,7 @@ async function initStore(){
     }
   }catch(e){}
   let loaded=0;
-  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1();migrate13()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;if(first)animIn();render();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();migrate13();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
+  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1();migrate13()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;render();if(first)animIn();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();migrate13();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
   note(store.synced?"Salvo na sua conta Claude — igual no iPhone e no computador.":PWA?"Salvo neste iPhone. Faça um backup de vez em quando.":"Salvo só neste navegador.");
   if(PWA){
     try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -2948,15 +2948,20 @@ function fxStats(cur){
 
 /* ---------- cabeçalho ---------- */
 /* número grande conta até o valor novo */
+/* número grande do topo (30/10/2026, pedido dele: "tem muita coisa que pula"): só conta até o valor quando é o MESMO número
+   (mesma tela e mesmo rótulo) que mudou de valor. Trocar de tela, de mês ou de rótulo mostra o valor direto (antes contava do
+   número da tela anterior, ex.: 3.609 → 300 ao abrir o Mês). O header pode chamar setBig mais de uma vez no mesmo desenho:
+   vale só a última (aplicada num microtask). */
 function setBig(sym,cents){
-  const el=$("big"), from=el.dataset.v==null?0:+el.dataset.v, show=v=>{el.innerHTML=`<small>${sym}</small>${v<0?"−":""}${brl(Math.abs(v))}`};
-  el.dataset.v=cents;cancelAnimationFrame(setBig.raf);
-  const swap=el.dataset.sym!=null&&el.dataset.sym!==sym;
-  if(from===cents||matchMedia("(prefers-reduced-motion: reduce)").matches){el.dataset.sym=sym;show(cents);return}
-  if(swap) el.animate([{opacity:.25,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:360,easing:"cubic-bezier(.2,.8,.2,1)"});
-  el.dataset.sym=sym;const t0=performance.now(), dur=650;
-  const step=t=>{const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);show(Math.round(from+(cents-from)*e));if(k<1)setBig.raf=requestAnimationFrame(step)};
-  setBig.raf=requestAnimationFrame(step);
+  setBig.p={sym,cents,key:tab+"|"+(selCard||"")+"|"+(($("bigLabel")||{}).textContent||"")};
+  if(setBig.q)return;setBig.q=1;
+  queueMicrotask(()=>{setBig.q=0;const {sym,cents,key}=setBig.p, el=$("big"), C=setBig.c||{};
+    const show=v=>{el.innerHTML=`<small>${sym}</small>${v<0?"−":""}${brl(Math.abs(v))}`};
+    cancelAnimationFrame(setBig.raf);setBig.c={key,cents,sym};el.dataset.v=cents;el.dataset.sym=sym;
+    if(C.key!==key||C.sym!==sym||C.cents===cents||matchMedia("(prefers-reduced-motion: reduce)").matches){show(cents);return}
+    const from=C.cents, t0=performance.now(), dur=520;
+    const step=t=>{const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);show(Math.round(from+(cents-from)*e));if(k<1)setBig.raf=requestAnimationFrame(step)};
+    setBig.raf=requestAnimationFrame(step)});
 }
 /* cartão do topo do Hoje/Contas personalizável (29/10/2026, pedido dele: "era pra usar o visual do cartão, mas que fosse
    personalizável"). cfg.homeCard={name?, color?}: color "" = cor da 1ª conta (como antes), "theme" = cor do tema, "#rrggbb" = escolhida.
@@ -6061,7 +6066,7 @@ function go(t){
   ["pHome","pAno"].forEach(p=>{if(p!==tab)$(p).innerHTML=""});
   $("tabAv").toggleAttribute("aria-current",tab==="pMe");if(tab==="pMe")$("tabAv").setAttribute("aria-current","page");document.querySelector("nav.tabs").classList.toggle("onme",tab==="pMe");
   if(tab==="pAno") year=Math.max(MIN_YEAR,Number(view.slice(0,4)));
-  animIn();render();sbMark();window.scrollTo(0,0);
+  render();sbMark();window.scrollTo(0,0);animIn();
 }
 /* seletores (.seg/.segc): a pílula escura desliza da opção antiga para a nova, mesmo quando a tela é redesenhada
    (a posição anterior fica em pillPos, pela id/aria-label do seletor) */
@@ -6090,7 +6095,14 @@ function slideIn(panel,dir,skip){
     [{opacity:0,transform:`translateX(${dir*26}px)`},{opacity:1,transform:"none"}],
     {duration:340,delay:Math.min(i,4)*35,easing:"cubic-bezier(.2,.8,.2,1)",fill:"backwards"}));
 }
-function animIn(){document.body.classList.add("anim");clearTimeout(animIn.t);animIn.t=setTimeout(()=>document.body.classList.remove("anim"),1000)}
+function animIn(){
+  document.body.classList.add("anim");clearTimeout(animIn.t);animIn.t=setTimeout(()=>document.body.classList.remove("anim"),650);
+  if(reduceM())return;
+  const P=$(tab), E="cubic-bezier(.2,.8,.2,1)";
+  if(P){(animIn.a||[]).forEach(a=>{try{a.cancel()}catch(e){}});
+    animIn.a=[P.animate([{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"none"}],{duration:260,easing:E})];
+    document.querySelectorAll("header.top .bigrow,header.top .split,header.top #hBar,header.top #ptitle").forEach(el=>{if(el.offsetParent)animIn.a.push(el.animate([{opacity:0},{opacity:1}],{duration:200,easing:"ease-out"}))})}
+}
 /* dígito da tecla, inclusive do teclado numérico com o Num Lock desligado (aí o navegador manda End, ←, ↓…) */
 const numKey=e=>{const m=/^Numpad(\d)$/.exec(e.code||"");return m?m[1]:/^\d$/.test(e.key)?e.key:""};
 document.addEventListener("keydown",e=>{const t=e.target, m=/^Numpad(\d)$/.exec(e.code||"");
