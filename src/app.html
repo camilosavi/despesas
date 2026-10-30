@@ -2154,13 +2154,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 #pHome .dwhy{margin:.7em 0 0;font-size:.8rem;color:var(--muted);line-height:1.4}#pHome .dwhy b{color:var(--ink);white-space:normal}
 #pHome .d-fluxo h3 .flleg{margin:0;gap:.9em;font-size:.75rem}
 #pHome .fl{background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),var(--line) calc(25% - 1px),var(--line) 25%);background-position:0 -1.4em;padding-top:.2em}
-#pHome .flb i.r{background:var(--head)}#pHome .flb i.d{background:color-mix(in srgb,var(--head) 35%,var(--surface))}
-#pHome .flleg i.r{background:var(--head)}#pHome .flleg i.d{background:color-mix(in srgb,var(--head) 35%,var(--surface))}
 :root[data-theme="dark"] #pHome{--dk:1}
-:root[data-theme="dark"] #pHome :is(.flb,.flleg) i.r{background:var(--accent)}:root[data-theme="dark"] #pHome :is(.flb,.flleg) i.d{background:color-mix(in srgb,var(--accent) 35%,var(--surface))}
-:root[data-theme="dark"] #pHome .d-saldo{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 34%,var(--surface)),color-mix(in srgb,var(--accent) 14%,var(--surface)))!important}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #pHome :is(.flb,.flleg) i.r{background:var(--accent)}:root:not([data-theme="light"]) #pHome :is(.flb,.flleg) i.d{background:color-mix(in srgb,var(--accent) 35%,var(--surface))}
-  :root:not([data-theme="light"]) #pHome .d-saldo{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 34%,var(--surface)),color-mix(in srgb,var(--accent) 14%,var(--surface)))!important}}
+:root[data-theme="dark"] #pHome .d-saldo{background:linear-gradient(160deg,color-mix(in srgb,var(--head) 50%,#5277c4),color-mix(in srgb,var(--head) 72%,#5277c4))!important}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]) #pHome .d-saldo{background:linear-gradient(160deg,color-mix(in srgb,var(--head) 50%,#5277c4),color-mix(in srgb,var(--head) 72%,#5277c4))!important}}
 #pHome .dnc{gap:.1em}#pHome .dnc .dnn{font-size:.7rem;max-width:7em;overflow:hidden;text-overflow:ellipsis;margin:0 auto}
 #pHome .dleg li{grid-template-columns:.6em 1fr auto;font-size:.82rem}#pHome .dleg em{display:none}
 #pHome .dtv{display:grid;justify-items:end;gap:.1em}#pHome .dtv small{color:var(--muted);font-size:.74rem}#pHome .dtv b{font-size:.9rem;font-variant-numeric:tabular-nums}
@@ -2226,12 +2223,44 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* atributo hidden vale sempre no topo (30/10/2026: na tela Você o PC mostrava o seletor de ano e "Na conta em…" que deviam estar escondidos) */
 #addBtn[hidden],.fab[hidden],header.top [hidden],header.top .bigrow[hidden],header.top #mpill[hidden],header.top .split[hidden]{display:none!important}
 #meHead .nm{color:var(--ink)!important}#meHead .label{color:var(--muted)!important}#meHead .av{background:var(--chip);color:var(--ink)}
+/* ===== Navegação no celular (30/10/2026, análise de design): ☰ em todas as telas, nome embaixo de cada aba, + sem cobrir nada ===== */
+.hmenu{display:none}
+@media (max-width:979px){
+  .hmenu{display:grid;place-items:center;width:40px;height:40px;margin:-6px 2px -6px -8px;border:0;background:none;color:var(--ink);cursor:pointer;flex:none;border-radius:10px}
+  .hmenu svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+  body:has(#pHome:not([hidden])) .hmenu{display:none}
+  header.top .titlerow{align-items:center}
+  nav.tabs .tab:not([aria-current="page"]){flex-direction:column;gap:2px!important}
+  nav.tabs .tab:not([aria-current="page"]) span{display:block!important;font-size:.62rem;font-weight:600;line-height:1;letter-spacing:.01em}
+  nav.tabs.onme .tab span{display:block!important;font-size:.62rem;line-height:1}
+  nav.tabs.onme .tab{flex-direction:column;gap:2px!important}
+  body:has(#pHome:not([hidden])) #addBtn{display:none!important}
+  .wrap>main:not([hidden]){padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))!important}
+}
+@media (max-width:380px){nav.tabs .tab:not([aria-current="page"]) span{font-size:.56rem}}
+/* ===== Linguagem visual única (30/10/2026, análise de design) =====
+   receita/despesa com as mesmas cores em todo gráfico; links numa cor só (mais escura no claro, para contraste); títulos de seção iguais ao Início;
+   tela do cartão sem pintar o fundo; alvos de toque e textos pequenos maiores */
+:root{--rcol:var(--pos);--dcol:color-mix(in srgb,var(--neg) 72%,var(--surface));--link:color-mix(in srgb,var(--accent) 62%,#000)}
+:root[data-theme="dark"]{--link:var(--accent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--link:var(--accent)}}
+i.r,.flb i.r,.flleg i.r{background:var(--rcol)!important}i.d,.flb i.d,.flleg i.d{background:var(--dcol)!important}
+:is(#pHome,#pMes,#pAno,#pCards,#pFx,#pMe,#mBody) section>h2:not(.fold h2){font-size:.74rem!important;text-transform:uppercase!important;letter-spacing:.05em!important;font-weight:600!important;color:var(--muted)!important;font-family:inherit!important}
+:is(#pHome,#pMes,#pAno,#pCards,#pFx,#pMe,#mBody) section:not(.fold)>h2 :is(small,button,a,em,b,label,.h2act){text-transform:none!important;letter-spacing:0!important}
+:is(#pHome,#pMes,#pAno,#pCards,#pFx,#pMe,#mBody) section:not(.fold)>h2 :is(button,a,label){font-size:.8rem!important}
+.h2act,.h2act :is(button,label,a),section>h2 button:not(.hdel),section>h2 a,section>h2 label,.dlink,.linkbtn{color:var(--link)!important}
+section>h2 .tbtn.go{color:var(--btn-ink)!important}
+#pHome .dlink{text-decoration:none;font-weight:600}
+#pHome .d-saldo .dlink{color:#fff!important;text-decoration:underline}
+.chips .chip,.azfil button,[data-mesord],[data-azview]{min-height:36px}
+#pHome .dtn small,#pHome .dcr small,#pHome .dtv small,.dcard .dcr small,#pHome .drc>small{font-size:.78rem}
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="tcard">
     <div class="titlerow">
+      <button class="hmenu" id="hMenu" aria-label="Abrir o menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <button class="backbtn" id="backBtn" hidden><span aria-hidden="true">‹</span> <span id="backLbl">Voltar</span></button>
       <h1 id="ptitle">Mês</h1>
       <button class="hav" id="hAv" hidden aria-label="Sua foto e aparência"></button>
@@ -2883,12 +2912,8 @@ function cardTheme(c){
   if(dk){for(let i=0;i<6&&lumHex(col)<.22;i++)col=mixHex(col,"#ffffff",.25)}else{for(let i=0;i<6&&lumHex(col)>.32;i++)col=mixHex(col,"#000000",.2)}
   st.setProperty("--hc",ccol());st.setProperty("--accent",col);st.setProperty("--accent-ink",lumHex(col)>.4?"#13201D":"#FFFFFF");st.setProperty("--btn","var(--accent)");st.setProperty("--btn-ink","var(--accent-ink)");
   const hd=mixHex(ccol(),"#000000",dk?.7:.55);st.setProperty("--head",hd);st.setProperty("--head-muted",mixHex(hd,"#ffffff",.6));
-  /* tela inteira na cor do cartão (fundo, blocos e linhas puxados para a cor) */
+  /* fundo e blocos não puxam mais a cor do cartão (30/10/2026, análise de design: a tela do cartão era a única pintada) */
   ["--bg","--surface","--zebra","--line","--chip"].forEach(k=>st.removeProperty(k));
-  const pr=document.createElement("div");pr.style.cssText="position:absolute;visibility:hidden";document.body.appendChild(pr);
-  const base=k=>{pr.style.background="var("+k+")";return getComputedStyle(pr).backgroundColor};
-  const tint=[["--bg",dk?.16:.10],["--surface",dk?.2:.12],["--zebra",dk?.22:.14],["--line",dk?.3:.2],["--chip",dk?.3:.18]].map(([k,a])=>[k,"color-mix(in srgb,"+ccol()+" "+Math.round(a*100)+"%,"+base(k)+")"]);
-  pr.remove();tint.forEach(([k,v])=>st.setProperty(k,v));
 }
 const dueOf=c=>+(((cfg.cards||{})[c]||{}).due)||0;
 /* mês em que a fatura conta: vence do dia 10 em diante → paga no próprio mês (ex.: Renner dia 15, com o adiantamento);
@@ -3115,7 +3140,7 @@ function header(){header0();hTlUpdate()}
 function header0(){
   $("s1").parentElement.hidden=false;
   const wal=tab==="pAno"&&anoSubTab==="metas", isYear=tab==="pAno"&&!wal, isFx=tab==="pFx", isHome=tab==="pHome";
-  const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
+  const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&["subs","debts","metas"].includes(navSel))||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
   const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Metas",debts:"Dívidas",subs:"Assinaturas",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
@@ -3185,12 +3210,13 @@ function header0(){
       $("bigLabel").textContent=`Saldo ${selCard}`;setBig("R$",benBal(b));
       $("s1l").textContent="Gasto no mês";$("s1").textContent=R(sp);$("s2l").textContent=b.daily?"Por dia útil":"Crédito por mês";$("s2").textContent=b.daily?R(b.daily):b.credit?R(b.credit):"—";
       $("hFoot").textContent=nx?`próximo crédito ${fmtDM(nx)}${b.daily||b.credit?`: ${R(benCreditOn(b,nx))}`:""}`:"";return}
-    const cs=selCard?[selCard]:credCards(), tot=cs.reduce((s,c)=>s+billTot(c,view),0);
-    const L=cs.flatMap(c=>cardItems(c,view)), open=L.filter(x=>!isPaid(x)&&!rollYM(x)).reduce((s,x)=>s+amt(x),0)+cs.reduce((s,c)=>s+rollAmt(c,view),0);
-    $("bigLabel").textContent=selCard?`Fatura ${selCard}`:"Total das faturas";
+    /* lista de cartões: soma a fatura que cada cartão mostra (a em aberto, billShown), igual aos cartões da tela (30/10/2026) */
+    const cs=selCard?[selCard]:credCards(), ymOf=c=>selCard?view:billShown(c,view).ym, tot=cs.reduce((s,c)=>s+(selCard?billTot(c,view):billShow(c,ymOf(c))),0);
+    const L=cs.flatMap(c=>cardItems(c,ymOf(c))), open=L.filter(x=>!isPaid(x)&&!rollYM(x)).reduce((s,x)=>s+amt(x),0)+cs.reduce((s,c)=>s+rollAmt(c,ymOf(c)),0);
+    $("bigLabel").textContent=selCard?`Fatura ${selCard}`:"Faturas em aberto";
     setBig("R$",tot);
     $("s1l").textContent=selCard?"Vencimento":"Cartões";
-    $("s1").textContent=selCard?(dueOf(selCard)?fmtDM(cardDue(selCard,view)):"—"):String(cs.filter(c=>cardTotal(c,view)).length);
+    $("s1").textContent=selCard?(dueOf(selCard)?fmtDM(cardDue(selCard,view)):"—"):String(cs.length);
     $("s2l").textContent="A pagar";$("s2").textContent=R(open);
     const nx=cs.reduce((s,c)=>s+cardTotal(c,shiftYM(view,1)),0);
     {const t0=tot;$("hFoot").textContent=`próximo mês: ${R(nx)}${t0?` (${nx<=t0?"−":"+"} ${R(Math.abs(t0-nx))})`:""}`}
@@ -3686,7 +3712,7 @@ function dcLogo(c){
   return `<span class="dclogo" style="--ls:${sc}">${h}</span>`;
 }
 function dashCard(c,full){
-  const k=cardCfg(c), ym=curYM(), bs=billShown(c,ym), bv=billShow(c,bs.ym), col=cardColor(c), svg=bankLogoSvg(c), dark=lumHex(col)>.5;
+  const k=cardCfg(c), ym=tab=="pCards"&&!selCard?view:curYM(), bs=billShown(c,ym), bv=billShow(c,bs.ym), col=cardColor(c), svg=bankLogoSvg(c), dark=lumHex(col)>.5;
   const f=k.limit?cardFree(c):null, pct=k.limit&&f?Math.max(0,Math.min(100,(k.limit-f.free)/k.limit*100)):null;
   const logo=dcLogo(c);
   let meta="";
@@ -3700,7 +3726,7 @@ function dashCard(c,full){
     const tm=cm.filter(x=>(whenOf(x)||"").slice(0,7)===curYM()).reduce((s,x)=>s+amt(x),0);
     meta=`${fat?`<span class="dsub2">Faturas</span><span class="dfat">${fat}</span>`:""}${cm.length?`<span class="dsub2">Últimas compras<em>Neste mês <b>${R(tm)}</b></em></span><span class="dcmp">${cm.slice(0,4).map(x=>`<span class="dcr"><span><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,"desp").n)} · ${fmtDM(whenOf(x))}</small></span><b>−${R(amt(x))}</b></span>`).join("")}</span>`:""}`;
   }
-  return `<div class="dcard" role="button" tabindex="0" data-opencard="${esc(c)}"><span class="dcplast" style="--cc:${col};color:${dark?"#1A1A1A":"#fff"}">${logo}<span class="dcchip"></span>
+  return `<div class="dcard" role="button" tabindex="0" data-opencard="${esc(c)}" data-ym="${bs.ym}"><span class="dcplast" style="--cc:${col};color:${dark?"#1A1A1A":"#fff"}">${logo}<span class="dcchip"></span>
     <span class="dcinfo"><span><small>Fatura</small><b>${R(bv)}</b></span><span><small>${dueOf(c)?"Vence":"Mês"}</small><b>${dueOf(c)?fmtDM(cardDue(c,bs.ym)):shortMonth(bs.ym)}</b></span>${f?`<span><small>${f.free<0?"Acima":"Livre"}</small><b class="${f.free<0?"neg":""}">${R(Math.abs(f.free))}</b></span>`:""}</span></span>
     <span class="mini" ${pct==null?'style="visibility:hidden"':""}><i style="width:${pct||0}%;background:${pct>=100?"var(--neg)":pct>=80?"var(--warn)":col}"></i></span>${meta}</div>`;
 }
@@ -3734,7 +3760,7 @@ function dashHome(){
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
    <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pWal">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
-   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receitas</span><b>${R(rec)}</b><small>${recLeft?`falta receber ${R(recLeft)}`:"recebido até hoje"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesas</span><b>${R(des)}</b><small>${desLeft?`falta pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobrou":"Faltou"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div></section>
+   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receitas</span><b>${R(rec)}</b><small>${recLeft?`a receber ${R(recLeft)}`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesas</span><b>${R(des)}</b><small>${desLeft?`a pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobrou":"Faltou"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div></section>
    <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p></section>
    <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
    <section class="db d-gastos"><h3>Gastos</h3>${cats}</section>
@@ -4844,9 +4870,9 @@ function renderCards(){
       if(isBen(c)){const b=bens().find(x=>x.name===c), v=benBal(b), nx=benNext(b);
         return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv ${v<0?"neg":""}">${R(v)}</span><span class="fm">saldo do vale${nx?` · crédito ${fmtDM(nx)}`:""}</span></button>`}
       if(IS_WIDE.matches) return dashCard(c,true);
-      const tot=cardTotal(c,view), n=cardItems(c,view).length, max=Math.max(...months.map(m=>cardTotal(c,m)),1);
+      const fy=billShown(c,view).ym, tot=billShow(c,fy), n=cardItems(c,fy).filter(x=>!genFat(x)).length, max=Math.max(...months.map(m=>cardTotal(c,m)),1);
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
-      return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${acctOf(c)?`saldo ${R(acctOf(c).cents)} · `:""}${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
+      return `<button class="folder" data-opencard="${esc(c)}" data-ym="${fy}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${dueOf(c)?`vence ${fmtDM(cardDue(c,fy))} · `:`fatura de ${MES[+fy.slice(5)-1].toLowerCase()} · `}${n?`${n} ${n===1?"item":"itens"}`:"sem itens"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
       `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
@@ -5569,8 +5595,8 @@ function renderAno(){
     for(let g=0;g<=2;g++){const y=top+(H-top-bot)*g/2;svg+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`}
     const bw2=NM<=6?16:10;
     idx.forEach((mi,i)=>{const n=MES[mi],cx=NM>1?24+i*(W-48)/(NM-1):W/2;
-      svg+=`<rect x="${cx-bw2-1}" y="${H-bot-sc(recM[i])}" width="${bw2}" height="${sc(recM[i])}" rx="2" class="bar-r" fill="var(--accent)"/>`;
-      svg+=`<rect x="${cx+1}" y="${H-bot-sc(despM[i])}" width="${bw2}" height="${sc(despM[i])}" rx="2" class="bar-r" fill="var(--c2)"/>`;
+      svg+=`<rect x="${cx-bw2-1}" y="${H-bot-sc(recM[i])}" width="${bw2}" height="${sc(recM[i])}" rx="2" class="bar-r" fill="var(--rcol)"/>`;
+      svg+=`<rect x="${cx+1}" y="${H-bot-sc(despM[i])}" width="${bw2}" height="${sc(despM[i])}" rx="2" class="bar-r" fill="var(--dcol)"/>`;
       svg+=`<text x="${cx}" y="${H-6}" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Figtree,system-ui">${n}</text>`});
     svg+=`<text x="2" y="${top+9}" font-size="9" fill="var(--muted)" font-family="Figtree,system-ui">${R(max).replace(/,\d\d$/,"")}</text></svg>`;
 
@@ -5589,7 +5615,7 @@ function renderAno(){
       <div class="card hcard"><small>POUPANÇA MÉDIA</small><b>${recTot?Math.round((saldoTot/recTot)*100)+'%':'—'}</b><span>da receita</span></div>
     </div>`;
 
-    const chartSec = `<section><h2>Receitas × despesas</h2><div class="card chart"><div class="legend"><span><i class="dot" style="background:var(--accent)"></i>Receitas</span><span><i class="dot" style="background:var(--c2)"></i>Despesas</span></div>${svg}</div></section>`;
+    const chartSec = `<section><h2>Receitas × despesas</h2><div class="card chart"><div class="legend"><span><i class="dot" style="background:var(--rcol)"></i>Receitas</span><span><i class="dot" style="background:var(--dcol)"></i>Despesas</span></div>${svg}</div></section>`;
 
     const tableSec = `<section><h2>Resumo de ${year} <small>deslize →</small></h2><div class="card tablewrap"><table class="yt"><thead><tr><th>Categoria</th>${idx.map(i=>`<th class="r">${MES[i]}</th>`).join("")}<th class="r">Total</th></tr></thead><tbody>`+
       (rows||`<tr><td colspan="${NM+2}" style="color:var(--muted)">Sem despesas em ${year}</td></tr>`)+
@@ -6301,7 +6327,7 @@ document.addEventListener("click",async e=>{
   if(t.closest("#hAv,#tabAv")){go("pMe");return}
   {const fp=t.closest("[data-fxper]");if(fp){fxPer=+fp.dataset.fxper;try{localStorage.setItem("despesas.fxPer",fxPer)}catch(e){}render();return}}
   {const cb=t.closest("[data-dcar]");if(cb){const c=$("dcar");if(c)c.scrollBy({left:+cb.dataset.dcar*c.clientWidth,behavior:"smooth"});return}}
-  {if(t.closest("[data-sbmin]")){const on=!document.documentElement.classList.contains("sbmin"), H=document.documentElement;H.classList.add("sbanim");clearTimeout(H.sbT);H.sbT=setTimeout(()=>H.classList.remove("sbanim"),420);H.classList.toggle("sbmin",on);lsSet("despesas.sbMin",on?"1":null);setTimeout(()=>window.dispatchEvent(new Event("resize")),340);return}if(t.closest("#dMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
+  {if(t.closest("[data-sbmin]")){const on=!document.documentElement.classList.contains("sbmin"), H=document.documentElement;H.classList.add("sbanim");clearTimeout(H.sbT);H.sbT=setTimeout(()=>H.classList.remove("sbanim"),420);H.classList.toggle("sbmin",on);lsSet("despesas.sbMin",on?"1":null);setTimeout(()=>window.dispatchEvent(new Event("resize")),340);return}if(t.closest("#dMenu,#hMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
   if(t.closest("#hBell")||t.closest("#hBell2")){avSheet();return}
   const avr=t.closest("[data-av]"); if(avr){const e=avLog().find(x=>x.k===avr.dataset.av);avGo(e&&e.go);return}
   if(t.closest("[data-av-me]")){avGo({me:1});return}

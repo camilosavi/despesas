@@ -893,3 +893,14 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   que deviam estar escondidos (`header.top [hidden]{display:none!important}` e `.bigrow:not([hidden])` na regra do PC), nome/foto do topo
   apareciam brancos no fundo claro (agora `--ink`), e o menu lateral não acende "Visão geral" na tela Você (`navCur` → "pMe"); "+" escondido
   quando `hidden`; Assinaturas sem nenhuma mostra um aviso em vez de tela vazia; valor das "Parcelas dos meses seguintes" sem quebrar.
+- **Análise de design aplicada** (30/10/2026, ele: "aplique" as 3 prioridades):
+  1. *Números que batem:* a lista de Cartões soma a fatura que cada cartão mostra (`billShown`, título "Faturas em aberto", "Cartões" = quantos
+     cartões); os cartões da lista (PC `dashCard`, que agora usa `view` na tela Cartões, e celular `.folder`) mostram a mesma fatura ("vence dd/mm ·
+     N itens") e levam `data-ym`, então o cartão abre nessa fatura, não num mês vazio.
+  2. *Navegação no celular:* ☰ (`#hMenu`) no topo de todas as telas fora do Início (abre a gaveta, igual ao `#dMenu`); nome pequeno embaixo de cada
+     aba da barra; sem "+" no Início (Receita/Despesa do Saldo fazem isso); listas com 150 px livres embaixo para o "+" e a barra não cobrirem nada.
+  3. *Uma linguagem visual:* títulos de seção em caixa alta pequena em todas as telas (como os blocos do Início; seções recolhíveis `.fold` ficam como
+     estavam); links de ação numa cor só (`--link`: dourado escurecido no claro para contraste, dourado no escuro; "+ Novo cartão" segue botão);
+     receita/despesa nos gráficos sempre `--rcol` (verde) / `--dcol` (vermelho suave) — Início e Relatórios; **tela do cartão não pinta mais o fundo**
+     (`cardTheme` só troca destaque/botões, não `--bg/--surface/--line`); seletor de mês/ano escondido em Metas, Dívidas e Assinaturas; chips com
+     36 px de altura; legendas pequenas do Início em .78rem; Saldo total no escuro em azul (antes marrom); "a receber/a pagar" no Resumo.
