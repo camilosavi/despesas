@@ -1870,9 +1870,9 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .dtr>b{font-variant-numeric:tabular-nums;font-size:.95rem}
   /* colunas: quantas cabem pela largura do painel; blocos grandes ocupam mais de uma linha */
   @container (min-width:640px){#pHome .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.d-saldo,.d-fluxo,.d-trans{grid-column:auto}}
-  @container (min-width:900px){#pHome .dgrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"s r h" "f g c" "t t t"}
+  @container (min-width:900px){#pHome .dgrid{grid-template-columns:minmax(0,24fr) minmax(0,16fr) minmax(0,23.5fr) minmax(0,32fr);grid-template-areas:"s r r h" "f f g c" "t t g c"}
     .d-saldo{grid-area:s}.d-res{grid-area:r}.d-saude{grid-area:h}.d-fluxo{grid-area:f}.d-gastos{grid-area:g}.d-cartoes{grid-area:c}.d-trans{grid-area:t}}
-  @container (min-width:2000px){#pHome .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:"s r h h" "f g c c" "t t t t"}}
+  @container (min-width:2000px){#pHome .dgrid{grid-template-columns:minmax(0,24fr) minmax(0,16fr) minmax(0,23.5fr) minmax(0,32fr)}}
 }
 /* ===== PC: demais telas no mesmo visual da Visão geral (blocos claros, sem faixa escura nem tintas) ===== */
 @media (min-width:980px){
@@ -1912,7 +1912,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .wrap>header.top,.wrap>#note{flex:none}
   #pHome:not([hidden]){display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto!important;padding-bottom:1.2em!important;scrollbar-width:thin}
   #pHome .dtop{flex:none}
-  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(max-content,1fr) max-content}
+  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(11em,1fr) minmax(11em,1fr)}
   #pHome .db{overflow:hidden;display:flex;flex-direction:column;min-height:0}
   /* janela baixa (30/10/2026, print dele com "Nas contas" cortado): a linha de cima e o fluxo não encolhem abaixo do conteúdo; a página rola */
   #pHome :is(.d-saldo,.d-res,.d-saude,.d-fluxo){min-height:min-content}
@@ -1920,8 +1920,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   #pHome .dgrid>section.db{margin:0!important}
   .d-trans h3{position:sticky;top:-1.2em;background:var(--surface);z-index:1}
   /* últimas transações em faixa larga embaixo (30/10/2026, ele: "mal alinhado"): lista em colunas, as 3 colunas de cima ficam com a mesma altura */
-  @container (min-width:900px){#pHome .d-trans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:2.4em;align-content:start;padding-right:5.2em!important}#pHome .d-trans>h3,#pHome .d-trans>.dempty{grid-column:1/-1}}
-  @container (min-width:2000px){#pHome .d-trans{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  #pHome .d-trans,#pHome .d-cartoes{overflow-y:auto!important;scrollbar-width:thin}#pHome .d-gastos .dleg{overflow:auto}
   .dnw{flex:1;min-height:0;grid-template-rows:minmax(9em,2fr) minmax(5em,1fr)}
   .dnb{height:100%;width:auto;aspect-ratio:1;max-width:100%;justify-self:center;min-height:9em}
   .dnb{container-type:inline-size}.dnb .dn{position:absolute;inset:0;height:100%}.dnb .dnc b{font-size:clamp(.6rem,7.2cqi,2rem)}.dnb .dnc small{font-size:clamp(.55rem,5cqi,.8rem)}
@@ -2128,6 +2127,68 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .ctxm .ctxs{padding:6px 10px 2px;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.ctxm .ctxs:empty{padding:0;margin:3px 6px;border-top:1px solid var(--line)}
 .ctxm button{all:unset;box-sizing:border-box;display:block;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:.92rem;white-space:nowrap}
 .ctxm button:hover,.ctxm button:focus-visible{background:var(--chip)}.ctxm button.dng{color:#d9534f}.ctxm button.arm{background:#d9534f;color:#fff}
+
+/* ===== Visão geral no desenho de referência (30/10/2026, print do Grefi): Saldo colorido com Receita/Despesa, Resumo em 3 quadros, Nota com "Por onde começar",
+   Fluxo + Últimas transações à esquerda, Gastos no meio, Cartões com faturas e últimas compras à direita ===== */
+#pHome .db h3{text-transform:uppercase;letter-spacing:.05em;font-size:.74rem!important;font-weight:600;align-items:center}
+#pHome .db h3 .dlink,#pHome .db h3 small,#pHome .db h3 .flleg{text-transform:none;letter-spacing:0}
+#pHome .dlink{color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-size:.8rem}
+#pHome .d-saldo{background:var(--head)!important;border-color:transparent!important;color:#fff}
+#pHome .d-saldo h3{color:rgba(255,255,255,.8)!important}#pHome .d-saldo .dlink{color:#fff}
+#pHome .d-saldo .dbig{font-size:clamp(1.3rem,10cqi,2.2rem);color:#fff}
+#pHome .dsub{display:block;margin-top:.35em;font-size:.78rem;color:rgba(255,255,255,.78);white-space:normal}
+#pHome .dqa{display:flex;gap:.6em;margin-top:.9em}
+#pHome .dqa button{flex:1;display:flex;align-items:center;justify-content:center;gap:.35em;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.08);color:#fff;border-radius:99px;padding:.45em .6em;font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap}
+#pHome .dqa button:hover{background:rgba(255,255,255,.18)}
+#pHome .dqa svg,#pHome .drc svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#pHome .drs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6em}
+#pHome .drc{display:grid;gap:.2em;padding:.7em .8em;border-radius:.8em;min-width:0;background:color-mix(in srgb,var(--pos) 13%,transparent)}
+#pHome .drc.out{background:color-mix(in srgb,var(--neg) 12%,transparent)}
+#pHome .drc>span{display:flex;align-items:center;gap:.35em;font-size:.8rem;font-weight:600}
+#pHome .drc>b{font-size:clamp(.74rem,3.9cqi,1.15rem);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
+#pHome .drc>small{font-size:.72rem;color:var(--muted);white-space:normal;line-height:1.25}
+#pHome .dsc2{display:flex;align-items:baseline;gap:.35em;margin-bottom:.6em}
+#pHome .dsc2>b{font-family:var(--display);font-size:clamp(1.5rem,10cqi,2.2rem);line-height:1}#pHome .dsc2>span{color:var(--muted);font-size:.9rem}
+#pHome .dbadge{font-style:normal;margin-left:.5em;font-size:.75rem;font-weight:600;padding:.2em .7em;border-radius:99px;color:var(--bc);background:color-mix(in srgb,var(--bc) 14%,transparent);align-self:center}
+#pHome .dbar{display:block;height:.5em;border-radius:99px;background:var(--line);overflow:hidden}#pHome .dbar i{display:block;height:100%;border-radius:99px}
+#pHome .dwhy{margin:.7em 0 0;font-size:.8rem;color:var(--muted);line-height:1.4}#pHome .dwhy b{color:var(--ink);white-space:normal}
+#pHome .d-fluxo h3 .flleg{margin:0;gap:.9em;font-size:.75rem}
+#pHome .fl{background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),var(--line) calc(25% - 1px),var(--line) 25%);background-position:0 -1.4em;padding-top:.2em}
+#pHome .flb i.r{background:var(--head)}#pHome .flb i.d{background:color-mix(in srgb,var(--head) 35%,var(--surface))}
+#pHome .flleg i.r{background:var(--head)}#pHome .flleg i.d{background:color-mix(in srgb,var(--head) 35%,var(--surface))}
+:root[data-theme="dark"] #pHome{--dk:1}
+:root[data-theme="dark"] #pHome :is(.flb,.flleg) i.r{background:var(--accent)}:root[data-theme="dark"] #pHome :is(.flb,.flleg) i.d{background:color-mix(in srgb,var(--accent) 35%,var(--surface))}
+:root[data-theme="dark"] #pHome .d-saldo{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 34%,var(--surface)),color-mix(in srgb,var(--accent) 14%,var(--surface)))!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #pHome :is(.flb,.flleg) i.r{background:var(--accent)}:root:not([data-theme="light"]) #pHome :is(.flb,.flleg) i.d{background:color-mix(in srgb,var(--accent) 35%,var(--surface))}
+  :root:not([data-theme="light"]) #pHome .d-saldo{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 34%,var(--surface)),color-mix(in srgb,var(--accent) 14%,var(--surface)))!important}}
+#pHome .dnc{gap:.1em}#pHome .dnc .dnn{font-size:.7rem;max-width:7em;overflow:hidden;text-overflow:ellipsis;margin:0 auto}
+#pHome .dleg li{grid-template-columns:.6em 1fr auto;font-size:.82rem}#pHome .dleg em{display:none}
+#pHome .dtv{display:grid;justify-items:end;gap:.1em}#pHome .dtv small{color:var(--muted);font-size:.74rem}#pHome .dtv b{font-size:.9rem;font-variant-numeric:tabular-nums}
+#pHome .dtn b{font-size:.88rem}
+#pHome .dsub2{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;font-weight:700;margin-top:.4em;padding-top:.6em;border-top:1px solid var(--line)}
+#pHome .dsub2 em{font-style:normal;font-weight:500;color:var(--muted)}#pHome .dsub2 em b{color:var(--ink)}
+#pHome .dfat,#pHome .dcmp{display:grid}
+#pHome .dfr{display:grid;grid-template-columns:1fr auto auto;gap:.8em;align-items:center;padding:.35em .5em;border-radius:.5em;font-size:.82rem}
+#pHome .dfr.cur{background:var(--chip)}#pHome .dfr b{font-variant-numeric:tabular-nums;min-width:5.5em;text-align:right}
+#pHome .dst{font-style:normal;font-size:.72rem;font-weight:600;padding:.15em .6em;border-radius:99px;background:var(--chip);color:var(--muted)}
+#pHome .dst.ok{color:var(--pos);background:color-mix(in srgb,var(--pos) 14%,transparent)}#pHome .dst.late{color:var(--neg);background:color-mix(in srgb,var(--neg) 12%,transparent)}
+#pHome .dst.open{color:var(--ink);background:var(--chip)}
+#pHome .dcr{display:flex;justify-content:space-between;align-items:center;gap:.8em;padding:.45em .5em;border-bottom:1px solid var(--line);font-size:.82rem}
+#pHome .dcr:last-child{border-bottom:0}#pHome .dcr>span{display:grid;min-width:0}#pHome .dcr>span b{overflow:hidden;text-overflow:ellipsis}#pHome .dcr small{color:var(--muted);font-size:.72rem}#pHome .dcr>b{font-variant-numeric:tabular-nums}
+#pHome .dcard .mini{display:none!important}
+@media (max-width:979px){#pHome .d-cartoes .dsub2,#pHome .d-cartoes .dfat,#pHome .d-cartoes .dcmp{display:flex!important}#pHome .dfat,#pHome .dcmp{flex-direction:column}#pHome .dsub2{display:flex!important}}
+@media (min-width:980px){
+  body:has(#pHome:not([hidden])) #addBtn{display:none!important}
+  #pHome>.helpbar{display:none}#pHome .dtop{margin-bottom:1em}
+  #pHome .db{padding:1em 1.1em!important;border-radius:1em}
+  #pHome .db h3{margin-bottom:.8em}
+  #pHome .d-cartoes .dcplast{max-width:17em}
+  #pHome .d-cartoes .dside{top:calc(min(100cqw - 3.4em,17em)/1.75/2 - .2em)}
+  #pHome .d-gastos .dnw{flex:1;grid-template-rows:auto auto;align-content:center;gap:1.6em}
+  #pHome .d-gastos .dnb{height:auto;width:min(100%,12.5em);min-height:0;aspect-ratio:1}
+  #pHome .d-gastos .dleg{max-height:none}
+  #pHome .dtr{padding:.45em 0!important;gap:.7em}#pHome .dtr .ico,#pHome .dtr>span:first-child{transform:scale(.88)}
+}
 </style>
 
 <div class="wrap">
@@ -3593,10 +3654,14 @@ function dashCard(c,full){
   const logo=dcLogo(c);
   let meta="";
   if(full){
-    const cl=closeOf(c), months=Array.from({length:6},(_,i)=>shiftYM(view,i)), mx=Math.max(...months.map(m=>cardTotal(c,m)),1);
-    const n=cardItems(c,view).length, parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
-    meta=`<span class="dcmeta"><span>${cl?`Fecha dia ${cl} · melhor dia de compra ${bestDayOf(cl)}${isBestDay(c)?" ★ hoje":""}`:"Sem dia de fechamento"}</span><span>${n?`${n} ${n===1?"item":"itens"} em ${MES[+view.slice(5)-1].toLowerCase()}`:"sem lançamentos no mês"}${parc?` · ${parc} parcelamentos`:""}${acctOf(c)?` · saldo ${R(acctOf(c).cents)}`:""}${limTag(c)}</span></span>
-    <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/mx*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span>`;
+    const b0=bs.ym, mons=[shiftYM(b0,-1),b0,shiftYM(b0,1)], td=today();
+    const st=m=>{const L=cardItems(c,m).filter(x=>!genFat(x)), v=billShow(c,m);if(!L.length&&!v)return null;
+      const paid=L.length&&L.every(isPaid), due=cardDue(c,m);
+      return paid?["ok","Paga"]:due&&due<td?["late","Vencida"]:m===b0?["open","Aberta"]:m<b0?["open","Aberta"]:["next","Próxima"]};
+    const fat=mons.map(m=>{const s=st(m);if(!s)return"";return `<span class="dfr${m===b0?" cur":""}"><span>${MES[+m.slice(5)-1]}. de ${m.slice(0,4)}</span><em class="dst ${s[0]}">${s[1]}</em><b>${R(billShow(c,m))}</b></span>`}).join("");
+    const cm=items.filter(x=>cardOf(x)===c&&!genFat(x)&&typeOf(x)==="desp").sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0));
+    const tm=cm.filter(x=>(whenOf(x)||"").slice(0,7)===curYM()).reduce((s,x)=>s+amt(x),0);
+    meta=`${fat?`<span class="dsub2">Faturas</span><span class="dfat">${fat}</span>`:""}${cm.length?`<span class="dsub2">Últimas compras<em>Neste mês <b>${R(tm)}</b></em></span><span class="dcmp">${cm.slice(0,4).map(x=>`<span class="dcr"><span><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,"desp").n)} · ${fmtDM(whenOf(x))}</small></span><b>−${R(amt(x))}</b></span>`).join("")}</span>`:""}`;
   }
   return `<button class="dcard" data-opencard="${esc(c)}"><span class="dcplast" style="--cc:${col};color:${dark?"#1A1A1A":"#fff"}">${logo}<span class="dcchip"></span>
     <span class="dcinfo"><span><small>Fatura</small><b>${R(bv)}</b></span><span><small>${dueOf(c)?"Vence":"Mês"}</small><b>${dueOf(c)?fmtDM(cardDue(c,bs.ym)):shortMonth(bs.ym)}</b></span>${f?`<span><small>${f.free<0?"Acima":"Livre"}</small><b class="${f.free<0?"neg":""}">${R(Math.abs(f.free))}</b></span>`:""}</span></span>
@@ -3610,7 +3675,7 @@ function dashHome(){
   const guard=saves().filter(b=>(b.goalCur||"BRL")==="BRL").reduce((s,b)=>{try{return s+svBrl(b)}catch(e){return s}},0);
   /* nota de saúde: sobra do mês, limite dos cartões, atrasos */
   let score=100;const why=[];
-  if(rec>0){const p=sob/rec;if(sob<0){score-=35;why.push("gastou mais do que entrou")}else if(p<.1){score-=15;why.push("sobra pequena")}}
+  if(rec>0){const p=sob/rec;if(sob<0){score-=35;why.push("gastou mais do que entrou no mês")}else if(p<.1){score-=15;why.push("sobra pequena")}}
   const hi=credCards().filter(c=>cardCfg(c).limit&&limPct(c)>=80);if(hi.length){score-=15;why.push("limite alto em "+hi.length+" cartão"+(hi.length>1?"s":""))}
   const late=items.filter(x=>typeOf(x)==="desp"&&!isPaid(x)&&!benOf(x)&&x.date<today()&&x.date>=MIN_DUE).length;if(late){score-=20;why.push(late+" atrasado"+(late>1?"s":""))}
   if(hasAcc&&bal<0){score-=20;why.push("conta no vermelho")}
@@ -3618,27 +3683,29 @@ function dashHome(){
   /* fluxo 6 meses */
   const f0=shiftYM(ym,-5)<MIN_YM?MIN_YM:shiftYM(ym,-5);const ms=[0,1,2,3,4,5].map(d=>shiftYM(f0,d)).map(m=>{const a=inMonth(m);return{m,r:sumT(a,"rec"),d:sumT(a,"desp")}});
   const mx=Math.max(1,...ms.flatMap(x=>[x.r,x.d]));
-  const flux=`<div class="fl">${ms.map(x=>`<div class="flc${x.m===ym?" now":""}"><div class="flb"><i class="r" style="height:${x.r/mx*100}%"></i><i class="d" style="height:${x.d/mx*100}%"></i></div><small>${MES[+x.m.slice(5)-1].toLowerCase().slice(0,3)}</small></div>`).join("")}</div><div class="flleg"><span><i class="r"></i>Entrou</span><span><i class="d"></i>Gastou</span></div>`;
+  const flux=`<div class="fl">${ms.map(x=>`<div class="flc${x.m===ym?" now":""}"><div class="flb"><i class="r" style="height:${x.r/mx*100}%"></i><i class="d" style="height:${x.d/mx*100}%"></i></div><small>${MES[+x.m.slice(5)-1].slice(0,3)}</small></div>`).join("")}</div>`;
+  const fleg=`<span class="flleg"><span><i class="r"></i>Receitas</span><span><i class="d"></i>Despesas</span></span>`;
   /* categorias */
   const bc=byCat(mi,"desp");const arr=Object.entries(bc).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);const tot=arr.reduce((s,x)=>s+x[1],0);
-  const top=arr.slice(0,7).map(([k,v])=>({k,v,c:catOf(k,"desp").c,n:catOf(k,"desp").n}));const rest=tot-top.reduce((s,x)=>s+x.v,0);if(rest>0)top.push({k:"_",v:rest,c:"var(--muted)",n:"Demais"});
-  const cats=tot?`<div class="dnw"><div class="dnb">${donutHtml(top,tot)}<div class="dnc"><small>Total</small><b>${R(tot)}</b></div></div><ul class="dleg">${top.map(x=>`<li><i style="background:${x.c}"></i><span>${esc(x.n)}</span><b>${R(x.v)}</b><em>${Math.round(x.v/tot*100)}%</em></li>`).join("")}</ul></div>`:`<p class="dempty">Nenhum gasto neste mês ainda.</p>`;
+  const top=arr.slice(0,5).map(([k,v])=>({k,v,c:catOf(k,"desp").c,n:catOf(k,"desp").n}));const rest=tot-top.reduce((s,x)=>s+x.v,0);if(rest>0)top.push({k:"_",v:rest,c:"var(--muted)",n:"Outras categorias"});
+  const cats=tot?`<div class="dnw"><div class="dnb">${donutHtml(top,tot)}<div class="dnc"><small>Maior gasto</small><b>${(top[0].v/tot*100).toLocaleString("pt-BR",{maximumFractionDigits:1})}%</b><small class="dnn">${esc(top[0].n)}</small></div></div><ul class="dleg">${top.map(x=>`<li title="${Math.round(x.v/tot*100)}%"><i style="background:${x.c}"></i><span>${esc(x.n)}</span><b>${R(x.v)}</b><em>${Math.round(x.v/tot*100)}%</em></li>`).join("")}</ul></div>`:`<p class="dempty">Nenhum gasto neste mês ainda.</p>`;
   const cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
   const cardsH=cs.length?`<div class="dcar"><div class="dcards" id="dcar">${cs.map(c=>dashCard(c,true)).join("")}</div>${cs.length>1?`<button class="dside l" data-dcar="-1" aria-label="Cartão anterior" hidden>‹</button><button class="dside r" data-dcar="1" aria-label="Próximo cartão">›</button>`:""}</div>`:`<p class="dempty">Nenhum cartão ainda.</p>`;
   const last=items.filter(x=>!genFat(x)).slice().sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0)).slice(0,7);
-  const tr=last.length?last.map(x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${fmtDM(whenOf(x))}${cardOf(x)?" · "+esc(cardOf(x)):""}</small></span><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b></div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
-  const sub=(l,v,cl)=>`<div><small>${l}</small><b class="${cl||""}">${v}</b></div>`;
+  const tr=last.length?last.map(x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,t).n)} · ${esc(cardOf(x)||x.acct||(t==="rec"?"Conta":x.pay)||"")}</small></span><span class="dtv"><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b><small>${fmtDM(whenOf(x))}</small></span></div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
+  const td0=today(), recLeft=mi.filter(x=>typeOf(x)==="rec"&&recDay(x)>td0).reduce((s,x)=>s+amt(x),0), desLeft=mi.filter(x=>typeOf(x)==="desp"&&!isPaid(x)&&!benOf(x)).reduce((s,x)=>s+amt(x),0);
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""></button><div><b class="dgr">${gr}${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
-   <section class="db d-saldo"><h3>Saldo total</h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><div class="dsplit">${hasAcc?sub("Nas contas",R(bal),bal<0?"neg":""):""}${sub("Guardado",R(guard))}</div></section>
-   <section class="db d-res"><h3>Resumo de ${monthLabel(ym).split(" ")[0].toLowerCase()}</h3><div class="dsplit three">${sub("Entrou",R(rec),"pos")}${sub("Gastou",R(des))}${sub(sob>=0?"Sobrou":"Faltou",R(Math.abs(sob)),sob>=0?"pos":"neg")}</div></section>
-   <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc"><b style="color:${sc}">${score}</b><span><b>${sl}</b><small>${why.length?why.join(" · "):"tudo em dia"}</small></span></div><span class="mini"><i style="width:${score}%;background:${sc}"></i></span></section>
-   <section class="db d-fluxo"><h3>Fluxo de caixa <small>6 meses</small></h3>${flux}</section>
-   <section class="db d-gastos"><h3>Gastos por categoria</h3>${cats}</section>
-   <section class="db d-cartoes"><h3>Cartões <button class="dlink" data-nav="pCards">Ver todos</button></h3>${cardsH}</section>
+   <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pWal">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
+   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receitas</span><b>${R(rec)}</b><small>${recLeft?`falta receber ${R(recLeft)}`:"recebido até hoje"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesas</span><b>${R(des)}</b><small>${desLeft?`falta pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobrou":"Faltou"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div></section>
+   <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p></section>
+   <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
+   <section class="db d-gastos"><h3>Gastos</h3>${cats}</section>
+   <section class="db d-cartoes"><h3>Cartões <button class="dlink" data-nav="pCards">Ver cartões</button></h3>${cardsH}</section>
    <section class="db d-trans"><h3>Últimas transações <button class="dlink" data-nav="pMes">Ver todas</button></h3>${tr}</section>
   </div>`;
 }
+document.addEventListener("click",e=>{const q=e.target.closest("[data-dqa]");if(!q)return;openSheet();const b=document.querySelector(`#typeSeg [data-type="${q.dataset.dqa}"]`);if(b&&!b.classList.contains("on"))b.click()});
 document.addEventListener("click",e=>{if(!IS_WIDE.matches&&e.target.closest(".dtop .dsearch")){e.preventDefault();go("pMes");setTimeout(()=>$("mSearch")?.focus(),80)}});
 document.addEventListener("keydown",e=>{if(e.target&&e.target.id==="dashQ"&&e.key==="Enter"){const q=e.target.value;go("pMes");mq=q;render()}});
 document.addEventListener("scroll",e=>{const c=e.target;if(!c||c.id!=="dcar")return;const i=Math.round(c.scrollLeft/Math.max(1,c.clientWidth)),n=c.children.length;const l=document.querySelector(".dside.l"),r=document.querySelector(".dside.r");if(l)l.hidden=i<=0;if(r)r.hidden=i>=n-1},true);
