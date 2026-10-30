@@ -1805,7 +1805,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .flb{display:flex;align-items:flex-end;justify-content:center;gap:.2em;min-height:0}
   .flb i{display:block;width:34%;max-width:1.6em;border-radius:.3em .3em 0 0;min-height:2px}
   i.r{background:var(--pos)}i.d{background:var(--c5)}
-  .flc small{font-size:.75rem;color:var(--muted)}
+  .flc small{font-size:.75rem;color:var(--muted)}.flc.now small{color:var(--ink);font-weight:700}
   .flleg{display:flex;gap:1.2em;margin-top:.8em;font-size:.8rem;color:var(--muted)}.flleg i{display:inline-block;width:.7em;height:.7em;border-radius:50%;margin-right:.4em}
   .dnw{display:grid;gap:1.1em;align-items:center}
   .dnb{position:relative;width:min(100%,15em);margin:0 auto}.dn{width:100%;display:block}
@@ -1882,7 +1882,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .dleg{overflow:auto;max-height:100%}
   .d-cartoes{overflow:hidden}.d-cartoes .dcards{overflow-y:hidden}
   .d-cartoes .dcard{align-self:start}
-  .d-cartoes .dcplast{width:100%;max-width:21em;margin-inline:auto;aspect-ratio:1.9}.d-cartoes .dcinfo b{font-size:clamp(.62rem,4.6cqi,.9rem)}.d-cartoes .dcmeta{display:none}
+  .d-cartoes .dcplast{width:100%;max-width:21em;margin-inline:auto;aspect-ratio:1.9}.d-cartoes .dcinfo b{font-size:clamp(.62rem,4.6cqi,.9rem)}.d-cartoes .dcmeta{max-width:21em;margin-inline:auto;width:100%}
   .d-cartoes .dcard .mini{max-width:21em;margin-inline:auto;width:100%}
 }
 @container (min-width:640px) and (max-width:1059px){#pHome .dgrid{grid-template-rows:none;overflow:auto}}
@@ -2007,6 +2007,8 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .fl{min-height:9em}
   .dnb{width:min(100%,13em)}
   .d-cartoes .dcmeta,.d-cartoes .dcard .spark{display:none!important}
+  main#pHome>section:not(.db)>h2{font-size:.95rem!important;font-weight:600!important;color:var(--muted)!important}
+  .canbuy-card{background:none!important;border:0!important;padding:0!important;box-shadow:none!important}
   .dnc b{font-size:clamp(.85rem,5.5cqi,1.15rem)}
   .d-cartoes .dcard .mini{margin-top:.5em}
   @container (max-width:330px){.d-res .dsplit b{font-size:.78rem}.d-res .dsplit.three{gap:.3em}}
@@ -3485,15 +3487,15 @@ function dashHome(){
   if(hasAcc&&bal<0){score-=20;why.push("conta no vermelho")}
   score=Math.max(0,score);const sl=score>=80?"Muito boa":score>=60?"Boa":score>=40?"Atenção":"Crítica", sc=score>=80?"var(--pos)":score>=60?"var(--c1)":score>=40?"var(--warn)":"var(--neg)";
   /* fluxo 6 meses */
-  const ms=[-5,-4,-3,-2,-1,0].map(d=>shiftYM(ym,d)).filter(m=>m>=MIN_YM||true).map(m=>{const a=inMonth(m);return{m,r:sumT(a,"rec"),d:sumT(a,"desp")}});
+  const f0=shiftYM(ym,-5)<MIN_YM?MIN_YM:shiftYM(ym,-5);const ms=[0,1,2,3,4,5].map(d=>shiftYM(f0,d)).map(m=>{const a=inMonth(m);return{m,r:sumT(a,"rec"),d:sumT(a,"desp")}});
   const mx=Math.max(1,...ms.flatMap(x=>[x.r,x.d]));
-  const flux=`<div class="fl">${ms.map(x=>`<div class="flc"><div class="flb"><i class="r" style="height:${x.r/mx*100}%"></i><i class="d" style="height:${x.d/mx*100}%"></i></div><small>${MES[+x.m.slice(5)-1].toLowerCase().slice(0,3)}</small></div>`).join("")}</div><div class="flleg"><span><i class="r"></i>Entrou</span><span><i class="d"></i>Gastou</span></div>`;
+  const flux=`<div class="fl">${ms.map(x=>`<div class="flc${x.m===ym?" now":""}"><div class="flb"><i class="r" style="height:${x.r/mx*100}%"></i><i class="d" style="height:${x.d/mx*100}%"></i></div><small>${MES[+x.m.slice(5)-1].toLowerCase().slice(0,3)}</small></div>`).join("")}</div><div class="flleg"><span><i class="r"></i>Entrou</span><span><i class="d"></i>Gastou</span></div>`;
   /* categorias */
-  const bc=byCat(mi,"desp");const arr=Object.entries(bc).filter(([k,v])=>v>0&&k!=="cartao").sort((a,b)=>b[1]-a[1]);const tot=arr.reduce((s,x)=>s+x[1],0);
-  const top=arr.slice(0,6).map(([k,v])=>({k,v,c:catOf(k,"desp").c,n:catOf(k,"desp").n}));const rest=tot-top.reduce((s,x)=>s+x.v,0);if(rest>0)top.push({k:"_",v:rest,c:"var(--c8)",n:"Outras"});
+  const bc=byCat(mi,"desp");const arr=Object.entries(bc).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);const tot=arr.reduce((s,x)=>s+x[1],0);
+  const top=arr.slice(0,7).map(([k,v])=>({k,v,c:catOf(k,"desp").c,n:catOf(k,"desp").n}));const rest=tot-top.reduce((s,x)=>s+x.v,0);if(rest>0)top.push({k:"_",v:rest,c:"var(--muted)",n:"Demais"});
   const cats=tot?`<div class="dnw"><div class="dnb">${donutHtml(top,tot)}<div class="dnc"><small>Total</small><b>${R(tot)}</b></div></div><ul class="dleg">${top.map(x=>`<li><i style="background:${x.c}"></i><span>${esc(x.n)}</span><b>${R(x.v)}</b><em>${Math.round(x.v/tot*100)}%</em></li>`).join("")}</ul></div>`:`<p class="dempty">Nenhum gasto neste mês ainda.</p>`;
   const cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
-  const cardsH=cs.length?`<div class="dcar"><div class="dcards" id="dcar">${cs.map(dashCard).join("")}</div>${cs.length>1?`<button class="dside l" data-dcar="-1" aria-label="Cartão anterior" hidden>‹</button><button class="dside r" data-dcar="1" aria-label="Próximo cartão">›</button>`:""}</div>`:`<p class="dempty">Nenhum cartão ainda.</p>`;
+  const cardsH=cs.length?`<div class="dcar"><div class="dcards" id="dcar">${cs.map(c=>dashCard(c,true)).join("")}</div>${cs.length>1?`<button class="dside l" data-dcar="-1" aria-label="Cartão anterior" hidden>‹</button><button class="dside r" data-dcar="1" aria-label="Próximo cartão">›</button>`:""}</div>`:`<p class="dempty">Nenhum cartão ainda.</p>`;
   const last=items.filter(x=>!genFat(x)).slice().sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0)).slice(0,7);
   const tr=last.length?last.map(x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${fmtDM(whenOf(x))}${cardOf(x)?" · "+esc(cardOf(x)):""}</small></span><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b></div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
   const sub=(l,v,cl)=>`<div><small>${l}</small><b class="${cl||""}">${v}</b></div>`;
