@@ -7982,8 +7982,12 @@ function holState(h){
 const holStTxt=(st,h)=>st.s==="old"?`antes de ${monthLabel(MIN_YM).toLowerCase()}, só informativo`:st.s==="same"?"lançado no app ✓":st.s==="dup"?`parece já lançado (“${esc(cleanDesc(st.dup.x))}”)`:"ainda não lançado";
 const evSum=(r,side,re)=>(r.ev||[]).filter(e=>e.s===side&&re.test(evKey(e.d))).reduce((a,e)=>a+e.c,0);
 /* [nome, valor do holerite, 1 = subir é bom / −1 = subir é ruim] */
+/* salário do mês = folha + adiantamento (30/10/2026, pedido dele: "o adiantamento também é uma parte do salário"):
+   o líquido da folha já vem sem o adiantamento, que aparece como desconto nela */
+const holAdv=r=>r&&r.k==="sal"?(r.ev||[]).filter(e=>e.s==="d"&&/ADIANT/.test(evKey(e.d))&&!/13/.test(evKey(e.d))).reduce((a,e)=>a+e.c,0):0;
+const holTot=r=>r.liq+holAdv(r);
 const HOL_ROWS=[
-  ["Líquido",r=>r.liq,1],["Proventos",r=>r.tp||0,1],["Descontos",r=>r.td||(r.tp?r.tp-r.liq:0),-1],
+  ["Salário do mês",holTot,1],["Folha (líquido)",r=>r.liq,1],["Adiantamento",holAdv,1],["Proventos",r=>r.tp||0,1],["Descontos (sem o adiantamento)",r=>(r.td||(r.tp?r.tp-r.liq:0))-holAdv(r),-1],
   ["Hora extra (com DSR)",r=>evSum(r,"p",/HORAS? EXTRAS?/),1],["Sobreaviso",r=>evSum(r,"p",/SOBREAVISO/),1],
   ["Convênio",r=>r.conv?r.conv.c:evSum(r,"d",/COPARTICIPA|CONVENIO/),-1],["INSS",r=>evSum(r,"d",/INSS/),-1],
   ["Imposto de renda",r=>evSum(r,"d",/IRRF|IMPOSTO DE RENDA/),-1],["Faltas e atrasos",r=>evSum(r,"d",/FALTA|ATRASO|DSR PERD/),-1]];
@@ -7994,11 +7998,11 @@ function holSection(){
   const F=A.filter(r=>r.k==="sal"), ch=F.slice(0,8).reverse();
   let chart="";
   if(ch.length>=2){
-    const mx=Math.max(...ch.map(r=>r.liq)), k=c=>Math.round(c/100).toLocaleString("pt-BR"), avg=Math.round(ch.reduce((a,r)=>a+r.liq,0)/ch.length);
-    const hi=ch.reduce((a,r)=>r.liq>a.liq?r:a), lo=ch.reduce((a,r)=>r.liq<a.liq?r:a);
-    chart=`<div class="hint" style="margin:0 0 6px"><b>Líquido da folha</b>, mês a mês</div>
-      <div class="holchart" role="img" aria-label="Líquido da folha por mês">${ch.map((r,i)=>`<div class="hvbar${i===ch.length-1?" last":""}${r.x?" off":""}"><b>${k(r.liq)}</b><i style="height:${Math.max(6,Math.round(r.liq/mx*64))}px"></i><small>${holMon(r.ref)}</small></div>`).join("")}</div>
-      <div class="src">Média ${R(avg)} · maior ${holMon(hi.ref)} ${R(hi.liq)} · menor ${holMon(lo.ref)} ${R(lo.liq)}</div>`;
+    const mx=Math.max(...ch.map(holTot)), k=c=>Math.round(c/100).toLocaleString("pt-BR"), avg=Math.round(ch.reduce((a,r)=>a+holTot(r),0)/ch.length);
+    const hi=ch.reduce((a,r)=>holTot(r)>holTot(a)?r:a), lo=ch.reduce((a,r)=>holTot(r)<holTot(a)?r:a);
+    chart=`<div class="hint" style="margin:0 0 6px"><b>Salário do mês</b> (adiantamento + folha), mês a mês</div>
+      <div class="holchart" role="img" aria-label="Salário do mês, com adiantamento">${ch.map((r,i)=>`<div class="hvbar${i===ch.length-1?" last":""}${r.x?" off":""}"><b>${k(holTot(r))}</b><i style="height:${Math.max(6,Math.round(holTot(r)/mx*64))}px"></i><small>${holMon(r.ref)}</small></div>`).join("")}</div>
+      <div class="src">Média ${R(avg)} · maior ${holMon(hi.ref)} ${R(holTot(hi))} · menor ${holMon(lo.ref)} ${R(holTot(lo))}</div>`;
   }
   let cmp="";
   if(F.length>=2){
@@ -8015,7 +8019,7 @@ function holSection(){
     if(L.length) miss=`<div class="hint" style="margin:0">Faltam holerites de ${L.slice(0,5).map(shortMonth).join(", ")}${L.length>5?` e mais ${L.length-5}`:""}. Importar deixa o salário previsto mais certo.</div>`}
   const show=holAll?A:A.slice(0,6);
   const list=show.map(r=>{const h=holFromRec(r), st=holState(h);
-    return `<button type="button" class="hlitem" data-holv="${esc(r.id)}"><span class="hn"><b>${esc(holShort(r))} · ${shortMonth(r.ref)}</b><small>${holStTxt(st,h)}${r.x?" · fora do previsto":""}</small></span><b class="hv">${R(r.liq)}</b><i>›</i></button>`}).join("");
+    return `<button type="button" class="hlitem" data-holv="${esc(r.id)}"><span class="hn"><b>${esc(holShort(r))} · ${shortMonth(r.ref)}</b><small>${holStTxt(st,h)}${r.x?" · fora do previsto":""}${holAdv(r)?` · com adiantamento ${R(holTot(r))}`:""}</small></span><b class="hv">${R(r.liq)}</b><i>›</i></button>`}).join("");
   return `<section id="holSec"><h2>Holerites lidos <small>${A.length}</small></h2><div class="card rate">
     ${chart}${cmp}${miss}
     <div class="hllist">${list}</div>
