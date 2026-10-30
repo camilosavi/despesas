@@ -1794,18 +1794,26 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
     padding:1.4em .9em!important;gap:0!important;background:var(--surface)!important;border-right:1px solid var(--line)!important;border-bottom:0!important;overflow-y:auto}
   nav.tabs>.tabbrand,nav.tabs>.tab{display:none!important}
   #sbMenu{display:block}
-  .sbbrand{display:flex;justify-content:center;padding:0 0 .6em}.sbbrand img{display:block;width:clamp(2.8em,38%,3.8em);height:auto;border-radius:50%}
-  /* menu recolhido (30/10/2026, pedido dele: "um botão pra minimizar") */
+  .sbbrand{display:flex;justify-content:center;align-items:center;height:4.2em;padding:0 0 .6em}.sbbrand img{display:block;width:3.8em;height:auto;border-radius:50%;transition:width .3s cubic-bezier(.3,.8,.2,1)}
+  /* menu recolhido (30/10/2026, pedido dele: "um botão pra minimizar"; animação refeita: "não tá bonita").
+     Nada muda de lugar na vertical e os ícones ficam no mesmo x: só a largura anda, os nomes somem com fade
+     e os títulos dos grupos viram uma linha no mesmo espaço. */
+  nav.tabs{transition:width .3s cubic-bezier(.3,.8,.2,1)!important;overflow-x:hidden!important}
+  body{transition:padding-left .3s cubic-bezier(.3,.8,.2,1)}
+  .sb{overflow:hidden;transition:padding .3s cubic-bezier(.3,.8,.2,1),background-color .2s,color .2s}
+  .sb>span{transition:opacity .18s ease .08s}
+  .sbgrp small{white-space:nowrap;overflow:hidden;background:linear-gradient(var(--line),var(--line)) .8em 50%/0 1px no-repeat;transition:color .18s ease .08s,background-size .3s ease}
   .sbmin-b{margin-top:.4em!important;opacity:.85}
-  .sbmin-b svg{transition:transform .2s ease}
-  html.sbmin{--sbw:4.6em}
-  html.sbmin nav.tabs{padding:1.2em .55em!important}
-  html.sbmin .sbbrand img{width:2.6em}
-  html.sbmin .sb{justify-content:center;padding:.65em 0;gap:0}
-  html.sbmin .sb>span{display:none}
-  html.sbmin .sbgrp small{font-size:0;padding:0;margin:.3em .6em .5em;border-top:1px solid var(--line)}
+  .sbmin-b svg{transition:transform .3s cubic-bezier(.3,.8,.2,1)}
+  nav.tabs .tabav{transition:margin .3s cubic-bezier(.3,.8,.2,1),color .25s,transform .45s cubic-bezier(.34,1.6,.5,1)!important}
+  html.sbmin{--sbw:5em}
+  html.sbmin .sbbrand img{width:2.7em}
+  html.sbmin .sb{padding-left:calc((5em - 1.8em - 1.25em)/2)}
+  html.sbmin .sb>span{opacity:0;transition:opacity .1s ease}
+  html.sbmin .sbgrp small{color:transparent;background-size:calc(5em - 1.8em - 1.6em) 1px;transition:color .1s ease,background-size .3s ease}
   html.sbmin .sbmin-b svg{transform:rotate(180deg)}
-  html.sbmin nav.tabs .tabav{margin:auto auto 0!important;align-self:center}
+  html.sbmin nav.tabs .tabav{margin-left:calc((5em - 40px)/2 - .9em)!important}
+  @media (prefers-reduced-motion:reduce){nav.tabs,body,.sb,.sb>span,.sbgrp small,.sbbrand img,nav.tabs .tabav{transition:none!important}}
   .sbgrp{margin-bottom:1.1em}
   .sbgrp small{display:block;font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:.4em .8em}
   .sb{display:flex;align-items:center;gap:.7em;width:100%;padding:.62em .8em;margin:.1em 0;border:0;border-radius:.8em;background:none;color:var(--muted);font:inherit;font-size:.95rem;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap}
@@ -1912,8 +1920,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .wrap>header.top,.wrap>#note{flex:none}
   #pHome:not([hidden]){display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto!important;padding-bottom:1.2em!important;scrollbar-width:thin}
   #pHome .dtop{flex:none}
-  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:auto minmax(12em,1fr) minmax(10em,1fr)}
+  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(12em,1fr) minmax(10em,1fr)}
   #pHome .db{overflow:hidden;display:flex;flex-direction:column;min-height:0}
+  /* janela baixa (30/10/2026, print dele com "Nas contas" cortado): a linha de cima e o fluxo não encolhem abaixo do conteúdo; a página rola */
+  #pHome :is(.d-saldo,.d-res,.d-saude,.d-fluxo){min-height:min-content}
   #pHome .d-trans{overflow-y:auto}
   .d-trans h3{position:sticky;top:-1.2em;background:var(--surface);z-index:1}
   .dnw{flex:1;min-height:0;grid-template-rows:minmax(9em,2fr) minmax(5em,1fr)}
@@ -6116,7 +6126,7 @@ document.addEventListener("click",async e=>{
   if(t.closest("#hAv,#tabAv")){go("pMe");return}
   {const fp=t.closest("[data-fxper]");if(fp){fxPer=+fp.dataset.fxper;try{localStorage.setItem("despesas.fxPer",fxPer)}catch(e){}render();return}}
   {const cb=t.closest("[data-dcar]");if(cb){const c=$("dcar");if(c)c.scrollBy({left:+cb.dataset.dcar*c.clientWidth,behavior:"smooth"});return}}
-  {if(t.closest("[data-sbmin]")){const on=!document.documentElement.classList.contains("sbmin");document.documentElement.classList.toggle("sbmin",on);lsSet("despesas.sbMin",on?"1":null);setTimeout(()=>window.dispatchEvent(new Event("resize")),60);return}if(t.closest("#dMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
+  {if(t.closest("[data-sbmin]")){const on=!document.documentElement.classList.contains("sbmin");document.documentElement.classList.toggle("sbmin",on);lsSet("despesas.sbMin",on?"1":null);setTimeout(()=>window.dispatchEvent(new Event("resize")),340);return}if(t.closest("#dMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
   if(t.closest("#hBell")||t.closest("#hBell2")){avSheet();return}
   const avr=t.closest("[data-av]"); if(avr){const e=avLog().find(x=>x.k===avr.dataset.av);avGo(e&&e.go);return}
   if(t.closest("[data-av-me]")){avGo({me:1});return}
