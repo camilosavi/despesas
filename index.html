@@ -1794,18 +1794,21 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
     padding:1.4em .9em!important;gap:0!important;background:var(--surface)!important;border-right:1px solid var(--line)!important;border-bottom:0!important;overflow-y:auto}
   nav.tabs>.tabbrand,nav.tabs>.tab{display:none!important}
   #sbMenu{display:block}
-  .sbbrand{display:flex;justify-content:center;align-items:center;height:4.2em;padding:0 0 .6em}.sbbrand img{display:block;width:3.8em;height:auto;border-radius:50%;transition:width .3s cubic-bezier(.3,.8,.2,1)}
+  .sbbrand{display:flex;justify-content:center;align-items:center;height:4.2em;padding:0 0 .6em}.sbbrand img{display:block;width:3.8em;height:auto;border-radius:50%}html.sbanim .sbbrand img{transition:width .3s cubic-bezier(.3,.8,.2,1)}
   /* menu recolhido (30/10/2026, pedido dele: "um botão pra minimizar"; animação refeita: "não tá bonita").
      Nada muda de lugar na vertical e os ícones ficam no mesmo x: só a largura anda, os nomes somem com fade
      e os títulos dos grupos viram uma linha no mesmo espaço. */
-  nav.tabs{transition:width .3s cubic-bezier(.3,.8,.2,1)!important;overflow-x:hidden!important}
-  body{transition:padding-left .3s cubic-bezier(.3,.8,.2,1)}
-  .sb{overflow:hidden;transition:padding .3s cubic-bezier(.3,.8,.2,1),background-color .2s,color .2s}
+  /* as transições só valem durante o toque no botão (classe sbanim por 400 ms): ao abrir o app ou trocar de tela a largura nunca anima */
+  nav.tabs{overflow-x:hidden!important}
+  html.sbanim nav.tabs{transition:width .3s cubic-bezier(.3,.8,.2,1)!important}
+  html.sbanim body{transition:padding-left .3s cubic-bezier(.3,.8,.2,1)}
+  .sb{overflow:hidden;transition:background-color .2s,color .2s}
+  html.sbanim .sb{transition:padding .3s cubic-bezier(.3,.8,.2,1),background-color .2s,color .2s}
   .sb>span{transition:opacity .18s ease .08s}
   .sbgrp small{white-space:nowrap;overflow:hidden;background:linear-gradient(var(--line),var(--line)) .8em 50%/0 1px no-repeat;transition:color .18s ease .08s,background-size .3s ease}
   .sbmin-b{margin-top:.4em!important;opacity:.85}
   .sbmin-b svg{transition:transform .3s cubic-bezier(.3,.8,.2,1)}
-  nav.tabs .tabav{transition:margin .3s cubic-bezier(.3,.8,.2,1),color .25s,transform .45s cubic-bezier(.34,1.6,.5,1)!important}
+  html.sbanim nav.tabs .tabav{transition:margin .3s cubic-bezier(.3,.8,.2,1),color .25s,transform .45s cubic-bezier(.34,1.6,.5,1)!important}
   html.sbmin{--sbw:5em}
   html.sbmin .sbbrand img{width:2.7em}
   html.sbmin .sb{padding-left:calc((5em - 1.8em - 1.25em)/2)}
@@ -1981,6 +1984,8 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 @media (min-width:980px){
   #pMes:not([hidden]){display:grid!important;grid-template-columns:minmax(15em,22em) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:.7em 1em;overflow:hidden!important;align-content:stretch}
   #pMes>.mesw{grid-column:1;margin:0!important}#pMes>.msearch{grid-column:2;margin:0!important}
+  /* Ano e Fixos: seletor do mesmo tamanho e no mesmo lugar do Mês (lá ele divide a linha com a busca) */
+  #pAno>.mesw{width:min(22em,100%);box-sizing:border-box}
   #pMes>#mBody{grid-column:1/-1;display:flex;flex-direction:column;min-height:0;margin:0!important}
   #pMes>.helpbar{display:none}
   #pMes .mfbar{flex:none;margin:0 0 .7em!important}
@@ -3005,6 +3010,10 @@ function hTlUpdate(){
     if(closeD)st.push({t:"Fecha "+fmtDM(closeD),st:closeD<=t?"done":"next"});
     st.push({t:(due<t?"Venceu ":"Vence ")+fmtDM(due),st:due<t?"done":"next"});
     const n=st.filter(x=>x.st==="done").length;hTlSet(st,(n-1)/(st.length-1)*100);return}
+  /* Ano e Fixos com a mesma linha do tempo (do ano) que o Mês: o topo fica da mesma altura e o seletor Mês | Ano | Fixos não pula (30/10/2026) */
+  if(tab==="pAno"&&anoSubTab!=="metas"&&!(navSel&&navSel!=="rel")){
+    const y=String(year), cy=t.slice(0,4), isCur=y===cy, past=y<cy;
+    hTlSet([{t:"Jan",st:past||isCur?"done":"next"},...(isCur?[{t:"Hoje, "+fmtDM(t),st:"now"}]:[]),{t:"Dez",st:past?"done":"next"}],past?100:isCur?50:0);return}
   hTlSet(null)}
 function header(){header0();hTlUpdate()}
 function header0(){
@@ -6100,7 +6109,9 @@ function animIn(){
   if(reduceM())return;
   const P=$(tab), E="cubic-bezier(.2,.8,.2,1)";
   if(P){(animIn.a||[]).forEach(a=>{try{a.cancel()}catch(e){}});
-    animIn.a=[P.animate([{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"none"}],{duration:260,easing:E})];
+    /* o seletor Mês | Ano | Fixos fica parado (está no mesmo lugar nas três telas); só o resto entra */
+    const fx=[{opacity:0,transform:"translateY(8px)"},{opacity:1,transform:"none"}], o={duration:260,easing:E};
+    animIn.a=P.querySelector(":scope>.mesw")?[...P.children].filter(c=>!c.matches(".mesw")).map(c=>c.animate(fx,o)):[P.animate(fx,o)];
     document.querySelectorAll("header.top .bigrow,header.top .split,header.top #hBar,header.top #ptitle").forEach(el=>{if(el.offsetParent)animIn.a.push(el.animate([{opacity:0},{opacity:1}],{duration:200,easing:"ease-out"}))})}
 }
 /* dígito da tecla, inclusive do teclado numérico com o Num Lock desligado (aí o navegador manda End, ←, ↓…) */
@@ -6138,7 +6149,7 @@ document.addEventListener("click",async e=>{
   if(t.closest("#hAv,#tabAv")){go("pMe");return}
   {const fp=t.closest("[data-fxper]");if(fp){fxPer=+fp.dataset.fxper;try{localStorage.setItem("despesas.fxPer",fxPer)}catch(e){}render();return}}
   {const cb=t.closest("[data-dcar]");if(cb){const c=$("dcar");if(c)c.scrollBy({left:+cb.dataset.dcar*c.clientWidth,behavior:"smooth"});return}}
-  {if(t.closest("[data-sbmin]")){const on=!document.documentElement.classList.contains("sbmin");document.documentElement.classList.toggle("sbmin",on);lsSet("despesas.sbMin",on?"1":null);setTimeout(()=>window.dispatchEvent(new Event("resize")),340);return}if(t.closest("#dMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
+  {if(t.closest("[data-sbmin]")){const on=!document.documentElement.classList.contains("sbmin"), H=document.documentElement;H.classList.add("sbanim");clearTimeout(H.sbT);H.sbT=setTimeout(()=>H.classList.remove("sbanim"),420);H.classList.toggle("sbmin",on);lsSet("despesas.sbMin",on?"1":null);setTimeout(()=>window.dispatchEvent(new Event("resize")),340);return}if(t.closest("#dMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
   if(t.closest("#hBell")||t.closest("#hBell2")){avSheet();return}
   const avr=t.closest("[data-av]"); if(avr){const e=avLog().find(x=>x.k===avr.dataset.av);avGo(e&&e.go);return}
   if(t.closest("[data-av-me]")){avGo({me:1});return}
