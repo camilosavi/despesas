@@ -4540,7 +4540,10 @@ function itemHTML(x){
 }
 
 /* ---------- aba Cartões ---------- */
-function allCards(){const set=new Set(Object.keys(cfg.cards||{}));items.forEach(x=>{const c=cardOf(x);if(c)set.add(c)});return [...set]}
+function allCards(){const set=new Set(Object.keys(cfg.cards||{}));items.forEach(x=>{const c=cardOf(x);if(c)set.add(c)});const all=[...set],o=cfg.cardOrder||[];return [...o.filter(c=>set.has(c)),...all.filter(c=>!o.includes(c))]}
+let cardOrdOn=false;
+async function cardMove(c,d){const l=allCards().filter(x=>!isBen(x)||true),i=l.indexOf(c),j=i+d;if(i<0||j<0||j>=l.length)return;[l[i],l[j]]=[l[j],l[i]];try{await saveCfg({cardOrder:l});render()}catch(e){toast("Não deu para salvar. Tente de novo.")}}
+document.addEventListener("click",e=>{const t=e.target;if(t.closest("#cardOrd")){cardOrdOn=!cardOrdOn;render();return}const m=t.closest("[data-cmv]");if(m){e.preventDefault();cardMove(m.dataset.cmv.split("|")[0],+m.dataset.cmv.split("|")[1])}});
 /* "Itens da fatura": lista recolhida nos 6 primeiros, com botão para expandir (out/2026, pedido dele) */
 const FAT_N=6, fatOpen=new Set();
 const cardItems=(c,ym)=>items.filter(x=>cardOf(x)===c&&(!ym||x.date.startsWith(ym)));
@@ -4551,10 +4554,12 @@ const billTot=(c,ym)=>cardItems(c,ym).filter(x=>!rollYM(x)).reduce((s,x)=>s+amt(
 function renderCards(){
   if(document.activeElement&&(document.activeElement.classList.contains("limin")||/^bn(Bal|Credit|Day)$/.test(document.activeElement.id))) return;
   if(!selCard){
-    const cs=allCards().sort((a,b)=>cardTotal(b,view)-cardTotal(a,view)||a.localeCompare(b));
+    const cs=allCards();
     if(!cs.length){$("pCards").innerHTML=`<section><div class="empty"><strong>Nenhum cartão ainda</strong>Crie o seu, com limite e dia de vencimento. Depois é só lançar compras no Crédito escolhendo o cartão.</div><button type="button" class="btn primary" id="cardNew2" style="width:100%;margin-top:12px">+ Novo cartão</button></section>`;return}
     const months=Array.from({length:6},(_,i)=>shiftYM(view,i));
-    $("pCards").innerHTML=`<section><h2>Seus cartões<button type="button" class="tbtn go h2act" id="cardNew">+ Novo cartão</button></h2><div class="folders">`+cs.map(c=>{
+    const ordRow=(c,i)=>`<div class="folder cordrow" style="display:flex;align-items:center;gap:12px;cursor:default">${cardBadge(c)}<span class="fn" style="flex:1">${esc(c)}</span><button type="button" class="tbtn" data-cmv="${esc(c)}|-1" ${i===0?"disabled":""} aria-label="Subir">↑</button><button type="button" class="tbtn" data-cmv="${esc(c)}|1" ${i===cs.length-1?"disabled":""} aria-label="Descer">↓</button></div>`;
+    $("pCards").innerHTML=`<section><h2>Seus cartões<span class="h2act"><button type="button" class="tbtn" id="cardOrd">${cardOrdOn?"Pronto":"Ordenar"}</button><button type="button" class="tbtn go" id="cardNew">+ Novo cartão</button></span></h2><div class="folders">`+cs.map((c,ci)=>{
+      if(cardOrdOn)return ordRow(c,ci);
       if(isBen(c)){const b=bens().find(x=>x.name===c), v=benBal(b), nx=benNext(b);
         return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv ${v<0?"neg":""}">${R(v)}</span><span class="fm">saldo do vale${nx?` · crédito ${fmtDM(nx)}`:""}</span></button>`}
       if(IS_WIDE.matches) return dashCard(c,true);
