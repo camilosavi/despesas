@@ -2382,8 +2382,10 @@ const shortMonth=ym=>{const[y,m]=ym.split("-").map(Number);return MES[m-1].toLow
 const digits=v=>Number(String(v||"").replace(/\D/g,"").slice(0,10)||0);
 const rate4=(brlC,eurC)=>eurC?(brlC/eurC).toLocaleString("pt-BR",{minimumFractionDigits:4,maximumFractionDigits:4}):"—";
 
-/* o app só mostra a partir de set/2026 (setembro fica disponível se precisar; o normal é começar no mês atual) */
+/* o app começa em set/2026 por padrão, mas recua automaticamente se a pessoa importar faturas ou lançamentos mais antigos para controle histórico */
 const MIN_YM="2026-09", MIN_YEAR=+MIN_YM.slice(0,4);
+const firstYM=()=>{let m=MIN_YM;for(const x of items){const ym=(x.date||"").slice(0,7);if(ym&&ym.length===7&&ym<m&&ym>="2020-01")m=ym}return m};
+const firstYear=()=>+firstYM().slice(0,4);
 let cfgLoaded=false, items=[], fx=[], cfg={}, tab="pHome", view=curYM()<MIN_YM?MIN_YM:curYM(), year=new Date().getFullYear();
 let F={months:6,q:""};
 let catTouched=false, serAck=null, editing=null, dupAck=null, mergeInto=null, fxEditing=null, form={type:"desp",cents:0,cat:"cartao",pay:"Pix",paid:true};
@@ -2556,16 +2558,53 @@ const sameParc=(a,b)=>!!a&&normParc(a)===normParc(b);
 function similarTo(a,b){
   if(a===b||typeOf(a)!==typeOf(b)||cardOf(a)!==cardOf(b)||genFat(a)||genFat(b)) return false;
   if((a.date||"").slice(0,7)!==(b.date||"").slice(0,7)) return false;
-  if(!closeC(a.cents,b.cents)) return false;
   const ns=nameSim(a.desc,b.desc);
+  /* mesma parcela e mesmo nome na fatura: aceita até 2% (ou R$ 0,05) de diferença por arredondamento de centavos entre parcelas */
+  if(a.parc&&b.parc&&sameParc(a.parc,b.parc)&&ns>=0.5&&Math.abs(a.cents-b.cents)<=Math.max(5,Math.round(Math.max(a.cents,b.cents)*0.02))) return true;
+  if(!closeC(a.cents,b.cents)) return false;
   if(a.parc&&b.parc) return sameParc(a.parc,b.parc)||ns>=0.5;
   if(a.buy&&b.buy&&dayGap(a.buy,b.buy)>3) return false;
+  /* um lançado à mão e outro importado da fatura: mesmo valor e mesma data da compra (até 2 dias) = mesmo gasto mesmo com nome diferente */
+  if(!!a.imp!==!!b.imp&&!a.parc&&!b.parc&&(a.buy||b.buy)&&dayGap(a.buy||a.date,b.buy||b.date)<=2) return true;
+  /* assinatura reconhecida (ex.: "Netflix" e "NETFLIX.COM") no mesmo cartão e mês */
+  if(!a.parc&&!b.parc&&typeof subOf==="function"&&subOf(a)&&subOf(a)===subOf(b)) return true;
   if(!a.parc&&!b.parc&&(!a.imp||!b.imp)&&a.cat&&a.cat===b.cat&&!["outros","cartao"].includes(a.cat)&&(!a.buy||!b.buy)) return true;
   if(a.parc||b.parc) return ns>=0.5;
   return ns>=0.5||(dayGap(a.buy||a.date,b.buy||b.date)<=2&&(!toks(a.desc).length||!toks(b.desc).length));
 }
 function findSimilar(x,pool,skip){
   return (pool||items).filter(y=>y.id!==x.id&&!(skip&&skip.has(y.id))&&similarTo(x,y)).sort((p,q)=>(x.parc?sameParc(q.parc,x.parc)-sameParc(p.parc,x.parc):0)||nameSim(x.desc,q.desc)-nameSim(x.desc,p.desc)||(x.buy?dayGap(x.buy,p.buy||p.date)-dayGap(x.buy,q.buy||q.date):0)||Math.abs(p.cents-x.cents)-Math.abs(q.cents-x.cents))[0]||null;
+}
+/* tag da fatura oficial importada para (c, ym); null se este mês só tem lançamentos à mão ou parcelas geradas por faturas anteriores */
+function billImpTag(c,ym,L){
+  const list=L||items.filter(x=>cardOf(x)===c&&!genFat(x)&&(x.date||"").startsWith(ym));
+  const tags=[...new Set(list.map(x=>x.imp).filter(t=>t&&/^(fatura-|print-)/.test(t)))];
+  if(!tags.length) return null;
+  const matchYM=t=>{const d=t.replace(/^(fatura-|print-)/,"");if(!/^\d{4}-\d{2}-\d{2}$/.test(d))return d===ym;return shiftYM(d.slice(0,7),-dueShift(+d.slice(8)))===ym};
+  const hit=tags.find(matchYM);
+  if(hit) return hit;
+  if(tags.every(t=>/^fatura-\d{4}-\d{2}-\d{2}$/.test(t))) return null;
+  return tags[tags.length-1];
+}
+/* separa os itens da fatura oficial deste mês (IM) do que está fora dela (LO = lançados à mão ou parcelas antigas que sobraram) */
+function billOutItems(c,ym,L){
+  const list=(L||cardItems(c,ym)).filter(x=>!genFat(x)), bt=billImpTag(c,ym,list);
+  if(bt) return {bt,IM:list.filter(x=>x.imp===bt),LO:list.filter(x=>x.imp!==bt)};
+  return {bt:null,IM:[],LO:[]};
+}
+/* acha na fatura importada (IM, ou na fatura do mês vizinho se caiu na virada do fechamento) o par de um item fora da fatura (x) */
+function sugInBill(x,IM,used,c,ym){
+  let m=findSimilar(x,IM,used)
+    ||IM.filter(y=>!used.has(y.id)&&closeC(y.cents,x.cents)&&(!x.parc&&!y.parc||sameParc(x.parc,y.parc))).sort((p,q)=>nameSim(x.desc,q.desc)-nameSim(x.desc,p.desc)||(x.buy&&p.buy&&q.buy?dayGap(x.buy,p.buy)-dayGap(x.buy,q.buy):0))[0]
+    ||(x.parc?IM.filter(y=>!used.has(y.id)&&sameParc(x.parc,y.parc)&&(nameSim(x.desc,y.desc)>=0.4||closeC(x.cents,y.cents)))[0]:null)
+    ||(!x.parc?IM.filter(y=>{if(used.has(y.id)||!y.parc)return false;const pm=/^(\d+)\/(\d+)$/.exec(y.parc);return pm&&closeC(x.cents,y.cents*+pm[2])&&(nameSim(x.desc,y.desc)>=0.4||(x.buy&&y.buy&&dayGap(x.buy,y.buy)<=2))})[0]:null)
+    ||IM.filter(y=>!used.has(y.id)&&!x.parc&&!y.parc&&(nameSim(x.desc,y.desc)>=0.6||(typeof subOf==="function"&&subOf(x)&&subOf(x)===subOf(y)))&&Math.abs(x.cents-y.cents)<=Math.max(100,Math.round(Math.max(x.cents,y.cents)*0.15)))[0];
+  if(!m&&c&&ym&&!x.imp){
+    const adj=[shiftYM(ym,-1),shiftYM(ym,1)].flatMap(am=>{const bt=billImpTag(c,am);return bt?items.filter(y=>cardOf(y)===c&&y.date.startsWith(am)&&y.imp===bt&&!used.has(y.id)):[]});
+    m=adj.find(y=>closeC(y.cents,x.cents)&&((x.parc&&y.parc&&sameParc(x.parc,y.parc)&&nameSim(x.desc,y.desc)>=0.5)||(!x.parc&&!y.parc&&x.buy&&y.buy&&dayGap(x.buy,y.buy)<=2&&(nameSim(x.desc,y.desc)>=0.35||x.cents===y.cents))))||null;
+  }
+  if(m) used.add(m.id);
+  return m;
 }
 const dupKey=(a,b)=>[a.id,b.id].sort().join("|");
 const notDup=()=>Array.isArray(cfg.notDup)?cfg.notDup:[];
@@ -2577,14 +2616,14 @@ function dupPairs(list){
 /* "Mesclar tudo" de todos os meses e cartões (out/2026, pedido dele): mesmos pares sugeridos da tela do cartão
    ("Fora da fatura do banco" = à mão × importado, e "Parecidos"), mês a mês, sem repetir item. */
 function allMergePairs(){
-  const out=[],nd=new Set(notDup());
+  const out=[],nd=new Set(notDup()),fy=firstYM();
   credCards().forEach(c=>{
-    const ms=[...new Set(items.filter(x=>cardOf(x)===c&&!genFat(x)&&(x.date||"")>=MIN_YM+"-01").map(x=>x.date.slice(0,7)))].sort();
+    const ms=[...new Set(items.filter(x=>cardOf(x)===c&&!genFat(x)&&(x.date||"")>=fy+"-01").map(x=>x.date.slice(0,7)))].sort();
     ms.forEach(ym=>{
-      const L=cardItems(c,ym).filter(x=>!genFat(x)), IM=L.filter(x=>x.imp), LO=L.filter(x=>!x.imp), used=new Set();
+      const L=cardItems(c,ym).filter(x=>!genFat(x)), {IM,LO}=billOutItems(c,ym,L), used=new Set();
       if(IM.length&&LO.length) LO.forEach(x=>{
-        const m=findSimilar(x,IM,used)||IM.filter(y=>!used.has(y.id)&&Math.abs(y.cents-x.cents)<=Math.max(1,Math.round(x.cents*0.005))).sort((p,q)=>nameSim(x.desc,q.desc)-nameSim(x.desc,p.desc))[0]||(x.parc?IM.filter(y=>!used.has(y.id)&&y.parc===x.parc&&nameSim(x.desc,y.desc)>=0.5)[0]:null);
-        if(m){used.add(m.id);used.add(x.id);out.push([x,m])}});
+        const m=sugInBill(x,IM,used,c,ym);
+        if(m&&!nd.has(dupKey(x,m))){used.add(x.id);out.push([x,m])}});
       dupPairs(L.filter(x=>!used.has(x.id))).forEach(([a,b])=>{out.push([a,b])});
     })});
   return out;
@@ -2990,7 +3029,7 @@ function header0(){
   }
   if(tab==="pCards"){
     $("period").textContent=monthLabel(view);
-    $("next").disabled=view>=shiftYM(curYM(),24);$("prev").disabled=view<=MIN_YM;
+    $("next").disabled=view>=shiftYM(curYM(),24);$("prev").disabled=view<=firstYM();
     $("s1").parentElement.hidden=!!selCard&&!isBen(selCard)&&IS_WIDE.matches; /* o vencimento já está no cartão (pedido dele) */
     if(selCard&&isBen(selCard)){const b=bens().find(x=>x.name===selCard), sp=items.filter(x=>x.pay===selCard&&typeOf(x)==="desp"&&x.date.startsWith(view)).reduce((t,x)=>t+x.cents,0), nx=benNext(b);
       $("bigLabel").textContent=`Saldo ${selCard}`;setBig("R$",benBal(b));
@@ -3011,8 +3050,8 @@ function header0(){
   $("period").textContent=isYear?String(year):monthLabel(view);
   $("prev").setAttribute("aria-label",isYear?"Ano anterior":"Mês anterior");$("next").setAttribute("aria-label",isYear?"Próximo ano":"Próximo mês");
   $("next").disabled=isYear?year>=new Date().getFullYear()+2:view>=shiftYM(curYM(),24);
-  $("prev").disabled=isYear?year<=MIN_YEAR:view<=MIN_YM;
-  const arr=isYear?items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=MIN_YM):inMonth(view);
+  $("prev").disabled=isYear?year<=firstYear():view<=firstYM();
+  const arr=isYear?items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=firstYM()):inMonth(view);
   const rec=sumT(arr,"rec"),desp=sumT(arr,"desp"),chain=!isYear&&view>=curYM(),saldo=chain?endBal(view):rec-desp;
   const vmn=monthLabel(view).split(" ")[0].toLowerCase();
   $("bigLabel").textContent=isYear?"Saldo do ano":chain?(hasAcc()?`Na conta no fim de ${vmn}`:`Saldo no fim de ${vmn}`):"Saldo do mês";
@@ -3193,7 +3232,10 @@ function rollYM(x){
   for(let i=0;i<24;i++,m=shiftYM(m,1)){const D=cardDue(c,m)||`${m}-${pad(lastDay(m))}`;if(D>=now) return m}
   return m;
 }
-const rollGone=(x,m)=>items.some(y=>y!==x&&cardOf(y)===cardOf(x)&&isPrevBal(y)&&(y.date||"").startsWith(m)&&!(x.date||"").startsWith(m));
+const rollGone=(x,m)=>{const c=cardOf(x);if(!c||(x.date||"").startsWith(m))return false;
+  if(items.some(y=>y!==x&&cardOf(y)===c&&isPrevBal(y)&&(y.date||"").startsWith(m))) return true;
+  /* se a fatura de m já foi importada do banco e não trouxe "Saldo da fatura anterior", a anterior foi paga no banco e não rola para m */
+  return !!billImpTag(c,m)};
 /* itens que vieram de faturas anteriores não pagas para a fatura de `c` em `ym` */
 const rolledIn=(c,ym)=>items.filter(x=>cardOf(x)===c&&rollYM(x)===ym&&!rollGone(x,ym));
 const rollAmt=(c,ym)=>rolledIn(c,ym).reduce((s,x)=>s+amt(x),0);
@@ -3585,7 +3627,7 @@ const fold=t=>(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCas
 function searchHits(q){
   const words=fold(q).split(/\s+/).filter(Boolean);
   if(!words.length) return [];
-  return items.filter(x=>(x.date||"").slice(0,7)>=MIN_YM).filter(x=>{
+  return items.filter(x=>(x.date||"").slice(0,7)>=firstYM()).filter(x=>{
     const t=typeOf(x), hay=fold([cleanDesc(x),x.desc,cardOf(x)||"",catOf(x.cat,t).n,x.pay||"",brl(x.cents),(x.tags||[]).map(g=>"#"+g+" "+g).join(" ")].join(" "));
     return words.every(w=>hay.includes(w))}).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
 }
@@ -3608,7 +3650,7 @@ function mesShell(){
 }
 /* Comparativo com o mês anterior (29/10/2026, pedido dele): por categoria, até o mesmo dia do mês anterior quando é o mês atual; mês fechado compara com o mês anterior inteiro */
 function prevCatMap(){
-  const p=shiftYM(view,-1); if(p<MIN_YM) return null;
+  const p=shiftYM(view,-1); if(p<firstYM()) return null;
   const cut=view===curYM()?today().slice(8):"31";
   return {ym:p,cur:view===curYM(),by:byCat(inMonth(p).filter(x=>x.date.slice(8)<=cut),"desp")};
 }
@@ -3886,7 +3928,7 @@ function feeSection(ym){
     <p class="hint expl" style="margin:8px 2px 0">Vêm de pagar a fatura em parte (rotativo), de parcelar a fatura e de compras no exterior. Pagando a fatura inteira, os juros e encargos não aparecem.</p></section>`;
 }
 function feeYear(y){
-  const ms=Array.from({length:12},(_,i)=>`${y}-${pad(i+1)}`).filter(m=>m>=MIN_YM&&m<=curYM());
+  const ms=Array.from({length:12},(_,i)=>`${y}-${pad(i+1)}`).filter(m=>m>=firstYM()&&m<=curYM());
   const per=ms.map(m=>inMonth(m).filter(isFee).reduce((s,x)=>s+amt(x),0)), t=per.reduce((a,b)=>a+b,0);if(!t) return "";
   const mx=Math.max(...per,1);
   return `<section><h2>Juros, IOF e tarifas em ${y} <small>${R(t)}</small></h2><div class="card flist">${ms.map((m,i)=>`<div class="frow"><span>${shortMonth(m)}</span><span class="b"><i style="width:${per[i]/mx*100}%;background:var(--neg)"></i></span><span>${R(per[i])}</span></div>`).join("")}</div>
@@ -4694,7 +4736,8 @@ function renderCards(){
       g>tot?`<div class="warn" style="font-size:.88rem;font-weight:600">Falta lançar ${R(g-tot)} para bater com o banco</div>`:
       tot>g?`<div class="warn" style="font-size:.88rem;font-weight:600">Lançado passa ${R(tot-g)} do banco. Confira algum item ou atualize o valor.</div>`:
       `<div class="pos" style="font-size:.88rem;font-weight:600">Bate com o banco ✓</div>`;
-    const st2="";
+    const {IM:bIM,LO:bLO}=billOutItems(c,view,L), imT=bIM.reduce((s,x)=>s+x.cents,0), loT=bLO.reduce((s,x)=>s+x.cents,0);
+    const st2=bIM.length&&bLO.length?`<div class="warn" style="font-size:.86rem;font-weight:600;margin-top:4px">Fatura importada do banco: ${R(imT)} · + ${R(loT)} fora da fatura (${bLO.length} ${bLO.length===1?"item abaixo":"itens abaixo"} para mesclar ou apagar)</div>`:"";
     fb=`<div class="card rate"><div class="top"><div><span class="hint" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.7rem">Total da fatura${allPaid?" · paga":""}</span><div class="val ${allPaid?"pos":""}"><small>R$</small>${brl(billTot(c,view))}</div><div class="src">${g&&L.length?`valor do banco · lançado ${R(d)} em ${L.length} ${L.length===1?"item":"itens"}${rollAmt(c,view)?` + ${R(rollAmt(c,view))} da anterior`:""}`:`${L.length} ${L.length===1?"item lançado":"itens lançados"}`}</div></div><button class="tbtn" id="fatEdit">${g?"Editar valor":"Informar valor"}</button></div>${status}${st2}</div>`;
   }
   {const ri=rolledIn(c,view), rv=ri.reduce((s,x)=>s+amt(x),0), gn=cardItems(c,view).filter(x=>rollYM(x)), to=gn.length?rollYM(gn[0]):null;
@@ -4726,14 +4769,13 @@ function renderCards(){
   h+=mainSP;
   /* mesclar fica numa coluna própria à direita no computador (cdside); no celular a ordem continua a mesma */
   const mainA=h;h="";
-  {const IM=L.filter(x=>x.imp), LO=L.filter(x=>!x.imp);
+  {const {IM,LO}=billOutItems(c,view,L);
    if(IM.length&&LO.length){
-     const used=new Set(), sug=x=>{const c=findSimilar(x,IM,used)||IM.filter(y=>!used.has(y.id)&&Math.abs(y.cents-x.cents)<=Math.max(1,Math.round(x.cents*0.005))).sort((p,q)=>nameSim(x.desc,q.desc)-nameSim(x.desc,p.desc))[0]||(x.parc?IM.filter(y=>!used.has(y.id)&&y.parc===x.parc&&nameSim(x.desc,y.desc)>=0.5)[0]:null);if(c)used.add(c.id);return c};
-     const tl=LO.reduce((s,x)=>s+x.cents,0), MP=[], sugC=new Map();
-     LO.forEach(x=>{const c=sug(x);sugC.set(x.id,c);if(c)MP.push(`${x.id}|${c.id}`)});
-     h+=`<section><h2>Fora da fatura do banco <small>${R(tl)}</small></h2><p class="hint expl" style="margin:-4px 0 8px">Lançados à mão em ${mn} que não vieram da fatura importada. Se forem repetidos, mescle ou apague; se forem compras novas, deixe.</p>${MP.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(MP.join(","))}">Mesclar todos os ${MP.length} com a fatura</button></div>`:""}<div class="card">`+
-       LO.map(x=>{const c=sugC.get(x.id), sib=laterSiblings(x).length;
-         return `<div class="duprow"><div><b>${esc(cleanDesc(x))}</b> · ${R(x.cents)}${x.parc?` · ${x.parc}`:""}<span>${c?`parece “${esc(cleanDesc(c))}” (${R(c.cents)}${c.parc?` · ${c.parc}`:""}) da fatura`:"nada parecido na fatura"}${sib?` · leva junto ${sib} ${sib===1?"parcela seguinte":"parcelas seguintes"}`:""}</span></div><div class="svbtns">${c?`<button class="btn soft" data-lodel="${esc(x.id)}">Apagar</button><button class="btn primary" data-merge="${esc(x.id)}|${esc(c.id)}">Mesclar</button>`:`<button class="btn soft" data-lodel="${esc(x.id)}" style="grid-column:1/-1">Apagar</button>`}</div></div>`}).join("")+
+     const used=new Set(), tl=LO.reduce((s,x)=>s+x.cents,0), MP=[], sugC=new Map();
+     LO.forEach(x=>{const m=sugInBill(x,IM,used,c,view);sugC.set(x.id,m);if(m)MP.push(`${x.id}|${m.id}`)});
+     h+=`<section><h2>Fora da fatura do banco <small>${R(tl)}</small></h2><p class="hint expl" style="margin:-4px 0 8px">Estão somando em ${mn}, mas não vieram na fatura importada deste mês (lançados à mão ou parcelas geradas de faturas anteriores). Mescle ou apague os repetidos.</p>${MP.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(MP.join(","))}">Mesclar todos os ${MP.length} com a fatura</button></div>`:""}<div class="card">`+
+       LO.map(x=>{const m=sugC.get(x.id), sib=laterSiblings(x).length, otherM=m&&!m.date.startsWith(view)?shortMonth(m.date.slice(0,7)):"", fromOld=x.imp&&/^fatura-/.test(x.imp);
+         return `<div class="duprow"><div><b>${esc(cleanDesc(x))}</b> · ${R(x.cents)}${x.parc?` · ${x.parc}`:""}<span>${fromOld?"parcela gerada de fatura anterior · ":""}${m?`parece “${esc(cleanDesc(m))}” (${R(m.cents)}${m.parc?` · ${m.parc}`:""})${otherM?` já na fatura de ${otherM}`:" da fatura"}`:"não apareceu na fatura importada"}${sib?` · leva junto ${sib} ${sib===1?"parcela seguinte":"parcelas seguintes"}`:""}</span></div><div class="svbtns">${m?`<button class="btn soft" data-lodel="${esc(x.id)}">Apagar</button><button class="btn primary" data-merge="${esc(x.id)}|${esc(m.id)}">Mesclar</button>`:`<button class="btn soft" data-lodel="${esc(x.id)}" style="grid-column:1/-1">Apagar</button>`}</div></div>`}).join("")+
        `</div>${LO.length>1?`<div class="toolbar"><button class="tbtn" id="loAll">Apagar todos os ${LO.length} (${R(tl)})</button></div>`:""}</section>`;
    }}
   {const P=dupPairs(L);if(P.length) h+=`<section><h2>Parecidos <small>${P.length}</small></h2>${P.length>1?`<div class="toolbar" style="margin:0 0 10px"><button class="tbtn go" data-mgall="${esc(P.map(([a,b])=>a.id+"|"+b.id).join(","))}">Mesclar todos os ${P.length} pares</button></div>`:""}<div class="card">`+P.map(([a,b])=>`<div class="duprow"><div><b>${esc(cleanDesc(a))}</b> e <b>${esc(cleanDesc(b))}</b><span>${R(a.cents)}${a.parc?` · ${a.parc}`:""} · parecem o mesmo lançamento</span></div><div class="svbtns"><button class="btn soft" data-notdup="${esc(dupKey(a,b))}">Não são</button><button class="btn primary" data-merge="${esc(a.id)}|${esc(b.id)}">Mesclar</button></div></div>`).join("")+`</div></section>`}
@@ -4745,9 +4787,16 @@ function renderCards(){
   const max=Math.max(...months.map(m=>cardTotal(c,m)),1);
   h+=`<section><h2>Próximas faturas <small>já comprometido</small></h2><div class="card flist">`+months.map(m=>{const v=cardTotal(c,m);
     return `<button class="frow ${m===view?"sel":""}" data-cardmonth="${m}"><span>${shortMonth(m)}</span><span class="b"><i style="width:${v/max*100}%"></i></span><span>${R(v)}</span></button>`}).join("")+`</div></section>`;
+  {const histM=[...new Set(items.filter(x=>cardOf(x)===c&&!genFat(x)&&(x.date||"").slice(0,7)<=curYM()).map(x=>x.date.slice(0,7)))].sort();
+   if(histM.some(m=>m<curYM())){
+     const hMax=Math.max(...histM.map(m=>billShow(c,m)),1), hAvg=Math.round(histM.reduce((s,m)=>s+billShow(c,m),0)/histM.length);
+     h+=`<section><h2>Histórico de faturas <small>média ${R(hAvg)}/mês</small></h2><div class="card flist">`+histM.slice().reverse().map(m=>{
+       const v=billShow(c,m), L0=cardItems(c,m).filter(x=>!genFat(x)), pd=L0.length&&L0.every(isPaid);
+       return `<button class="frow ${m===view?"sel":""}" data-cardmonth="${m}"><span>${shortMonth(m)}${pd?` <small class="pos">✓</small>`:""}</span><span class="b"><i style="width:${v/hMax*100}%;background:${pd?"var(--pos)":"var(--accent)"}"></i></span><span>${R(v)}</span></button>`}).join("")+`</div></section>`;
+   }}
   h+=parcSection(c);
-  h+=`<section><h2>Importar e limpar</h2><div class="card rate"><div class="hint expl">Baixe a fatura em PDF no app do banco e importe aqui. O app lê no próprio aparelho, mostra as compras para você conferir e só adiciona as que você marcar.</div>
-    <label class="btn soft" style="text-align:center;cursor:pointer;display:block">Importar fatura do ${esc(c)} (PDF)<input type="file" id="impFile" accept="application/pdf,.pdf" hidden></label>
+  h+=`<section><h2>Importar e limpar</h2><div class="card rate"><div class="hint expl">Baixe uma ou várias faturas em PDF (inclusive antigas, para histórico e controle) no app do banco e importe aqui. O app lê no próprio aparelho, confere os valores e mescla o que já estiver lançado.</div>
+    <label class="btn soft" style="text-align:center;cursor:pointer;display:block">Importar faturas do ${esc(c)} (PDF, uma ou várias)<input type="file" id="impFile" accept="application/pdf,.pdf,.ofx,.qfx" multiple hidden></label>
     ${all.length?`<button class="tbtn" id="zeroMonth" style="margin-top:10px">Zerar ${mn}</button>`:""}</div></section>`;
   {const mainRest=mainA.startsWith(cardHero)?mainA.slice(cardHero.length):mainA, heroH=mainA.startsWith(cardHero)?cardHero:"";
   /* computador: duas colunas independentes (esquerda = cartão + limite…, direita = fatura + itens + mesclar), sem buraco entre blocos de alturas diferentes */
@@ -5354,9 +5403,9 @@ function fxRowSection(){
 let anoSubTab = lsGet("despesas.anoTab") || "metas";
 function renderAno(){
   const ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&(ae.closest("#saveSec")||ae.closest("#debtSec")||/^ac[nv]_\d/.test(ae.id))) return;
-  const yArr=items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=MIN_YM);
+  const fy=firstYM(), yArr=items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=fy);
   const mon=m=>yArr.filter(x=>x.date.slice(5,7)===pad(m+1));
-  const idx=MES.map((_,i)=>i).filter(i=>`${year}-${pad(i+1)}`>=MIN_YM), NM=idx.length;
+  const idx=MES.map((_,i)=>i).filter(i=>`${year}-${pad(i+1)}`>=fy), NM=idx.length || 1;
   const recM=idx.map(i=>sumT(mon(i),"rec")), despM=idx.map(i=>sumT(mon(i),"desp"));
   const recTot=recM.reduce((a,b)=>a+b,0), despTot=despM.reduce((a,b)=>a+b,0), saldoTot=recTot-despTot;
 
@@ -5641,11 +5690,11 @@ function avSheet(){
 function avGo(g){
   closeSheets();
   if(!g){go("pHome");return}
-  if(g.mes){view=g.mes<MIN_YM?MIN_YM:g.mes;go("pMes");return}
+  if(g.mes){view=g.mes<firstYM()?firstYM():g.mes;go("pMes");return}
   if(g.me){go("pMe");setTimeout(()=>$("pushSec")?.scrollIntoView({block:"start"}),80);return}
   if(g.c){backTo="pHome";selCard=g.c;if(g.ym)view=g.ym;go("pCards");return}
   if(g.id){const x=items.find(y=>y.id===g.id);if(!x){toast("Esse lançamento não existe mais.");go("pHome");return}
-    view=x.date.slice(0,7)<MIN_YM?MIN_YM:x.date.slice(0,7);go("pMes");setTimeout(()=>openSheet(x),60);return}
+    view=x.date.slice(0,7)<firstYM()?firstYM():x.date.slice(0,7);go("pMes");setTimeout(()=>openSheet(x),60);return}
   go("pHome");setTimeout(()=>document.querySelector("#pHome .due")?.closest("section")?.scrollIntoView({block:"start",behavior:"smooth"}),80);
 }
 function avOpen(k){
@@ -6032,7 +6081,7 @@ function go(t){
   /* painéis que repetem ids (acEdit, saveSec…) não ficam desenhados escondidos */
   ["pHome","pAno"].forEach(p=>{if(p!==tab)$(p).innerHTML=""});
   $("tabAv").toggleAttribute("aria-current",tab==="pMe");if(tab==="pMe")$("tabAv").setAttribute("aria-current","page");document.querySelector("nav.tabs").classList.toggle("onme",tab==="pMe");
-  if(tab==="pAno") year=Math.max(MIN_YEAR,Number(view.slice(0,4)));
+  if(tab==="pAno") year=Math.max(firstYear(),Number(view.slice(0,4)));
   render();sbMark();window.scrollTo(0,0);animIn();
 }
 /* seletores (.seg/.segc): a pílula escura desliza da opção antiga para a nova, mesmo quando a tela é redesenhada
@@ -6096,7 +6145,7 @@ document.addEventListener("keydown",e=>{
 document.querySelectorAll(".tab").forEach((b,i)=>{b.title=`${b.textContent.trim()} (${i+1})`});$("tabAv").title="Você: perfil e ajustes (5)";
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{if(b.id==="tabMore"){drawerOpen(true);return}if(b.dataset.tab==="pCards")selCard=null;go(b.dataset.tab)});
 $("backBtn").onclick=()=>{if(tab==="pFx"){navGo("metas");return}if(tab==="pOrc"){go("pMes");return}if(tab==="pCards"&&!selCard){go("pWal");return}selCard=null;go(backTo==="pMes"||backTo==="pHome"?backTo:"pCards")};
-$("prev").onclick=()=>{if(tab==="pAno"){if(year<=MIN_YEAR)return;year--;view=year+view.slice(4);if(view<MIN_YM)view=MIN_YM}else{if(view<=MIN_YM)return;view=shiftYM(view,-1)}render();slideIn($(tab),-1)};
+$("prev").onclick=()=>{const fy=firstYM(),fY=firstYear();if(tab==="pAno"){if(year<=fY)return;year--;view=year+view.slice(4);if(view<fy)view=fy}else{if(view<=fy)return;view=shiftYM(view,-1)}render();slideIn($(tab),-1)};
 $("next").onclick=()=>{if(tab==="pAno"){year++;view=year+view.slice(4)}else view=shiftYM(view,1);render();slideIn($(tab),1)};
 
 document.addEventListener("click",async e=>{
@@ -6233,7 +6282,7 @@ document.addEventListener("click",async e=>{
   const ldb=t.closest("[data-lodel]"); if(ldb){if(!ldb.classList.contains("sure")){ldb.classList.add("sure");ldb.textContent="Toque de novo";return}
     const x=items.find(y=>y.id===ldb.dataset.lodel);if(x){ldb.disabled=true;try{await dropWithSeries(x);toast("Apagado");render()}catch(e){toast("Não deu para apagar. Tente de novo.")}}return}
   if(t.id==="loAll"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para apagar todos";return}
-    const LO=cardItems(selCard,view).filter(x=>!genFat(x)&&!x.imp);t.disabled=true;try{for(const x of LO) await dropWithSeries(x);toast(`${LO.length} apagados`);render()}catch(e){toast("Parou no meio. Confira e tente de novo.")}return}
+    const {LO}=billOutItems(selCard,view);t.disabled=true;try{for(const x of LO) await dropWithSeries(x);toast(`${LO.length} apagados`);render()}catch(e){toast("Parou no meio. Confira e tente de novo.")}return}
   const ndb=t.closest("[data-notdup]"); if(ndb){try{await saveCfg({notDup:[...notDup(),ndb.dataset.notdup]});render()}catch(x){}return}
   if(t.id==="fxSwap"){const e=$("fxEur").value;$("fxEur").value=$("fxBrl").value;$("fxBrl").value=e;fxTouch=["eur","brl"];fxCalc();return}
   if(t.id==="fxRtToday"){const r=rateNum(fxSheetCur);if(!r){toast("Sem cotação agora. Tente de novo em instantes.");return}$("fxRt").value=rateTxt(r);fxCalc("rt");return}
@@ -6243,6 +6292,8 @@ document.addEventListener("click",async e=>{
   {const st=t.closest("[data-shtype]");if(st&&shots){const[i,ty]=st.dataset.shtype.split("|"),r=shots.L[+i];if(r&&r.type!==ty){r.type=ty;r.on=!shotDup(r.E,ty)}shotsRender();return}
    const so=t.closest("[data-shon]");if(so&&shots){const r=shots.L[+so.dataset.shon];if(r){r.on=so.checked;shotsRender()}return}
    if(t.closest("#shotsAdd")){t.closest("#shotsAdd").disabled=true;shotsAdd();return}}
+  {const mo=t.closest("[data-mimpopen]");if(mo&&multiImp){const b=multiImp.list[+mo.dataset.mimpopen];if(b){openImport(b.card,b.r);imp.onDone=()=>{selCard=b.card;go("pCards")}}return}}
+  if(t.id==="mimpGo"){multiImpRun(t);return}
   {const h1=t.closest("[data-holone]");if(h1){const h=holBatch[+h1.dataset.holone];if(h){h1.disabled=true;holLaunch([h])}return}}
   if(t.id==="holAll"){t.disabled=true;holLaunch(holBatch);return}
   if(t.id==="holMore"){holAll=!holAll;render();return}
@@ -6402,8 +6453,12 @@ document.addEventListener("change",e=>{
   if(e.target.closest&&e.target.closest("#xlsSheet")){xlSync(e.target);return}
   if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";closeSheets();const im=F.filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name));if(im.length){if(im.length<F.length)toast("Com prints, os PDFs vão um por vez.");im.length===1?readShot(im[0]):readShots(im)}else readMany(F);return}
   if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else if(/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name))readShot(f);else readInvoice(f,true);return}
-  if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";readInvoice(f);return}
+  if(e.target.id==="impFile"&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";readMany(F,selCard);return}
+  if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
+  if(e.target.dataset&&e.target.dataset.mimp!=null&&multiImp){const b=multiImp.list[+e.target.dataset.mimp];if(b){b.on=e.target.checked;multiImpRender()}return}
+  if(e.target.dataset&&e.target.dataset.mimpcard!=null&&multiImp){const b=multiImp.list[+e.target.dataset.mimpcard];if(b){b.card=e.target.value;multiImpMark();multiImpRender()}return}
+  if(e.target.id==="mimpFuture"&&multiImp){multiImp.future=e.target.checked;multiImpRender();return}
 });
 const maskIds=new Set(["trVal","soV","cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","dbTotal","dbPer","dbVal","dmVal","fxEur","fxBrl","limTot","limFree","cdLimit"]);
 document.addEventListener("input",e=>{
@@ -6916,7 +6971,47 @@ $("cardSheet").addEventListener("submit",async e=>{
 
 /* ---------- leitor de fatura (PDF) ---------- */
 /* pages: [{h, items:[{s,x,t}]}]  (t = distância do topo da página) */
+const PAY_CR_RE=/\b(pagamento|pgto|pagto|deb(?:ito)?\s*autom|fatura\s*paga|cr[eé]dito\s*de\s*parcelamento|parcelamento\s*de\s*fatura|fatura\s*parcelada|saldo\s*parcelado|cred\s*parc\s*fat|vl\.?\s*fat\.?\s*ef)\b/i;
+const EST_CR_RE=/\b(estorno|cancelamento|devolu[cç][aã]o|reembolso|cashback|desconto|bonifica|isencao|isen[cç][aã]o|ajuste\s*a\s*cr[eé]dito|cr[eé]dito\s*em\s*confian[cç]a)\b/i;
+const isPayCredit=r=>{const d=`${r.desc||""} ${r.shop||""}`;return !EST_CR_RE.test(d)&&PAY_CR_RE.test(d)};
+/* estornos, devoluções, descontos e cashback na fatura: antes ficavam em credits (<0) e eram ignorados como "pagamento anterior",
+   deixando a fatura no app maior que a do banco. Agora cancelam a compra de mesmo valor ou abatem nas compras da fatura. */
+function settleInvoiceCredits(res){
+  if(!res||!Array.isArray(res.rows)) return res;
+  const rows=res.rows.map(r=>({...r}));
+  let estTot=0,estN=0;
+  const ests=rows.filter(r=>r.cents<0&&!isPayCredit(r));
+  /* 1) compra de mesmo valor na mesma fatura: cancela os dois */
+  ests.forEach(cr=>{
+    const v=-cr.cents, crNm=cr.shop||cr.desc||"";
+    let j=rows.findIndex(x=>x.cents>0&&!x.gone&&!x.prev&&closeC(x.cents,v)&&nameSim(x.shop||x.desc||"",crNm)>0);
+    if(j<0) j=rows.findIndex(x=>x.cents===v&&!x.gone&&!x.prev);
+    if(j>=0){rows[j].gone=1;cr.gone=1;estTot+=v;estN++}
+  });
+  /* 2) estorno parcial da mesma loja ou desconto de encargo/anuidade */
+  ests.filter(cr=>!cr.gone).forEach(cr=>{
+    const v=-cr.cents, crNm=cr.shop||cr.desc||"";
+    const j=rows.findIndex(x=>x.cents>v&&!x.gone&&!x.prev&&nameSim(x.shop||x.desc||"",crNm)>=0.35);
+    if(j>=0){rows[j].cents-=v;rows[j].desc=`${rows[j].desc} (c/ estorno −${R(v)})`;cr.gone=1;estTot+=v;estN++}
+  });
+  /* 3) estorno de compra de fatura anterior, cashback ou desconto geral: abate das maiores compras para fechar com o total do banco */
+  ests.filter(cr=>!cr.gone).forEach(cr=>{
+    let rem=-cr.cents;
+    const deb=rows.filter(x=>x.cents>0&&!x.gone&&!x.prev).sort((a,b)=>b.cents-a.cents);
+    for(const x of deb){
+      if(rem<=0) break;
+      if(x.cents>rem){x.cents-=rem;x.desc=`${x.desc} (c/ desconto −${R(rem)})`;estTot+=rem;rem=0;break}
+      else if(x.cents===rem){x.gone=1;estTot+=rem;rem=0;break}
+    }
+    if(rem===0){cr.gone=1;estN++}
+  });
+  return {...res,rows:rows.filter(r=>!r.gone),estorno:(res.estorno||0)+estTot,estornoN:(res.estornoN||0)+estN};
+}
 function parseInvoice(pages){
+  const r=_parseInvoiceRaw(pages);
+  return settleInvoiceCredits(r);
+}
+function _parseInvoiceRaw(pages){
   const MONEY=/^-?\d{1,3}(\.\d{3})*,\d{2}$/, DATE=/^\d{2}\/\d{2}\/\d{4}$/;
   const toC=v=>{const neg=v.startsWith("-");return (neg?-1:1)*Number(v.replace(/[-.]/g,"").replace(",",""))};
   const iso=d=>{const[a,b,c]=d.split("/");return `${c}-${b}-${a}`};
@@ -7209,16 +7304,64 @@ async function pdfPagesOf(file){
     pages.push({h:vp.height,w:vp.width,items:tc.items.map(i=>({s:i.str,x:i.transform[4],w:i.width,t:vp.height-i.transform[5]}))})}
   return pages;
 }
-/* vários PDFs de uma vez (pensado para holerites): cada um aprende para o salário previsto e entra no histórico; depois mostra
-   um resumo (novo / já estava / já lançado), com "Lançar" em cada um e "Lançar os que faltam" (out/2026) */
-async function readMany(files){
-  toast(`Lendo ${files.length} PDFs…`);const R0=[],other=[],dupF=[],seen=new Set();
-  for(const f of files){try{const h=parseHolerite(await pdfPagesOf(f));
-    if(!h){other.push(f.name);continue}
-    const kk=`${h.ref}|${h.kind}`;if(seen.has(kk)){dupF.push(f.name);continue}seen.add(kk);
-    const had=(cfg.hol||{})[`${h.ref}|${holKey2(h.kind)}`], tag=!had?"novo":had.liq===h.cents&&had.date===h.date?"já estava":"atualizado";
-    holLearn(h);R0.push({h,tag})}catch(e){other.push(f.name)}}
-  if(!R0.length){toast("Nenhum desses PDFs é holerite. Para faturas, importe um de cada vez.");return}
+/* vários arquivos de uma vez: lê faturas de cartão (PDF ou OFX, atuais e antigas para controle histórico) e/ou holerites */
+async function parseOfxCardFile(file){
+  const buf=new Uint8Array(await file.arrayBuffer());
+  let txt;try{txt=new TextDecoder("utf-8",{fatal:true}).decode(buf)}catch(e){txt=new TextDecoder("windows-1252").decode(buf)}
+  if(!/<CCSTMTRS>/i.test(txt)) return null;
+  const tv=(b,t)=>{const m=new RegExp("<"+t+">\\s*([^<\\r\\n]*)","i").exec(b);return m?m[1].trim():""};
+  const dt=v=>v&&v.length>=8?`${v.slice(0,4)}-${v.slice(4,6)}-${v.slice(6,8)}`:"";
+  const cents=v=>Math.round(parseFloat(String(v).replace(",","."))*100)||0;
+  const bid=tv(txt,"BANKID")||tv(txt,"FID"), org=tv(txt,"ORG");
+  const ORGS=[[/nu ?pagamentos|nubank/i,"Nubank"],[/ita[uú]/i,"Itaú"],[/bradesco/i,"Bradesco"],[/caixa/i,"Caixa"],[/banco do brasil|\bbb\b/i,"Banco do Brasil"],[/santander/i,"Santander"],[/inter\b/i,"Inter"],[/c6/i,"C6"],[/pagseguro|pagbank/i,"PagBank"],[/picpay/i,"PicPay"],[/mercado ?pago/i,"Mercado Pago"],[/\bpan\b/i,"Pan"]];
+  const bank=OFX_BANKS[bid]||OFX_BANKS[bid.replace(/^0+/,"")]||(ORGS.find(([re])=>re.test(org))||[])[1]||(org?titleCase(org.replace(/^banco\s+/i,"")):"")||"";
+  const T=txt.split(/<STMTTRN>/i).slice(1).map(b=>{b=b.split(/<\/STMTTRN>/i)[0];return {date:dt(tv(b,"DTPOSTED")),cents:cents(tv(b,"TRNAMT")),memo:(tv(b,"MEMO")||tv(b,"NAME")).replace(/\s+/g," ").trim()}}).filter(t=>t.date&&t.cents);
+  if(!T.length) return null;
+  const rows=T.map(t=>{let d=t.memo;const pm=/\s*[-–]?\s*parcela\s*(\d+)\s*\/\s*(\d+)\s*$/i.exec(d);if(pm)d=d.slice(0,pm.index).trim();
+    return {date:t.date,desc:pm?parcTag(d,+pm[1],+pm[2]):d,shop:"",cents:-t.cents}}).filter(r=>!(r.cents<0&&isPayCredit(r)));
+  return settleInvoiceCredits({bank,due:"",rows,total:null,close:0});
+}
+async function readMany(files,fixedCard){
+  toast(`Lendo ${files.length} arquivos…`);
+  const R0=[],invs=[],other=[],dupF=[],seen=new Set(),seenInv=new Set();
+  for(let idx=0;idx<files.length;idx++){
+    const f=files[idx];
+    if(files.length>2) toast(`Lendo ${idx+1} de ${files.length}…`);
+    try{
+      const head=new TextDecoder("latin1").decode(new Uint8Array(await f.slice(0,600).arrayBuffer()));
+      if(/\.(ofx|qfx)$/i.test(f.name)||/OFXHEADER|<OFX>/i.test(head)){
+        const r=await parseOfxCardFile(f);
+        if(r&&r.rows.length){invs.push({file:f.name,r});continue}
+        other.push(f.name);continue;
+      }
+      const pages=await pdfPagesOf(f);
+      if(!pages.some(pg=>pg.items.some(i=>i.s.trim()))){other.push(f.name);continue}
+      const h=!fixedCard&&parseHolerite(pages);
+      if(h){
+        const kk=`${h.ref}|${h.kind}`;if(seen.has(kk)){dupF.push(f.name);continue}seen.add(kk);
+        const had=(cfg.hol||{})[`${h.ref}|${holKey2(h.kind)}`], tag=!had?"novo":had.liq===h.cents&&had.date===h.date?"já estava":"atualizado";
+        holLearn(h);R0.push({h,tag});continue;
+      }
+      const r=parseInvoice(pages);
+      if(r&&r.rows&&r.rows.length){
+        const ik=`${r.bank||""}|${r.due||""}|${r.rows.length}|${r.rows.reduce((s,x)=>s+x.cents,0)}`;
+        if(seenInv.has(ik)){dupF.push(f.name);continue}seenInv.add(ik);
+        invs.push({file:f.name,r});continue;
+      }
+      other.push(f.name);
+    }catch(e){other.push(f.name)}
+  }
+  $("toast").hidden=true;
+  if(invs.length){
+    if(invs.length===1&&!R0.length&&!other.length&&!dupF.length){
+      const {r}=invs[0], card=fixedCard||(r.bank?await bankCard(r.bank):credCards().length===1?credCards()[0]:null);
+      if(!card){pickCard(r);return}
+      openImport(card,r);imp.onDone=()=>{selCard=card;backTo=tab==="pCards"?"pCards":tab;go("pCards")};return;
+    }
+    await openMultiImport(invs,fixedCard,R0,other,dupF);
+    return;
+  }
+  if(!R0.length){toast("Não reconheci faturas de cartão nem holerites nesses arquivos.");return}
   anoSubTab="fixos";lsSet("despesas.anoTab","fixos");
   holImportSheet(R0,other,dupF);
 }
@@ -7274,8 +7417,8 @@ async function readOfx(file){
     if(!T.length){toast("Esse OFX não tem movimentos.");return}
     if(isCard){
       const rows=T.map(t=>{let d=t.memo;const pm=/\s*[-–]?\s*parcela\s*(\d+)\s*\/\s*(\d+)\s*$/i.exec(d);if(pm)d=d.slice(0,pm.index).trim();
-        return {date:t.date,desc:pm?parcTag(d,+pm[1],+pm[2]):d,shop:"",cents:-t.cents}}).filter(r=>!(r.cents<0&&/pagamento|pgto/i.test(r.desc)));
-      const r={bank,due:"",rows,total:null,close:0};
+        return {date:t.date,desc:pm?parcTag(d,+pm[1],+pm[2]):d,shop:"",cents:-t.cents}}).filter(r=>!(r.cents<0&&isPayCredit(r)));
+      const r=settleInvoiceCredits({bank,due:"",rows,total:null,close:0});
       if(bank==="Conta"){pickCard(r);return}
       const card=await bankCard(bank);openImport(card,r);imp.onDone=()=>{selCard=card;backTo=tab;go("pCards")};return}
     const bal=tv(txt,"BALAMT"), asof=tv(txt,"DTASOF"), at=dt(asof)||today();
@@ -8546,58 +8689,75 @@ function guessDueYM(card,rows){
     if(last<=d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())) return ym}
   return shiftYM(last.slice(0,7),1);
 }
-function openImport(card,r){
+function buildImp(card,r){
   const dueYM=r.due?r.due.slice(0,7):guessDueYM(card,r.rows);
   const dd=r.due?+r.due.slice(8):dueOf(card)||10, bill=shiftYM(dueYM,-dueShift(dd));
   const debits=r.rows.filter(x=>x.cents>0), credits=r.rows.filter(x=>x.cents<0);
-  const tag=(r.pfx||"fatura-")+(r.due||bill);
-  imp={card,pfx:r.pfx||"",due:r.due,bank:r.bank,total:r.total,close:r.close||0,bill,guess:!r.due,again:items.some(x=>cardOf(x)===card&&x.imp===tag),future:true,replace:true,paid:!!r.due&&r.due<today(),
+  const tag=(r.pfx||"fatura-")+(r.due||bill), dueEff=r.due||dueDateOf(dd,bill);
+  const o={card,pfx:r.pfx||"",due:r.due,bank:r.bank,total:r.total,close:r.close||0,bill,guess:!r.due,
+    again:items.some(x=>cardOf(x)===card&&x.imp===tag),future:true,replace:true,full:true,
+    paid:dueEff<today(),estorno:r.estorno||0,estornoN:r.estornoN||0,
     rows:debits.map((x,i)=>({...x,...invoiceEntry(x),i,on:true})),credits};
-  /* fatura anterior parcelada: o crédito do valor financiado ("VL FAT EF") sai do mês anterior, que já conta esse valor
-     inteiro, e volta nas parcelas desta fatura em diante (senão conta duas vezes) */
-  imp.fin=-credits.filter(x=>FIN_RE.test(x.desc)).reduce((s,x)=>s+x.cents,0);imp.finOn=imp.fin>0;
-  imp.finDone=items.some(x=>x.finOf===tag);
+  o.fin=-credits.filter(x=>FIN_RE.test(x.desc)).reduce((s,x)=>s+x.cents,0);o.finOn=o.fin>0;
+  o.finDone=items.some(x=>x.finOf===tag);
+  return o;
+}
+function openImport(card,r){
+  imp=buildImp(card,r);
   impMark();impRender();
   closeSheets(true);$("scrim").hidden=$("impSheet").hidden=false;cardTheme(card);
 }
 const FIN_RE=/\bVL\.?\s?FAT\.?\s?EF\b|PARCELAMENTO DE FATURA|FATURA PARCELADA|\bPARC\.?\s?FAT/i;
-function impGeneric(){const L=[];[imp.bill,shiftYM(imp.bill,1)].forEach(ym=>items.filter(x=>cardOf(x)===imp.card&&x.date.startsWith(ym)&&x.cat==="cartao"&&/^Fatura /i.test(x.desc||"")&&!x.imp).forEach(x=>L.push(x)));return L}
+function impGeneric(O){const I=O||imp, L=[];[I.bill,shiftYM(I.bill,1)].forEach(ym=>items.filter(x=>cardOf(x)===I.card&&x.date.startsWith(ym)&&x.cat==="cartao"&&/^Fatura /i.test(x.desc||"")&&!x.imp).forEach(x=>L.push(x)));return L}
 /* fatura já paga: vale para o mês cujo vencimento já passou (parcelas futuras continuam em aberto) */
-const impDD=()=>imp.due?+imp.due.slice(8):dueOf(imp.card)||10;
-function impPaidFor(ym){return !!imp.paid&&dueDateOf(impDD(),ym)<=today()}
+const impDD=(O)=>{const I=O||imp;return I.due?+I.due.slice(8):dueOf(I.card)||10};
+function impPaidFor(ym,O){
+  const I=O||imp, d=dueDateOf(impDD(I),ym);
+  const mL=items.filter(x=>cardOf(x)===I.card&&!genFat(x)&&(x.date||"").startsWith(ym));
+  if(mL.length&&mL.every(isPaid)) return true;
+  return (!!I.paid||d<today())&&d<=today();
+}
 /* data dos itens importados: vence do dia 10 em diante → no dia do vencimento; senão, último dia do mês */
-const impDate=ym=>dueDateOf(impDD(),ym);
+const impDate=(ym,O)=>dueDateOf(impDD(O),ym);
 /* parcelas de uma fatura antiga (antes de MIN_YM) que caem de MIN_YM em diante e ainda não existem */
-/* só valem faturas com vencimento a partir do mês seguinte ao MIN_YM (out/2026); as anteriores são só informativas */
+/* só valem faturas com vencimento a partir do mês seguinte ao MIN_YM (out/2026) para o saldo da conta; faturas antigas entram como pagas para histórico e controle */
 const MIN_DUE=shiftYM(MIN_YM,1)+"-01";
-const impDueOf=ym=>dueDateOf(impDD(),ym);
-function preParcs(r){
-  const m=/^(\d+)\/(\d+)$/.exec(r.parc||"");if(!m) return [];
-  const ex=items.filter(x=>cardOf(x)===imp.card), L=[];
-  for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){const ym=shiftYM(imp.bill,j), parc=`${i}/${+m[2]}`;
-    if(impDueOf(ym)<MIN_DUE) continue;
-    const c={id:"_pre",type:"desp",desc:r.name,cat:r.cat,cents:r.cents,parc,date:ym+"-01",buy:r.date,card:imp.card,imp:"_"};
+const impDueOf=(ym,O)=>dueDateOf(impDD(O),ym);
+function preParcs(r,O){
+  const I=O||imp, m=/^(\d+)\/(\d+)$/.exec(r.parc||"");if(!m) return [];
+  const ex=items.filter(x=>cardOf(x)===I.card), L=[];
+  for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){const ym=shiftYM(I.bill,j), parc=`${i}/${+m[2]}`;
+    if(impDueOf(ym,I)<MIN_DUE) continue;
+    const c={id:"_pre",type:"desp",desc:r.name,cat:r.cat,cents:r.cents,parc,date:ym+"-01",buy:r.date,card:I.card,imp:"_"};
     if(findSimilar(c,ex.filter(x=>x.date.startsWith(ym)))) continue;
     L.push({ym,parc});}
   return L;
 }
-function impMark(){
-  const ex=items.filter(x=>cardOf(x)===imp.card&&x.date.startsWith(imp.bill)&&!genFat(x)), used=new Set();
-  imp.old=(imp.due||impDueOf(imp.bill))<MIN_DUE;
-  imp.pre=imp.old&&!(imp.full&&imp.bill>=MIN_YM);
-  imp.rows.forEach(r=>{
-    if(imp.pre){r.match=null;r.dup=false;r.later=preParcs(r).length;r.on=r.later>0;return}
-    const cand={id:"_imp"+r.i,type:"desp",desc:r.name,cat:r.cat,cents:r.cents,parc:r.parc,date:imp.bill+"-01",buy:r.date,card:imp.card,imp:"_"};
-    const m=findSimilar(cand,ex,used);r.match=m?m.id:null;r.dup=!!m;if(m){used.add(m.id);r.on=false}else r.on=true;
+function impMark(O){
+  const I=O||imp;
+  const ex=items.filter(x=>cardOf(x)===I.card&&x.date.startsWith(I.bill)&&!genFat(x)), used=new Set();
+  /* lançamentos à mão no mês vizinho (quando a compra foi perto do fechamento e caiu no mês ao lado antes de importar o PDF) */
+  const exAdj=items.filter(x=>cardOf(x)===I.card&&!x.imp&&!genFat(x)&&(x.date.startsWith(shiftYM(I.bill,-1))||x.date.startsWith(shiftYM(I.bill,1))));
+  I.old=(I.due||impDueOf(I.bill,I))<MIN_DUE;
+  I.pre=I.old&&!I.full;
+  I.rows.forEach(r=>{
+    if(I.pre){r.match=null;r.dup=false;r.later=preParcs(r,I).length;r.on=r.later>0;return}
+    const cand={id:"_imp"+r.i,type:"desp",desc:r.name,cat:r.cat,cents:r.cents,parc:r.parc,date:I.bill+"-01",buy:r.date,card:I.card,imp:"_"};
+    let m=findSimilar(cand,ex,used);
+    if(!m){
+      m=exAdj.find(y=>!used.has(y.id)&&closeC(y.cents,r.cents)&&((r.parc&&y.parc&&sameParc(y.parc,r.parc)&&nameSim(y.desc,r.name)>=0.5)||(!r.parc&&!y.parc&&y.buy&&r.date&&dayGap(y.buy,r.date)<=2&&(nameSim(y.desc,r.name)>=0.35||y.cents===r.cents))))||null;
+    }
+    r.match=m?m.id:null;r.dup=!!m;if(m){used.add(m.id);r.on=false}else r.on=true;
   });
-  impRecur();
+  impRecur(I);
 }
 /* compra sem parcela que já veio em outro mês deste cartão com o mesmo valor (ou assinatura de nome conhecido) = assinatura:
    liga ela e as dos outros meses no mesmo group (repetição mensal) e põe Assinaturas se estava em Outros. Pessoa troca na conferência. */
-function impRecur(){
-  const old=items.filter(x=>typeOf(x)==="desp"&&cardOf(x)===imp.card&&!genFat(x)&&!x.parc&&x.cat!=="cartao"&&!FEE_RE.test(cleanDesc(x))&&x.date.slice(0,7)!==imp.bill);
-  imp.rows.forEach(r=>{
-    r.rec=null;if(imp.pre||r.parc||r.cat==="cartao"||FEE_RE.test(r.name)) return;
+function impRecur(O){
+  const I=O||imp;
+  const old=items.filter(x=>typeOf(x)==="desp"&&cardOf(x)===I.card&&!genFat(x)&&!x.parc&&x.cat!=="cartao"&&!FEE_RE.test(cleanDesc(x))&&x.date.slice(0,7)!==I.bill);
+  I.rows.forEach(r=>{
+    r.rec=null;if(I.pre||r.parc||r.cat==="cartao"||FEE_RE.test(r.name)) return;
     const prev=old.filter(x=>closeC(x.cents,r.cents)&&(fold(x.desc||"")===fold(r.name)||nameSim(x.desc||"",r.name)>=.5));
     const known=SUBN.some(([re])=>re.test(fold(r.name)));
     if(!prev.length&&!known) return;
@@ -8608,23 +8768,23 @@ function impRecur(){
 function impRender(){
   const on=imp.rows.filter(r=>r.on), tot=imp.rows.reduce((s,r)=>s+r.cents,0), sel=on.reduce((s,r)=>s+r.cents,0);
   const gen=impGeneric(), fut=on.filter(r=>{const m=/^(\d+)\/(\d+)$/.exec(r.parc);return m&&+m[1]<+m[2]});
-  const months=Array.from({length:4},(_,i)=>shiftYM(imp.due?imp.due.slice(0,7):curYM(),i-2)).filter(m=>m>=MIN_YM||m===imp.bill);
+  const months=Array.from({length:4},(_,i)=>shiftYM(imp.due?imp.due.slice(0,7):imp.bill||curYM(),i-2));
   const nPre=imp.pre?on.reduce((s,r)=>s+preParcs(r).length,0):0;
   const[dy,dm,dd]=(imp.due||"--").split("-");
   $("impSheet").innerHTML=`<div class="grip"></div>
   <h3><span>Fatura ${esc(imp.card)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="imphead"><b>${R(tot)} em ${imp.rows.length} lançamentos</b><span class="hint">${imp.total!=null?(Math.abs(imp.total-tot)<=2?`bate com o total do banco ✓ · `:`<span class="warn">banco diz ${R(imp.total)}</span> · `):""}${imp.due?`vence ${dd}/${dm}/${dy}${imp.credits.length||(imp.bank&&imp.bank!==imp.card)?" · ":""}`:""}${imp.bank&&imp.bank!==imp.card?`<span class="warn">parece fatura do ${esc(imp.bank)}</span> · `:""}${imp.credits.length?`${imp.credits.length===1?"pagamento anterior ignorado":"pagamentos anteriores ignorados"} (${R(-imp.credits.reduce((s,x)=>s+x.cents,0))})`:""}</span></div>
+  <div class="imphead"><b>${R(tot)} em ${imp.rows.length} lançamentos</b><span class="hint">${imp.total!=null?(Math.abs(imp.total-tot)<=2?`bate com o total do banco ✓ · `:`<span class="warn">banco diz ${R(imp.total)}</span> · `):""}${imp.estorno?`${imp.estornoN||1} ${(imp.estornoN||1)===1?"estorno/desconto abatido":"estornos/descontos abatidos"} (−${R(imp.estorno)}) · `:""}${imp.due?`vence ${dd}/${dm}/${dy}${imp.credits.length||(imp.bank&&imp.bank!==imp.card)?" · ":""}`:""}${imp.bank&&imp.bank!==imp.card?`<span class="warn">parece fatura do ${esc(imp.bank)}</span> · `:""}${imp.credits.length?`${imp.credits.length===1?"pagamento anterior ignorado":"pagamentos anteriores ignorados"} (${R(-imp.credits.reduce((s,x)=>s+x.cents,0))})`:""}</span></div>
   ${imp.again?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 8px">Esta fatura já foi importada antes. O que já está lançado aparece como “já lançado”.</p>`:""}
   ${imp.guess?`<p class="warn" style="font-size:.85rem;font-weight:600;margin:0 0 8px">Não achei o vencimento ${imp.pfx?"no print":"no PDF"}: escolhi o mês pela data das compras. Confira abaixo.</p>`:""}
   <div class="field" style="margin-bottom:8px"><label for="impBill">Entra na fatura de</label><select id="impBill">${months.map(m=>`<option value="${m}" ${m===imp.bill?"selected":""}>${monthLabel(m)}</option>`).join("")}</select></div>
-  <div class="ilist">${imp.rows.map(r=>{const[,m,d]=r.date.split("-");
-    return `<label class="irow ${r.on?"":"off"}"><input type="checkbox" data-imp="${r.i}" ${r.on?"checked":""}><span class="d">${esc(r.name)}</span><span class="v">${R(r.cents)}</span><span class="m">${d}/${m} · ${esc(catOf(r.cat,"desp").n)}${r.parc?` · parcela ${r.parc}`:""}${imp.pre?(r.later?` · lança ${r.later} ${r.later===1?"parcela":"parcelas"} que ${r.later===1?"vence":"vencem"} de ${shortMonth(MIN_DUE.slice(0,7))} em diante`:` · só informativo`):""}${r.dup?` · já lançado como “${esc(cleanDesc(items.find(x=>x.id===r.match)||{}))}”, vai mesclar`:""}</span></label>`}).join("")}</div>
+  <div class="ilist">${imp.rows.map(r=>{const[,m,d]=r.date.split("-"), mx=r.match?items.find(x=>x.id===r.match):null, adjM=mx&&!mx.date.startsWith(imp.bill)?shortMonth(mx.date.slice(0,7)):"";
+    return `<label class="irow ${r.on?"":"off"}"><input type="checkbox" data-imp="${r.i}" ${r.on?"checked":""}><span class="d">${esc(r.name)}</span><span class="v">${R(r.cents)}</span><span class="m">${d}/${m} · ${esc(catOf(r.cat,"desp").n)}${r.parc?` · parcela ${r.parc}`:""}${imp.pre?(r.later?` · lança ${r.later} ${r.later===1?"parcela":"parcelas"} que ${r.later===1?"vence":"vencem"} de ${shortMonth(MIN_DUE.slice(0,7))} em diante`:` · só informativo`):""}${r.dup?` · já lançado como “${esc(cleanDesc(mx||{}))}”${adjM?` (em ${adjM})`:""}, vai mesclar`:""}</span></label>`}).join("")}</div>
   ${(()=>{const L=imp.rows.filter(r=>r.rec&&(r.on||r.match));if(!L.length||imp.pre) return "";
     return `<p class="hint" style="margin:8px 0 2px">Parecem assinaturas (ligo todos os meses numa série):</p>`+L.map(r=>`<label class="check"><input type="checkbox" data-impser="${r.i}" ${r.ser?"checked":""}> ${esc(r.name)} · ${R(r.cents)} · ${r.rec.months.length?`visto em ${r.rec.months.map(shortMonth).join(", ")}`:"assinatura conhecida"}</label>`).join("")})()}
-  ${imp.pre?`<p class="hint" style="margin:8px 0">Fatura com vencimento antes de ${monthLabel(MIN_DUE.slice(0,7)).toLowerCase()} é só informativa: entram só as parcelas que vencem de ${shortMonth(MIN_DUE.slice(0,7))} em diante; quando você importar a fatura seguinte, elas aparecem como “já lançado” e são mescladas.</p>`:""}
-  ${imp.old&&imp.bill>=MIN_YM?`<label class="check"><input type="checkbox" id="impFull" ${imp.full?"checked":""}> Lançar a fatura inteira mesmo assim (histórico): tudo entra como pago, mescla com o que já está lançado e não mexe no saldo da conta</label>`:""}
-  <label class="check"><input type="checkbox" id="impPaid" ${imp.paid?"checked":""} ${imp.full&&!imp.pre?"disabled":""}> Fatura já paga${imp.due&&imp.due<today()?" (o vencimento já passou)":""}</label>
-  ${imp.fin>0&&!imp.pre&&!imp.finDone&&shiftYM(imp.bill,-1)>=MIN_YM?`<label class="check"><input type="checkbox" id="impFin" ${imp.finOn?"checked":""}> Tirar ${R(imp.fin)} de ${monthLabel(shiftYM(imp.bill,-1)).split(" ")[0].toLowerCase()}: a fatura de lá foi parcelada e esse valor volta nas parcelas</label>`:""}
+  ${imp.pre?`<p class="hint" style="margin:8px 0">Modo só parcelas atuais: entram só as parcelas que vencem de ${shortMonth(MIN_DUE.slice(0,7))} em diante.</p>`:""}
+  ${imp.old?`<label class="check"><input type="checkbox" id="impFull" ${imp.full?"checked":""}> Lançar a fatura inteira no histórico (entra como paga, mescla com o que já está lançado e não mexe no saldo da conta)</label>`:""}
+  <label class="check"><input type="checkbox" id="impPaid" ${imp.paid?"checked":""} ${imp.old&&imp.full&&!imp.pre?"disabled":""}> Fatura já paga${imp.due&&imp.due<today()?" (o vencimento já passou)":""}</label>
+  ${imp.fin>0&&!imp.pre&&!imp.finDone?`<label class="check"><input type="checkbox" id="impFin" ${imp.finOn?"checked":""}> Tirar ${R(imp.fin)} de ${monthLabel(shiftYM(imp.bill,-1)).split(" ")[0].toLowerCase()}: a fatura de lá foi parcelada e esse valor volta nas parcelas</label>`:""}
   ${fut.length&&!imp.pre?`<label class="check"><input type="checkbox" id="impFuture" ${imp.future?"checked":""}> Lançar também as próximas parcelas (${fut.length} ${fut.length===1?"compra parcelada":"compras parceladas"})</label>`:""}
   ${gen.length&&!imp.pre?`<label class="check"><input type="checkbox" id="impReplace" ${imp.replace?"checked":""}> Apagar o lançamento genérico “${esc(gen[0].desc)}” (${R(gen.reduce((s,x)=>s+x.cents,0))}), para não contar em dobro</label>`:""}
   ${imp.pfx?"":`<button type="button" class="linkbtn" id="diagOpen">Algo não bateu com o PDF? Copiar diagnóstico</button>`}
@@ -8644,62 +8804,172 @@ function impSync(){
   const st=$("impSheet").scrollTop, ls=document.querySelector("#impSheet .ilist")?.scrollTop||0;
   impRender();$("impSheet").scrollTop=st;const il=document.querySelector("#impSheet .ilist");if(il)il.scrollTop=ls;
 }
-$("impSheet").addEventListener("submit",async e=>{
-  e.preventDefault();
-  const on=imp.rows.filter(r=>r.on), mg=imp.rows.filter(r=>!r.on&&r.match);if(!on.length&&!mg.length) return;
-  const btn=e.target.querySelector("button[type=submit]");btn.disabled=true;
-  const now=Date.now(), tag=(imp.pfx||"fatura-")+(imp.due||imp.bill), card=imp.card;
+async function impCommit(I,batchBills){
+  const on=I.rows.filter(r=>r.on), mg=I.rows.filter(r=>!r.on&&r.match);
+  if(!on.length&&!mg.length) return {nAdd:0,nUpd:0,finTxt:"",bill:I.bill};
+  const now=Date.now(), tag=(I.pfx||"fatura-")+(I.due||I.bill), card=I.card;
   const ex=items.filter(x=>cardOf(x)===card);
-  const add=[], upd=[];
-  if(imp.pre) on.forEach((r,k)=>{const g="g"+now+"_"+k;
-    preParcs(r).forEach(p=>add.push({type:"desp",desc:r.name,cat:r.cat,cents:r.cents,pay:"Crédito",card,paid:impPaidFor(p.ym),buy:r.date,imp:tag,date:impDate(p.ym),parc:p.parc,group:g}))});
+  const add=[], upd=[], delSib=[];
+  const canGenFut=(ym,r,parc,grp)=>{
+    if(batchBills&&batchBills.has(ym)) return false;
+    const hit=ex.find(x=>x.date.startsWith(ym)&&!genFat(x)&&((closeC(x.cents,r.cents)&&(sameParc(x.parc,parc)||nameSim(x.desc,r.name)>=0.5||(grp&&x.group===grp)))||(sameParc(x.parc,parc)&&nameSim(x.desc,r.name)>=0.5)));
+    if(hit){if(!hit.group||(!hit.parc&&parc))upd.push([hit.id,{...(hit.group?{}:{group:grp}),...(hit.parc?{}:{parc})}]);return false}
+    if(billImpTag(card,ym)) return false;
+    return true;
+  };
+  if(I.pre) on.forEach((r,k)=>{const g="g"+now+"_"+k;
+    preParcs(r,I).forEach(p=>add.push({type:"desp",desc:r.name,cat:r.cat,cents:r.cents,pay:"Crédito",card,paid:impPaidFor(p.ym,I),buy:r.date,imp:tag,date:impDate(p.ym,I),parc:p.parc,group:g}))});
   else on.forEach((r,k)=>{
     const base={type:"desp",desc:r.name,cat:r.cat,cents:r.cents,pay:"Crédito",card,paid:false,buy:r.date,imp:tag};
     let g="g"+now+"_"+k;
-    /* parcela nova entra na série da parcela anterior que já está lançada */
     const pm=/^(\d+)\/(\d+)$/.exec(r.parc||"");
     if(pm){const sib=ex.find(y=>y.group&&y.parc&&parcInfo(y)&&parcInfo(y).n===+pm[2]&&(fold(y.desc||"")===fold(r.name)||nameSim(y.desc||"",r.name)>=.5)&&closeC(y.cents,r.cents));if(sib) g=sib.group}
     if(r.ser&&r.rec){const pg=r.rec.prev.find(y=>y.group&&!/^s/.test(y.group));g=pg?pg.group:g;
       if(!pg) r.rec.prev.forEach(y=>upd.push([y.id,{group:g,...(y.cat==="outros"?{cat:"assin"}:{})}]));
       else r.rec.prev.filter(y=>!y.group).forEach(y=>upd.push([y.id,{group:g,...(y.cat==="outros"?{cat:"assin"}:{})}]))}
-    add.push({...base,...(r.ser&&r.rec&&r.cat==="outros"?{cat:"assin"}:{}),paid:impPaidFor(imp.bill),date:impDate(imp.bill),parc:r.parc,...(r.parc||(r.ser&&r.rec)?{group:g}:{})});
+    add.push({...base,...(r.ser&&r.rec&&r.cat==="outros"?{cat:"assin"}:{}),paid:impPaidFor(I.bill,I),date:impDate(I.bill,I),parc:r.parc,...(r.parc||(r.ser&&r.rec)?{group:g}:{})});
     const m=/^(\d+)\/(\d+)$/.exec(r.parc);
-    if(imp.future&&m) for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){
-      const ym=shiftYM(imp.bill,j), parc=`${i}/${+m[2]}`;
-      if(ex.some(x=>x.date.startsWith(ym)&&closeC(x.cents,r.cents)&&sameParc(x.parc,parc))) continue;
-      add.push({...base,date:impDate(ym),parc,group:g});
+    if(I.future&&m) for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){
+      const ym=shiftYM(I.bill,j), parc=`${i}/${+m[2]}`;
+      if(!canGenFut(ym,r,parc,g)) continue;
+      add.push({...base,paid:impPaidFor(ym,I),date:impDate(ym,I),parc,group:g});
     }
   });
   mg.forEach((r,k)=>{const x=items.find(y=>y.id===r.match);if(!x) return;
     let g=x.group||("g"+now+"_m"+k);
+    const pm=/^(\d+)\/(\d+)$/.exec(r.parc||"");
+    if(pm&&!x.group){const sib=ex.find(y=>y.id!==x.id&&y.group&&y.parc&&parcInfo(y)&&parcInfo(y).n===+pm[2]&&(fold(y.desc||"")===fold(r.name)||nameSim(y.desc||"",r.name)>=.5)&&closeC(y.cents,r.cents));if(sib) g=sib.group}
     if(r.ser&&r.rec&&!x.group){const pg=r.rec.prev.find(y=>y.group&&!/^s/.test(y.group));g=pg?pg.group:g;
       r.rec.prev.filter(y=>!y.group).forEach(y=>upd.push([y.id,{group:g,...(y.cat==="outros"?{cat:"assin"}:{})}]))}
-    upd.push([x.id,{buy:x.buy||r.date,imp:tag,cents:r.cents,...(r.ser&&r.rec&&!x.group?{group:g,...(x.cat==="outros"?{cat:"assin"}:{})}:{}),...(impPaidFor(imp.bill)?{paid:true}:{}),...(r.parc&&!x.parc?{parc:r.parc}:{}),...(r.parc&&!x.group?{group:g}:{})}]);
+    const crossMonth=!x.date.startsWith(I.bill);
+    if(crossMonth&&!x.imp) laterSiblings(x).filter(s=>!s.imp).forEach(s=>delSib.push(s.id));
+    upd.push([x.id,{buy:x.buy||r.date,imp:tag,cents:r.cents,...(crossMonth?{date:impDate(I.bill,I)}:{}),...(r.ser&&r.rec&&!x.group?{group:g,...(x.cat==="outros"?{cat:"assin"}:{})}:{}),...(impPaidFor(I.bill,I)?{paid:true}:{}),...(r.parc&&!x.parc?{parc:r.parc}:{}),...(r.parc&&!x.group?{group:g}:{})}]);
     const m=/^(\d+)\/(\d+)$/.exec(r.parc);
-    if(imp.future&&m) for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){
-      const ym=shiftYM(imp.bill,j), parc=`${i}/${+m[2]}`;
-      if(ex.some(y=>y.date.startsWith(ym)&&closeC(y.cents,r.cents)&&(sameParc(y.parc,parc)||y.group===x.group&&x.group))) continue;
-      add.push({type:"desp",desc:x.desc,cat:x.cat,cents:r.cents,pay:"Crédito",card,paid:false,buy:r.date,imp:tag,date:impDate(ym),parc,group:g});
+    if(I.future&&m) for(let i=+m[1]+1,j=1;i<=+m[2];i++,j++){
+      const ym=shiftYM(I.bill,j), parc=`${i}/${+m[2]}`;
+      if(!canGenFut(ym,r,parc,g)) continue;
+      add.push({type:"desp",desc:x.desc,cat:x.cat,cents:r.cents,pay:"Crédito",card,paid:impPaidFor(ym,I),buy:r.date,imp:tag,date:impDate(ym,I),parc,group:g});
     }
   });
+  if(I.replace&&!I.pre) for(const x of impGeneric(I)) await store.items.remove(x.id);
+  for(const id of delSib) await store.items.remove(id);
+  for(const [id,p] of upd) await store.items.update(id,p);
+  let n=0;for(const x of add){await store.items.add({...x,createdAt:now+(n++)})}
+  /* se esta fatura veio do banco sem "Saldo da fatura anterior" e sem parcelamento de fatura, a fatura do mês anterior já foi paga no banco */
+  const fym=shiftYM(I.bill,-1);
+  if(!I.pre&&!I.rows.some(r=>r.prev)&&!I.fin){
+    const prevDue=cardDue(card,fym)||`${fym}-${pad(lastDay(fym))}`;
+    if(prevDue<today()){
+      const unp=items.filter(x=>cardOf(x)===card&&!genFat(x)&&x.date.startsWith(fym)&&!isPaid(x));
+      for(const x of unp) await store.items.update(x.id,{paid:true});
+    }
+  }
+  let finTxt="";
+  if(I.fin>0&&I.finOn&&!I.finDone&&!I.pre){
+    const sv=items.find(x=>cardOf(x)===card&&x.date.startsWith(fym)&&/^Saldo da fatura anterior$/i.test(x.desc||"")&&x.cents>=I.fin);
+    if(sv) await store.items.update(sv.id,{cents:sv.cents-I.fin,finOf:tag,finCut:I.fin});
+    else await store.items.add({type:"desp",desc:"Parcelado da fatura (volta nas parcelas)",cat:"cartao",cents:-I.fin,pay:"Crédito",card,paid:true,date:impDate(fym,I),imp:tag,finOf:tag,createdAt:now+(n++)});
+    finTxt=` · ${R(I.fin)} tirado de ${monthLabel(fym).split(" ")[0].toLowerCase()}`}
+  const dueDay=I.due?+I.due.slice(8):0;
+  {const o=((cfg.cards||{})[card]||{}), nd=dueDay&&dueFix(o.due,I.due,o.dueBank), nc=I.close&&o.close!==I.close;
+    if(nd||nc){const cur={...(cfg.cards||{})};cur[card]={...o,...(nd?{due:dueDay,dueBank:1}:{}),...(nc?{close:I.close}:{})};await saveCfg({cards:cur})}}
+  const bill=I.pre?(add.map(x=>x.date.slice(0,7)).sort()[0]||curYM()):I.bill;
+  return {nAdd:add.length,nUpd:upd.length,finTxt,bill};
+}
+$("impSheet").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const on=imp.rows.filter(r=>r.on), mg=imp.rows.filter(r=>!r.on&&r.match);if(!on.length&&!mg.length) return;
+  const btn=e.target.querySelector("button[type=submit]");btn.disabled=true;
   try{
-    if(imp.replace&&!imp.pre) for(const x of impGeneric()) await store.items.remove(x.id);
-    for(const [id,p] of upd) await store.items.update(id,p);
-    let n=0;for(const x of add){await store.items.add({...x,createdAt:now+(n++)})}
-    let finTxt="";const fym=shiftYM(imp.bill,-1);
-    if(imp.fin>0&&imp.finOn&&!imp.finDone&&!imp.pre&&fym>=MIN_YM){
-      const sv=items.find(x=>cardOf(x)===card&&x.date.startsWith(fym)&&/^Saldo da fatura anterior$/i.test(x.desc||"")&&x.cents>=imp.fin);
-      if(sv) await store.items.update(sv.id,{cents:sv.cents-imp.fin,finOf:tag,finCut:imp.fin});
-      else await store.items.add({type:"desp",desc:"Parcelado da fatura (volta nas parcelas)",cat:"cartao",cents:-imp.fin,pay:"Crédito",card,paid:true,date:impDate(fym),imp:tag,finOf:tag,createdAt:now+(n++)});
-      finTxt=` · ${R(imp.fin)} tirado de ${monthLabel(fym).split(" ")[0].toLowerCase()}`}
-    const dueDay=imp.due?+imp.due.slice(8):0;
-    {const o=((cfg.cards||{})[card]||{}), nd=dueDay&&dueFix(o.due,imp.due,o.dueBank), nc=imp.close&&o.close!==imp.close;
-      if(nd||nc){const cur={...(cfg.cards||{})};cur[card]={...o,...(nd?{due:dueDay,dueBank:1}:{}),...(nc?{close:imp.close}:{})};await saveCfg({cards:cur})}}
-    const bill=imp.pre?(add.map(x=>x.date.slice(0,7)).sort()[0]||curYM()):imp.bill,imp0=imp;imp=null;closeSheets();view=bill;render();window.scrollTo(0,0);
+    const res=await impCommit(imp), imp0=imp;imp=null;closeSheets();view=res.bill;render();window.scrollTo(0,0);
     if(imp0&&imp0.onDone) await imp0.onDone();
-    toast(`${add.length} ${add.length===1?"lançamento adicionado":"lançamentos adicionados"}${upd.length?` · ${upd.length} mesclados`:""}${finTxt}`);
+    toast(`${res.nAdd} ${res.nAdd===1?"lançamento adicionado":"lançamentos adicionados"}${res.nUpd?` · ${res.nUpd} mesclados`:""}${res.finTxt}`);
   }catch(x){btn.disabled=false;err("impErr","Parou no meio. Confira o cartão antes de importar de novo.")}
 });
+/* ---------- importação em lote de várias faturas (atuais e antigas, para histórico e controle) ---------- */
+let multiImp=null;
+function multiImpMark(){
+  if(!multiImp) return;
+  multiImp.list.forEach(b=>{
+    b.impObj=buildImp(b.card,b.r);
+    b.impObj.future=multiImp.future;
+    b.impObj.full=true;
+    impMark(b.impObj);
+    b.bill=b.impObj.bill;
+    b.due=b.impObj.due;
+    b.paid=b.impObj.paid;
+    b.tot=b.impObj.rows.reduce((s,x)=>s+x.cents,0);
+    b.nNew=b.impObj.rows.filter(x=>x.on).length;
+    b.nMerge=b.impObj.rows.filter(x=>!x.on&&x.match).length;
+    b.again=b.impObj.again;
+  });
+  multiImp.list.sort((a,b)=>a.bill.localeCompare(b.bill)||(a.due||"").localeCompare(b.due||""));
+}
+async function openMultiImport(invs,fixedCard,hols,other,dupF){
+  const list=[];
+  for(const {file,r} of invs){
+    const card=fixedCard||(r.bank?await bankCard(r.bank):credCards()[0]||"Cartão");
+    list.push({file,r,card,needCard:!fixedCard&&!r.bank&&credCards().length>1,on:true});
+  }
+  multiImp={list,fixedCard,hols:hols||[],other:other||[],dupF:dupF||[],future:true};
+  multiImpMark();
+  closeSheets(true);$("toast").hidden=true;
+  multiImpRender();
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
+function multiImpRender(){
+  if(!multiImp) return;
+  const L=multiImp.list, sel=L.filter(b=>b.on), sumTot=sel.reduce((s,b)=>s+b.tot,0);
+  const cs=credCards(), firstB=L[0]?.bill, lastB=L[L.length-1]?.bill;
+  const rows=L.map((b,i)=>{
+    const [dy,dm,dd]=(b.due||"").split("-"), okTot=b.r.total!=null&&Math.abs(b.r.total-b.tot)<=2;
+    const sub=[
+      b.due?`vence ${dd}/${dm}/${dy}`:shortMonth(b.bill),
+      b.paid?"paga ✓":"em aberto",
+      `${b.impObj.rows.length} itens${b.nMerge?` (${b.nNew} novos, ${b.nMerge} mesclam)`:""}`,
+      b.r.estorno?`−${R(b.r.estorno)} estorno`:"",
+      b.r.total!=null?(okTot?"bate com o PDF ✓":`PDF ${R(b.r.total)}`):"",
+      b.again&&!b.nNew?"já importada":""
+    ].filter(Boolean).join(" · ");
+    const cardPick=b.needCard?`<select data-mimpcard="${i}" aria-label="Cartão" style="margin-top:4px;padding:4px 8px;font-size:.78rem">${cs.map(c=>`<option value="${esc(c)}" ${c===b.card?"selected":""}>${esc(c)}</option>`).join("")}</select>`:"";
+    return `<div class="hlimp" style="align-items:center;gap:10px">
+      <input type="checkbox" data-mimp="${i}" ${b.on?"checked":""} style="width:18px;height:18px;accent-color:var(--accent);flex-shrink:0">
+      <span class="hn" style="flex:1;min-width:0"><b>${esc(b.card)} · ${shortMonth(b.bill)}</b><small>${sub}</small>${cardPick}</span>
+      <b class="hv">${R(b.tot)}</b>
+      <button type="button" class="tbtn" data-mimpopen="${i}">Ver</button>
+    </div>`;
+  }).join("");
+  $("diagSheet").innerHTML=`<div class="grip"></div>
+  <h3><span>Faturas lidas (${L.length})</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <p class="hint" style="margin:0 0 10px">${L.length} ${L.length===1?"fatura lida":"faturas lidas"}${firstB&&lastB&&firstB!==lastB?` (de ${shortMonth(firstB)} a ${shortMonth(lastB)})`:""} · As faturas vencidas entram como <b>pagas</b> no histórico (sem mexer no saldo atual da conta) e as parcelas em comum são ligadas na mesma série sem duplicar.${multiImp.hols.length?` Também li ${multiImp.hols.length} ${multiImp.hols.length===1?"holerite":"holerites"} (já salvos no histórico).`:""}</p>
+  <div class="hllist" style="margin:0 0 12px;max-height:48vh;overflow-y:auto">${rows}</div>
+  <label class="check" style="margin-bottom:10px"><input type="checkbox" id="mimpFuture" ${multiImp.future?"checked":""}> Gerar também as próximas parcelas das compras ainda em aberto</label>
+  ${multiImp.other.length?`<p class="hint" style="margin:0 0 10px">Ignorados (não reconheci como fatura): ${multiImp.other.slice(0,4).map(esc).join(", ")}${multiImp.other.length>4?` e mais ${multiImp.other.length-4}`:""}.</p>`:""}
+  <button type="button" class="btn primary" id="mimpGo" style="width:100%" ${sel.length?"":"disabled"}>Importar ${sel.length} ${sel.length===1?"fatura":"faturas"} (${R(sumTot)})</button>`;
+}
+async function multiImpRun(btn){
+  if(!multiImp) return;
+  const sel=multiImp.list.filter(b=>b.on);if(!sel.length) return;
+  if(btn){btn.disabled=true;btn.textContent="Importando…"}
+  /* ordena da fatura mais antiga para a mais recente e avisa quais meses já estão no lote para não gerar parcela sintética onde já tem PDF real */
+  sel.sort((a,b)=>a.bill.localeCompare(b.bill)||(a.due||"").localeCompare(b.due||""));
+  const byCardBills=new Map();
+  sel.forEach(b=>{if(!byCardBills.has(b.card))byCardBills.set(b.card,new Set());byCardBills.get(b.card).add(b.bill)});
+  let totAdd=0,totUpd=0,lastCard=sel[sel.length-1].card,lastBill=sel[sel.length-1].bill;
+  try{
+    for(const b of sel){
+      const I=buildImp(b.card,b.r);
+      I.future=multiImp.future;
+      I.full=true;
+      impMark(I);
+      const res=await impCommit(I,byCardBills.get(b.card));
+      totAdd+=res.nAdd;totUpd+=res.nUpd;lastCard=b.card;lastBill=res.bill;
+    }
+    multiImp=null;closeSheets();
+    selCard=lastCard;view=lastBill;backTo="pCards";go("pCards");
+    toast(`${sel.length} ${sel.length===1?"fatura importada":"faturas importadas"} (${totAdd} lançamentos${totUpd?`, ${totUpd} mesclados`:""})`,true);
+  }catch(e){if(btn){btn.disabled=false;btn.textContent="Tentar de novo"}toast("Parou no meio. Confira e tente de novo.")}
+}
 
 /* ---------- folha de câmbio ---------- */
 let fxSheetCur="EUR";
