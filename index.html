@@ -929,7 +929,9 @@ nav.tabs .tab:active,.tabav:active{transform:scale(.92)}
 .tabav[data-sync="ok"]::after{display:none}
 @keyframes sydot{to{opacity:.35}}
 /* tela "Você" (perfil e ajustes): abre pela foto; a pílula some e a foto ganha um anel */
-nav.tabs.onme::before{opacity:0}
+nav.tabs::before{transition:transform .45s cubic-bezier(.3,1.3,.45,1),left .45s cubic-bezier(.3,1.3,.45,1),width .45s cubic-bezier(.3,1.3,.45,1)}
+nav.tabs.onme::before{left:calc(100% - 64px);width:52px;transform:none}
+.tabav{transition:transform .45s cubic-bezier(.34,1.6,.5,1),border-color .3s ease,box-shadow .3s ease!important}
 .tabav[aria-current="page"]{border-color:#fff;box-shadow:0 0 0 3px color-mix(in srgb,#fff 32%,transparent)}
 .mehead{display:flex;align-items:center;gap:14px}
 .mehead .av{width:64px;height:64px;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:rgba(255,255,255,.18);color:#fff;font-family:var(--display);font-weight:700;font-size:1.6rem;border:2px solid rgba(255,255,255,.35)}

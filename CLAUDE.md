@@ -906,3 +906,4 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
      36 px de altura; legendas pequenas do Início em .78rem; Saldo total no escuro em azul (antes marrom); "a receber/a pagar" no Resumo.
 
 - **Barra de baixo fixa no celular** (30/10/2026, ele: "fica mudando de lugar quando na minha foto"): a barra encolhia com o + (Mês, Contas) e alargava sem ele (Início, Você). Agora tem sempre a mesma largura/posição (centralizada, 100% − 28 px) e o + flutua acima dela, no canto direito. Medido em 440 e 375 nas 4 telas: bordas iguais.
+- **Barra de baixo anima até a foto** (30/10/2026, ele: "anima isso aí, tá horroroso"): ao abrir a tela Você a pílula da barra desliza até a foto e vira um círculo (`nav.tabs.onme::before`: `left`/`width`/`transform` com a mesma mola); antes só sumia. O anel da foto também aparece com transição.
