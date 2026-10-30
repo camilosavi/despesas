@@ -3944,7 +3944,7 @@ function subList(){
     L.sort((a,b)=>b.date.localeCompare(a.date));const ym=L[0].date.slice(0,7), cents=L.filter(x=>x.date.startsWith(ym)).reduce((s,x)=>s+amt(x),0);
     const card=cardOf(L[0]), sh=subShare()[name], back=shBack(sh), np=shParts(sh).length;
     let got=0;if(sh) inMonth(cur).filter(x=>typeOf(x)==="rec").forEach(x=>{const m=shMatch(sh,x.cents,shWho(x));if(m&&(x.cat==="divid"&&(x.desc||"").startsWith(name)||/^Pix de /i.test(x.desc||"")))got+=m.k});
-    return {name,cents,card,last:L[0],ym,sh,back,np,mine:Math.max(0,cents-back),got:Math.min(got,np),cat:L[0].cat,off:subOffOf(name,ym)};
+    return {name,cents,card,last:L[0],ym,sh,back,np,mine:sh&&sh.euC>0?sh.euC:Math.max(0,cents-back),got:Math.min(got,np),cat:L[0].cat,off:subOffOf(name,ym)};
   }).sort((a,b)=>b.cents-a.cents);
 }
 /* quem pagou a parte da assinatura no mês (pelos Pix/receitas de 1–3 × valor) e quem costuma pagar e ainda não pagou */
@@ -3963,26 +3963,27 @@ const shOwe=(sh,n)=>{const P=shParts(sh), m=P.find(x=>x.nm&&nmSame(x.nm,n));retu
 const waLink=t=>"https://wa.me/?text="+encodeURIComponent(t);
 /* quantas partes um valor recebido representa (1 a 3 meses), aceitando arredondamento de até 3 centavos por parte */
 const shareK=(cents,c)=>{for(let k=1;k<=3;k++)if(Math.abs(cents-k*c)<=3*k)return k;return 0};
+const isEuNm=n=>/^eu$/i.test((n||"").trim());
 let subEdit=null, subMode="eq", subRows=[], subSel=[], subEu=true;
 /* abre o editor da divisão com o que já está salvo */
 function subOpen(name){const sh=subShare()[name];subMode=sh&&Array.isArray(sh.p)&&sh.p.length?"each":"eq";
-  subRows=subMode==="each"?sh.p.map(x=>({...x})):[{nm:"",c:0},{nm:"",c:0}];subSel=sh&&Array.isArray(sh.p)&&sh.p.length&&subMode==="eq"?sh.p.map(x=>x.nm):[];subEu=!(sh&&sh.eu===0)}
+  subRows=subMode==="each"?[...(sh.euC>0?[{nm:"Eu",c:sh.euC}]:[]),...sh.p.map(x=>({...x}))]:[{nm:"",c:0},{nm:"",c:0}];subSel=sh&&Array.isArray(sh.p)&&sh.p.length&&subMode==="eq"?sh.p.map(x=>x.nm):[];subEu=!(sh&&sh.eu===0)}
 function subReadRows(){subRows=subRows.map((r,i)=>({nm:($("subPn_"+i)?.value??r.nm).trim(),c:$("subPv_"+i)?digits($("subPv_"+i).value):r.c}))}
 function subEditor(r){
-  const each=subMode==="each", back=subRows.reduce((s,x)=>s+(x.c||0),0);
+  const each=subMode==="each", back=subRows.filter(x=>!isEuNm(x.nm)).reduce((s,x)=>s+(x.c||0),0), euRow=subRows.filter(x=>isEuNm(x.nm)).reduce((s,x)=>s+(x.c||0),0);
   const seg=`<div class="seg" role="group" aria-label="Como divide" style="margin:0 0 10px"><button type="button" data-submode="eq" aria-pressed="${!each}">Todos iguais</button><button type="button" data-submode="each" aria-pressed="${each}">Valor por pessoa</button></div>`;
   const eq=`<p class="hint expl" style="margin:0 0 8px">Diga entre quantas pessoas divide, <b>contando você</b>: cada um paga ${esc(R(r.cents))} ÷ pessoas.</p>
     <div class="svrow2" style="grid-template-columns:1fr auto;align-items:center"><input id="subN" inputmode="numeric" placeholder="Pessoas (com você)" value="${subSel.length?subSel.length+(subEu?1:0):r.sh&&!(r.sh.p&&r.sh.p.length)?r.sh.n+1:""}" aria-label="Dividido entre quantas pessoas, contando você" data-subtot="${r.cents}"><span id="subEach" class="hint" style="margin:0;white-space:nowrap">${subSel.length?R(Math.round(r.cents/(subSel.length+(subEu?1:0))))+" cada":r.sh&&!(r.sh.p&&r.sh.p.length)?R(r.sh.c)+" cada":"—"}</span></div>`;
   const PE0=azList(), selNew=subSel.filter(n=>!PE0.some(q=>nmSame(q.name,n)));
   const eqPick=`<div class="subpick"><span>Com quem divide (opcional)</span><div class="chips"><button type="button" class="chip" data-subeu="1" aria-pressed="${subEu}">Eu</button>${PE0.map(q=>`<button type="button" class="chip" data-subsel="${esc(q.name)}" aria-pressed="${subSel.some(n=>nmSame(n,q.name))}">${esc(q.name)}</button>`).join("")}${selNew.map(n=>`<button type="button" class="chip" data-subsel="${esc(n)}" aria-pressed="true">${esc(n)}</button>`).join("")}</div>
     <div class="pnew" style="margin-top:8px"><input type="text" id="subSelNew" maxlength="24" placeholder="Outra pessoa (nome)" autocomplete="off" enterkeyhint="done" aria-label="Nome de outra pessoa"><button type="button" class="btn soft" id="subSelAdd">Incluir</button></div></div>`;
-  const PE=azList(), used=subRows.map(x=>(x.nm||"").trim()).filter(Boolean), free=PE.filter(q=>!used.some(n=>nmSame(n,q.name)));
+  const PE=azList(), used=subRows.map(x=>(x.nm||"").trim()).filter(Boolean), free=[{name:"Eu"},...PE].filter(q=>!used.some(n=>nmSame(n,q.name)));
   const ea=`<p class="hint expl" style="margin:0 0 8px">Quem te paga e quanto (sem contar você). Quem você escolher entra em Pessoas, e quem já está lá aparece aqui.</p>
     <datalist id="azNames">${PE.map(q=>`<option value="${esc(q.name)}">`).join("")}</datalist>
     <div class="subrows">${subRows.map((x,i)=>{const nm=(x.nm||"").trim();return `<div class="subrow"><span class="azbub${nm?"":" empty"}" style="--h:${azHue(nm)}">${nm?esc(azInit(nm)):"?"}</span><input type="text" id="subPn_${i}" list="azNames" maxlength="24" placeholder="Nome" value="${esc(x.nm||"")}" aria-label="Nome da pessoa ${i+1}" autocomplete="off"><input type="text" id="subPv_${i}" inputmode="numeric" placeholder="R$ 0,00" value="${x.c?brl(x.c):""}" aria-label="Quanto a pessoa ${i+1} paga"><button type="button" class="acdel" data-subdel="${i}" aria-label="Tirar pessoa ${i+1}" ${subRows.length<2?"hidden":""}>×</button></div>`}).join("")}</div>
     ${free.length?`<div class="subpick"><span>Das suas Pessoas</span><div class="chips">${free.map(q=>`<button type="button" class="chip" data-subpick="${esc(q.name)}">+ ${esc(q.name)}</button>`).join("")}</div></div>`:""}
     <div class="toolbar" style="margin:10px 0 0"><button type="button" class="tbtn" id="subAdd">+ Outra linha</button></div>
-    <p class="hint" id="subMine" style="margin:8px 0 0">${back?`Recebe ${R(back)} · sai ${R(Math.max(0,r.cents-back))} para você`:"—"}</p>`;
+    <p class="hint" id="subMine" style="margin:8px 0 0">${back?`Recebe ${R(back)} · sai ${R(euRow>0?euRow:Math.max(0,r.cents-back))} para você`:"—"}</p>`;
   const dd=subDayOf(r.name,r.last), dayBox=`<div class="subday"><label>Dia da cobrança no cartão${dd.manual?"":" (visto nos lançamentos)"}<input id="subDay" inputmode="numeric" maxlength="2" placeholder="Dia (1 a 31)" value="${dd.d||""}" aria-label="Dia da cobrança"></label><button type="button" class="btn soft" id="subDaySave">Salvar dia</button></div>`;
   return `<div class="svedit">${dayBox}${seg}${each?ea:eq+eqPick}<p class="hint expl" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
     <div class="svbtns">${r.off?`<button class="btn soft" id="subBack">Reativar</button>`:`<button class="btn soft" id="subKill">Cancelada</button>`}${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary wide" id="subSave" data-subtot="${r.cents}">Salvar</button></div></div>`;
@@ -4005,9 +4006,9 @@ function subSection(){
 async function subSave(off){
   const S={...subShare()};let newAz=null;
   if(off) delete S[subEdit];
-  else if(subMode==="each"){subReadRows();const P=subRows.filter(x=>x.c>0).map(x=>({nm:x.nm,c:x.c}));
+  else if(subMode==="each"){subReadRows();const euC=subRows.filter(x=>isEuNm(x.nm)).reduce((a,x)=>a+(x.c||0),0), P=subRows.filter(x=>x.c>0&&!isEuNm(x.nm)).map(x=>({nm:x.nm,c:x.c}));
     if(!P.length){toast("Diga quanto pelo menos uma pessoa paga.");return}
-    S[subEdit]={n:P.length,c:Math.round(P.reduce((s,x)=>s+x.c,0)/P.length),p:P};newAz=azMerge(P.map(x=>x.nm))}
+    S[subEdit]={n:P.length,c:Math.round(P.reduce((s,x)=>s+x.c,0)/P.length),p:P,...(euC>0?{euC}:{})};newAz=azMerge(P.map(x=>x.nm))}
   else if(subSel.length){const tot=+($("subN")?.dataset.subtot||0), c=Math.round(tot/(subSel.length+(subEu?1:0)));
     S[subEdit]={n:subSel.length,c,p:subSel.map(nm=>({nm,c})),...(subEu?{}:{eu:0})};newAz=azMerge(subSel)}
   else{const p=parseInt(($("subN")?.value||"").replace(/\D/g,""),10)||0, tot=+($("subN")?.dataset.subtot||0), c=p?Math.round(tot/p):0;
@@ -6430,7 +6431,7 @@ document.addEventListener("input",e=>{
   if(id==="mSearch"){mq=e.target.value;$("mClear").hidden=!mq;clearTimeout(renderMes.t);renderMes.t=setTimeout(renderMes,180)}
   if(id==="fQ"){F.q=e.target.value;clearTimeout(renderPlan.t);renderPlan.t=setTimeout(()=>{renderPlan();const q=$("fQ");q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)}
   if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||id.startsWith("pv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
-  if(id&&id.startsWith("subPv_")&&$("subMine")){const tot=+($("subSave")?.dataset.subtot||0);let b=0;document.querySelectorAll("[id^=subPv_]").forEach(i=>b+=digits(i.value));$("subMine").textContent=b?`Recebe ${R(b)} · sai ${R(Math.max(0,tot-b))} para você`:"—"}
+  if(id&&id.startsWith("subPv_")&&$("subMine")){const tot=+($("subSave")?.dataset.subtot||0);let b=0,eu=0;document.querySelectorAll("[id^=subPv_]").forEach(i=>{const n=$("subPn_"+i.id.slice(6));if(n&&isEuNm(n.value))eu+=digits(i.value);else b+=digits(i.value)});$("subMine").textContent=b?`Recebe ${R(b)} · sai ${R(eu>0?eu:Math.max(0,tot-b))} para você`:"—"}
   if(id==="fxRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
   if(id==="svRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
   if(id==="svVal"||id==="svRt") svEqHint();
