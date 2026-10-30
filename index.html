@@ -2033,7 +2033,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .dtop{flex-wrap:wrap;gap:.7em!important}
   #pHome .dtop>div{flex:1 1 0;min-width:0}#pHome .dtop>div small{overflow:hidden;text-overflow:ellipsis}
   .dlogo{display:block;flex:none;width:46px;height:46px;padding:0;border:0;border-radius:50%;background:none;cursor:pointer}.dlogo img{display:block;width:100%;height:100%;border-radius:50%}
-  .dtop .dsearch{order:3;width:100%!important;flex:1 0 100%}
+  .dtop{flex-wrap:nowrap!important;gap:.6em!important}
+  .dtop .dsearch{order:0;flex:none;width:2.7em!important;height:2.7em;padding:0;justify-content:center;cursor:pointer}
+  .dtop .dsearch input{display:none}
+  .dtop .dsearch svg{stroke:var(--ink)}
   .dgr{font-size:1.35rem}
   .db{padding:1.1em 1.1em!important;border-radius:20px}
   .dbig{font-size:clamp(1.9rem,11cqi,2.6rem)}
@@ -3541,6 +3544,7 @@ function dashHome(){
    <section class="db d-trans"><h3>Últimas transações <button class="dlink" data-nav="pMes">Ver todas</button></h3>${tr}</section>
   </div>`;
 }
+document.addEventListener("click",e=>{if(!IS_WIDE.matches&&e.target.closest(".dtop .dsearch")){e.preventDefault();go("pMes");setTimeout(()=>$("mSearch")?.focus(),80)}});
 document.addEventListener("keydown",e=>{if(e.target&&e.target.id==="dashQ"&&e.key==="Enter"){const q=e.target.value;go("pMes");mq=q;render()}});
 document.addEventListener("scroll",e=>{const c=e.target;if(!c||c.id!=="dcar")return;const i=Math.round(c.scrollLeft/Math.max(1,c.clientWidth)),n=c.children.length;const l=document.querySelector(".dside.l"),r=document.querySelector(".dside.r");if(l)l.hidden=i<=0;if(r)r.hidden=i>=n-1},true);
 const IS_WIDE=matchMedia("(min-width:980px)");
