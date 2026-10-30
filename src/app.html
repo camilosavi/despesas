@@ -2182,10 +2182,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   #pHome>.helpbar{display:none}#pHome .dtop{margin-bottom:1em}
   #pHome .db{padding:1em 1.1em!important;border-radius:1em}
   #pHome .db h3{margin-bottom:.8em}
-  #pHome .d-cartoes .dcplast{max-width:17em}
-  #pHome .d-cartoes .dside{top:calc(min(100cqw - 3.4em,17em)/1.75/2 - .2em)}
+  #pHome .d-cartoes .dcplast{max-width:24em}#pHome .d-cartoes .dcard .dsub2,#pHome .d-cartoes .dfat,#pHome .d-cartoes .dcmp{max-width:none}
+  #pHome .d-cartoes .dside{top:calc(min(100cqw - 3.4em,24em)/1.75/2 - .2em)}
   #pHome .d-gastos .dnw{flex:1;grid-template-rows:auto auto;align-content:center;gap:1.6em}
-  #pHome .d-gastos .dnb{height:auto;width:min(100%,12.5em);min-height:0;aspect-ratio:1}
+  #pHome .d-gastos .dnb{height:auto;width:min(100%,15em);min-height:0;aspect-ratio:1}
   #pHome .d-gastos .dleg{max-height:none}
   #pHome .dtr{padding:.45em 0!important;gap:.7em}#pHome .dtr .ico,#pHome .dtr>span:first-child{transform:scale(.88)}
 }
@@ -2207,6 +2207,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   #pHome .db{border-radius:1em}
 }
 @container (max-width:340px){#pHome .drs{grid-template-columns:1fr;gap:.45em}#pHome .drc{grid-template-columns:1fr auto;align-items:center;column-gap:.6em;padding:.55em .75em}#pHome .drc>b{grid-column:2;grid-row:1;font-size:1rem}#pHome .drc>small{grid-column:1/-1}}
+/* carrossel de cartões no celular: arrasto de lado livre (30/10/2026, ele: "não dá pra arrastar pro lado e trocar") */
+#pHome .d-cartoes .dcards{touch-action:pan-x pan-y;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;align-items:flex-start}
+#pHome .dcard{align-content:start;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#pHome .dcard:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:1em}
 </style>
 
 <div class="wrap">
@@ -2644,7 +2648,7 @@ function note(t){$("note").textContent=t}
     const sh=el.closest(".sheet");
     if(sh&&!sh.hidden){if(el.closest("input[type=range],.ilist,.tablewrap,.mxwrap"))return;
       g={k:"sheet",el:sh,x:t.clientX,y:t.clientY,t:Date.now(),top:sh.scrollTop};return}
-    if(openSheet()||$("backBtn").hidden||el.closest(".tablewrap,.mxwrap,input,textarea,select"))return;
+    if(openSheet()||$("backBtn").hidden||el.closest(".tablewrap,.mxwrap,.dcards,.cstrip,input,textarea,select"))return;
     g={k:"back",el:document.querySelector(".wrap"),x:t.clientX,y:t.clientY,t:Date.now()};
   },{passive:true});
   document.addEventListener("touchmove",e=>{
@@ -3681,9 +3685,9 @@ function dashCard(c,full){
     const tm=cm.filter(x=>(whenOf(x)||"").slice(0,7)===curYM()).reduce((s,x)=>s+amt(x),0);
     meta=`${fat?`<span class="dsub2">Faturas</span><span class="dfat">${fat}</span>`:""}${cm.length?`<span class="dsub2">Últimas compras<em>Neste mês <b>${R(tm)}</b></em></span><span class="dcmp">${cm.slice(0,4).map(x=>`<span class="dcr"><span><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,"desp").n)} · ${fmtDM(whenOf(x))}</small></span><b>−${R(amt(x))}</b></span>`).join("")}</span>`:""}`;
   }
-  return `<button class="dcard" data-opencard="${esc(c)}"><span class="dcplast" style="--cc:${col};color:${dark?"#1A1A1A":"#fff"}">${logo}<span class="dcchip"></span>
+  return `<div class="dcard" role="button" tabindex="0" data-opencard="${esc(c)}"><span class="dcplast" style="--cc:${col};color:${dark?"#1A1A1A":"#fff"}">${logo}<span class="dcchip"></span>
     <span class="dcinfo"><span><small>Fatura</small><b>${R(bv)}</b></span><span><small>${dueOf(c)?"Vence":"Mês"}</small><b>${dueOf(c)?fmtDM(cardDue(c,bs.ym)):shortMonth(bs.ym)}</b></span>${f?`<span><small>${f.free<0?"Acima":"Livre"}</small><b class="${f.free<0?"neg":""}">${R(Math.abs(f.free))}</b></span>`:""}</span></span>
-    <span class="mini" ${pct==null?'style="visibility:hidden"':""}><i style="width:${pct||0}%;background:${pct>=100?"var(--neg)":pct>=80?"var(--warn)":col}"></i></span>${meta}</button>`;
+    <span class="mini" ${pct==null?'style="visibility:hidden"':""}><i style="width:${pct||0}%;background:${pct>=100?"var(--neg)":pct>=80?"var(--warn)":col}"></i></span>${meta}</div>`;
 }
 function dashHome(){
   const ym=curYM(), mi=inMonth(ym), rec=sumT(mi,"rec"), des=sumT(mi,"desp"), sob=rec-des;

@@ -879,3 +879,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   celular), lupa e sino sem círculo; "Olá, Nome" numa linha própria embaixo (saudação agora é "Olá" também no PC); Saldo total em degradê com botões
   Receita/Despesa cheios. Em celular estreito (bloco ≤ 340 px, ex. 375 px) o Resumo do mês vira 3 linhas (rótulo à esquerda, valor à direita) em vez
   de cortar os valores.
+- **Carrossel de cartões no celular arrasta** (30/10/2026, ele: "não dá pra arrastar pro lado e trocar"): o cartão da Visão geral (`dashCard`) virou
+  `div role=button` (antes `<button>`, que no Safari pode não deixar rolar começando nele); `.dcards` com `touch-action:pan-x pan-y` e
+  `overscroll-behavior-x:contain`; o gesto de "voltar" (arrastar para a direita) ignora `.dcards`/`.cstrip`. Listas do cartão não esticam mais
+  (`align-content:start`). No PC o cartão vai até 24em (antes 17em, ficava pequeno em 1920).
