@@ -1870,9 +1870,9 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .dtr>b{font-variant-numeric:tabular-nums;font-size:.95rem}
   /* colunas: quantas cabem pela largura do painel; blocos grandes ocupam mais de uma linha */
   @container (min-width:640px){#pHome .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.d-saldo,.d-fluxo,.d-trans{grid-column:auto}}
-  @container (min-width:1060px){#pHome .dgrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"s r h" "f g c" "t g c"}
+  @container (min-width:1060px){#pHome .dgrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"s r h" "f g c" "t t t"}
     .d-saldo{grid-area:s}.d-res{grid-area:r}.d-saude{grid-area:h}.d-fluxo{grid-area:f}.d-gastos{grid-area:g}.d-cartoes{grid-area:c}.d-trans{grid-area:t}}
-  @container (min-width:2000px){#pHome .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:"s r h h" "f g c c" "t g c c"}}
+  @container (min-width:2000px){#pHome .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:"s r h h" "f g c c" "t t t t"}}
 }
 /* ===== PC: demais telas no mesmo visual da Visão geral (blocos claros, sem faixa escura nem tintas) ===== */
 @media (min-width:980px){
@@ -1912,12 +1912,15 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .wrap>header.top,.wrap>#note{flex:none}
   #pHome:not([hidden]){display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto!important;padding-bottom:1.2em!important;scrollbar-width:thin}
   #pHome .dtop{flex:none}
-  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(12em,1fr) minmax(10em,1fr)}
+  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(15em,1fr) max-content}
   #pHome .db{overflow:hidden;display:flex;flex-direction:column;min-height:0}
   /* janela baixa (30/10/2026, print dele com "Nas contas" cortado): a linha de cima e o fluxo não encolhem abaixo do conteúdo; a página rola */
   #pHome :is(.d-saldo,.d-res,.d-saude,.d-fluxo){min-height:min-content}
-  #pHome .d-trans{overflow-y:auto}
+  #pHome .d-trans{overflow:hidden}
   .d-trans h3{position:sticky;top:-1.2em;background:var(--surface);z-index:1}
+  /* últimas transações em faixa larga embaixo (30/10/2026, ele: "mal alinhado"): lista em colunas, as 3 colunas de cima ficam com a mesma altura */
+  @container (min-width:1060px){#pHome .d-trans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:2.4em;align-content:start;padding-right:5.2em!important}#pHome .d-trans>h3,#pHome .d-trans>.dempty{grid-column:1/-1}}
+  @container (min-width:2000px){#pHome .d-trans{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .dnw{flex:1;min-height:0;grid-template-rows:minmax(9em,2fr) minmax(5em,1fr)}
   .dnb{height:100%;width:auto;aspect-ratio:1;max-width:100%;justify-self:center;min-height:9em}
   .dnb{container-type:inline-size}.dnb .dn{position:absolute;inset:0;height:100%}.dnb .dnc b{font-size:clamp(.6rem,7.2cqi,2rem)}.dnb .dnc small{font-size:clamp(.55rem,5cqi,.8rem)}
@@ -1972,7 +1975,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 
 @media (min-width:980px){
   #pMes:not([hidden]){display:grid!important;grid-template-columns:minmax(15em,22em) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:.7em 1em;overflow:hidden!important;align-content:stretch}
-  #pMes>.mesw{grid-column:1;margin:0!important}#pMes>.msearch{grid-column:2;margin:0!important}
+  #pMes>.msearch{grid-column:1/-1;margin:0!important}
   /* Ano e Fixos: seletor do mesmo tamanho e no mesmo lugar do Mês (lá ele divide a linha com a busca) */
   #pAno>.mesw{width:min(22em,100%);box-sizing:border-box}
   #pMes>#mBody{grid-column:1/-1;display:flex;flex-direction:column;min-height:0;margin:0!important}
@@ -3011,7 +3014,7 @@ function header0(){
   const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
-  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Metas",debts:"Dívidas",subs:"Assinaturas",rel:"Relatórios"})[navSel]||(wal?"Contas":"Ano"),pOrc:"Orçamento",pMe:"Você"};
+  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Metas",debts:"Dívidas",subs:"Assinaturas",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=tab==="pHome"?homeCardName():titles[tab]||"";$("ptitle").classList.toggle("hcedit",tab==="pHome"&&!IS_WIDE.matches);
   const sub=tab==="pCards"||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
@@ -3681,10 +3684,10 @@ function searchBody(){
   if(H.length>300) h+=`<p class="hint">Mostrando os 300 mais recentes de ${H.length}. Digite mais para filtrar.</p>`;
   return h;
 }
-const mesSwitch=cur=>`<div class="mesw" role="tablist" aria-label="Mês, ano e fixos">${[["mes","Mês"],["ano","Ano"],["fixos","Fixos"]].map(([k,t])=>`<button type="button" role="tab" class="${k===cur?"on":""}" aria-selected="${k===cur}" data-msw="${k}">${t}</button>`).join("")}</div>`;
+const mesSwitch=cur=>`<div class="mesw" role="tablist" aria-label="Ano e fixos">${[["ano","Ano"],["fixos","Fixos"]].map(([k,t])=>`<button type="button" role="tab" class="${k===cur?"on":""}" aria-selected="${k===cur}" data-msw="${k}">${t}</button>`).join("")}</div>`;
 function mesShell(){
   if($("mSearch")) return;
-  $("pMes").innerHTML=mesSwitch("mes")+`<div class="msearch" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="mSearch" type="search" placeholder="Buscar em todos os meses" aria-label="Buscar lançamentos" autocomplete="off" enterkeyhint="search" value="${esc(mq)}"><button class="clr" id="mClear" aria-label="Limpar busca" ${mq?"":"hidden"}>×</button></div><div id="mBody"></div>`;
+  $("pMes").innerHTML=`<div class="msearch" role="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="mSearch" type="search" placeholder="Buscar em todos os meses" aria-label="Buscar lançamentos" autocomplete="off" enterkeyhint="search" value="${esc(mq)}"><button class="clr" id="mClear" aria-label="Limpar busca" ${mq?"":"hidden"}>×</button></div><div id="mBody"></div>`;
   $("mSearch").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();e.target.blur()}});
 }
 /* Comparativo com o mês anterior (29/10/2026, pedido dele): por categoria, até o mesmo dia do mês anterior quando é o mês atual; mês fechado compara com o mês anterior inteiro */
