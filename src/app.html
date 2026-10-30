@@ -1870,7 +1870,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .dtr>b{font-variant-numeric:tabular-nums;font-size:.95rem}
   /* colunas: quantas cabem pela largura do painel; blocos grandes ocupam mais de uma linha */
   @container (min-width:640px){#pHome .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.d-saldo,.d-fluxo,.d-trans{grid-column:auto}}
-  @container (min-width:1060px){#pHome .dgrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"s r h" "f g c" "t t t"}
+  @container (min-width:900px){#pHome .dgrid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:"s r h" "f g c" "t t t"}
     .d-saldo{grid-area:s}.d-res{grid-area:r}.d-saude{grid-area:h}.d-fluxo{grid-area:f}.d-gastos{grid-area:g}.d-cartoes{grid-area:c}.d-trans{grid-area:t}}
   @container (min-width:2000px){#pHome .dgrid{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-areas:"s r h h" "f g c c" "t t t t"}}
 }
@@ -1917,9 +1917,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   /* janela baixa (30/10/2026, print dele com "Nas contas" cortado): a linha de cima e o fluxo não encolhem abaixo do conteúdo; a página rola */
   #pHome :is(.d-saldo,.d-res,.d-saude,.d-fluxo){min-height:min-content}
   #pHome .d-trans{overflow:hidden}
+  #pHome .dgrid>section.db{margin:0!important}
   .d-trans h3{position:sticky;top:-1.2em;background:var(--surface);z-index:1}
   /* últimas transações em faixa larga embaixo (30/10/2026, ele: "mal alinhado"): lista em colunas, as 3 colunas de cima ficam com a mesma altura */
-  @container (min-width:1060px){#pHome .d-trans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:2.4em;align-content:start;padding-right:5.2em!important}#pHome .d-trans>h3,#pHome .d-trans>.dempty{grid-column:1/-1}}
+  @container (min-width:900px){#pHome .d-trans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:2.4em;align-content:start;padding-right:5.2em!important}#pHome .d-trans>h3,#pHome .d-trans>.dempty{grid-column:1/-1}}
   @container (min-width:2000px){#pHome .d-trans{grid-template-columns:repeat(4,minmax(0,1fr))}}
   .dnw{flex:1;min-height:0;grid-template-rows:minmax(9em,2fr) minmax(5em,1fr)}
   .dnb{height:100%;width:auto;aspect-ratio:1;max-width:100%;justify-self:center;min-height:9em}
@@ -1930,7 +1931,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .d-cartoes .dcplast{width:100%;max-width:21em;margin-inline:auto;aspect-ratio:1.9}.d-cartoes .dcinfo b{font-size:clamp(.62rem,4.6cqi,.9rem)}.d-cartoes .dcmeta{max-width:21em;margin-inline:auto;width:100%}
   .d-cartoes .dcard .mini{max-width:21em;margin-inline:auto;width:100%}
 }
-@container (min-width:640px) and (max-width:1059px){
+@container (min-width:640px) and (max-width:899px){
   #pHome .dgrid{flex:none;min-height:0;grid-template-rows:none;grid-auto-rows:auto;overflow:visible}
   #pHome .d-gastos .dnw{min-height:24em}#pHome .d-fluxo .fl{min-height:11em}#pHome .d-trans{max-height:24em}#pHome .d-cartoes{min-height:20em}
 }
