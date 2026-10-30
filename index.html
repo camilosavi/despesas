@@ -1503,11 +1503,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* telas do computador em 3 colunas, como a do cartão (out/2026, pedido dele): só a partir de 1200 px; abaixo disso e no celular nada muda */
 @media (min-width:1200px){
   /* Contas e Fixos: as seções correm em 3 colunas (cada seção inteira, sem partir no meio) */
-  .ano-metas-grid,.ano-fixos-grid{display:block!important;column-count:3;column-gap:var(--g-col)}
-  .ano-metas-grid>.ano-col-main,.ano-metas-grid>.ano-col-side,.ano-fixos-grid>.ano-col-main,.ano-fixos-grid>.ano-col-side{display:contents;position:static}
-  .ano-metas-grid section,.ano-fixos-grid section{break-inside:avoid;margin-top:0;margin-bottom:var(--g-gap)}
-  .ano-metas-grid>*>*,.ano-fixos-grid>*>*{break-inside:avoid}
-  .ano-metas-grid>.ano-col-main>:first-child,.ano-fixos-grid>.ano-col-main>:first-child{margin-top:0!important}
+  .ano-metas-grid,.ano-fixos-grid{display:grid!important;column-count:auto!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g-gap) var(--g-col);align-items:start}
+  .ano-metas-grid>.ano-col-main,.ano-metas-grid>.ano-col-side,.ano-fixos-grid>.ano-col-main,.ano-fixos-grid>.ano-col-side,.ano-metas-grid>*>div,.ano-fixos-grid>*>div{display:contents;position:static}
+  .ano-metas-grid section,.ano-fixos-grid section{break-inside:avoid;margin:0!important;min-width:0}
+  .ano-metas-grid>*>*,.ano-fixos-grid>*>*{break-inside:avoid;min-width:0}
   /* Ano: gráfico e resumo à esquerda (2 colunas), próximos meses à direita */
   .ano-visao-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;column-gap:var(--g-col)!important}
   .ano-visao-grid>.ano-col-main,.ano-visao-grid>.ano-col-side{display:contents;position:static}
@@ -1519,9 +1518,11 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .mes-split{grid-template-columns:minmax(0,2.3fr) minmax(0,1fr)!important}
   .mes-main .card.tl{column-count:2;column-gap:26px}
   .mes-main .card.tl>*{break-inside:avoid}
-  /* Você: aparência + duas colunas de seções */
-  #pMe:not([hidden]){column-count:3!important;column-gap:var(--g-col)}
+  /* Você e Limites: 3 colunas em telas largas */
+  #pMe:not([hidden]){column-count:auto!important;grid-template-columns:repeat(3,minmax(0,1fr))}
   #pMe>section{break-inside:avoid}
+  #pOrc .bud{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #pOrc .brow:nth-child(3){border-top:0}
 }
 /* BASE ÚNICA (fim): topo → 1º bloco igual em todas as telas do computador; recuo duplo das caixinhas/dívidas/pessoas no celular;
    linhas de limite que estouravam a largura em 375 px */
@@ -1721,11 +1722,6 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   /* Visão geral */
   #pHome:not([hidden]){padding-top:1.4em!important}
   .flc.now small{color:var(--ink);font-weight:700}
-  /* colunas: quantas cabem pela largura do painel; blocos grandes ocupam mais de uma linha */
-  @container (min-width:640px){#pHome .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.d-saldo,.d-fluxo,.d-trans{grid-column:auto}}
-  @container (min-width:900px){#pHome .dgrid{grid-template-columns:minmax(0,24fr) minmax(0,16fr) minmax(0,23.5fr) minmax(0,32fr);grid-template-areas:"s r r h" "f f g c" "t t g c"}
-    .d-saldo{grid-area:s}.d-res{grid-area:r}.d-saude{grid-area:h}.d-fluxo{grid-area:f}.d-gastos{grid-area:g}.d-cartoes{grid-area:c}.d-trans{grid-area:t}}
-  @container (min-width:2000px){#pHome .dgrid{grid-template-columns:minmax(0,24fr) minmax(0,16fr) minmax(0,23.5fr) minmax(0,32fr)}}
 }
 body:has(#pHome:not([hidden])) header.top,body:has(#pHome:not([hidden])) #hFoot{display:none!important}
 #pHome:not([hidden]){container-type:inline-size}
@@ -1813,6 +1809,10 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
   #pHome:not([hidden]){display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto!important;padding-bottom:1.2em!important;scrollbar-width:thin}
   #pHome .dtop{flex:none}
   #pHome .dgrid{flex:1 0 0;min-height:28em;grid-template-rows:max-content minmax(8.5em,1fr) minmax(8.5em,1fr)}
+  /* colunas: quantas cabem pela largura do painel; blocos grandes ocupam mais de uma linha */
+  @container (min-width:640px){#pHome .dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.d-saldo,.d-fluxo,.d-trans{grid-column:auto}}
+  @container (min-width:900px){#pHome .dgrid{grid-template-columns:minmax(0,24fr) minmax(0,16fr) minmax(0,23.5fr) minmax(0,32fr);grid-template-areas:"s r r h" "f f g c" "t t g c"}
+    .d-saldo{grid-area:s}.d-res{grid-area:r}.d-saude{grid-area:h}.d-fluxo{grid-area:f}.d-gastos{grid-area:g}.d-cartoes{grid-area:c}.d-trans{grid-area:t}}
   #pHome .db{overflow:hidden;display:flex;flex-direction:column;min-height:0}
   /* janela baixa (30/10/2026, print dele com "Nas contas" cortado): a linha de cima e o fluxo não encolhem abaixo do conteúdo; a página rola */
   #pHome :is(.d-saldo,.d-res,.d-saude){min-height:min-content}#pHome .d-fluxo{overflow:hidden}#pHome .d-fluxo .fl{min-height:3em}
@@ -1830,10 +1830,12 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
   .d-cartoes .dcplast{width:100%;max-width:21em;margin-inline:auto;aspect-ratio:1.9}.d-cartoes .dcinfo b{font-size:clamp(.62rem,4.6cqi,.9rem)}
   .d-cartoes .dcard .mini{max-width:21em;margin-inline:auto;width:100%}
   /* faixa de aviso (conta no vermelho etc.) compacta no PC: uma linha, sem tomar a altura dos blocos */
-  #pHome>section:not(.db){flex:none;margin:0 0 1em!important;padding:0!important;background:none!important;border:0!important}
-  #pHome>section>.card.banner{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2em .9em;padding:.7em 1.1em!important;border-radius:1em;margin:0!important;background:color-mix(in srgb,var(--neg) 9%,var(--surface))!important;border:1px solid color-mix(in srgb,var(--neg) 55%,transparent)!important}
-  #pHome>section>.card.banner p{margin:0;font-size:.85rem}
-  #pHome>section>.card.banner strong{font-size:.95rem}
+  #pHome>section:not(.db):has(>.banner){flex:none;margin:0 0 1em!important;padding:0!important;background:none!important;border:0!important}
+  #pHome>section>.card.banner{padding:.9em 1.1em!important;border-radius:1em!important;margin:0!important;border:1px solid var(--line)!important}
+  #pHome>section>.card.banner .btn{flex:0 0 auto;min-width:8.5em;white-space:nowrap}
+  #pHome>section>.card.banner[style*="--neg"]{display:flex;flex-wrap:wrap;align-items:baseline;gap:.2em .9em;padding:.7em 1.1em!important;background:color-mix(in srgb,var(--neg) 9%,var(--surface))!important;border:1px solid color-mix(in srgb,var(--neg) 55%,transparent)!important}
+  #pHome>section>.card.banner[style*="--neg"] p{margin:0;font-size:.85rem}
+  #pHome>section>.card.banner[style*="--neg"] strong{font-size:.95rem}
   .d-gastos .dnw{min-height:14em}
   .cdhero .phys-card{display:none!important}
   .cdhero .dcplast{margin-bottom:1em;width:100%}
@@ -1861,21 +1863,37 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
   #pMes>.msearch{grid-column:1/-1;margin:0!important}
   /* Ano e Fixos: seletor do mesmo tamanho e no mesmo lugar do Mês (lá ele divide a linha com a busca) */
   #pAno>.mesw{width:min(22em,100%);box-sizing:border-box}
-  #pMes>#mBody{grid-column:1/-1;display:flex;flex-direction:column;min-height:0;margin:0!important}
+  #pMes>#mBody{grid-column:1/-1;display:flex;flex-direction:column;min-height:0;margin:0!important;column-count:auto!important;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+  #pMes>#mBody:has(>.mes-split:not(.mes-empty)){overflow:hidden}
   #pMes>.helpbar{display:none}
   #pMes .mfbar{flex:none;margin:0 0 .7em!important}
   #pMes .mes-split{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1em;align-items:stretch}
   #pMes .mes-main,#pMes .mes-side,#pMes .mes-side>*{min-height:0;column-count:1!important;columns:auto!important}#pMes .mes-main,#pMes .mes-side{overflow-y:auto;scrollbar-width:thin}
   #pMes .cstrip,#pMes .mfbar .ctile{margin:0}
   /* ===== Contas / Metas / Dívidas / Assinaturas: cada item do menu mostra só o seu assunto, em blocos que preenchem a janela ===== */
-  #pAno[data-f] .ano-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,23em),1fr));gap:1em;align-items:start}
+  #pAno[data-f] .ano-grid{display:grid!important;column-count:auto!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,23em),1fr))!important;gap:1em;align-items:start}
   #pAno[data-f] .ano-col-main,#pAno[data-f] .ano-col-side{display:contents}
-  #pAno[data-f] .ano-grid section{margin:0 0 1em!important}
+  #pAno[data-f] .ano-grid section{margin:0!important}
   #pAno[data-f="C"] :is(.gM,.gD,.gS,.gX),#pAno[data-f="M"] :is(.gC,.gD,.gS,.gX),#pAno[data-f="D"] :is(.gC,.gM,.gS,.gX),#pAno[data-f="S"] :is(.gC,.gM,.gD,.gX){display:none!important}
   #pAno[data-f="D"] .gP,#pAno[data-f="M"] .gP{display:none!important}
   #pAno[data-f] .ano-grid>*>div{display:contents}
   #pAno[data-f] .ano-grid>*>div>section,#pAno[data-f] .ano-grid>*>div>*{min-width:0}
   #pAno[data-f] .mesw{display:none!important}
+  /* Você, Câmbio e Limites: grades com rolagem vertical dentro do painel (sem multi-column horizontal) */
+  #pMe:not([hidden]){column-count:auto!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--g-gap) var(--g-col);align-items:start;align-content:start}
+  #pMe>section{margin:0!important;min-width:0}
+  #pMe>.helpbar{grid-column:1/-1}
+  #pFx:not([hidden]){column-count:auto!important;display:grid;grid-template-columns:minmax(18em,1fr) minmax(0,1.4fr);gap:var(--g-gap) var(--g-col);align-items:start;align-content:start}
+  #pFx>section{margin:0!important;min-width:0;border-top:0;padding-top:var(--g-pad)!important}
+  #pFx>.helpbar{grid-column:1/-1}
+  #pOrc:not([hidden]){column-count:auto!important}
+  #pOrc .bud{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 var(--g-col)}
+  #pOrc .brow:nth-child(2){border-top:0}
+}
+@media (min-width:1200px){
+  #pMe:not([hidden]){grid-template-columns:repeat(3,minmax(0,1fr))}
+  #pOrc .bud{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #pOrc .brow:nth-child(3){border-top:0}
 }
 @container (min-width:640px) and (max-width:899px){
   #pHome .dgrid{flex:none;min-height:0;grid-template-rows:none;grid-auto-rows:auto;overflow:visible}
@@ -1888,11 +1906,12 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
   #pHome:not([hidden]){padding-top:12px!important}
   /* Início: a página não rola; só a lista rola dentro da área abaixo do relógio (nada passa por baixo dele, sem o borrão do iOS) */
   html:has(#pHome:not([hidden])),body:has(#pHome:not([hidden])){height:100dvh;overflow:hidden}
-  body:has(#pHome:not([hidden])) .wrap{position:fixed;top:env(safe-area-inset-top,0px);left:8px;right:8px;bottom:0;height:auto;min-height:0!important;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-top:12px!important;padding-bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 64px + 24px)!important}
-  #pHome>section:not(.db){margin:0 0 12px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
-  #pHome>section>.card.banner{display:block;padding:10px 14px!important;border-radius:16px!important;margin:0!important;background:color-mix(in srgb,var(--neg) 9%,var(--surface))!important;border:1px solid color-mix(in srgb,var(--neg) 55%,transparent)!important}
-  #pHome>section>.card.banner strong{font-size:.9rem!important;line-height:1.25}
-  #pHome>section>.card.banner p{font-size:.78rem!important;line-height:1.35;margin:3px 0 0!important}
+  body:has(#pHome:not([hidden])) .wrap{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;bottom:0;height:auto;min-height:0!important;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-top:12px!important;padding-bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 64px + 24px)!important}
+  #pHome>section:not(.db):has(>.banner){margin:0 0 12px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+  #pHome>section>.card.banner{padding:12px 14px!important;border-radius:16px!important;margin:0!important;border:1px solid var(--line)!important}
+  #pHome>section>.card.banner[style*="--neg"]{display:block;padding:10px 14px!important;background:color-mix(in srgb,var(--neg) 9%,var(--surface))!important;border:1px solid color-mix(in srgb,var(--neg) 55%,transparent)!important}
+  #pHome>section>.card.banner[style*="--neg"] strong{font-size:.9rem!important;line-height:1.25}
+  #pHome>section>.card.banner[style*="--neg"] p{font-size:.78rem!important;line-height:1.35;margin:3px 0 0!important}
   .dcar{position:relative}
   .dside{display:none!important}
   .d-cartoes .dcards{display:flex;gap:.8em;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin-inline:-1.3em;padding-inline:1.3em;scroll-padding-inline:1.3em}
@@ -1921,6 +1940,7 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
   header.top .tcard::before,header.top .tcard::after{display:none!important}
   header.top .tcard .label,header.top .tcard .split span,header.top .tcard .big small{color:var(--muted)!important;opacity:1!important}
   header.top .tcard .big,header.top .tcard .split b,header.top .tcard #ptitle,header.top .titlerow{color:var(--ink)!important}
+  body:has(#pMe:not([hidden])) header.top .tcard .split{position:static;text-align:left;margin-top:10px!important}
   header.top .monthpill,header.top .hseg{background:var(--bg)!important;border:1px solid var(--line)!important;color:var(--ink)!important}
   header.top .monthpill *,header.top button{color:var(--ink)}
   #backBtn{background:var(--chip)!important;color:var(--ink)!important}
@@ -2021,7 +2041,7 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
 /* ===== Início no celular como a referência (30/10/2026): barra com ☰ · busca · sino, "Olá, Nome" embaixo, Saldo em degradê ===== */
 .dham{display:none}
 @media (max-width:979px){
-  #pHome .dtop{flex-wrap:wrap!important;row-gap:1em!important;margin:0 calc(-1*var(--g-side)) 1em!important;padding:.2em var(--g-side) 0}
+  #pHome .dtop{flex-wrap:wrap!important;row-gap:1em!important;margin:0 0 1em!important;padding:.2em 0 0}
   #pHome .dlogo{width:2.7em;height:2.7em;border-radius:.8em;display:grid;place-items:center}
   #pHome .dlogo img{display:none}#pHome .dham{display:block;width:1.5em;height:1.5em;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round}
   #pHome .dtop .dsearch{margin-left:auto}
