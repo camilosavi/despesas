@@ -1783,7 +1783,18 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
     padding:1.4em .9em!important;gap:0!important;background:var(--surface)!important;border-right:1px solid var(--line)!important;border-bottom:0!important;overflow-y:auto}
   nav.tabs>.tabbrand,nav.tabs>.tab{display:none!important}
   #sbMenu{display:block}
-  .sbbrand{display:block;padding:.2em .6em 1em}.sbbrand img{display:block;width:clamp(3.4em,52%,5em);height:auto;border-radius:1em}
+  .sbbrand{display:flex;justify-content:center;padding:0 0 .6em}.sbbrand img{display:block;width:clamp(2.8em,38%,3.8em);height:auto;border-radius:50%}
+  /* menu recolhido (30/10/2026, pedido dele: "um botão pra minimizar") */
+  .sbmin-b{margin-top:.4em!important;opacity:.85}
+  .sbmin-b svg{transition:transform .2s ease}
+  html.sbmin{--sbw:4.6em}
+  html.sbmin nav.tabs{padding:1.2em .55em!important}
+  html.sbmin .sbbrand img{width:2.6em}
+  html.sbmin .sb{justify-content:center;padding:.65em 0;gap:0}
+  html.sbmin .sb>span{display:none}
+  html.sbmin .sbgrp small{font-size:0;padding:0;margin:.3em .6em .5em;border-top:1px solid var(--line)}
+  html.sbmin .sbmin-b svg{transform:rotate(180deg)}
+  html.sbmin nav.tabs .tabav{margin:auto auto 0!important;align-self:center}
   .sbgrp{margin-bottom:1.1em}
   .sbgrp small{display:block;font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:.4em .8em}
   .sb{display:flex;align-items:center;gap:.7em;width:100%;padding:.62em .8em;margin:.1em 0;border:0;border-radius:.8em;background:none;color:var(--muted);font:inherit;font-size:.95rem;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap}
@@ -2082,6 +2093,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .drawer.on .dwbox{transform:none}
   .dwbox .sbbrand{display:block;padding:.2em .6em 1em}.dwbox .sbbrand img{display:block;width:4.4em;height:auto;border-radius:1em}
   .dwbox .sbgrp{margin-bottom:1.1em}
+  .dwbox .sbmin-b{display:none!important}
   .dwbox .sbgrp small{display:block;font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);padding:.4em .8em}
   .dwbox .sb{display:flex;align-items:center;gap:.8em;width:100%;padding:.8em .8em;margin:.1em 0;border:0;border-radius:.9em;background:none;color:var(--ink);font:inherit;font-size:1rem;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap}
   .dwbox .sb svg{width:1.3em;height:1.3em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -3484,8 +3496,8 @@ const NAVP=[["metas","Metas","M12 3v18M12 3l6 3-6 3"],["subs","Assinaturas","M4 
 const NAVA=[["rel","Relatórios","M5 20V10M12 20V4M19 20v-7"]];
 function sidebarHtml(){
   const cur=navCur();
-  const b=(k,n,d)=>`<button class="sb ${cur===k?"on":""}" data-nav="${k}"><svg viewBox="0 0 24 24"><path d="${d}"/></svg><span>${n}</span></button>`;
-  return `<span class="sbbrand"><img src="tostao-logo.png" alt="Um Tostão"></span><div class="sbgrp"><small>Menu principal</small>${NAVS.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Planejamento</small>${NAVP.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Análises</small>${NAVA.map(x=>b(...x)).join("")}</div>`;
+  const b=(k,n,d)=>`<button class="sb ${cur===k?"on":""}" data-nav="${k}" title="${n}"><svg viewBox="0 0 24 24"><path d="${d}"/></svg><span>${n}</span></button>`;
+  return `<span class="sbbrand"><img src="tostao-logo.png" alt="Um Tostão"></span><div class="sbgrp"><small>Menu principal</small>${NAVS.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Planejamento</small>${NAVP.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Análises</small>${NAVA.map(x=>b(...x)).join("")}</div><button class="sb sbmin-b" data-sbmin title="Recolher ou abrir o menu" aria-label="Recolher ou abrir o menu"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Recolher menu</span></button>`;
 }
 let navSel=null;
 const navCur=()=>navSel||(tab==="pHome"?"pHome":tab==="pMes"?"pMes":tab==="pCards"||tab==="pFx"?"pCards":tab==="pAno"&&anoSubTab==="metas"?"pWal":tab==="pAno"?"rel":"pHome");
@@ -4499,6 +4511,7 @@ function applyTheme(){const t=lsGet("despesas.theme")||"tostao", root=document.d
   if(gen&&st.textContent)root.dataset.accent="gen";else if(t&&THEMES[t]&&t!=="verde")root.dataset.accent=t;else delete root.dataset.accent;
   const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=getComputedStyle(document.documentElement).getPropertyValue("--head").trim()||m.content}
 applyTheme();
+try{if(lsGet("despesas.sbMin")==="1")document.documentElement.classList.add("sbmin")}catch(e){}
 const avInner=()=>{const ph=userPhoto();return ph?`<img src="${ph}" alt="">`:esc((myName()||"?").trim().charAt(0).toUpperCase()||"?")};
 let photoSug=false;
 /* cor que mais aparece na foto, entre as com cor de verdade (ignora cinza, quase branco e quase preto) */
@@ -6092,7 +6105,7 @@ document.addEventListener("click",async e=>{
   if(t.closest("#hAv,#tabAv")){go("pMe");return}
   {const fp=t.closest("[data-fxper]");if(fp){fxPer=+fp.dataset.fxper;try{localStorage.setItem("despesas.fxPer",fxPer)}catch(e){}render();return}}
   {const cb=t.closest("[data-dcar]");if(cb){const c=$("dcar");if(c)c.scrollBy({left:+cb.dataset.dcar*c.clientWidth,behavior:"smooth"});return}}
-  {if(t.closest("#dMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
+  {if(t.closest("[data-sbmin]")){const on=!document.documentElement.classList.contains("sbmin");document.documentElement.classList.toggle("sbmin",on);lsSet("despesas.sbMin",on?"1":null);setTimeout(()=>window.dispatchEvent(new Event("resize")),60);return}if(t.closest("#dMenu")){drawerOpen(true);return}if(t.id==="drawer"){drawerOpen(false);return}const nv=t.closest("[data-nav]");if(nv){drawerOpen(false);navGo(nv.dataset.nav);return}}
   if(t.closest("#hBell")||t.closest("#hBell2")){avSheet();return}
   const avr=t.closest("[data-av]"); if(avr){const e=avLog().find(x=>x.k===avr.dataset.av);avGo(e&&e.go);return}
   if(t.closest("[data-av-me]")){avGo({me:1});return}
