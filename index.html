@@ -2134,6 +2134,11 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   body:has(#pAno[data-f]) #mpill{display:none!important}
 }
 @media (min-width:980px){.drawer,#tabMore{display:none!important}}
+.ctxm{position:fixed;z-index:60;min-width:13em;max-width:min(86vw,20em);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 12px 36px rgba(0,0,0,.35);display:grid;gap:1px;-webkit-user-select:none;user-select:none}
+.ctxm .ctxh{padding:7px 10px 6px;font-weight:700;font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctxm .ctxs{padding:6px 10px 2px;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.ctxm .ctxs:empty{padding:0;margin:3px 6px;border-top:1px solid var(--line)}
+.ctxm button{all:unset;box-sizing:border-box;display:block;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:.92rem;white-space:nowrap}
+.ctxm button:hover,.ctxm button:focus-visible{background:var(--chip)}.ctxm button.dng{color:#d9534f}.ctxm button.arm{background:#d9534f;color:#fff}
 </style>
 
 <div class="wrap">
@@ -4527,6 +4532,56 @@ let swipeJust=false;
     s.el.style.transition="transform .3s cubic-bezier(.3,1.3,.45,1)";s.el.style.transform="";setTimeout(()=>{s.el.style.transition="";s.el.classList.remove("swiping","swready")},320);
     if(s.dx<-80){const to=!isPaid(s.x);try{await store.items.update(s.x.id,paidPatch(to));haptic();toast(to?`${cleanDesc(s.x)}: pago`:`${cleanDesc(s.x)}: a pagar`,to);render()}catch(e){toast("Não deu para salvar.")}}};
   document.addEventListener("touchend",end);document.addEventListener("touchcancel",end);
+})();
+/* menu do botão direito / segurar o dedo num lançamento (30/10/2026, pedido dele): Editar, pago/a pagar, pessoas, excluir */
+(function(){
+  const SEL=".item[data-id],.tlrow[data-id],.cline[data-id],.dtr[data-id],tr.click[data-id]";
+  let M=null,armT=0;
+  const close=()=>{if(M){M.remove();M=null}};
+  const pessoaOn=(x,id)=>azParts(x).some(e=>e.id===id);
+  async function setPessoas(x,id){
+    const cur=azParts(x).map(e=>({id:e.id,...(e.o?{o:1}:{})})),on=cur.some(e=>e.id===id);
+    const L=on?cur.filter(e=>e.id!==id):cur.concat([{id}]);
+    await store.items.update(x.id,{pessoas:L,pessoa:"",pv:0});render()}
+  function open(x,px,py){
+    close();
+    const b=document.createElement("div");b.className="ctxm";b.setAttribute("role","menu");
+    const row=(k,t,cls)=>`<button type="button" role="menuitem" data-k="${k}" class="${cls||""}">${t}</button>`;
+    let h=`<div class="ctxh">${esc(cleanDesc(x))}</div>`+row("edit","Editar");
+    if(typeOf(x)==="desp"&&!benOf(x)) h+=row("paid",isPaid(x)?"Marcar como a pagar":"Marcar como pago");
+    const ps=azList();
+    if(ps.length){h+=`<div class="ctxs">Pessoas</div>`+ps.map(a=>row("p:"+a.id,(pessoaOn(x,a.id)?"✓ ":"")+esc(a.name))).join("")}
+    const sib=laterSiblings(x).length;
+    h+=`<div class="ctxs"></div>`+row("del","Excluir","dng");
+    if(sib) h+=row("delall","Excluir esta e as "+sib+" seguintes","dng");
+    b.innerHTML=h;document.body.appendChild(b);M=b;
+    const r=b.getBoundingClientRect();
+    b.style.left=Math.max(8,Math.min(px,innerWidth-r.width-8))+"px";b.style.top=Math.max(8,Math.min(py,innerHeight-r.height-8))+"px";
+    let armed="";
+    b.addEventListener("click",async e=>{
+      const t=e.target.closest("button[data-k]");if(!t)return;e.stopPropagation();const k=t.dataset.k;
+      try{
+        if(k==="edit"){close();openSheet(x)}
+        else if(k==="paid"){close();const to=!isPaid(x);await store.items.update(x.id,paidPatch(to));haptic();toast(to?"Pago":"A pagar",to);render()}
+        else if(k[0]==="p"&&k[1]===":"){close();await setPessoas(x,k.slice(2));toast("Pessoas atualizadas",true)}
+        else if(k==="del"||k==="delall"){
+          if(armed!==k){armed=k;b.querySelectorAll(".dng").forEach(z=>{z.textContent=z.dataset.k===k?"Toque de novo para excluir":(z.dataset.k==="del"?"Excluir":"Excluir esta e as seguintes")});t.classList.add("arm");return}
+          close();if(k==="delall")await dropWithSeries(x);else await store.items.remove(x.id);toast("Lançamento excluído");render()}
+      }catch(er){toast("Não deu para salvar.")}
+    });
+  }
+  const itemOf=el=>{const n=el&&el.closest&&el.closest(SEL);return n?items.find(i=>i.id===n.dataset.id):null};
+  document.addEventListener("contextmenu",e=>{const x=itemOf(e.target);if(!x||e.target.closest("input,textarea,.sheet")){return}e.preventDefault();open(x,e.clientX,e.clientY)});
+  /* celular: segurar ~0,5 s abre o mesmo menu */
+  let lp=null;
+  document.addEventListener("touchstart",e=>{clearTimeout(armT);if(e.touches.length!==1||e.target.closest(".sheet"))return;const x=itemOf(e.target);if(!x)return;const t=e.touches[0];lp={x:t.clientX,y:t.clientY};
+    armT=setTimeout(()=>{if(!lp)return;swipeJust=true;setTimeout(()=>swipeJust=false,600);haptic();open(x,lp.x,lp.y);lp=null},520)},{passive:true});
+  document.addEventListener("touchmove",e=>{if(!lp)return;const t=e.touches[0];if(Math.abs(t.clientX-lp.x)>8||Math.abs(t.clientY-lp.y)>8){clearTimeout(armT);lp=null}},{passive:true});
+  ["touchend","touchcancel"].forEach(n=>document.addEventListener(n,()=>{clearTimeout(armT);lp=null}));
+  document.addEventListener("mousedown",e=>{if(M&&!e.target.closest(".ctxm"))close()},true);
+  document.addEventListener("touchstart",e=>{if(M&&!e.target.closest(".ctxm"))close()},{passive:true,capture:true});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")close()});
+  window.addEventListener("scroll",close,true);window.addEventListener("resize",close);
 })();
 /* foto e tema: só neste aparelho (localStorage), aparecem também na tela de entrada */
 const THEMES={tostao:["#14203A","#C9A25A"],verde:["#0E3B35","#12A57E"],meianoite:["#0B1730","#2E4C8A"],bordo:["#3A0E17","#8A1E33"],petroleo:["#0B2C30","#16707A"],oliva:["#262A14","#5F6B26"],cafe:["#33241A","#8A5A36"],ameixa:["#2D1529","#7A3770"],...{azul:["#0F2C57","#2F6FE0"],roxo:["#2A1A55","#7A4FD6"],laranja:["#4A2410","#E0701A"],rosa:["#4A1530","#D6457F"],grafite:["#1E252C","#4C5F73"]}}, TH_N={tostao:"Tostão",verde:"Verde",meianoite:"Meia-noite",bordo:"Bordô",petroleo:"Petróleo",oliva:"Oliva",cafe:"Café",ameixa:"Ameixa",azul:"Azul",roxo:"Roxo",laranja:"Laranja",rosa:"Rosa",grafite:"Grafite"};
