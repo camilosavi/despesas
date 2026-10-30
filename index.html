@@ -940,10 +940,9 @@ nav.tabs.onme::before{opacity:0}
 /* telas menores (iPhone SE/mini, Android pequeno): o + fica só redondo para não cobrir botões,
    e o teclado da senha encolhe com a altura da tela (antes o 0 ficava cortado) */
 @media (max-width:979px){
-  .fab{padding:0!important;width:56px!important;min-width:56px;height:56px;right:14px!important;bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 4px)!important}
+  .fab{padding:0!important;width:56px!important;min-width:56px;height:56px;right:14px!important;bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 78px)!important}
   .fab span,.fab span#addLbl{display:none!important}.fab b{margin-top:-2px}
-  nav.tabs{left:14px!important;transform:none!important;width:calc(100% - 28px - 64px)!important}
-  body:has(#addBtn[hidden]) nav.tabs{left:50%!important;transform:translateX(-50%)!important;width:calc(100% - 28px)!important}
+  nav.tabs{left:50%!important;transform:translateX(-50%)!important;width:calc(100% - 28px)!important}
   .toast{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
 }
 .toast{bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 80px)!important}
