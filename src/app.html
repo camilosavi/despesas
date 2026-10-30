@@ -1956,7 +1956,11 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* ===== Celular no mesmo visual do PC (29/10/2026): Visão geral em coluna, menu em gaveta, cabeçalho e blocos claros ===== */
 @media (max-width:979px){
   body:has(#pHome:not([hidden])) header.top,body:has(#pHome:not([hidden])) #hFoot{display:none!important}
-  #pHome:not([hidden]){padding-top:26px!important;padding-bottom:28px!important;container-type:inline-size}
+  #pHome:not([hidden]){padding-top:20px!important;padding-bottom:0!important;container-type:inline-size}
+  /* faixa sólida atrás do relógio: o conteúdo que rola não aparece por baixo dele (e sai com degradê, sem o corte do iOS) */
+  body:has(#pHome:not([hidden]))::before{display:block!important;content:"";position:fixed;top:0;left:0;right:0;height:calc(env(safe-area-inset-top,0px) + 12px);background:linear-gradient(to bottom,var(--bg) calc(100% - 12px),transparent);border-radius:0;z-index:9;pointer-events:none}
+  /* fim da página: só o necessário para passar da barra de baixo e do + */
+  body:has(#pHome:not([hidden])) .wrap{padding-bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 64px + 24px)!important}
   #pHome>section:not(.db){margin:0 0 12px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
   #pHome>section>.card.banner{display:block;padding:10px 14px!important;border-radius:16px!important;margin:0!important;background:color-mix(in srgb,var(--neg) 9%,var(--surface))!important;border:1px solid color-mix(in srgb,var(--neg) 55%,transparent)!important}
   #pHome>section>.card.banner strong{font-size:.9rem!important;line-height:1.25}
