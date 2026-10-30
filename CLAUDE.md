@@ -875,3 +875,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   Últimas transações com "categoria · conta" e valor + data à direita. Títulos dos blocos em caixa alta pequena. No PC cabe na janela sem rolar
   (`min-height:34em`, linhas `minmax(11em,1fr)`; Transações e Cartões rolam por dentro), sem o "+" (os botões do Saldo fazem isso) e sem o "Como
   funciona" no Início. Testado 1280×800, 1366×680, 1440×900, 1470×830, 1920×1080 e celular 320/375/440.
+- **Início no celular como a referência** (30/10/2026, print dele do Grefi no iPhone): barra de cima com ☰ (`.dham`, abre a gaveta; o logo some no
+  celular), lupa e sino sem círculo; "Olá, Nome" numa linha própria embaixo (saudação agora é "Olá" também no PC); Saldo total em degradê com botões
+  Receita/Despesa cheios. Em celular estreito (bloco ≤ 340 px, ex. 375 px) o Resumo do mês vira 3 linhas (rótulo à esquerda, valor à direita) em vez
+  de cortar os valores.

@@ -2189,6 +2189,24 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   #pHome .d-gastos .dleg{max-height:none}
   #pHome .dtr{padding:.45em 0!important;gap:.7em}#pHome .dtr .ico,#pHome .dtr>span:first-child{transform:scale(.88)}
 }
+
+/* ===== Início no celular como a referência (30/10/2026): barra com ☰ · busca · sino, "Olá, Nome" embaixo, Saldo em degradê ===== */
+.dham{display:none}
+@media (max-width:979px){
+  #pHome .dtop{flex-wrap:wrap!important;row-gap:1em!important;margin:0 calc(-1*var(--g-side)) 1em!important;padding:.2em var(--g-side) 0}
+  #pHome .dlogo{width:2.7em;height:2.7em;border-radius:.8em;display:grid;place-items:center}
+  #pHome .dlogo img{display:none}#pHome .dham{display:block;width:1.5em;height:1.5em;fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+  #pHome .dtop .dsearch{margin-left:auto}
+  #pHome .dtop>div{order:9;flex:1 0 100%!important;padding-top:.2em}
+  #pHome .dtop>div small{display:none}
+  #pHome .dgr{font-size:1.45rem}
+  #pHome .dtop .dsearch,#pHome .dtop .dbell{border:0;background:none}
+  #pHome .d-saldo{background:linear-gradient(160deg,color-mix(in srgb,var(--head) 82%,#fff),var(--head) 70%)!important}
+  #pHome .d-saldo .dbig{font-size:1.75rem}
+  #pHome .dqa button{background:rgba(0,0,0,.18);border-color:rgba(255,255,255,.22);border-radius:.6em;padding:.6em}
+  #pHome .db{border-radius:1em}
+}
+@container (max-width:340px){#pHome .drs{grid-template-columns:1fr;gap:.45em}#pHome .drc{grid-template-columns:1fr auto;align-items:center;column-gap:.6em;padding:.55em .75em}#pHome .drc>b{grid-column:2;grid-row:1;font-size:1rem}#pHome .drc>small{grid-column:1/-1}}
 </style>
 
 <div class="wrap">
@@ -3694,7 +3712,7 @@ function dashHome(){
   const last=items.filter(x=>!genFat(x)).slice().sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0)).slice(0,7);
   const tr=last.length?last.map(x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,t).n)} · ${esc(cardOf(x)||x.acct||(t==="rec"?"Conta":x.pay)||"")}</small></span><span class="dtv"><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b><small>${fmtDM(whenOf(x))}</small></span></div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
   const td0=today(), recLeft=mi.filter(x=>typeOf(x)==="rec"&&recDay(x)>td0).reduce((s,x)=>s+amt(x),0), desLeft=mi.filter(x=>typeOf(x)==="desp"&&!isPaid(x)&&!benOf(x)).reduce((s,x)=>s+amt(x),0);
-  return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""></button><div><b class="dgr">${gr}${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
+  return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
    <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pWal">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
    <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receitas</span><b>${R(rec)}</b><small>${recLeft?`falta receber ${R(recLeft)}`:"recebido até hoje"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesas</span><b>${R(des)}</b><small>${desLeft?`falta pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobrou":"Faltou"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div></section>
