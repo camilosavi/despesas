@@ -1912,7 +1912,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .wrap>header.top,.wrap>#note{flex:none}
   #pHome:not([hidden]){display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto!important;padding-bottom:1.2em!important;scrollbar-width:thin}
   #pHome .dtop{flex:none}
-  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(15em,1fr) max-content}
+  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(max-content,1fr) max-content}
   #pHome .db{overflow:hidden;display:flex;flex-direction:column;min-height:0}
   /* janela baixa (30/10/2026, print dele com "Nas contas" cortado): a linha de cima e o fluxo não encolhem abaixo do conteúdo; a página rola */
   #pHome :is(.d-saldo,.d-res,.d-saude,.d-fluxo){min-height:min-content}
@@ -1933,7 +1933,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 }
 @container (min-width:640px) and (max-width:899px){
   #pHome .dgrid{flex:none;min-height:0;grid-template-rows:none;grid-auto-rows:auto;overflow:visible}
-  #pHome .d-gastos .dnw{min-height:24em}#pHome .d-fluxo .fl{min-height:11em}#pHome .d-trans{max-height:24em}#pHome .d-cartoes{min-height:20em}
+  #pHome .d-gastos .dnw{min-height:24em}#pHome .d-fluxo .fl{min-height:11em}#pHome .d-trans{max-height:none;overflow:visible}#pHome .d-cartoes{min-height:20em}
 }
 /* faixa de aviso (conta no vermelho etc.) compacta no PC: uma linha, sem tomar a altura dos blocos */
 @media (min-width:980px){
