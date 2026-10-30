@@ -1967,7 +1967,11 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 /* ===== Celular no mesmo visual do PC (29/10/2026): Visão geral em coluna, menu em gaveta, cabeçalho e blocos claros ===== */
 @media (max-width:979px){
   body:has(#pHome:not([hidden])) header.top,body:has(#pHome:not([hidden])) #hFoot{display:none!important}
-  #pHome:not([hidden]){padding-top:calc(env(safe-area-inset-top,0px) + 14px)!important;container-type:inline-size}
+  #pHome:not([hidden]){padding-top:4px!important;container-type:inline-size}
+  #pHome>section:not(.db){margin:0 0 12px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+  #pHome>section>.card.banner{display:block;padding:10px 14px!important;border-radius:16px!important;margin:0!important;background:color-mix(in srgb,var(--neg) 9%,var(--surface))!important;border:1px solid color-mix(in srgb,var(--neg) 55%,transparent)!important}
+  #pHome>section>.card.banner strong{font-size:.9rem!important;line-height:1.25}
+  #pHome>section>.card.banner p{font-size:.78rem!important;line-height:1.35;margin:3px 0 0!important}
   #pHome .dtop{display:flex;align-items:center;gap:1.2em;margin-bottom:1.3em}
   #pHome .dtop>div{display:grid;margin-right:auto;min-width:0}
   .dgr{font-family:var(--display);font-size:1.6rem;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
