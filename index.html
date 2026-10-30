@@ -1937,6 +1937,18 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   #pMes .mes-main,#pMes .mes-side,#pMes .mes-side>*{min-height:0;column-count:1!important;columns:auto!important}#pMes .mes-main,#pMes .mes-side{overflow-y:auto;scrollbar-width:thin}
   #pMes .cstrip,#pMes .mfbar .ctile{margin:0}
 }
+
+/* ===== Contas / Metas / Dívidas / Assinaturas: cada item do menu mostra só o seu assunto, em blocos que preenchem a janela ===== */
+@media (min-width:980px){
+  #pAno[data-f] .ano-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,23em),1fr));gap:1em;align-items:start}
+  #pAno[data-f] .ano-col-main,#pAno[data-f] .ano-col-side{display:contents}
+  #pAno[data-f] .ano-grid section{margin:0 0 1em!important}
+  #pAno[data-f="C"] :is(.gM,.gD,.gS,.gX),#pAno[data-f="M"] :is(.gC,.gD,.gS,.gX),#pAno[data-f="D"] :is(.gC,.gM,.gS,.gX),#pAno[data-f="S"] :is(.gC,.gM,.gD,.gX){display:none!important}
+  #pAno[data-f="D"] .gP,#pAno[data-f="M"] .gP{display:none!important}
+  #pAno[data-f] .ano-grid>*>div{display:contents}
+  #pAno[data-f] .ano-grid>*>div>section,#pAno[data-f] .ano-grid>*>div>*{min-width:0}
+  #pAno[data-f] .mesw{display:none!important}
+}
 </style>
 
 <div class="wrap">
@@ -3293,9 +3305,9 @@ function navGo(k){
   if(k==="pHome"||k==="pMes"||k==="pCards"||k==="pWal"){go(k);return}
   navSel=k;
   const sc=id=>setTimeout(()=>{const e=document.getElementById(id);if(e)e.scrollIntoView({block:"start"})},60);
-  if(k==="metas"){go("pWal");navSel="metas";sbMark();sc("saveSec")}
-  else if(k==="debts"){go("pWal");navSel="debts";sbMark();sc("debtSec")}
-  else if(k==="subs"){anoSubTab="fixos";lsSet("despesas.anoTab","fixos");go("pAno");navSel="subs";sbMark();sc("subSec")}
+  if(k==="metas"){go("pWal");navSel="metas";render();window.scrollTo(0,0)}
+  else if(k==="debts"){go("pWal");navSel="debts";render();window.scrollTo(0,0)}
+  else if(k==="subs"){anoSubTab="fixos";lsSet("despesas.anoTab","fixos");go("pAno");navSel="subs";render()}
   else if(k==="rel"){anoSubTab="ano";lsSet("despesas.anoTab","ano");go("pAno");navSel="rel";sbMark()}
 }
 function sbMark(){const n=document.getElementById("sbMenu");if(n)n.innerHTML=sidebarHtml()}
@@ -5119,8 +5131,8 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())})()}${saveSection()}${debtSection()}${azSection()}</div>
-      <div class="ano-col-side">${fxRowSection()}${divSection()}</div>
+      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP">${azSection()}</div></div>
+      <div class="ano-col-side"><div class="gM">${fxRowSection()}</div><div class="gC gP">${divSection()}</div></div>
     </div>`;
   } else if(anoSubTab === "ano"){
     const W=340,H=150,top=10,bot=22,max=Math.max(...recM,...despM,1),bw=10;
@@ -5178,8 +5190,8 @@ function renderAno(){
     <div class="toolbar"><button class="tbtn" id="exAdd">Adicionar previsto</button></div></section>`;
 
     h += `<div class="ano-grid ano-fixos-grid">
-      <div class="ano-col-main">${salSection()}${holSection()}${subSection()}</div>
-      <div class="ano-col-side">${recurSection()}${prevSec}${feeYear(year)}</div>
+      <div class="ano-col-main"><div class="gX">${salSection()}${holSection()}</div><div class="gS">${subSection()}</div></div>
+      <div class="ano-col-side"><div class="gS">${recurSection()}</div><div class="gX">${prevSec}${feeYear(year)}</div></div>
     </div>`;
   }
 
@@ -5708,6 +5720,7 @@ function render(){
   if((tab==="pAno"&&anoSubTab!=="metas")||tab==="pMe") anoFold(tab);
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();sbMark();dcKeyAll();
+  {const P=$("pAno");if(P){const k=navSel||(tab==="pAno"&&anoSubTab==="metas"?"pWal":"");const f={pWal:"C",metas:"M",debts:"D",subs:"S"}[k];if(f&&tab==="pAno")P.dataset.f=f;else delete P.dataset.f}}
 }
 /* confete quando uma caixinha bate a meta. cfg.svCel guarda "id:meta" já comemorados (idempotente);
    na primeira vez só registra as que já estavam batidas, sem comemorar */
