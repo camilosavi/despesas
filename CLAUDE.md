@@ -883,3 +883,6 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   `div role=button` (antes `<button>`, que no Safari pode não deixar rolar começando nele); `.dcards` com `touch-action:pan-x pan-y` e
   `overscroll-behavior-x:contain`; o gesto de "voltar" (arrastar para a direita) ignora `.dcards`/`.cstrip`. Listas do cartão não esticam mais
   (`align-content:start`). No PC o cartão vai até 24em (antes 17em, ficava pequeno em 1920).
+- **PC encolhe pela altura da janela** (30/10/2026, ele: "pra encaixar tudo eu teria que estar com zoom em 50%"): `html{font-size:clamp(11px,min(.42vw+8.4px,2.1vh),26px)}`
+  (antes só pela largura), então em janela baixa tudo diminui junto em vez de passar da tela. Visão geral: `min-height:28em`, linhas `minmax(8.5em,1fr)`,
+  Fluxo sem altura mínima própria. Medido sem rolar em 1366×560, 1280×600, 1280×800, 1440×900, 1536×650, 1920×950 e 1920×1080.

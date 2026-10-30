@@ -1776,7 +1776,7 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
 .dlogo{display:none}
 @media (min-width:980px){
   :root{--sbw:clamp(11.5em,15vw,17em)}
-  html{font-size:clamp(14px,calc(.42vw + 8.4px),26px)}
+  html{font-size:clamp(11px,min(calc(.42vw + 8.4px),2.1vh),26px)}
   body{padding-top:0!important;padding-left:var(--sbw)}
   .wrap{max-width:none!important;padding:0 clamp(18px,2.2vw,56px) 4em!important}
   nav.tabs{top:0!important;bottom:0!important;right:auto!important;left:0!important;width:var(--sbw)!important;height:auto!important;flex-direction:column!important;align-items:stretch!important;
@@ -1912,10 +1912,10 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   .wrap>header.top,.wrap>#note{flex:none}
   #pHome:not([hidden]){display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto!important;padding-bottom:1.2em!important;scrollbar-width:thin}
   #pHome .dtop{flex:none}
-  #pHome .dgrid{flex:1 0 0;min-height:34em;grid-template-rows:max-content minmax(11em,1fr) minmax(11em,1fr)}
+  #pHome .dgrid{flex:1 0 0;min-height:28em;grid-template-rows:max-content minmax(8.5em,1fr) minmax(8.5em,1fr)}
   #pHome .db{overflow:hidden;display:flex;flex-direction:column;min-height:0}
   /* janela baixa (30/10/2026, print dele com "Nas contas" cortado): a linha de cima e o fluxo não encolhem abaixo do conteúdo; a página rola */
-  #pHome :is(.d-saldo,.d-res,.d-saude,.d-fluxo){min-height:min-content}
+  #pHome :is(.d-saldo,.d-res,.d-saude){min-height:min-content}#pHome .d-fluxo{overflow:hidden}#pHome .d-fluxo .fl{min-height:3em}
   #pHome .d-trans{overflow:hidden}
   #pHome .dgrid>section.db{margin:0!important}
   .d-trans h3{position:sticky;top:-1.2em;background:var(--surface);z-index:1}
