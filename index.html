@@ -7417,7 +7417,9 @@ async function readOfx(file){
     const atTs=asof.length>=12?new Date(+asof.slice(0,4),+asof.slice(4,6)-1,+asof.slice(6,8),+asof.slice(8,10),+asof.slice(10,12)).getTime():new Date(at+"T23:59:00").getTime();
     /* Inter: MEMO = Tipo: "detalhe" (igual ao PDF) → mesmo leitor do PDF; o NAME fica de reserva */
     const ix=T.length>=3&&T.filter(t=>/^[^:"]+:\s*".*"$/.test(t.memo)).length>=T.length*0.7;
-    const rows=ix?T.map(t=>{const m=/^([^:"]+):\s*"(.*)"$/.exec(t.memo);return m?extRow(t.date,t.cents,m[1].trim(),m[2].trim()):extRow(t.date,t.cents,t.memo,t.name)}):T.map(t=>{
+    const rows=ix?T.map(t=>{const m=/^([^:"]+):\s*"(.*)"$/.exec(t.memo);if(!m) return extRow(t.date,t.cents,t.memo,t.name);const r=extRow(t.date,t.cents,m[1].trim(),m[2].trim());
+      if(!r.shop&&/^Cp\s*:/i.test(m[2])&&t.name) r.who=t.name; /* o NAME traz o nome completo (o MEMO às vezes encurta), igual ao CSV */
+      return r}):T.map(t=>{
       const parts=t.memo.split(/\s+-\s+/), out=t.cents<0;
       let kind=parts.length>1?parts[0]:t.memo, det=parts.length>1?parts[1]:"";
       if(parts.length<2&&/^(pix|ted|doc|transf)/i.test(t.memo)){kind=t.memo.split(" ").slice(0,2).join(" ");det=t.memo.replace(/^(pix|ted|doc|transf\w*)\s*(transf\w*|enviad\w*|recebid\w*|qrs?|qr code|env|rec)?\s*/i,"").replace(/\s\d{2}\/\d{2}$/,"").trim()}
@@ -7556,10 +7558,10 @@ function billPaidBy(e,r,cents){
 function extPlan(e){
   const me=[fold(e.holder),fold(myName())].filter(Boolean), used=new Set();
   return e.rows.map((r,i)=>{
-    const out=r.cents<0, cents=Math.abs(r.cents), k=fold(r.kind), tag=`extrato-${e.bank}-${r.date}-${r.cents}-${fold(r.det).slice(0,24)}`;
+    const out=r.cents<0, cents=Math.abs(r.cents), k=fold(r.kind), tagOld=`extrato-${e.bank}-${r.date}-${r.cents}-${fold(r.det).slice(0,24)}`, tag=`extrato-${e.bank}-${r.date}-${r.cents}-${fold(r.shop||r.who||r.det).split(" ")[0].slice(0,8)}`;
     const lbl=titleCase(r.shop||r.who||r.det||r.kind)||r.kind, base={i,date:r.date,cents,type:out?"desp":"rec",tag,on:false,act:"",note:"",lbl:`${/pix/.test(k)?(out?"Pix para ":"Pix de "):""}${lbl}`};
     if(r.date<MIN_YM+"-01") return {...base,act:"old",note:`antes de ${shortMonth(MIN_YM)}`};
-    if(items.some(x=>x.imp===tag)) return {...base,act:"done",note:"já importado"};
+    if(items.some(x=>x.imp===tag||x.imp===tagOld)) return {...base,act:"done",note:"já importado"};
     if(r.pixCred) return {...base,act:"skip",note:out?"Pix no crédito: entra na fatura do cartão":"crédito do Pix no crédito"};
     if(/sal[aá]rio/.test(k)){const sh=items.find(x=>typeOf(x)==="rec"&&x.cat==="sal"&&closeC(x.cents,cents)&&Math.abs((new Date(x.fell||x.date)-new Date(r.date))/864e5)<=5);
       return {...base,act:sh?"done":"skip",match:sh?sh.id:undefined,note:sh?`já lançado como “${cleanDesc(sh)}”`:"salário: lance pelo holerite (o valor líquido é o do holerite)"}}
