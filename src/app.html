@@ -2432,7 +2432,7 @@ async function initStore(){
     }
   }catch(e){}
   let loaded=0;
-  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1();migrate13()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;render();if(first)animIn();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();migrate13();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
+  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1();migrate13();azAutoPass()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;render();if(first)animIn();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();migrate13();azAutoPass();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
   note(store.synced?"Salvo na sua conta Claude — igual no iPhone e no computador.":PWA?"Salvo neste iPhone. Faça um backup de vez em quando.":"Salvo só neste navegador.");
   if(PWA){
     try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -5135,6 +5135,40 @@ function azMerge(names){
   const L=azList(),add=[];
   names.forEach(n=>{n=(n||"").trim();if(!n||L.some(q=>nmSame(q.name,n))||add.some(q=>nmSame(q.name,n)))return;add.push({id:"az"+Date.now()+Math.random().toString(36).slice(2,6),name:n,moves:[]})});
   return add.length?[...L,...add]:null;
+}
+/* Pessoa pelo nome na assinatura/despesa (03/11/2026, pedido dele: "well hub de tal pessoa… já vincular lá no pessoas"): despesa que é assinatura
+   (subOf) ou "Wellhub/Gympass/TotalPass <Nome>" com o nome (ou "Nome no Pix") de uma pessoa na descrição vira `pessoas:[{id}]` (ela te deve o valor
+   todo); se a pessoa ainda não existe e o nome vem depois de Wellhub/Gympass, ela é criada. `pauto:1` marca que foi automático: o vínculo é editável
+   (lançamento, menu do botão direito, histórico da pessoa) e, uma vez marcado, nunca é refeito (tirar a pessoa à mão vale). Idempotente. */
+const AZ_GYM=/^(?:wellhub|gympass|totalpass)\s+(?:de\s+|do\s+|da\s+)?(.+)$/i;
+const azNorm=t=>fold(t).replace(/[^a-z0-9]+/g," ").trim();
+function azFind(desc){
+  const d=" "+azNorm(desc)+" ";
+  return azList().find(p=>azAliases(p).some(n=>{n=azNorm(n);const f=n.split(" ")[0];return (n.length>=4&&d.includes(" "+n+" "))||(f.length>=4&&d.includes(" "+f+" "))}))||null;
+}
+function azGymName(desc){
+  const m=AZ_GYM.exec(cleanDescStr(desc));if(!m)return "";
+  const w=m[1].replace(/[^A-Za-zÀ-ÿ ]+/g," ").trim().split(/\s+/).filter(Boolean);
+  if(!w.length||w.length>3||w.some(t=>t.length<2||/^(mensal|anual|plano|plus|basic|premium|starter|silver|gold|platinum|diamond|app|br|ltda|sa)$/i.test(t)))return "";
+  const me=azNorm(myName()).split(" ")[0];if(me&&me.length>=3&&azNorm(w[0])===me)return "";
+  return w.map(t=>t[0].toUpperCase()+t.slice(1).toLowerCase()).join(" ");
+}
+const cleanDescStr=d=>String(d||"").replace(/^[^·]+ · /,"");
+let _azA=false;
+async function azAutoPass(){
+  if(_azA||!cfgLoaded||!_itemsIn||!items.length)return;
+  const cand=items.filter(x=>typeOf(x)==="desp"&&!x.pauto&&!genFat(x)&&(x.date||"")>=MIN_YM+"-01"&&!azParts(x).length&&!/^pix\b|transfer/i.test(fold(cleanDescStr(x.desc)))&&(subOf(x)||azGymName(x.desc)||AZ_GYM.test(cleanDescStr(x.desc))));
+  if(!cand.length)return;
+  _azA=true;
+  try{
+    const novos=[...new Set(cand.filter(x=>!azFind(cleanDescStr(x.desc))).map(x=>azGymName(x.desc)).filter(Boolean))];
+    if(novos.length){const L=azMerge(novos);if(L)await saveCfg({acertos:L})}
+    let n=0;const who=new Set();
+    for(const x of cand){const p=azFind(cleanDescStr(x.desc));if(!p)continue;
+      await store.items.update(x.id,{pessoas:[{id:p.id}],pauto:1});n++;who.add(p.name)}
+    if(n)toast(`${n} ${n===1?"assinatura ligada":"assinaturas ligadas"} a ${[...who].join(", ")} em Pessoas · dá para trocar`,true);
+  }catch(e){}
+  _azA=false;
 }
 /* assinaturas em que a pessoa paga uma parte (cfg.subShare[nome].p[].nm), e incluir/tirar a pessoa de uma assinatura */
 const azSubsOf=p=>{const A=azAliases(p),out=[];Object.entries(subShare()).forEach(([sub,sh])=>{if(!sh||!Array.isArray(sh.p))return;const m=sh.p.find(x=>x.nm&&A.some(n=>nmSame(n,x.nm)));if(m)out.push({sub,c:m.c})});return out};
