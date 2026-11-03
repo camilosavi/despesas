@@ -2051,6 +2051,42 @@ section>h2 .tbtn.go{color:var(--btn-ink)!important}
 .azst2.open{color:var(--dcol,#d9534f)}.azst2.ok{color:var(--rcol,#2e9e6b)}
 .azst2 .azpx{font-size:.78rem;color:var(--link,var(--muted));font-weight:600;padding:0}
 .azchip{display:none}
+/* O que merece atenção (Nota de saúde do Início) */
+#pHome .datw.in-res{display:none}
+/* os blocos .db também são containers (largura própria): este precisa olhar o #pHome, por isso o nome */
+#pHome{container-name:phome}
+@container phome (min-width:900px){#pHome .datw.in-res{display:block;margin-top:.2em}#pHome .datw.in-saude{display:none}#pHome .datw.in-res .dat{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 1.4em}
+  /* só o título, numa linha (o resto fica no title): a linha de cima do painel não pode crescer muito */
+  #pHome .datw.in-res .datb small{display:none}#pHome .datw.in-res .dath{margin-top:.5em}#pHome .datw.in-res .dat li{padding:.3em 0}
+  #pHome .datw.in-res .datb b{font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pHome .datw.in-res .datmore{margin-top:.1em}}
+#pHome .dath{display:block;margin:.9em 0 0;font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#pHome .dat{list-style:none;margin:.3em 0 0;padding:0}
+#pHome .dat li{display:flex;align-items:flex-start;gap:.5em;padding:.5em 0;border-top:1px solid var(--line)}
+#pHome .dat li::before{content:"";flex:none;width:.5em;height:.5em;margin-top:.5em;border-radius:50%;background:var(--ac,var(--muted))}
+#pHome .datb{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer}
+#pHome .datb b{display:block;font-size:.84rem;font-weight:700;line-height:1.3;color:var(--ink);white-space:normal}
+#pHome .datb small{display:block;margin-top:.1em;font-size:.74rem;line-height:1.3;color:var(--muted)}
+#pHome .datx{flex:none;min-width:32px;min-height:32px;margin:-.4em -.3em 0 0;border:0;background:none;font-size:1.15rem;line-height:1;color:var(--muted);cursor:pointer}
+#pHome .datmore{display:block;margin-top:.2em;font-size:.74rem;color:var(--muted)}
+.tag.dn{background:color-mix(in srgb,var(--pos) 16%,transparent);color:var(--pos)}
+/* Pessoas: crédito (adiantado), resumo e blocos recolhidos (03/11/2026) */
+#azSec .v.adv,#azSec b.adv,#azSec .adv{color:var(--link,var(--ink))}
+.azstat.three{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.azstat.three b{font-size:1.18rem}
+#azSec .azbrk{margin:0 0 10px;font-size:.84rem;color:var(--muted)}#azSec .azbrk b{font-variant-numeric:tabular-nums}
+#azSec .azbrk b.pos{color:var(--rcol,var(--pos))}#azSec .azbrk b.neg{color:var(--dcol,var(--neg))}
+#azSec details.azmore{border-top:1px solid var(--line);margin-top:var(--g-pad);font-size:.84rem;color:var(--muted)}
+#azSec details.azmore>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:44px;font-weight:700;font-size:.92rem;color:var(--link,var(--ink))}
+#azSec details.azmore>summary::-webkit-details-marker{display:none}
+#azSec details.azmore>summary::after{content:"+";font-size:1.2rem;font-weight:500;line-height:1}
+#azSec details.azmore[open]>summary::after{content:"−"}
+#azSec details.azmore>.azadd,#azSec details.azmore>.svbtns,#azSec details.azmore>input,#azSec details.azmore>.azsub,#azSec details.azmore>.azsubadd{margin-bottom:var(--g-pad)}
+#azSec details.azmore>.svbtns{margin-top:8px}
+#azSec .azpanel>.aztools{margin:var(--g-pad) 0 0;padding-top:var(--g-pad);border-top:1px solid var(--line)}
+#azSec .azpanel>.svsec:first-child,#azSec .azpanel>.azbrk+.svsec{margin-top:0}
+#azSec button.svmv{border-top:0}
+#azSec .svmv+.svmv,#azSec .azch+.svmv,#azSec .svmv+.azch,#azSec .azch+.azch{border-top:1px solid var(--line)}
+#azSec .azmh+.svmv,#azSec .azmh+.azch,#azSec .svsec+.svmv,#azSec .svsec+.azch,#azSec .azch .svmv{border-top:0}
+
 </style>
 
 <div class="wrap">
@@ -3563,6 +3599,62 @@ function dashCard(c,full){
     <span class="dcinfo"><span><small>Fatura</small><b>${R(bv)}</b></span><span><small>${dueOf(c)?"Vence":"Mês"}</small><b>${dueOf(c)?fmtDM(cardDue(c,bs.ym)):shortMonth(bs.ym)}</b></span>${f?`<span><small>${f.free<0?"Acima":"Livre"}</small><b class="${f.free<0?"neg":""}">${R(Math.abs(f.free))}</b></span>`:""}</span></span>
     <span class="mini" ${pct==null?'style="visibility:hidden"':""}><i style="width:${pct||0}%;background:${pct>=100?"var(--neg)":pct>=80?"var(--warn)":col}"></i></span>${meta}</div>`;
 }
+/* ---------- O que merece atenção (03/11/2026, pedido dele: "analisa o app e veja o que dá pra implantar") ----------
+   Lista curta dentro da Nota de saúde (Início, celular e PC): no máximo 3 avisos, do mais importante ao menos. Cada aviso tem uma chave `k`;
+   o "×" grava em cfg.attOff (últimas 150) e ele some. 1) cobrança duplicada · 2) assinatura que mudou de valor ou é nova ·
+   3) categoria bem acima do mês passado · 4) parcela que acaba este mês. Só olha mês atual e anterior (e a partir de MIN_YM). */
+const attOff=()=>Array.isArray(cfg.attOff)?cfg.attOff:[];
+/* duas compras importadas (fatura, extrato, Open Finance) no mesmo cartão, mesmo nome e valor, até 2 dias de diferença. Lançada à mão + importada
+   é caso de "Parecidos/Mesclar", não de cobrança em dobro; parcela e assinatura (mesmo group) ficam de fora. */
+function attDup(){
+  const lo=shiftYM(curYM(),-1)+"-01", out=[], used=new Set();
+  const L=items.filter(x=>typeOf(x)==="desp"&&!genFat(x)&&x.imp&&!parcInfo(x)&&cardOf(x)&&x.cents>=1000&&(x.date||"")>=lo)
+    .sort((a,b)=>(a.buy||a.date).localeCompare(b.buy||b.date));
+  L.forEach((a,i)=>{if(used.has(a.id))return;
+    for(let j=i+1;j<L.length;j++){const b=L[j];if(used.has(b.id))continue;
+      const da=a.buy||a.date, db=b.buy||b.date;
+      if((Date.parse(db+"T12:00:00Z")-Date.parse(da+"T12:00:00Z"))/864e5>2)break;
+      if(cardOf(a)===cardOf(b)&&a.cents===b.cents&&fold(cleanDesc(a)).replace(/\s+/g," ")===fold(cleanDesc(b)).replace(/\s+/g," ")&&!(a.group&&a.group===b.group)){
+        out.push({k:"dup:"+dupKey(a,b),pr:1,c:"var(--neg)",t:`${cleanDesc(a)} cobrado 2× · ${R(a.cents)}`,s:`${fmtDM(da)}${db!==da?" e "+fmtDM(db):""} no ${cardOf(a)} · toque para conferir`,id:b.id});used.add(a.id);used.add(b.id);break}}});
+  return out;
+}
+/* assinatura (subOf) com o valor do mês diferente do mês anterior (a partir de 4% e R$ 1,00, para não pegar variação de câmbio) ou que apareceu agora */
+function attSub(){
+  const cur=curYM(), pv=shiftYM(cur,-1), by={}, out=[];
+  items.forEach(x=>{const ym=(x.date||"").slice(0,7);if(ym>cur||ym<MIN_YM)return;const k=subOf(x);if(!k)return;const o=(by[k]=by[k]||{});o[ym]=(o[ym]||0)+amt(x)});
+  Object.entries(by).forEach(([name,M])=>{const ms=Object.keys(M).sort(), l=ms[ms.length-1], p=ms[ms.length-2];
+    if(l<pv||subOffOf(name,l))return;
+    if(ms.length===1){if(l>shiftYM(MIN_YM,1))out.push({k:"subn:"+name,pr:3,c:"var(--warn)",name,nova:1,t:`Assinatura nova: ${name}`,s:`${R(M[l])}/mês desde ${shortMonth(l)}`,nav:"subs"});return}
+    if(p!==shiftYM(l,-1))return;
+    const d=M[l]-M[p];
+    if(Math.abs(d)>=Math.max(100,M[p]*.04))out.push({k:"subc:"+name+":"+l,pr:2,c:d>0?"var(--warn)":"var(--pos)",name,d,t:`${name} ${d>0?"subiu":"baixou"}: ${R(M[p])} → ${R(M[l])}`,s:`${d>0?"+":"−"}${R(Math.abs(d))} por mês · ${shortMonth(l)}`,nav:"subs"})});
+  return out;
+}
+/* a categoria que mais cresceu sobre o mesmo dia do mês anterior (≥ 30% e ≥ R$ 150); só a maior, e só a partir do dia 8 (antes disso o mês ainda
+   tem pouca coisa para comparar). Os dois meses entram até o mesmo dia (data = vencimento, como no resto do app). */
+function attCat(){
+  const cur=curYM(), pv=shiftYM(cur,-1), cut=today().slice(8);if(pv<firstYM()||+cut<8)return [];
+  const a=byCat(inMonth(cur).filter(x=>x.date.slice(8)<=cut),"desp"), b=byCat(inMonth(pv).filter(x=>x.date.slice(8)<=cut),"desp"), L=[];
+  Object.entries(a).forEach(([k,v])=>{if(k==="cartao"||k==="euro"||k==="outros"||k==="assin")return;const w=b[k]||0;if(w>0&&v>=w*1.3&&v-w>=15000)L.push({k:"cat:"+k+":"+cur,pr:4,c:"var(--warn)",d:v-w,t:`${catOf(k,"desp").n} ${Math.round((v/w-1)*100)}% acima do mês passado`,s:`${R(v)} agora · ${R(w)} até o mesmo dia em ${shortMonth(pv)}`,nav:"pMes"})});
+  return L.sort((x,y)=>y.d-x.d).slice(0,1);
+}
+/* última parcela que vence neste mês: no mês que vem esse valor sai da fatura */
+function attParc(){
+  const cur=curYM();
+  return items.filter(x=>typeOf(x)==="desp"&&!genFat(x)&&(x.date||"").startsWith(cur)&&(p=>p&&p.n>1&&p.i===p.n)(parcInfo(x))).sort((a,b)=>amt(b)-amt(a)).slice(0,1)
+    .map(x=>({k:"parc:"+x.id,pr:5,c:"var(--pos)",t:`Última parcela: ${cleanDesc(x).replace(/\s*\(?\d+\/\d+\)?$/,"")}`,s:`${R(amt(x))} sai da fatura a partir do mês que vem`,id:x.id}));
+}
+const attAll=()=>{const off=new Set(attOff());return [...attDup(),...attSub(),...attCat(),...attParc()].filter(a=>!off.has(a.k)).sort((a,b)=>a.pr-b.pr)};
+function attHtml(where){
+  const A=attAll(), N=where==="in-res"?2:3;if(!A.length)return "";/* no PC (Resumo do mês) cabem 2, em duas colunas, sem esticar a linha de cima */
+  return `<div class="datw ${where}"><small class="dath">Merece atenção</small><ul class="dat">${A.slice(0,N).map(a=>`<li style="--ac:${a.c}"><button type="button" class="datb" title="${esc(a.t+" — "+a.s)}" ${a.id?`data-attid="${esc(a.id)}"`:`data-nav="${a.nav}"`}><b>${esc(a.t)}</b><small>${esc(a.s)}</small></button><button type="button" class="datx" data-attoff="${esc(a.k)}" aria-label="Dispensar este aviso">×</button></li>`).join("")}</ul>${A.length>N?`<small class="datmore">+${A.length-N} ${A.length-N===1?"aviso":"avisos"}</small>`:""}</div>`;
+}
+document.addEventListener("click",e=>{
+  const x=e.target.closest("[data-attoff]");
+  if(x){e.preventDefault();e.stopPropagation();saveCfg({attOff:[...attOff(),x.dataset.attoff].slice(-150)}).then(()=>render()).catch(()=>toast("Não deu para salvar."));return}
+  const g=e.target.closest("[data-attid]");
+  if(g){const it=items.find(i=>i.id===g.dataset.attid);if(it){e.preventDefault();e.stopPropagation();openSheet(it)}}
+},true);
 function dashHome(){
   const ym=curYM(), mi=inMonth(ym), rec=sumT(mi,"rec"), des=sumT(mi,"desp"), sob=rec-des;
   const nm=(myName()||(typeof userName==="function"?userName():"")||"").replace(/^@/,"").split(" ")[0], h=new Date().getHours(), gr=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
@@ -3593,8 +3685,8 @@ function dashHome(){
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
    <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pWal">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
-   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receitas</span><b>${R(rec)}</b><small>${recLeft?`a receber ${R(recLeft)}`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesas</span><b>${R(des)}</b><small>${desLeft?`a pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobrou":"Faltou"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div></section>
-   <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p></section>
+   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receitas</span><b>${R(rec)}</b><small>${recLeft?`a receber ${R(recLeft)}`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesas</span><b>${R(des)}</b><small>${desLeft?`a pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobrou":"Faltou"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
+   <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p>${attHtml("in-saude")}</section>
    <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
    <section class="db d-gastos"><h3>Gastos</h3>${cats}</section>
    <section class="db d-cartoes"><h3>Cartões <button class="dlink" data-nav="pCards">Ver cartões</button></h3>${cardsH}</section>
@@ -4017,10 +4109,11 @@ function subEditor(r){
 function subSection(){
   const L=subList();if(!L.length) return "";
   const A=L.filter(r=>!r.off), tot=A.reduce((s,r)=>s+r.cents,0), mine=A.reduce((s,r)=>s+r.mine,0), cur=curYM();
+  const subChg=Object.fromEntries(attSub().map(a=>[a.name,a]));/* assinatura que subiu/baixou/é nova aparece marcada aqui, mesmo depois de dispensar o aviso do Início */
   const row=r=>{const nxt=r.off?`cancelada · última cobrança em ${shortMonth(r.ym)}`:r.card?`fatura ${r.card} de ${shortMonth(r.ym>cur?r.ym:shiftYM(r.ym,1))}`:`~${fmtDM(shiftYM(r.last.date.slice(0,7),1)+r.last.date.slice(7))}`;
     const sub=[nxt,r.sh?`÷ ${r.np+1} pessoas, ${r.sh.p&&r.sh.p.length?"valores diferentes":R(r.sh.c)+" cada"} · ${r.got} de ${r.np} pagaram em ${shortMonth(cur)} · sai ${R(r.mine)} para você`:""].filter(Boolean).join(" · ");
     const ed=subEdit===r.name;
-    return `<div class="subg${r.off?" suboff":""}"><button class="item rec-it" data-subdiv="${esc(r.name)}" aria-expanded="${ed}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit">${catIco("assin","desp")}<span class="t"><div class="d">${esc(r.name)}${r.off?` <span class="tag">cancelada</span>`:""}</div><div class="m">${esc(sub)}</div></span><span class="v">${R(r.cents)}<small style="display:block;font-weight:500;color:var(--muted)">${R(r.cents*12)}/ano</small></span></button>
+    return `<div class="subg${r.off?" suboff":""}"><button class="item rec-it" data-subdiv="${esc(r.name)}" aria-expanded="${ed}" style="width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit">${catIco("assin","desp")}<span class="t"><div class="d">${esc(r.name)}${r.off?` <span class="tag">cancelada</span>`:""}${(a=>a?` <span class="tag ${a.nova?"":a.d>0?"":"dn"}">${a.nova?"nova":(a.d>0?"subiu ":"baixou ")+R(Math.abs(a.d))}</span>`:"")(subChg[r.name])}</div><div class="m">${esc(sub)}</div></span><span class="v">${R(r.cents)}<small style="display:block;font-weight:500;color:var(--muted)">${R(r.cents*12)}/ano</small></span></button>
       ${ed&&r.sh?(()=>{const P=subPayers(r.name,r.sh), mn=monthLabel(cur).split(" ")[0].toLowerCase(), first=n=>titleCase(n.split(" ")[0]);
         return `<div class="svedit" style="padding-bottom:0"><p class="hint" style="margin:0 0 6px">${P.paid.length?`Pagaram em ${mn}: ${esc(P.paid.map(first).join(", "))}.`:`Ninguém pagou em ${mn} ainda.`}${P.miss.length?` Faltam: ${esc(P.miss.map(first).join(", "))}.`:""}</p>
         ${P.miss.length?`<div class="btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${P.miss.map(n=>`<a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi, ${first(n)}! Falta o ${r.name} de ${mn}: ${R(shOwe(r.sh,n))}. Valeu!`)}">Cobrar ${esc(first(n))} no WhatsApp</a>`).join("")}</div>`:""}
@@ -5219,10 +5312,10 @@ function shDropPerson(sub,name){
   const P=shParts(sh).filter(x=>!(x.nm&&nmSame(x.nm,name))).map(x=>({nm:x.nm||"",c:x.c}));
   if(P.length)S[sub]=shPack(P);else delete S[sub];return S;
 }
-function azSubsHtml(p){
+function azSubsHtml(p,bare){
   const S=azSubsOf(p), nm=esc(p.name), free=subList().filter(r=>!r.off&&!S.some(s=>s.sub===r.name));
   if(!S.length&&!free.length)return "";
-  return `<div class="svsec">Assinaturas com ${nm}</div>`+
+  return (bare?"":`<div class="svsec">Assinaturas com ${nm}</div>`)+
     S.map(s=>`<div class="azsub"><span class="azsn">${esc(s.sub)}</span><span class="azsv">${R(s.c)}/mês</span><button type="button" class="svlink" data-azsubdrop="${esc(s.sub)}" aria-label="Tirar ${nm} de ${esc(s.sub)}">tirar</button></div>`).join("")+
     (free.length?`<div class="azsubadd"><select id="azSubSel" aria-label="Assinatura">${free.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}</option>`).join("")}</select><input id="azSubVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Quanto ${nm} paga por mês"><button type="button" class="btn soft" data-azsubadd="1">Incluir</button></div>`:"");
 }
@@ -5282,50 +5375,83 @@ const azEntries=p=>{const E=[],cur=curYM();
      cada Pix vai para a cobrança em aberto de mesmo valor (±R$ 0,15) ou, senão, a mais antiga; entra no mês dessa cobrança. */
   E.relm={};/* relevado: sobra de até AZ_TOL por cobrança que um Pix quitou */
   const open=E.filter(e=>(e.k==="sub"||(e.k==="x"&&!e.o))&&e.c>0).sort((a,b)=>a.ym.localeCompare(b.ym)||(a.d||"").localeCompare(b.d||"")).map(e=>({ym:e.ym,left:e.c,e}));
+  /* Pix maior que uma cobrança quita as seguintes (03/11/2026, achado na revisão: Ricardo pagou 2 meses de uma vez e só 1 ficava quitada, a outra
+     "em aberto" e o mês mostrava "você deve"): cada pedaço do Pix vira uma entrada no mês da cobrança que ele quitou; o que passar de todas as
+     cobranças fica como crédito (cred = pagou adiantado) e é consumido sozinho quando a próxima cobrança aparecer. */
   azPix(p).sort((a,b)=>a.x.date.localeCompare(b.x.date)).forEach(e=>{
-    const pe={ym:e.x.date.slice(0,7),c:e.c,k:"pix",x:e.x,d:e.x.date,ign:e.ign,forD:""};
-    if(!e.ign){let need=-e.c,t=open.find(o=>o.left>0&&Math.abs(o.left-need)<=AZ_TOL)||open.find(o=>o.left>0);
-      if(t){pe.ym=t.ym;pe.forD=t.e.d;pe.at=1;t.e.pd=e.x.date;(t.e.pxs=t.e.pxs||[]).push(pe);t.left=Math.max(0,t.left-need);if(t.left>0&&t.left<=AZ_TOL){E.relm[t.ym]=(E.relm[t.ym]||0)+t.left;t.left=0}}}
-    E.push(pe)});
-  open.forEach(o=>{o.e.st=o.left>0?"open":"paid"});
+    if(e.ign){E.push({ym:e.x.date.slice(0,7),c:0,k:"pix",x:e.x,d:e.x.date,ign:true,forD:""});return}
+    let rest=e.x.cents,last=null;
+    const give=(o,use)=>{const pe={ym:o.ym,c:-use,k:"pix",x:e.x,d:e.x.date,ign:false,forD:o.e.d||"",at:1,part:use};
+      o.left-=use;rest-=use;o.e.pd=e.x.date;(o.e.pxs=o.e.pxs||[]).push(pe);E.push(pe);last=pe};
+    const near=open.find(o=>o.left>0&&Math.abs(o.left-rest)<=AZ_TOL);
+    if(near)give(near,Math.min(rest,near.left));
+    else for(const o of open){if(rest<=0)break;if(o.left>0)give(o,Math.min(rest,o.left))}
+    if(rest>0&&rest<=AZ_TOL&&last){last.c-=rest;last.part+=rest;rest=0}
+    if(rest>0)E.push({ym:e.x.date.slice(0,7),c:-rest,k:"pix",x:e.x,d:e.x.date,ign:false,forD:"",at:0,cred:1,part:rest})});
+  open.forEach(o=>{if(o.left>0&&o.left<=AZ_TOL&&(o.e.pxs||[]).length){E.relm[o.ym]=(E.relm[o.ym]||0)+o.left;o.left=0}o.e.st=o.left>0?"open":"paid";o.e.rem=o.left});
   (p.moves||[]).forEach(m=>E.push({ym:(m.date||cur).slice(0,7),c:m.done?0:m.cents,k:"m",m,d:m.date}));
   return E};
 const azMonths=p=>{const M={};azEntries(p).forEach(e=>{(M[e.ym]=M[e.ym]||[]).push(e)});return Object.entries(M).sort((a,b)=>b[0].localeCompare(a[0]))};
 const azMonthSum=(p,ym)=>{const E=azEntries(p);return azTol(E.filter(e=>e.ym===ym).reduce((s,e)=>s+e.c,0)-(E.relm[ym]||0))};
+/* Pix que passou de todas as cobranças = crédito (pagou adiantado), não dívida sua */
+const azCred=p=>azEntries(p).filter(e=>e.cred).reduce((t,e)=>t-e.c,0);
+/* situação: owe = te deve · due = você deve · adv = pagou adiantado · even = tudo acertado */
+const azSt=p=>{const b=azBal(p);if(!b)return {b,k:"even"};if(b>0)return {b,k:"owe"};return {b,k:azCred(p)>=-b-AZ_TOL?"adv":"due"}};
+const azMon=ym=>monthLabel(ym).split(" ")[0].toLowerCase().slice(0,3);
+/* mês mais antigo ainda pendente (do lado que o saldo aponta) */
+const azSince=p=>{const s=Math.sign(azBal(p));return azEntries(p).filter(e=>e.c&&e.k!=="pix"&&e.st!=="paid"&&Math.sign(e.c)===s).map(e=>e.ym).sort()[0]||""};
 function azSection(){
   const L=azList();
   let h=`<section id="azSec"><h2>Pessoas ${azForm?"":`<button id="azAdd">+ Pessoa</button>`}</h2>`;
   if(azForm) h+=`<div class="card svedit" style="padding-top:14px;margin-bottom:10px"><input id="azName" maxlength="24" placeholder="Nome (ex.: Mãe)"><div class="svbtns"><button class="btn soft" id="azCancel">Cancelar</button><button class="btn primary" id="azCreate">Criar</button></div></div>`;
   if(!L.length) return h+(azForm?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa (ex.: Mãe). Ela aparece ao lançar uma despesa ou receita e também ao dividir uma assinatura.</div>`)+`</section>`;
-  const owe=L.reduce((s,p)=>s+Math.max(0,azBal(p)),0), due=L.reduce((s,p)=>s+Math.max(0,-azBal(p)),0);
-  h+=`<div class="card"><div class="azstat"><div><small>Te devem</small><b class="${owe?"pos":""}">${R(owe)}</b></div><div><small>Você deve</small><b class="${due?"neg":""}">${R(due)}</b></div></div><div class="azfil" role="group" aria-label="Organizar por"><span>Organizar</span>${[["mes","Por mês"],["az","A–Z"],["cat","Categoria"]].map(([k,t])=>`<button type="button" data-azview="${k}" aria-pressed="${azView===k}">${t}</button>`).join("")}</div>`+
+  const ST=L.map(azSt), owe=ST.reduce((s,x)=>s+(x.k==="owe"?x.b:0),0), due=ST.reduce((s,x)=>s+(x.k==="due"?-x.b:0),0), adi=ST.reduce((s,x)=>s+(x.k==="adv"?-x.b:0),0);
+  h+=`<div class="card"><div class="azstat${adi?" three":""}"><div><small>Te devem</small><b class="${owe?"pos":""}">${R(owe)}</b></div><div><small>Você deve</small><b class="${due?"neg":""}">${R(due)}</b></div>${adi?`<div><small>Adiantado</small><b class="adv">${R(adi)}</b></div>`:""}</div><div class="azfil" role="group" aria-label="Organizar por"><span>Organizar</span>${[["mes","Por mês"],["az","A–Z"],["cat","Categoria"]].map(([k,t])=>`<button type="button" data-azview="${k}" aria-pressed="${azView===k}">${t}</button>`).join("")}</div>`+
   (b=>[...b.filter(p=>p.pin),...b.filter(p=>!p.pin)])(azView==="az"?[...L].sort((a,b)=>a.name.localeCompare(b.name,"pt",{sensitivity:"base"})):L).map(p=>{
-    const b=azBal(p), cm=azMonthSum(p,curYM()), open=azOpen===p.id, nm=esc(p.name);
+    const b=azBal(p), cm=azMonthSum(p,curYM()), open=azOpen===p.id, nm=esc(p.name), S0=azSt(p), since=azSince(p);
     const hue=azHue(p.name);
-    let row=`<button class="svrow azrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="azav" style="--h:${hue}">${esc((p.name.trim()[0]||"?").toUpperCase())}${p.pin?`<i aria-label="fixada">📌</i>`:""}</span><span class="svn"><span class="svnm">${nm}</span><span class="svsub"><span>${b>0?"te deve":b<0?"você deve":"tudo acertado ✓"}${b&&cm!==b?` · este mês ${cm?R(Math.abs(cm))+(cm<0?" (você deve)":""):"R$ 0,00"}`:""}</span></span></span><span class="v ${b<0?"neg":b>0?"pos":""}">${b?R(Math.abs(b)):"—"}</span></button>`;
+    let row=`<button class="svrow azrow" data-az="${esc(p.id)}" aria-expanded="${open}"><span class="azav" style="--h:${hue}">${esc((p.name.trim()[0]||"?").toUpperCase())}${p.pin?`<i aria-label="fixada">📌</i>`:""}</span><span class="svn"><span class="svnm">${nm}</span><span class="svsub"><span>${S0.k==="owe"?"te deve":S0.k==="due"?"você deve":S0.k==="adv"?"pagou adiantado":"tudo acertado ✓"}${S0.k==="even"||S0.k==="adv"?"":cm&&cm!==b?` · este mês ${R(Math.abs(cm))}${cm<0?" (você deve)":""}`:since&&since<curYM()?` · desde ${azMon(since)}`:""}</span></span></span><span class="v ${S0.k==="due"?"neg":S0.k==="owe"?"pos":S0.k==="adv"?"adv":""}">${b?R(Math.abs(b)):"—"}</span></button>`;
     if(open){
       const mv=[...(p.moves||[])].sort((x,y)=>(x.done?1:0)-(y.done?1:0)||y.date.localeCompare(x.date)||String(y.id).localeCompare(String(x.id)));
       const line=(m,sub)=>`<${sub?"div":`button data-azmv="${esc(m.id)}"`} class="svmv" ${sub?"":`aria-label="Marcar como ${m.done?"não acertado":"acertado"}"`}><span style="${m.done?"text-decoration:line-through;opacity:.55":""}">${esc(m.desc||"Sem descrição")}${sub?"":` · ${fmtDate(m.date)}`}${sub?` · assinatura`:""}${m.done?" · acertado ✓":""}</span><span class="${m.cents<0?"neg":"pos"}" style="${m.done?"opacity:.55":""}">${m.cents<0?"−":"+"} ${R(Math.abs(m.cents))}${sub?"":`<span class="ed">${m.done?"desfazer":"acertar"}</span>`}</span></${sub?"div":"button"}>`;
-      row+=`<div class="svedit azpanel"><div class="aztools"><button class="svlink" data-azpin="1">${p.pin?"Soltar do topo":"📌 Fixar no topo"}</button>${azView==="az"?"":`<span><button class="svlink" data-azmove="-1" aria-label="Subir">↑</button><button class="svlink" data-azmove="1" aria-label="Descer">↓</button></span>`}</div>${(()=>{const E=azEntries(p), cur=curYM(), a=Math.max(0,b), d=Math.max(0,-b), pg=E.filter(e=>e.o&&!e.c&&e.ym===cur).reduce((t,e)=>t+e.pc,0), rc=-E.filter(e=>e.c<0&&!e.o&&e.ym===cur).reduce((t,e)=>t+e.c,0);
-        return `<div class="azsum"><div><small>${nm} te deve</small><b class="${a?"pos":""}">${R(a)}</b></div><div><small>Você deve a ${nm}</small><b class="${d?"neg":""}">${R(d)}</b></div>${pg||rc?`<p>Este mês: ${pg?`você pagou ${R(pg)}`:""}${pg&&rc?" · ":""}${rc?`${nm} pagou ${R(rc)}`:""}</p>`:""}</div>`})()}${azSubsHtml(p)}<div class="svsec">Novo acerto</div><div class="azadd"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"></div><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div><details class="azpixd"${p.pix?" open":""}><summary>Nome no Pix${p.pix?"":" (para achar o que já pagou)"}</summary><input id="azPixNm" maxlength="60" placeholder="Ex.: Maria Silva" value="${esc(p.pix||"")}" aria-label="Nome no Pix"></details>`+
+      const E0=azEntries(p), cur0=curYM(), S=azSt(p), cr=azCred(p);
+      /* resumo curto: só aparece quando o saldo junta coisas diferentes (o total já está na linha da pessoa) */
+      const brk=(()=>{const pos=E0.filter(e=>e.c>0&&e.k!=="pix").reduce((t,e)=>t+(e.rem!=null?e.rem:e.c),0), neg=-E0.filter(e=>e.c<0&&e.k!=="pix").reduce((t,e)=>t+e.c,0),
+          parts=[pos?`${nm} te deve <b class="pos">${R(pos)}</b>`:"",neg?`você deve <b class="neg">${R(neg)}</b>`:"",cr?`adiantado <b class="adv">${R(cr)}</b>`:""].filter(Boolean);
+        const pg=E0.filter(e=>e.o&&!e.c&&e.ym===cur0).reduce((t,e)=>t+e.pc,0), rc=-E0.filter(e=>e.c<0&&!e.o&&!e.cred&&e.ym===cur0).reduce((t,e)=>t+e.c,0);
+        return (parts.length>1?`<p class="azbrk">${parts.join(" · ")}</p>`:"")+(pg||rc?`<p class="azbrk">Este mês: ${pg?`você pagou ${R(pg)}`:""}${pg&&rc?" · ":""}${rc?`${nm} pagou ${R(rc)}`:""}</p>`:"")})();
+      row+=`<div class="svedit azpanel">${brk}`+
         (()=>{const MS=azMonths(p);if(!MS.length)return "";
           const fm=v=>`${v<0?"−":"+"} ${R(Math.abs(v))}`, cls=v=>v<0?"neg":v>0?"pos":"";
-          const ent=e=>e.k==="pix"?`<button class="svmv" data-azpix="${esc(e.x.id)}"><span style="${e.ign?"text-decoration:line-through;opacity:.55":""}">Pix recebido ${fmtDM(e.d)}</span><span class="pos" style="${e.ign?"opacity:.55":""}">+ ${R(e.x.cents)}<span class="ed">${e.ign?"usar":"ignorar"}</span></span></button>`:e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):e.o?`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${e.c?"neg":""}" style="${e.c?"":"opacity:.6"}">${e.c?"− ":""}${R(e.pc)}<span class="ed">${e.c?"você paga":"pago ✓"}</span></span></button>`:(typeOf(e.x)==="rec"?`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}</span><span class="pos">+ ${R(Math.abs(e.c))}<span class="ed">ela pagou</span></span></button>`:`<div class="azch"><button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="azamt">${R(Math.abs(e.c))}</span></button><div class="azst2 ${e.st==="paid"?"ok":"open"}"><span>${e.st==="paid"?"pago ✓":"em aberto"}${(e.pxs||[]).map(q=>` · Pix de ${fmtDM(q.d)}`).join("")}</span>${(e.pxs||[]).map(q=>`<button class="azpx" data-azpix="${esc(q.x.id)}">ignorar</button>`).join("")}</div></div>`);
+          const ent=e=>e.k==="pix"?(e.cred
+              ?`<button class="svmv" data-azpix="${esc(e.x.id)}"><span>Pix adiantado ${fmtDM(e.d)}</span><span class="adv">${R(e.part)}<span class="ed">ignorar</span></span></button>`
+              :`<button class="svmv" data-azpix="${esc(e.x.id)}"><span style="${e.ign?"text-decoration:line-through;opacity:.55":""}">Pix recebido ${fmtDM(e.d)}</span><span class="pos" style="${e.ign?"opacity:.55":""}">+ ${R(e.part||e.x.cents)}<span class="ed">${e.ign?"usar":"ignorar"}</span></span></button>`)
+            :e.k==="sub"||(e.k==="x"&&!e.o&&typeOf(e.x)==="desp")?chg(e)
+            :e.k==="m"?line(e.m,false):e.o?`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${e.c?"neg":""}" style="${e.c?"":"opacity:.6"}">${e.c?"− ":""}${R(e.pc)}<span class="ed">${e.c?"você paga":"pago ✓"}</span></span></button>`
+            :`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}</span><span class="pos">+ ${R(Math.abs(e.c))}<span class="ed">ela pagou</span></span></button>`;
+          /* cobrança dela (assinatura ou despesa ligada): valor cheio e, embaixo, a situação com o(s) Pix que entraram nela */
+          function chg(e){const px=e.pxs||[], paid=e.st==="paid", head=e.k==="sub"?`<div class="svmv"><span>${esc(e.m.desc||"Assinatura")} · assinatura</span><span class="azamt">${R(e.c)}</span></div>`
+              :`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="azamt">${R(Math.abs(e.c))}</span></button>`;
+            const pxT=px.map(q=>` · Pix de ${fmtDM(q.d)}${Math.abs(q.part-Math.abs(e.c))>AZ_TOL?` (${R(q.part)})`:""}`).join("");
+            return `<div class="azch">${head}<div class="azst2 ${paid?"ok":"open"}"><span>${paid?"pago ✓":px.length?`faltam ${R(e.rem)}`:"em aberto"}${pxT}</span>${px.map(q=>`<button class="azpx" data-azpix="${esc(q.x.id)}">ignorar</button>`).join("")}</div></div>`}
           let n=0;
           /* A–Z / Categoria (27/10/2026, pedido dele): agrupa por lançamento (nome) ou pela categoria do lançamento; cada grupo mostra quantos itens e o total */
           const gname=e=>e.k==="sub"?(e.m.desc||"Assinatura"):e.k==="pix"?"Pix recebido":e.k==="m"?(e.m.desc||"Sem descrição"):cleanDesc(e.x).replace(/\s*\(?\d+\/\d+\)?$/,"");
           const gcat=e=>e.k==="sub"?"Assinaturas":e.k==="pix"?"Pix recebido":e.k==="m"?"Avulso (sem lançamento)":catOf(e.x.cat,typeOf(e.x)).n;
-          const grouped=azView==="mes"?null:(()=>{const G={},key=azView==="cat"?gcat:gname;azEntries(p).forEach(e=>{const k=key(e)||"Sem nome",g=(G[k.toLowerCase()]=G[k.toLowerCase()]||{k,L:[]});g.L.push(e)});
+          const grouped=azView==="mes"?null:(()=>{const G={},key=azView==="cat"?gcat:gname;E0.forEach(e=>{const k=key(e)||"Sem nome",g=(G[k.toLowerCase()]=G[k.toLowerCase()]||{k,L:[]});g.L.push(e)});
             return Object.values(G).sort((a,b)=>a.k.localeCompare(b.k,"pt",{sensitivity:"base"}))})();
+          const tot=`<div class="azmh azmt"><span>${S.k==="owe"?"Total em aberto":S.k==="due"?"Você deve":S.k==="adv"?"Adiantado":"Total"}</span><span class="${S.k==="owe"?"azo":S.k==="due"?"neg":S.k==="adv"?"adv":"pos"}">${b?R(Math.abs(b)):"quitado ✓"}</span></div>`;
           if(grouped) return `<div class="svsec">Histórico</div><div>`+grouped.map(g=>{const sum=g.L.reduce((t,e)=>t+e.c,0);
-            return `<div class="azmh"><span>${esc(g.k)} · ${g.L.length} ${g.L.length===1?"item":"itens"}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+g.L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<120).map(ent).join("")}).join("")+
-            `<div class="azmh azmt"><span>Total</span><span class="${cls(b)}">${b?fm(b):"acertado ✓"}</span></div></div>`;
-          return `<div class="svsec">Histórico</div><div>`+MS.map(([ym,L])=>{const sum=L.reduce((t,e)=>t+e.c,0);
+            return `<div class="azmh"><span>${esc(g.k)} · ${g.L.length} ${g.L.length===1?"item":"itens"}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+g.L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<120).map(ent).join("")}).join("")+tot+`</div>`;
+          return `<div class="svsec">Histórico</div><div>`+MS.map(([ym,L])=>{
             const rows=L.filter(e=>!(e.k==="pix"&&e.at)).sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
-            const sum2=azMonthSum(p,ym);
-            return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${sum2>0?"azo":sum2<0?"neg":"pos"}">${sum2?(sum2>0?"falta ":"você deve ")+R(Math.abs(sum2)):"quitado ✓"}</span></div>`+rows}).join("")+
-            `<div class="azmh azmt"><span>${b>0?"Total em aberto":b<0?"Você deve":"Total"}</span><span class="${b>0?"azo":b<0?"neg":"pos"}">${b?R(Math.abs(b)):"quitado ✓"}</span></div></div>`})()+
+            const sum2=azMonthSum(p,ym), credM=-L.filter(e=>e.cred).reduce((t,e)=>t+e.c,0), adv=sum2<0&&credM>=-sum2-AZ_TOL;
+            return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${sum2>0?"azo":adv?"adv":sum2<0?"neg":"pos"}">${sum2?(sum2>0?"falta ":adv?"adiantado ":"você deve ")+R(Math.abs(sum2)):"quitado ✓"}</span></div>`+rows}).join("")+tot+`</div>`})()+
           (()=>{const LO=azLoose();return LO.length?`<details class="azloose"><summary>Pix recebidos sem pessoa (${LO.length}) · é de ${nm}?</summary>`+LO.map(x=>`<button class="svmv" data-azlink="${esc(x.id)}"><span>${esc(shWho(x))} · ${fmtDM(x.date)}</span><span class="pos">${R(x.cents)}<span class="ed">é de ${nm}</span></span></button>`).join("")+`</details>`:""})()+
+        `<details class="azmore"><summary>Novo acerto</summary><div class="azadd"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"></div><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div></details>`+
+        (()=>{const sb=azSubsHtml(p,true);return sb?`<details class="azmore"><summary>Assinaturas com ${nm}</summary>${sb}</details>`:""})()+
+        `<details class="azmore azpixd"${p.pix?" open":""}><summary>Nome no Pix${p.pix?"":" (para achar o que já pagou)"}</summary><input id="azPixNm" maxlength="60" placeholder="Ex.: Maria Silva" value="${esc(p.pix||"")}" aria-label="Nome no Pix"></details>`+
+        `<div class="aztools"><button class="svlink" data-azpin="1">${p.pin?"Soltar do topo":"📌 Fixar no topo"}</button>${azView==="az"?"":`<span><button class="svlink" data-azmove="-1" aria-label="Subir">↑</button><button class="svlink" data-azmove="1" aria-label="Descer">↓</button></span>`}</div>`+
         `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
     }
     return row}).join("")+`</div></section>`;
