@@ -5252,7 +5252,14 @@ const azLoose=()=>{const PE=azList();return items.filter(x=>typeOf(x)==="rec"&&!
 const azEntries=p=>{const E=[],cur=curYM();
   azSubLines(p.name).forEach(m=>E.push({ym:cur,c:m.cents,k:"sub",m}));
   azLinked(p).forEach(x=>{const pa=azParts(x).find(e=>e.id===p.id)||{};E.push({ym:x.date.slice(0,7),c:azLv(x,p),k:"x",x,d:x.date,o:pa.o&&typeOf(x)==="desp"?1:0,pc:pa.c||0})});
-  azPix(p).forEach(e=>E.push({ym:e.x.date.slice(0,7),c:e.c,k:"pix",x:e.x,d:e.x.date,ign:e.ign}));
+  /* Pix quita a cobrança, não o mês em que caiu (03/11/2026, pedido dele: Maressa paga antes da cobrança nova cair e Ricardo na virada da fatura):
+     cada Pix vai para a cobrança em aberto de mesmo valor (±R$ 0,15) ou, senão, a mais antiga; entra no mês dessa cobrança. */
+  const open=E.filter(e=>(e.k==="sub"||(e.k==="x"&&!e.o))&&e.c>0).sort((a,b)=>a.ym.localeCompare(b.ym)||(a.d||"").localeCompare(b.d||"")).map(e=>({ym:e.ym,left:e.c}));
+  azPix(p).sort((a,b)=>a.x.date.localeCompare(b.x.date)).forEach(e=>{
+    let ym=e.x.date.slice(0,7);
+    if(!e.ign){let need=-e.c,t=open.find(o=>o.left>0&&Math.abs(o.left-need)<=AZ_TOL)||open.find(o=>o.left>0);
+      if(t){ym=t.ym;t.left=Math.max(0,t.left-need)}}
+    E.push({ym,c:e.c,k:"pix",x:e.x,d:e.x.date,ign:e.ign})});
   (p.moves||[]).forEach(m=>E.push({ym:(m.date||cur).slice(0,7),c:m.done?0:m.cents,k:"m",m,d:m.date}));
   return E};
 const azMonths=p=>{const M={};azEntries(p).forEach(e=>{(M[e.ym]=M[e.ym]||[]).push(e)});return Object.entries(M).sort((a,b)=>b[0].localeCompare(a[0]))};
