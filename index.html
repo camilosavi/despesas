@@ -2099,7 +2099,7 @@ section>h2 .tbtn.go{color:var(--btn-ink)!important}
 <form class="sheet" id="sheet" hidden autocomplete="off">
   <div class="grip"></div>
   <h3><span id="sheetTitle">Novo lançamento</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar PDF ou print</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
+  <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar PDF ou print</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
   <div class="seg" id="typeSeg"><button type="button" data-type="desp">Despesa</button><button type="button" data-type="rec">Receita</button></div>
   <div class="amount"><span>R$</span><input id="amt" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
   <div class="field"><label for="desc">Descrição</label><input type="text" id="desc" placeholder="Ex.: mercado, fatura Inter, salário" maxlength="80"><div class="chips recchips" id="recChips" hidden></div></div>
@@ -3274,10 +3274,10 @@ function contaBlock(withCards){
         :`<input type="text" id="acn_${i}" class="limin" maxlength="24" placeholder="Banco" value="${esc(a.name)}" aria-label="Nome da conta">`;
       return `<div class="acrow">${cs.length&&!a.free?cardBadge(a.name||cs[0]):""}${nm}<input type="text" id="acv_${i}" class="limin" inputmode="numeric" placeholder="${acCur(a)==="EUR"?"€ 0,00":acCur(a)==="USD"?"US$ 0,00":"R$ 0,00"}" value="${a.cents?brl(a.cents):""}" aria-label="Saldo"><button class="acdel" data-acdel="${i}" aria-label="Tirar conta" ${acDraft.length<2?"hidden":""}>×</button><select id="acc_${i}" class="acsel" style="grid-column:1/-1" aria-label="Moeda do saldo"><option value="BRL" ${acCur(a)==="BRL"?"selected":""}>Saldo em R$ (real)</option><option value="EUR" ${a.cur==="EUR"?"selected":""}>Saldo em € (euro)</option><option value="USD" ${a.cur==="USD"?"selected":""}>Saldo em US$ (dólar)</option></select></div>`}).join("")+
     `<div class="toolbar acchips" style="margin:0;flex-wrap:wrap">${[...new Set([...credCards(),...FX_PICK,...BANK_PICK])].filter(c=>!acDraft.some(a=>a.name===c)).slice(0,10).map(c=>`<button class="tbtn" data-acbank="${esc(c)}">+ ${esc(c)}</button>`).join("")}<button class="tbtn" id="acAdd">+ Outra conta</button></div><div class="row" style="margin:0">${A.length?`<button class="btn soft" id="acCancel">Cancelar</button>`:""}<button class="btn primary" id="acSave">Salvar saldo</button></div></div></section>`;
-  if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint expl">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label></section>`;
+  if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint expl">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain" hidden></label></section>`;
   const tot=accBal(), mv=accMoves(), fl=accFlow(ym), open=fl.out, after=endBal(ym);
   const at=A.map(a=>a.at).filter(Boolean).sort()[0], old=at&&at<addDays(today(),-3);
-  const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain" hidden></label>${acctsR().length>1?`<button class="lk" id="trOpen">Transferir</button>`:""}<button id="acEdit">Atualizar</button></span>`;
+  const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain" hidden></label>${acctsR().length>1?`<button class="lk" id="trOpen">Transferir</button>`:""}<button id="acEdit">Atualizar</button></span>`;
   /* banco limpo (out/2026): no celular, uma linha por conta; "ainda entra / falta pagar / sobra" já estão no topo */
   if(!IS_WIDE.matches) return `<section><h2>${withCards?"Contas e cartões":"Na conta"} ${ext}</h2><div class="card">`+
     A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${[a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:"",acEqTxt(a)].filter(Boolean).join(" · ")}</span></span><span class="v">${acVal(a)}</span></div>`).join("")+
@@ -4620,7 +4620,7 @@ function renderCards(){
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
       return `<button class="folder" data-opencard="${esc(c)}" data-ym="${fy}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${dueOf(c)?`vence ${fmtDM(cardDue(c,fy))} · `:`fatura de ${MES[+fy.slice(5)-1].toLowerCase()} · `}${n?`${n} ${n===1?"item":"itens"}`:"sem itens"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
-      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
+      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
@@ -6426,7 +6426,7 @@ document.addEventListener("change",e=>{
   if(e.target.classList&&e.target.classList.contains("xlsany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();openXls(f);return}
   if(e.target.closest&&e.target.closest("#xlsSheet")){xlSync(e.target);return}
   if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";closeSheets();const im=F.filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name));if(im.length){if(im.length<F.length)toast("Com prints, os PDFs vão um por vez.");im.length===1?readShot(im[0]):readShots(im)}else readMany(F);return}
-  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else if(/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name))readShot(f);else readInvoice(f,true);return}
+  if(e.target.classList&&e.target.classList.contains("pdfany")&&e.target.files[0]){const f=e.target.files[0];e.target.value="";closeSheets();if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else if(/\.csv$/i.test(f.name))readExtratoCsv(f);else if(/^image\//.test(f.type)||/\.(png|jpe?g|heic|webp)$/i.test(f.name))readShot(f);else readInvoice(f,true);return}
   if(e.target.id==="impFile"&&e.target.files.length>1){const F=[...e.target.files];e.target.value="";readMany(F,selCard);return}
   if(e.target.id==="impFile"&&e.target.files[0]){const f=e.target.files[0];e.target.value="";if(/\.(ofx|qfx)$/i.test(f.name))readOfx(f);else readInvoice(f);return}
   if(e.target.closest&&e.target.closest("#impSheet")) impSync();
@@ -7415,16 +7415,44 @@ async function readOfx(file){
       const card=await bankCard(bank);openImport(card,r);imp.onDone=()=>{selCard=card;backTo=tab;go("pCards")};return}
     const bal=tv(txt,"BALAMT"), asof=tv(txt,"DTASOF"), at=dt(asof)||today();
     const atTs=asof.length>=12?new Date(+asof.slice(0,4),+asof.slice(4,6)-1,+asof.slice(6,8),+asof.slice(8,10),+asof.slice(10,12)).getTime():new Date(at+"T23:59:00").getTime();
-    const rows=T.map(t=>{
+    /* Inter: MEMO = Tipo: "detalhe" (igual ao PDF) → mesmo leitor do PDF; o NAME fica de reserva */
+    const ix=T.length>=3&&T.filter(t=>/^[^:"]+:\s*".*"$/.test(t.memo)).length>=T.length*0.7;
+    const rows=ix?T.map(t=>{const m=/^([^:"]+):\s*"(.*)"$/.exec(t.memo);return m?extRow(t.date,t.cents,m[1].trim(),m[2].trim()):extRow(t.date,t.cents,t.memo,t.name)}):T.map(t=>{
       const parts=t.memo.split(/\s+-\s+/), out=t.cents<0;
       let kind=parts.length>1?parts[0]:t.memo, det=parts.length>1?parts[1]:"";
       if(parts.length<2&&/^(pix|ted|doc|transf)/i.test(t.memo)){kind=t.memo.split(" ").slice(0,2).join(" ");det=t.memo.replace(/^(pix|ted|doc|transf\w*)\s*(transf\w*|enviad\w*|recebid\w*|qrs?|qr code|env|rec)?\s*/i,"").replace(/\s\d{2}\/\d{2}$/,"").trim()}
       const deb=/compra|d[eé]bito|cart[aã]o|^pos$/i.test(kind)||t.type==="POS";
       return {date:t.date,cents:t.cents,kind,det,who:deb?"":det,shop:deb?(det||t.memo).replace(/\s{2,}.*$/,""):""};
     });
+    markPixCred(rows);
     const ds=T.map(t=>t.date).sort();
     openExtrato({bank,at,atTs,bal:bal?cents(bal):null,holder:"",rows,from:dt(tv(txt,"DTSTART"))||ds[0],to:dt(tv(txt,"DTEND"))||ds[ds.length-1]});
   }catch(e){toast("Não consegui ler esse OFX.")}
+}
+/* extrato CSV do Inter ("Extrato Conta Corrente", cabeçalho "Data Lançamento;Histórico;Descrição;Valor;Saldo"; ; como separador, vírgula decimal).
+   Histórico = tipo ("Compra no débito", "Pix enviado "…); Descrição = nome (Pix) ou loja de 22 letras + cidade (débito); salário/resgate vêm sem descrição. */
+async function readExtratoCsv(file){
+  try{
+    const buf=new Uint8Array(await file.arrayBuffer());let txt;try{txt=new TextDecoder("utf-8",{fatal:true}).decode(buf)}catch(e){txt=new TextDecoder("windows-1252").decode(buf)}
+    const L=txt.replace(/^﻿/,"").split(/\r?\n/);
+    const hi=L.findIndex(l=>/^Data Lan[çc]amento;Hist[óo]rico;Descri[çc][ãa]o;Valor;Saldo/i.test(l.trim()));
+    if(hi<0){toast("Esse CSV não é o extrato do Inter. Para outras planilhas use Você → Importar planilha.");return}
+    const num=s=>{s=String(s||"").trim();if(!s)return null;const n=Math.round(parseFloat(s.replace(/\./g,"").replace(",","."))*100);return isNaN(n)?null:n};
+    const dd=s=>{const m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s.trim());return m?`${m[3]}-${m[2]}-${m[1]}`:""};
+    const rows=[];
+    L.slice(hi+1).forEach(l=>{const c=l.split(";");if(c.length<4)return;
+      const date=dd(c[0]),v=num(c[3]);if(!date||!v)return;
+      const kind=c[1].trim(), det=(c[2]||"").trim(), deb=/compra no d[eé]bito/i.test(kind);
+      const r=extRow(date,v,kind,deb?"No estabelecimento "+ofShop(det):det.replace(/\s{2,}.*$/,""));
+      if(!deb&&/pix|transfer/i.test(fold(kind))) r.who=det; /* nome já vem limpo, sem Cp : */
+      rows.push(r)});
+    if(!rows.length){toast("Esse CSV não tem movimentos.");return}
+    const head=L.slice(0,hi).join("\n"), per=/Per[íi]odo\s*;\s*(\d{2})\/(\d{2})\/(\d{4})\s*a\s*(\d{2})\/(\d{2})\/(\d{4})/i.exec(head), sb=/^Saldo\s*;\s*([-\d.,]+)/im.exec(head);
+    const ds=rows.map(r=>r.date).sort(), to=per?`${per[6]}-${per[5]}-${per[4]}`:ds[ds.length-1], from=per?`${per[3]}-${per[2]}-${per[1]}`:ds[0];
+    markPixCred(rows);
+    /* o CSV não traz a hora: vale o fim do dia do período (um saldo digitado depois, no mesmo dia, ganha) */
+    openExtrato({bank:"Inter",at:to,atTs:new Date(to+"T23:59:00").getTime(),bal:sb?num(sb[1]):null,holder:"",rows,from,to});
+  }catch(e){toast("Não consegui ler esse CSV.")}
 }
 /* colar um PDF copiado (onde o sistema deixa: no iPhone o Safari só entrega texto e imagem) */
 async function pastePdf(){
@@ -7470,6 +7498,18 @@ const CONTAS=[["Claro",/Claro S\/?A|minhaclaro|claro\.com\.br/i],["Vivo",/Telef[
    marcar como pago o que já saiu e lançar o que ainda não está no app. Transferências entre contas da própria pessoa,
    investimento e pagamento de fatura ficam desmarcados. Só movimentos a partir de MIN_DUE. */
 const MES_LONG={janeiro:1,fevereiro:2,"março":3,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+/* linha de extrato no formato do Inter: tipo + "detalhe" (igual no PDF, no OFX e no CSV).
+   Pix: "Cp :99999999-NOME" (ou "237 328 1393014 NOME" na portabilidade de salário) → quem; compra no débito: "No estabelecimento LOJA" → loja */
+function extRow(date,cents,kind,det){
+  const who=/^(?:Cp\s*:\s*)?[\d ]+-?\s*(.+)$/.exec(det), shop=/^No estabelecimento\s+(.+)$/i.exec(det);
+  return {date,cents,kind,det,who:shop?"":who?who[1].trim():det,shop:shop?shop[1].trim():""};
+}
+/* "Crédito liberado · Pix no Crédito" e o Pix enviado do mesmo valor no mesmo dia: o valor vai na fatura do cartão, não na conta */
+function markPixCred(rows){
+  rows.forEach(r=>{if(/cr[eé]dito liberado/i.test(fold(r.kind))&&/pix no cr[eé]dito/i.test(fold(r.det)||fold(r.who))){
+    r.pixCred=true;
+    const o=rows.find(q=>!q.pixCred&&q.cents<0&&q.cents===-r.cents&&q.date===r.date&&/pix/i.test(fold(q.kind)));if(o)o.pixCred=true}});
+}
 function parseExtrato(pages){
   const PL=pages.map(pdfLines), flat=PL.map(L=>L.map(l=>l.cells.map(c=>c.s).join(" ")).join("\n")).join("\n");
   if(!/Saldo do dia:/i.test(flat)||!/Saldo (total|dispon)/i.test(flat)) return null;
@@ -7492,10 +7532,10 @@ function parseExtrato(pages){
     if(mi.length<2) return;
     const v=moneyC(l.cells[mi[mi.length-2]].s), desc=l.cells.slice(0,mi[mi.length-2]).map(c=>c.s).join(" ").trim();
     if(!desc||!v) return;
-    const m=/^([^:"]+):\s*"?(.*?)"?$/.exec(desc), kind=m?m[1].trim():desc, det=m?m[2].trim():"";
-    const who=/^(?:Cp\s*:\s*)?[\d ]+-?\s*(.+)$/.exec(det), shop=/^No estabelecimento\s+(.+)$/i.exec(det);
-    rows.push({date:day,cents:v,kind,det,who:shop?"":who?who[1].trim():det,shop:shop?shop[1].trim():""});
+    const m=/^([^:"]+):\s*"?(.*?)"?$/.exec(desc);
+    rows.push(extRow(day,v,m?m[1].trim():desc,m?m[2].trim():""));
   }));
+  markPixCred(rows);
   if(!rows.length&&bal==null) return null;
   return {bank,at,atTs,bal,holder,rows,from:per?`${per[3]}-${per[2]}-${per[1]}`:"",to:per?`${per[6]}-${per[5]}-${per[4]}`:at};
 }
@@ -7521,10 +7561,12 @@ function extPlan(e){
     if(r.date<MIN_DUE) return {...base,act:"old",note:`antes de ${shortMonth(MIN_DUE.slice(0,7))}`};
     if(items.some(x=>x.imp===tag)) return {...base,act:"done",note:"já importado"};
     if(r.pixCred) return {...base,act:"skip",note:out?"Pix no crédito: entra na fatura do cartão":"crédito do Pix no crédito"};
+    if(/sal[aá]rio/.test(k)){const sh=items.find(x=>typeOf(x)==="rec"&&x.cat==="sal"&&closeC(x.cents,cents)&&Math.abs((new Date(x.fell||x.date)-new Date(r.date))/864e5)<=5);
+      return {...base,act:sh?"done":"skip",match:sh?sh.id:undefined,note:sh?`já lançado como “${cleanDesc(sh)}”`:"salário: lance pelo holerite (o valor líquido é o do holerite)"}}
     const selfT=r.self||r.who&&me.some(n=>n&&(fold(r.who)===n||fold(r.who).startsWith(n.split(" ").slice(0,2).join(" "))));
     if(selfT) return {...base,act:"skip",note:out?"transferência para outra conta sua":"transferência de outra conta sua"};
     if(/resgate|aplica|cdb|poupan|invest/.test(k+" "+fold(r.det))) return {...base,act:"skip",note:"investimento"};
-    if(/fatura|parcelamento/.test(k)){const b=billPaidBy(e,r,cents);
+    if(/fatura|parcelamento/.test(k+" "+fold(r.det))){const b=billPaidBy(e,r,cents);
       if(b&&b.ids.length&&closeC(b.sum,cents)) return {...base,act:"payBill",on:true,ids:b.ids,note:`dá baixa na fatura ${b.card} de ${shortMonth(b.ym)}`};
       return {...base,act:"skip",note:b&&b.sum?`pagamento de cartão: a fatura ${b.card} de ${shortMonth(b.ym)} tem ${R(b.sum)} em aberto (confira no cartão)`:"pagamento de cartão (a fatura já está no app)"}}
     /* já está no app: mesmo tipo, mesmo valor, data (ou compra) até 3 dias de diferença */

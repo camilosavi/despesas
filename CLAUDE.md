@@ -227,6 +227,16 @@ card?, parc?:"i/n", group?, createdAt}`
   cartão → "já lançado" ou "marca como pago"; o resto vira lançamento pago (compra no débito → `invoiceEntry` para nome e
   categoria; Pix → "Pix de/para X", Outras receitas/Outros). `imp:"extrato-…"` evita importar de novo; `paidAt`/`createdAt`
   = dia do movimento (antes do `atTs`), então não descontam/somam de novo no `accBal()`.
+- **Extrato do Inter em OFX, CSV e PDF** (03/11/2026, `extRow`/`markPixCred`/`readExtratoCsv`): os três formatos trazem o mesmo texto `Tipo: "detalhe"`
+  (OFX: `MEMO`, sem acento: "Compra no debito", "Credito liberado"; `NAME` só repete o nome e vem vazio em salário/aplicação/parcelamento; BANKID 077,
+  ACCTTYPE CHECKING, `DTSTART/DTEND/LEDGERBAL`). Detalhe do Pix = `Cp :NNNNNNNN-NOME`; portabilidade de salário = `NNN NNN NNNNNNN NOME` (parece o
+  titular: `extPlan` trata `salário` à parte: "já lançado" se há receita `sal` de mesmo valor ±5 dias, senão fica de fora com "lance pelo holerite");
+  compra no débito = `No estabelecimento LOJA` com a loja cortada em 22 letras (a cidade pode colar: "…Vicen"). O leitor de OFX usa o mesmo
+  `extRow` do PDF quando ≥ 70% dos MEMO têm esse formato; senão cai no genérico ("Tipo - detalhe"). **CSV** (`Extrato Conta Corrente`, `;`, vírgula decimal,
+  cabeçalho `Data Lançamento;Histórico;Descrição;Valor;Saldo`, linhas "Conta/Período/Saldo" antes): Histórico = tipo, Descrição = nome (Pix) ou
+  loja de 22 letras + cidade (`ofShop`); sem hora, vale o fim do dia do período. `.csv` entra pelos mesmos botões "Extrato"/"Importar PDF ou print"
+  (CSV de outro formato → "use Importar planilha"). `markPixCred`: "Crédito liberado · Pix no Crédito" e o Pix enviado de mesmo valor e dia saem da
+  conta (vão na fatura). "Pagamento efetuado: Pagamento Fatura …" agora é reconhecido pelo detalhe (antes só pelo tipo) e dá baixa na fatura. Só movimentos de `MIN_DUE` em diante.
 - **Extrato OFX** (out/2026, para os amigos de qualquer banco): `readOfx` (pelo nome .ofx/.qfx ou pelo conteúdo
   "OFXHEADER"/"<OFX>" dentro do `readInvoice`; os inputs "Importar fatura ou conta" e "Extrato" aceitam OFX). UTF-8, senão
   windows-1252. Banco por BANKID/FID (`OFX_BANKS`) ou ORG. Conta → objeto do `parseExtrato` (MEMO "Tipo - detalhe" como no
