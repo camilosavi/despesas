@@ -5223,7 +5223,10 @@ const azLinked=p=>items.filter(x=>!genFat(x)&&azParts(x).some(e=>e.id===p.id));
    pessoa com `o:1` numa despesa = "eu pago a ela" (gasto meu que vai para ela): até ser paga é dívida minha (−), paga não pesa (0).
    Sem `o` = como antes: despesa = ela me deve (+), receita = ela me pagou (−). */
 const azLv=(x,p)=>{const e=azParts(x).find(e=>e.id===p.id);if(!e)return 0;if(e.o&&typeOf(x)==="desp")return isPaid(x)?0:-e.c;return e.c*(typeOf(x)==="rec"?-1:1)};
-const azBal=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x,p),0)+azPix(p).reduce((s,e)=>s+e.c,0);
+const azRaw=p=>(p.moves||[]).filter(m=>!m.done).reduce((s,m)=>s+m.cents,0)+azSubLines(p.name).reduce((s,m)=>s+m.cents,0)+azLinked(p).reduce((s,x)=>s+azLv(x,p),0)+azPix(p).reduce((s,e)=>s+e.c,0);
+/* diferença de até R$ 0,15 (arredondamento de divisão/Pix) é relevada: conta como quitado (03/11/2026, pedido dele) */
+const AZ_TOL=15, azTol=v=>Math.abs(v)<=AZ_TOL?0:v;
+const azBal=p=>azTol(azRaw(p));
 /* Pix recebido das pessoas (27/10/2026, pedido dele: "identifique se o pix foi recebido ao longo do mês"): receita cujo "Pix de <nome>"
    (ou "… · <nome>") bate com o nome da pessoa ou com o "Nome no Pix" (p.pix, vários separados por vírgula) abate o que ela deve, no mês em
    que caiu. Fora: receita já ligada à pessoa, divisão de assinatura (cat divid, tem fluxo próprio) e o que ele marcou "ignorar" (p.pixIgn). */
@@ -5242,7 +5245,7 @@ const azEntries=p=>{const E=[],cur=curYM();
   (p.moves||[]).forEach(m=>E.push({ym:(m.date||cur).slice(0,7),c:m.done?0:m.cents,k:"m",m,d:m.date}));
   return E};
 const azMonths=p=>{const M={};azEntries(p).forEach(e=>{(M[e.ym]=M[e.ym]||[]).push(e)});return Object.entries(M).sort((a,b)=>b[0].localeCompare(a[0]))};
-const azMonthSum=(p,ym)=>azEntries(p).filter(e=>e.ym===ym).reduce((s,e)=>s+e.c,0);
+const azMonthSum=(p,ym)=>azTol(azEntries(p).filter(e=>e.ym===ym).reduce((s,e)=>s+e.c,0));
 function azSection(){
   const L=azList();
   let h=`<section id="azSec"><h2>Pessoas ${azForm?"":`<button id="azAdd">+ Pessoa</button>`}</h2>`;
