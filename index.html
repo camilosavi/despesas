@@ -3624,7 +3624,7 @@ function searchHits(q){
   const words=fold(q).split(/\s+/).filter(Boolean);
   if(!words.length) return [];
   return items.filter(x=>(x.date||"").slice(0,7)>=firstYM()).filter(x=>{
-    const t=typeOf(x), hay=fold([cleanDesc(x),x.desc,cardOf(x)||"",catOf(x.cat,t).n,x.pay||"",brl(x.cents),(x.tags||[]).map(g=>"#"+g+" "+g).join(" ")].join(" "));
+    const t=typeOf(x), hay=fold([cleanDesc(x),x.desc,cardOf(x)||"",catOf(x.cat,t).n,x.pay||"",brl(x.cents),(x.tags||[]).map(g=>"#"+g+" "+g).join(" "),azParts(x).map(e=>{const q=azList().find(q=>q.id===e.id);return q?q.name+" "+azAliases(q).join(" "):""}).join(" ")].join(" "));
     return words.every(w=>hay.includes(w))}).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
 }
 function searchBody(){
