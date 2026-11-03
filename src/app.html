@@ -2025,6 +2025,17 @@ section>h2 .tbtn.go{color:var(--btn-ink)!important}
 #pHome .d-saldo .dlink{color:#fff!important;text-decoration:underline}
 .chips .chip,.azfil button,[data-mesord],[data-azview]{min-height:36px}
 #pHome .dtn small,#pHome .dcr small,#pHome .dtv small,.dcard .dcr small,#pHome .drc>small{font-size:.78rem}
+
+/* Pessoas: cobranças × Pix (03/11/2026, ele: "tudo parece entrada") — valor da cobrança neutro, situação em selo, Pix recebido como sub-linha verde */
+.azch{border-top:0}.azch .svmv{padding-bottom:2px}
+.azamt{font-weight:700;color:var(--ink)}
+.azst{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:0 0 10px}
+.azchip{font-size:.68rem;font-weight:800;letter-spacing:.04em;padding:3px 9px;border-radius:99px}
+.azchip.open{color:var(--dcol,#d9534f);background:color-mix(in srgb,var(--dcol,#d9534f) 16%,transparent)}
+.azchip.ok{color:var(--rcol,#2e9e6b);background:color-mix(in srgb,var(--rcol,#2e9e6b) 16%,transparent)}
+.azpx{display:inline-flex;gap:8px;align-items:center;font-size:.82rem;color:var(--rcol,#2e9e6b);background:none;border:0;padding:2px 0;font-weight:600}
+.azpx .ed{color:var(--link,var(--muted));font-weight:600}
+.azo{color:var(--link,var(--ink));font-weight:700}
 </style>
 
 <div class="wrap">
@@ -5257,10 +5268,10 @@ const azEntries=p=>{const E=[],cur=curYM();
   E.relm={};/* relevado: sobra de até AZ_TOL por cobrança que um Pix quitou */
   const open=E.filter(e=>(e.k==="sub"||(e.k==="x"&&!e.o))&&e.c>0).sort((a,b)=>a.ym.localeCompare(b.ym)||(a.d||"").localeCompare(b.d||"")).map(e=>({ym:e.ym,left:e.c,e}));
   azPix(p).sort((a,b)=>a.x.date.localeCompare(b.x.date)).forEach(e=>{
-    let ym=e.x.date.slice(0,7),forD="";
+    const pe={ym:e.x.date.slice(0,7),c:e.c,k:"pix",x:e.x,d:e.x.date,ign:e.ign,forD:""};
     if(!e.ign){let need=-e.c,t=open.find(o=>o.left>0&&Math.abs(o.left-need)<=AZ_TOL)||open.find(o=>o.left>0);
-      if(t){ym=t.ym;forD=t.e.d;t.e.pd=e.x.date;t.left=Math.max(0,t.left-need);if(t.left>0&&t.left<=AZ_TOL){E.relm[t.ym]=(E.relm[t.ym]||0)+t.left;t.left=0}}}
-    E.push({ym,c:e.c,k:"pix",x:e.x,d:e.x.date,ign:e.ign,forD})});
+      if(t){pe.ym=t.ym;pe.forD=t.e.d;pe.at=1;t.e.pd=e.x.date;(t.e.pxs=t.e.pxs||[]).push(pe);t.left=Math.max(0,t.left-need);if(t.left>0&&t.left<=AZ_TOL){E.relm[t.ym]=(E.relm[t.ym]||0)+t.left;t.left=0}}}
+    E.push(pe)});
   open.forEach(o=>{o.e.st=o.left>0?"open":"paid"});
   (p.moves||[]).forEach(m=>E.push({ym:(m.date||cur).slice(0,7),c:m.done?0:m.cents,k:"m",m,d:m.date}));
   return E};
@@ -5284,7 +5295,7 @@ function azSection(){
         return `<div class="azsum"><div><small>${nm} te deve</small><b class="${a?"pos":""}">${R(a)}</b></div><div><small>Você deve a ${nm}</small><b class="${d?"neg":""}">${R(d)}</b></div>${pg||rc?`<p>Este mês: ${pg?`você pagou ${R(pg)}`:""}${pg&&rc?" · ":""}${rc?`${nm} pagou ${R(rc)}`:""}</p>`:""}</div>`})()}${azSubsHtml(p)}<div class="svsec">Novo acerto</div><div class="azadd"><input id="azDesc" maxlength="40" placeholder="O que é (opcional)" aria-label="Descrição"><input id="azVal" inputmode="numeric" placeholder="R$ 0,00" aria-label="Valor"></div><div class="svbtns"><button class="btn soft" id="azOut">Eu devo a ${nm}</button><button class="btn primary" id="azIn">${nm} me deve</button></div><details class="azpixd"${p.pix?" open":""}><summary>Nome no Pix${p.pix?"":" (para achar o que já pagou)"}</summary><input id="azPixNm" maxlength="60" placeholder="Ex.: Maria Silva" value="${esc(p.pix||"")}" aria-label="Nome no Pix"></details>`+
         (()=>{const MS=azMonths(p);if(!MS.length)return "";
           const fm=v=>`${v<0?"−":"+"} ${R(Math.abs(v))}`, cls=v=>v<0?"neg":v>0?"pos":"";
-          const ent=e=>e.k==="pix"?`<button class="svmv" data-azpix="${esc(e.x.id)}"><span style="${e.ign?"text-decoration:line-through;opacity:.55":""}">Pix recebido ${fmtDM(e.d)}${e.forD&&!e.ign?` · quitou a de ${fmtDM(e.forD)}`:""}</span><span class="pos" style="${e.ign?"opacity:.55":""}">${R(e.x.cents)}<span class="ed">${e.ign?"usar":"ignorar"}</span></span></button>`:e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):e.o?`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${e.c?"neg":""}" style="${e.c?"":"opacity:.6"}">${e.c?"− ":""}${R(e.pc)}<span class="ed">${e.c?"você paga":"pago ✓"}</span></span></button>`:`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${e.st==="paid"?"":cls(e.c)}" style="${e.st==="paid"?"opacity:.6":""}">${typeOf(e.x)==="rec"?fm(e.c):R(Math.abs(e.c))}<span class="ed">${typeOf(e.x)==="rec"?"ela pagou":e.st==="paid"?"pago ✓":e.st==="open"?"em aberto":"lançamento"}</span></span></button>`;
+          const ent=e=>e.k==="pix"?`<button class="svmv" data-azpix="${esc(e.x.id)}"><span style="${e.ign?"text-decoration:line-through;opacity:.55":""}">Pix recebido ${fmtDM(e.d)}</span><span class="pos" style="${e.ign?"opacity:.55":""}">+ ${R(e.x.cents)}<span class="ed">${e.ign?"usar":"ignorar"}</span></span></button>`:e.k==="sub"?line(e.m,true):e.k==="m"?line(e.m,false):e.o?`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="${e.c?"neg":""}" style="${e.c?"":"opacity:.6"}">${e.c?"− ":""}${R(e.pc)}<span class="ed">${e.c?"você paga":"pago ✓"}</span></span></button>`:(typeOf(e.x)==="rec"?`<button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}</span><span class="pos">+ ${R(Math.abs(e.c))}<span class="ed">ela pagou</span></span></button>`:`<div class="azch"><button class="svmv" data-id="${esc(e.x.id)}"><span>${esc(cleanDesc(e.x))} · ${fmtDM(e.d)}${e.x.parc?` · ${e.x.parc}`:""}</span><span class="azamt">${R(Math.abs(e.c))}</span></button><div class="azst"><span class="azchip ${e.st==="paid"?"ok":"open"}">${e.st==="paid"?"PAGO ✓":"EM ABERTO"}</span>${(e.pxs||[]).map(q=>`<button class="azpx" data-azpix="${esc(q.x.id)}"><span>↳ Pix recebido ${fmtDM(q.d)} · + ${R(q.x.cents)}</span><span class="ed">ignorar</span></button>`).join("")}</div></div>`);
           let n=0;
           /* A–Z / Categoria (27/10/2026, pedido dele): agrupa por lançamento (nome) ou pela categoria do lançamento; cada grupo mostra quantos itens e o total */
           const gname=e=>e.k==="sub"?(e.m.desc||"Assinatura"):e.k==="pix"?"Pix recebido":e.k==="m"?(e.m.desc||"Sem descrição"):cleanDesc(e.x).replace(/\s*\(?\d+\/\d+\)?$/,"");
@@ -5295,10 +5306,10 @@ function azSection(){
             return `<div class="azmh"><span>${esc(g.k)} · ${g.L.length} ${g.L.length===1?"item":"itens"}</span><span class="${cls(sum)}">${sum?fm(sum):"acertado ✓"}</span></div>`+g.L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<120).map(ent).join("")}).join("")+
             `<div class="azmh azmt"><span>Total</span><span class="${cls(b)}">${b?fm(b):"acertado ✓"}</span></div></div>`;
           return `<div class="svsec">Histórico</div><div>`+MS.map(([ym,L])=>{const sum=L.reduce((t,e)=>t+e.c,0);
-            const rows=L.sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
+            const rows=L.filter(e=>!(e.k==="pix"&&e.at)).sort((a,b)=>(b.d||"").localeCompare(a.d||"")).filter(()=>n++<80).map(ent).join("");
             const sum2=azMonthSum(p,ym);
-            return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${cls(sum2)}">${sum2?(sum2>0?"em aberto ":"você deve ")+R(Math.abs(sum2)):"quitado ✓"}</span></div>`+rows}).join("")+
-            `<div class="azmh azmt"><span>${b>0?"Total em aberto":b<0?"Você deve":"Total"}</span><span class="${cls(b)}">${b?R(Math.abs(b)):"quitado ✓"}</span></div></div>`})()+
+            return `<div class="azmh"><span>${monthLabel(ym)}${ym===curYM()?" · este mês":""}</span><span class="${sum2>0?"azo":sum2<0?"neg":"pos"}">${sum2?(sum2>0?"em aberto ":"você deve ")+R(Math.abs(sum2)):"quitado ✓"}</span></div>`+rows}).join("")+
+            `<div class="azmh azmt"><span>${b>0?"Total em aberto":b<0?"Você deve":"Total"}</span><span class="${b>0?"azo":b<0?"neg":"pos"}">${b?R(Math.abs(b)):"quitado ✓"}</span></div></div>`})()+
           (()=>{const LO=azLoose();return LO.length?`<details class="azloose"><summary>Pix recebidos sem pessoa (${LO.length}) · é de ${nm}?</summary>`+LO.map(x=>`<button class="svmv" data-azlink="${esc(x.id)}"><span>${esc(shWho(x))} · ${fmtDM(x.date)}</span><span class="pos">${R(x.cents)}<span class="ed">é de ${nm}</span></span></button>`).join("")+`</details>`:""})()+
         `<div class="svfoot">${(p.moves||[]).some(m=>!m.done)?`<button class="svlink" id="azAll">Acertar tudo</button>`:`<span></span>`}<button class="svdel" id="azDel">Excluir ${nm}</button></div></div>`;
     }
