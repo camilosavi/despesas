@@ -7558,7 +7558,7 @@ function extPlan(e){
   return e.rows.map((r,i)=>{
     const out=r.cents<0, cents=Math.abs(r.cents), k=fold(r.kind), tag=`extrato-${e.bank}-${r.date}-${r.cents}-${fold(r.det).slice(0,24)}`;
     const lbl=titleCase(r.shop||r.who||r.det||r.kind)||r.kind, base={i,date:r.date,cents,type:out?"desp":"rec",tag,on:false,act:"",note:"",lbl:`${/pix/.test(k)?(out?"Pix para ":"Pix de "):""}${lbl}`};
-    if(r.date<MIN_DUE) return {...base,act:"old",note:`antes de ${shortMonth(MIN_DUE.slice(0,7))}`};
+    if(r.date<MIN_YM+"-01") return {...base,act:"old",note:`antes de ${shortMonth(MIN_YM)}`};
     if(items.some(x=>x.imp===tag)) return {...base,act:"done",note:"já importado"};
     if(r.pixCred) return {...base,act:"skip",note:out?"Pix no crédito: entra na fatura do cartão":"crédito do Pix no crédito"};
     if(/sal[aá]rio/.test(k)){const sh=items.find(x=>typeOf(x)==="rec"&&x.cat==="sal"&&closeC(x.cents,cents)&&Math.abs((new Date(x.fell||x.date)-new Date(r.date))/864e5)<=5);
@@ -7598,8 +7598,8 @@ function extRender(){
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Extrato ${esc(e.bank)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   ${e.bal!=null?`<div class="imphead"><b>${R(e.bal)}</b><span class="hint">saldo em ${fmtDM(e.at)}${e.from?` · extrato de ${fmtDM(e.from)} a ${fmtDM(e.to)}`:""}</span></div>
   <label class="check"><input type="checkbox" id="exBal" ${e.setBal&&!older?"checked":""} ${older?"disabled":""}> ${older?`O saldo na conta ${esc(acc.name)} é mais novo que este extrato`:`Usar como Saldo na conta ${esc(acc?acc.name:e.bank)}${acc?` (hoje: ${R(acc.cents)})`:""}`}</label>`:""}
-  <p class="hint" style="margin:8px 0">Desde ${shortMonth(MIN_DUE.slice(0,7))}: entrou ${R(ins)}, saiu ${R(outs)} (sem transferências suas, investimento e fatura).${nOld?` ${nOld} ${nOld===1?"movimento":"movimentos"} antes disso ficam de fora.`:""}</p>
-  <div class="card" style="padding:0 14px;margin:0 0 12px">${vis.map(row).join("")||`<p class="hint" style="padding:12px 0">Nenhum movimento a partir de ${shortMonth(MIN_DUE.slice(0,7))}.</p>`}</div>
+  <p class="hint" style="margin:8px 0">Desde ${shortMonth(MIN_YM)}: entrou ${R(ins)}, saiu ${R(outs)} (sem transferências suas, investimento e fatura).${nOld?` ${nOld} ${nOld===1?"movimento":"movimentos"} antes disso ficam de fora.`:""}</p>
+  <div class="card" style="padding:0 14px;margin:0 0 12px">${vis.map(row).join("")||`<p class="hint" style="padding:12px 0">Nenhum movimento a partir de ${shortMonth(MIN_YM)}.</p>`}</div>
   <div class="row"><button type="button" class="btn primary" id="exGo">${[nAdd?`Lançar ${nAdd}`:"",nPay?`marcar ${nPay} pago${nPay>1?"s":""}`:"",""].filter(Boolean).join(" e ")||"Só atualizar o saldo"}</button></div>`;
 }
 async function extApply(btn){

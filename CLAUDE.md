@@ -236,7 +236,7 @@ card?, parc?:"i/n", group?, createdAt}`
   cabeçalho `Data Lançamento;Histórico;Descrição;Valor;Saldo`, linhas "Conta/Período/Saldo" antes): Histórico = tipo, Descrição = nome (Pix) ou
   loja de 22 letras + cidade (`ofShop`); sem hora, vale o fim do dia do período. `.csv` entra pelos mesmos botões "Extrato"/"Importar PDF ou print"
   (CSV de outro formato → "use Importar planilha"). `markPixCred`: "Crédito liberado · Pix no Crédito" e o Pix enviado de mesmo valor e dia saem da
-  conta (vão na fatura). "Pagamento efetuado: Pagamento Fatura …" agora é reconhecido pelo detalhe (antes só pelo tipo) e dá baixa na fatura. Só movimentos de `MIN_DUE` em diante.
+  conta (vão na fatura). "Pagamento efetuado: Pagamento Fatura …" agora é reconhecido pelo detalhe (antes só pelo tipo) e dá baixa na fatura. Só movimentos de `MIN_YM` (set/2026) em diante (03/11/2026, pedido dele: o extrato é de 90 dias, tem que subir tudo; antes era `MIN_DUE`).
 - **Extrato OFX** (out/2026, para os amigos de qualquer banco): `readOfx` (pelo nome .ofx/.qfx ou pelo conteúdo
   "OFXHEADER"/"<OFX>" dentro do `readInvoice`; os inputs "Importar fatura ou conta" e "Extrato" aceitam OFX). UTF-8, senão
   windows-1252. Banco por BANKID/FID (`OFX_BANKS`) ou ORG. Conta → objeto do `parseExtrato` (MEMO "Tipo - detalhe" como no
