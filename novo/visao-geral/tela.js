@@ -65,18 +65,24 @@ const R_ = resumoMes(e, ym), cartoes = cartoesDeCredito(e);
   const trans = ult.map(l => { const c = catDe(l.cat || SEM_CATEGORIA[l.tipo], l.tipo); return `<div class="dtr"><span class="ic" style="background:${c.c}">${esc(c.n[0])}</span><span class="dtn"><b>${esc(l.nome)}</b><small>${esc(c.n)}${partes(l).length ? " · ÷" + (partes(l).length + 1) + " sua parte " + R(suaParte(l)) : ""}${l.cartao ? " · " + esc(l.cartao) : ""}</small></span><div><span class="v ${l.tipo === "rec" ? "rec" : ""}">${l.tipo === "rec" ? "+" : "−"}${R(l.cents)}</span><small>${dm(l.compra || l.caiu || l.data)}</small></div></div>`; }).join("");
   
   const nome = info.nome;
+  const W = {};
+  W.saldo = `<h3>Na conta hoje <button class="dlink">Ver contas</button></h3><b class="dbig">${R(naConta(e))}</b><small class="dsub">${e.contas.length} conta ativa · fim do mês ${R(R_.fimDoMes)}${aReceber(e) ? " · a receber " + R(aReceber(e)) : ""}</small><div class="dqa"><button>+ Receita</button><button>− Despesa</button></div>`;
+  W.resumo = `<h3>Resumo do mês <small>${mLab(ym)}</small></h3><div class="drs"><div class="drc"><span>Entrou</span><b>${R(R_.entrou)}</b><small>${R_.entraAinda ? "falta receber " + R(R_.entraAinda) : "tudo recebido"}</small></div><div class="drc out"><span>Gastou</span><b>${R(R_.gastou)}</b><small>A pagar ${R(R_.aPagar)}</small></div><div class="drc sob"><span>Sobra</span><b class="${R_.sobra < 0 ? "neg" : ""}">${R(R_.sobra)}</b><small>${R_.entrou ? Math.round(R_.sobra / R_.entrou * 100) + "% do que entrou" : ""}</small></div></div>`;
+  W.saude = `<h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span>${why.length ? `<ul class="dwhy">${why.map(w => `<li>• ${w}</li>`).join("")}</ul>` : ""}`;
+  W.fluxo = `<h3>Fluxo de caixa <span class="leg"><span><i style="background:var(--rcol)"></i>Entrou</span><span><i style="background:var(--dcol)"></i>Gastou</span></span></h3>${flux}`;
+  W.gastos = `<h3>Gastos</h3>${gastosH}`;
+  W.cartoes = `<h3>Cartões <button class="dlink">Ver cartões</button></h3>${cartaoH}`;
+  W.trans = `<h3>Últimas transações <button class="dlink">Ver todas</button></h3><div class="lista">${trans}</div>`;
+  const pg = proximosPagamentos(e, 10);
+  W.pagar = `<h3>Vence em 10 dias <span class="dim">${R(pg.reduce((s, d) => s + d.cents, 0))}</span></h3><div class="lista1">${pg.length ? pg.map(d => `<div class="dfr"><span>${esc(d.nome)}<br><em class="${d.data < e.hoje ? "neg" : ""}">${d.data < e.hoje ? "atrasado · " : ""}${dm(d.data)}</em></span><b>${R(d.cents)}</b></div>`).join("") : "<small>Nada vence nos próximos 10 dias.</small>"}</div>`;
+  const ps = saldosPorPessoa(e);
+  W.pessoas = `<h3>Pessoas <span class="dim">${aReceber(e) ? "a receber " + R(aReceber(e)) : ""}</span></h3><div class="lista1">${ps.length ? ps.map(x => `<div class="dfr"><span>${esc(x.pessoa)}<br><em>${x.cents > 0 ? "te deve" : x.cents < 0 ? "você deve" : "quitado"}</em></span><b class="${x.cents < 0 ? "neg" : ""}">${R(Math.abs(x.cents))}</b></div>`).join("") : "<small>Ninguém te deve nada. A divisão entra nas despesas e assinaturas.</small>"}</div>`;
+  ULT = [e, p, info]; WID = W;
   document.getElementById("pg").innerHTML = barra(info) + `
   <div class="dtop"><button aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div class="ola">Olá${nome ? ", " + esc(nome) : ""}<small>${dataLonga(e.hoje)}</small></div><button aria-label="Buscar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg></button><button aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15zM10 21h4"/></svg></button></div>
-  <div class="dgrid">
-  <section class="db d-saldo"><h3>Na conta hoje <button class="dlink">Ver contas</button></h3><b class="dbig">${R(naConta(e))}</b><small class="dsub">${e.contas.length} conta ativa · fim do mês ${R(R_.fimDoMes)}${aReceber(e) ? " · a receber " + R(aReceber(e)) : ""}</small><div class="dqa"><button>+ Receita</button><button>− Despesa</button></div></section>
-  <section class="db d-res"><h3>Resumo do mês <small>${mLab(ym)}</small></h3><div class="drs"><div class="drc"><span>Entrou</span><b>${R(R_.entrou)}</b><small>${R_.entraAinda ? "falta receber " + R(R_.entraAinda) : "tudo recebido"}</small></div><div class="drc out"><span>Gastou</span><b>${R(R_.gastou)}</b><small>A pagar ${R(R_.aPagar)}</small></div><div class="drc sob"><span>Sobra</span><b class="${R_.sobra < 0 ? "neg" : ""}">${R(R_.sobra)}</b><small>${R_.entrou ? Math.round(R_.sobra / R_.entrou * 100) + "% do que entrou" : ""}</small></div></div></section>
-  <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span>${why.length ? `<ul class="dwhy">${why.map(w => `<li>• ${w}</li>`).join("")}</ul>` : ""}</section>
-  <section class="db d-fluxo"><h3>Fluxo de caixa <span class="leg"><span><i style="background:var(--rcol)"></i>Entrou</span><span><i style="background:var(--dcol)"></i>Gastou</span></span></h3>${flux}</section>
-  <section class="db d-gastos"><h3>Gastos</h3>${gastosH}</section>
-  <section class="db d-cartoes"><h3>Cartões <button class="dlink">Ver cartões</button></h3>${cartaoH}</section>
-  <section class="db d-trans"><h3>Últimas transações <button class="dlink">Ver todas</button></h3><div class="lista">${trans}</div></section>
+  ${editBar()}<div class="dgrid${EDIT ? " edit" : ""}" id="grade">${grade()}
   </div>`;
-    dcKeyAll();
+    dcKeyAll(); ajustar();
   
 }
 
