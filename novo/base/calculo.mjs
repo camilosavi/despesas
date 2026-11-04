@@ -4,7 +4,7 @@
 // estado = {
 //   hoje:        "AAAA-MM-DD"
 //   inicio?:     "AAAA-MM-DD"  — o que vence antes disso não conta como atrasado nem rola para a próxima fatura
-//   lancamentos: [{ id, nome, tipo:"desp"|"rec", cents, data, pago?, pagoEm?, criadoEm?, conta?, cartao?, pagoCom?,
+//   lancamentos: [{ id, nome, tipo:"desp"|"rec", cat?, cents, data, pago?, pagoEm?, criadoEm?, conta?, cartao?, pagoCom?,
 //                   compra?, recorrente?, saldoAnterior?, caiu? }]
 //                 · cents sempre em centavos; data = dia em que o dinheiro sai/entra (cartão: vencimento da fatura)
 //                 · pago: só vale para despesa; pago !== false conta como pago
@@ -174,6 +174,15 @@ const faltasDoMes = (e, ym) => cartoesDeCredito(e).reduce((s, c) => s + faltaBru
 
 export function gastou(e, ym) {
   return soma(e.lancamentos.filter(l => mexeNaConta(e, l) && mesDe(l.data) === ym)) + faltasDoMes(e, ym);
+}
+
+// Gastou do mês repartido por categoria (soma = gastou). O que a fatura tem a mais que os itens lançados vem à parte, com k "_falta".
+export function gastosPorCategoria(e, ym) {
+  const m = {};
+  for (const l of e.lancamentos) if (mexeNaConta(e, l) && mesDe(l.data) === ym) m[l.cat || "outros"] = (m[l.cat || "outros"] || 0) + l.cents;
+  const f = faltasDoMes(e, ym);
+  if (f) m._falta = f;
+  return Object.entries(m).map(([k, cents]) => ({ k, cents })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents);
 }
 
 export function pago(e, ym) {

@@ -3,7 +3,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   fatura, rolaPara, aPagar, aPagarDetalhe, proximosPagamentos, entraAinda, entrou, gastou, pago, sobra,
-  naConta, saldoDaConta, fimDoMes, resumoMes, limite, mesFaturaAberta, vencimento,
+  naConta, saldoDaConta, gastosPorCategoria, fimDoMes, resumoMes, limite, mesFaturaAberta, vencimento,
 } from "../base/calculo.mjs";
 
 const T_ANTES = Date.parse("2026-10-20T10:00:00Z");
@@ -293,4 +293,17 @@ test("o mesmo número em qualquer lugar: a fatura em aberto é igual no A pagar,
   assert.equal(aPagarDetalhe(e, "2026-12").find(x => x.cartao === "Inter").cents, f.aberto);
   assert.equal(proximosPagamentos(e, 40).find(x => x.cartao === "Inter").cents, f.aberto);
   assert.equal(fimDoMes(e, "2026-12"), naConta(e) + entraAinda(e, "2026-11") + entraAinda(e, "2026-12") - aPagar(e, "2026-11") - aPagar(e, "2026-12"));
+});
+
+test("gastosPorCategoria: soma bate com gastou, falta de fatura vem à parte", () => {
+  const e = base({
+    lancamentos: [desp("a", 5000, "2026-11-10", { cat: "merc" }), desp("b", 3000, "2026-11-12", { cat: "merc" }), desp("c", 2000, "2026-11-20"),
+      desp("it", 10000, "2026-11-15", { cat: "compras", cartao: "Renner" })],
+    faturas: [{ cartao: "Renner", ym: "2026-11", valorBanco: 25000, importada: true }],
+  });
+  const g = gastosPorCategoria(e, "2026-11");
+  assert.equal(g.reduce((s, x) => s + x.cents, 0), gastou(e, "2026-11"));
+  assert.equal(g[0].k, "_falta");
+  assert.equal(g.find(x => x.k === "merc").cents, 8000);
+  assert.equal(g.find(x => x.k === "outros").cents, 2000);
 });
