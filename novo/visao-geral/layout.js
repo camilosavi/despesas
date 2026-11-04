@@ -80,7 +80,7 @@ function ajustar() {
   const pg = document.getElementById("pg");
   if (pg.clientWidth < 640) return;
   const H = g.getBoundingClientRect().height, topo = g.getBoundingClientRect().top + scrollY, livre = innerHeight - (topo - scrollY) - 16;
-  const k = Math.max(.5, Math.min(1, livre / H));
+  const k = Math.max(.85, Math.min(1, livre / H));
   if (k < 1) g.style.zoom = k.toFixed(3);
 }
 addEventListener("resize", ajustar);
