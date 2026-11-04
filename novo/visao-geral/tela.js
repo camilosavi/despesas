@@ -17,8 +17,9 @@ document.addEventListener("click", ev => { if (ev.target.id === "exemplo") { cfg
 document.addEventListener("change", async ev => {
   if (ev.target.id !== "arq" || !ev.target.files[0]) return;
   try {
-    const b = JSON.parse(await ev.target.files[0].text());
-    if (!b || !Array.isArray(b.items)) throw new Error("Esse arquivo não parece um backup do app (falta a lista de lançamentos).");
+    const nb = normalizarBackup(JSON.parse(await ev.target.files[0].text()));
+    if (nb.erro) throw new Error(nb.erro);
+    const b = nb.backup;
     const d = new Date(), hoje = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
     const { estado, resumo } = deAppAtual(b, hoje);
     cfg = { cards: Object.fromEntries(Object.entries(estado.cartoes).filter(([, k]) => k.cor).map(([n, k]) => [n, { color: k.cor }])) };

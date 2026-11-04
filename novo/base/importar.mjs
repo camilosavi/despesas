@@ -6,6 +6,22 @@ import { migrar } from "./categorias.mjs";
 
 const semPrefixo = (d, c) => (c ? String(d || "").replace(new RegExp("^" + c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + " · "), "") : String(d || ""));
 
+// Aceita o que o app atual gera de mais de um jeito: o backup da tela Você, esse mesmo dentro de { data }, ou as linhas da tabela
+// sync_rows do Supabase (kind i = lançamento, f = moeda, c = chave do cfg). Devolve { backup } ou { erro } dizendo o que encontrou.
+export function normalizarBackup(j) {
+  if (Array.isArray(j) && j.length && j.every(r => r && typeof r === "object" && "kind" in r)) {
+    const v = r => (r.data && "v" in r.data ? r.data.v : r.data);
+    return { backup: { items: j.filter(r => r.kind === "i").map(v), fx: j.filter(r => r.kind === "f").map(v), cfg: Object.fromEntries(j.filter(r => r.kind === "c").map(r => [r.id, v(r)])) } };
+  }
+  if (j && typeof j === "object" && !Array.isArray(j)) {
+    for (const c of [j, j.data, j.backup]) if (c && Array.isArray(c.items)) return { backup: c };
+    const campos = Object.keys(j).slice(0, 12).join(", ") || "nenhum";
+    const dica = j.app === "minhas-despesas-sync" ? " Esse é o arquivo de sincronização antigo (do Drive), não o backup." : "";
+    return { erro: `Não achei a lista de lançamentos. O arquivo tem app="${j.app ?? "?"}" e os campos: ${campos}.${dica}` };
+  }
+  return { erro: Array.isArray(j) ? `O arquivo é uma lista de ${j.length} itens sem o formato esperado.` : "O arquivo não é um backup do app." };
+}
+
 export function deAppAtual(b, hoje) {
   const cfg = b.cfg || {}, itens = b.items || [], cards = cfg.cards || {};
   const pers = { desp: (cfg.cats || []).map(c => ({ k: c.k, n: c.n, c: c.c })), rec: (cfg.catsRec || []).map(c => ({ k: c.k, n: c.n, c: c.c })) };

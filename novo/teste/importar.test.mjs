@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { deAppAtual } from "../base/importar.mjs";
+import { deAppAtual, normalizarBackup } from "../base/importar.mjs";
 import { fatura, gastou, aPagar, naConta } from "../base/calculo.mjs";
 
 // backup INVENTADO no formato do app atual
@@ -47,4 +47,15 @@ test("fatura vencida e não paga rola para a próxima (como o banco)", () => {
   const { estado: e } = deAppAtual(backup, "2026-11-04");
   assert.equal(fatura(e, "Inter", "2026-11").total, 0);
   assert.equal(aPagar(e, "2026-11") >= 0, true);
+});
+
+test("normalizarBackup: aceita backup, {data} e linhas do sync_rows; erro diz o que achou", () => {
+  assert.ok(normalizarBackup(backup).backup.items.length);
+  assert.ok(normalizarBackup({ data: backup }).backup.items.length);
+  const rows = [{ kind: "i", id: "1", data: { v: backup.items[0] } }, { kind: "c", id: "cards", data: { v: { Inter: { due: 2 } } } }, { kind: "m", id: "dev", data: { v: 1 } }];
+  const n = normalizarBackup(rows).backup;
+  assert.equal(n.items.length, 1); assert.deepEqual(n.cfg.cards, { Inter: { due: 2 } });
+  const e = normalizarBackup({ app: "outra-coisa", foo: 1 });
+  assert.match(e.erro, /outra-coisa/); assert.match(e.erro, /foo/);
+  assert.match(normalizarBackup({ app: "minhas-despesas-sync" }).erro, /Drive/);
 });
