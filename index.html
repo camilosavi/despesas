@@ -2046,6 +2046,11 @@ details.ppmore>summary{cursor:pointer;list-style:none;font-weight:700;font-size:
 details.ppmore>summary::-webkit-details-marker{display:none}
 details.ppmore .ppin{margin:var(--g-gap) 0}
 details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
+/* Você alinhada (04/11/2026): título da seção recolhida centralizado na linha (o h2 tinha 10px de margem embaixo e o texto ficava ~5px acima do meio), linhas da mesma altura; ☰ com o traço alinhado ao avatar */
+#pMe section.fold:not(.open){padding-block:0!important}
+#pMe section.fold:not(.open)>h2{margin:0!important;min-height:56px;align-items:center!important}
+#pMe section.fold.open>h2{align-items:center!important}
+@media (max-width:979px){body:has(#pMe:not([hidden])) .hmenu{margin-left:-11px}}
 </style>
 
 <div class="wrap">
