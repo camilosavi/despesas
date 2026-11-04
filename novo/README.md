@@ -10,6 +10,9 @@ Tudo é função pura de um `estado` (formato no topo do arquivo), então testa 
 - `base/calculo.mjs`: Fatura, A pagar, Entrou / Gastou / Sobra, Na conta hoje, Fim do mês, Livre (limite do cartão).
 - `base/categorias.mjs`: 10 de despesa + 5 de receita fixas; cada pessoa pode **adicionar** as suas (não edita/esconde as básicas). `migrar` leva as do app atual para a lista nova.
 - `base/datas.mjs`: datas e meses como texto, sem depender do fuso.
+- `base/pessoas.mjs`: divisão por pessoa (partes, saldo, acertos), vale para despesa e assinatura.
+- `marcas/`: **logos, cores e siglas dos bancos e o logo do Tostão, copiados sem mudança do app atual** (27 logos). Não redesenhar.
+- `visao-geral/`: a primeira tela (prévia com dados inventados). `node novo/visao-geral/montar.mjs saida.html`.
 - `teste/`: dados inventados.
 
 ## Rodar os testes
