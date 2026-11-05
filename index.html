@@ -3882,10 +3882,10 @@ function divSection(){
     ${d.miss?`<div style="padding:0 0 12px 50px"><a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi! Sua parte de ${d.name}: ${R(d.per)}${d.parcN>1?` (ou ${d.parcN}× ${R(d.unit)})`:""}. Pode mandar no Pix. Valeu!`)}">Cobrar no WhatsApp</a></div>`:""}</div>`).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
 }
-let divSel=[];
+let divSel=[], divNew=false;
 function divPeopleDraw(){const el=$("divPeople");if(!el)return;const L=ppList();
-  el.innerHTML=L.map(p=>`<button type="button" class="chip" data-divp="${esc(p.id)}" aria-pressed="${divSel.includes(p.id)}">${esc(ppFirst(p.name))}</button>`).join("");
-  el.hidden=!L.length;
+  el.innerHTML=L.map(p=>`<button type="button" class="chip" data-divp="${esc(p.id)}" aria-pressed="${divSel.includes(p.id)}">${esc(ppFirst(p.name))}</button>`).join("")+
+    (divNew?`<span class="ppin" style="flex:1 1 100%"><input id="divNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" enterkeyhint="done" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="divNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="divNewOn">+ Pessoa</button>`);
   if(divSel.length){const n=$("divN");if(n){const t=Math.max(divSel.length+1,parseInt((n.value||"").replace(/\D/g,""),10)||0);n.value=t}}}
 function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
   $("divHint").textContent=n>=2&&form.cents?`${R(Math.floor(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
@@ -6514,7 +6514,13 @@ document.addEventListener("change",e=>{
   if(e.target.id==="mimpFuture"&&multiImp){multiImp.future=e.target.checked;multiImpRender();return}
 });
 const maskIds=new Set(["trVal","soV","cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","dbTotal","dbPer","dbVal","dmVal","fxEur","fxBrl","limTot","limFree","cdLimit","ppVal","ppItVal"]);
-document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-divp]");if(!b)return;
+document.addEventListener("click",async e=>{const t=e.target.closest?e.target:null;if(!t)return;
+  if(t.closest("#divNewOn")){divNew=true;divPeopleDraw();setTimeout(()=>$("divNewName")?.focus(),30);return}
+  if(t.closest("#divNewGo")){const n=($("divNewName")?.value||"").trim();if(!n){toast("Diga o nome da pessoa.");return}
+    if(ppList().some(p=>fold(p.name)===fold(n))){toast("Já existe alguém com esse nome.");return}
+    const id=ppNewId();try{await saveCfg({pp:[...ppList(),{id,name:n,e:[]}]})}catch(er){toast("Não deu para salvar. Tente de novo.");return}
+    divNew=false;divSel=[...divSel,id];divPeopleDraw();divHint();return}
+  const b=t.closest("[data-divp]");if(!b)return;
   const id=b.dataset.divp;divSel=divSel.includes(id)?divSel.filter(q=>q!==id):[...divSel,id];
   if(!divSel.length&&$("divN"))$("divN").value="";divPeopleDraw();divHint()});
 document.addEventListener("input",e=>{
@@ -6732,7 +6738,7 @@ function openSheet(x){
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divPeopleDraw();divHint();
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divNew=false;divPeopleDraw();divHint();
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
