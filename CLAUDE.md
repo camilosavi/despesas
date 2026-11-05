@@ -930,3 +930,4 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   qualquer `input[type=date|month]` abre o calendário do app (dia → toque no título vai para meses → anos; Limpar / Hoje; respeita `min`/`max`;
   dispara `input` e `change`). Ouvinte de clique no `window` (captura), não no `document` (outro ouvinte parava o evento). Rolar reposiciona, não fecha.
   No celular fica o seletor do aparelho.
+- **Nomes repetidos em Pessoas** (05/11/2026, pedido dele: dois "Lucas" nos chips): `ppTag(q)` = nome curto dos chips (assinatura, divisão, pagamento ligado); se outra pessoa tem o mesmo primeiro nome vira "Lucas Silva" (com a 2ª palavra) e, se o nome inteiro também é igual, "(1)", "(2)". `ppLabel(p)` faz o mesmo (só "(n)") na lista da aba Pessoas. Cuidado: `nmSame` casa pelo primeiro nome, então Pix/assinatura de dois "Lucas" ainda pode cair no primeiro; dar sobrenome diferente ajuda só na exibição.
