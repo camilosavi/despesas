@@ -5153,10 +5153,15 @@ async function loadHist(cur){
   }catch(e){}finally{loadHist.b=0}
 }
 const histAvg=(cur,n)=>{const h=rHist[cur];if(!h||!h.v||h.v.length<2)return 0;const a=h.v.slice(0,n);return a.reduce((s,x)=>s+x,0)/a.length};
+/* preço médio pago só nas entradas desta caixinha na moeda da meta (com R$ pago); soma as compras da aba Moedas quando fxAll (05/11/2026) */
+function svAvgRate(b,g){let eu=0,br=0;
+  (b.moves||[]).forEach(m=>{if((m.cur||b.goalCur)===g&&m.cents>0&&m.brl>0){eu+=m.cents;br+=m.brl}});
+  if(b.fxAll)fx.forEach(x=>{if(fxCurOf(x)===g&&x.brl>0&&fxAmt(x)>0){eu+=fxAmt(x);br+=x.brl}});
+  return eu?br/eu:0}
 function fxPanel(b){
   const g=b.goalCur; if(g!=="EUR"&&g!=="USD") return "";
   loadHist(g);
-  const sym=g==="EUR"?"€":"US$", hoje=rateNum(g), a10=histAvg(g,10), a30=histAvg(g,30), mine=fxStats(g).avg;
+  const sym=g==="EUR"?"€":"US$", hoje=rateNum(g), a10=histAvg(g,10), a30=histAvg(g,30), mine=svAvgRate(b,g)||fxStats(g).avg;
   const sel={5:histAvg(g,5),10:a10,30:a30}[fxPer]||0, use=sel||hoje;
   const t=(l,v,hi)=>`<div class="fxt${hi?" hi":""}"><small>${l}</small><b>${v?R(Math.round(v*100)):"—"}</b></div>`;
   const left=Math.max(0,(b.goal||0)-svHave(b)), months=b.target?Math.max(0,monthsBetween(curYM(),b.target)):0;
@@ -5223,7 +5228,7 @@ function saveSection(){
         const pc=svPace(b), need=[pc&&pc.late?`Pela linha reta até ${shortMonth(b.target)}, era para ter ${svMoney(pc.exp,pc.cur)} agora. Para recuperar, guarde ~${svMoney(pc.per,pc.cur)} por mês daqui em diante.`:"",svNeedTxt(b)].filter(Boolean).join(" ");
         const bkRows=svBankRows(b), bkShow=bkRows.length>1||(bkRows[0]&&bkRows[0].bank);
         row+=`<div class="svedit">${need?`<p class="svneed">${esc(need)}</p>`:""}${fxPanel(b)}${bkShow?`<div class="svbanks"><div class="svsec">Onde está o dinheiro</div>${bkRows.map(r=>`<div class="svbk"><span>${r.bank?cardBadge(r.bank):""}<em>${esc(r.bank||"Sem banco definido")}</em></span><b class="${r.eq<0?"neg":""}">${svAmtsTxt(r.amts)}</b></div>`).join("")}</div>`:""}<div class="svsec">Guardar ou tirar</div><div class="svrow2"><input id="svVal" inputmode="numeric" placeholder="0,00" aria-label="Valor"><select id="svCur" aria-label="Moeda"><option value="BRL" ${!isFx?"selected":""}>R$</option><option value="EUR" ${b.goalCur==="EUR"?"selected":""}>€</option><option value="USD" ${b.goalCur==="USD"?"selected":""}>US$</option></select></div>${isFx?`<div class="field" style="margin:10px 0 0"><label for="svRt">Cotação usada (R$ por ${FXC[b.goalCur].sym})</label><div class="amount sm" style="margin:0"><span>R$</span><input id="svRt" inputmode="decimal" placeholder="0,0000" value="${rateNum(b.goalCur)?rateTxt(rateNum(b.goalCur)):""}"></div></div><p id="svEq" style="margin:6px 0 12px;font-size:.85rem;color:var(--muted)">Digite o valor: a conta com a cotação aparece aqui.</p>`:""}${svBankField("svBk","svBkNew",b,b.bank||(bkRows.filter(r=>r.bank).length===1?bkRows.find(r=>r.bank).bank:""))}${svAcField("svAc")}<div class="svbtns"><button class="btn soft" id="svOut">− Tirar</button><button class="btn primary" id="svIn">+ Guardar</button></div>`+
-          (mv.length?`<div class="svmvs"><div class="svsec">Movimentos</div>`+mv.map(m=>m.fxId?`<button class="svmv" data-svfx="${esc(m.fxId)}" aria-label="Editar compra de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · comprou${m.brl?` · R$ ${brl(m.brl)} a R$ ${rateTxt(m.brl/m.cents)}`:""}${m.where?` · ${esc(m.where)}`:""}</span><span><span class="pos" style="white-space:nowrap">+ ${svMoney(m.cents,m.cur)}</span> <span class="ed">editar</span></span></button>`:svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
+          (mv.length?`<div class="svmvs"><div class="svsec">Movimentos${(b.goalCur==="EUR"||b.goalCur==="USD")&&svAvgRate(b,b.goalCur)?` <small style="text-transform:none;letter-spacing:0;font-weight:600">· preço médio R$ ${rateTxt(svAvgRate(b,b.goalCur))} por ${b.goalCur==="EUR"?"€":"US$"}</small>`:""}</div>`+mv.map(m=>m.fxId?`<button class="svmv" data-svfx="${esc(m.fxId)}" aria-label="Editar compra de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · comprou${m.brl?` · R$ ${brl(m.brl)} a R$ ${rateTxt(m.brl/m.cents)}`:""}${m.where?` · ${esc(m.where)}`:""}</span><span><span class="pos" style="white-space:nowrap">+ ${svMoney(m.cents,m.cur)}</span> <span class="ed">editar</span></span></button>`:svMvEdit===m.id?svMvForm(m):`<button class="svmv" data-svmv="${esc(m.id)}" aria-label="Editar movimento de ${fmtDate(m.date)}"><span>${fmtDate(m.date)} · ${m.cents<0?"tirou":"guardou"}${m.rate?` · R$ ${brl(Math.abs(m.brl||0))} a R$ ${rateTxt(m.rate)}`:""}${m.bank?` · ${esc(m.bank)}`:""}</span><span><span class="${m.cents<0?"neg":"pos"}">${m.cents<0?"−":"+"} ${svMoney(Math.abs(m.cents),m.cur)}</span><span class="ed">editar</span></span></button>`).join("")+
             (allMv.length>5?`<button class="svmore" id="svAllMv">${svAllMv?"Mostrar só os 5 últimos":`Ver todos os ${allMv.length} movimentos`}</button>`:"")+`</div>`:"")+
         `<div class="svfoot"><button class="svlink" id="svEdit">${b.goal?"Editar caixinha":"Criar meta"}</button><button class="svdel" id="svDel">Excluir</button></div></div>`;
       }
@@ -5619,7 +5624,7 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP gQ">${ppSection()}</div></div>
+      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(false)+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP gQ">${ppSection()}</div></div>
       <div class="ano-col-side"><div class="gM">${fxRowSection()}</div><div class="gC gP">${divSection()}</div></div>
     </div>`;
   } else if(anoSubTab === "ano"){
