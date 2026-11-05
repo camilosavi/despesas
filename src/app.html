@@ -4096,7 +4096,7 @@ function subShare(){
   [...items].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).forEach(x=>{
     if((x.date||"").slice(0,7)<lo||typeOf(x)!=="desp")return;const k=subOf(x);if(!k||seen.has(k))return;
     const C=divCom(x);if(!C.length||x.divide.pagou)return;seen.add(k);if(out[k])return;
-    const n=x.div>=1?x.div:C.length+(divEuIn(x)?1:0), each=Math.round(x.cents/n), P=C.map(c=>{const q=pp.find(z=>z.id===c.pid);return q?{nm:q.name,c:c.cents>=0&&c.cents!=null?c.cents:each}:null}).filter(Boolean);
+    const n=x.div>=1?x.div:C.length+(divEuIn(x)?1:0), ym=(x.date||"").slice(0,7), tot=items.filter(z=>typeOf(z)==="desp"&&(z.date||"").slice(0,7)===ym&&subOf(z)===k).reduce((t,z)=>t+amt(z),0)||x.cents, each=Math.round(tot/n), P=C.map(c=>{const q=pp.find(z=>z.id===c.pid);return q?{nm:q.name,c:c.cents>=0&&c.cents!=null?c.cents:each}:null}).filter(Boolean);
     if(P.length)out[k]={n:P.length,c:each,p:P,...(divEuIn(x)?{}:{noMe:1})}});
   _shC={i:items,b:base,p:cfg.pp,v:out};return out;
 }
