@@ -2084,6 +2084,13 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 /* Fatura na lista de Contas (05/11/2026) */
 .fatrow>.fi{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;overflow:hidden;font-weight:700;font-family:var(--display);font-size:calc(.95rem*var(--k,1))}
 .fatrow>.fi svg,.fatrow>.fi img{width:70%;height:70%;max-width:100%;max-height:100%}
+/* Busca ao lado dos filtros no PC (05/11/2026, pedido dele): sem texto digitado a busca fica no canto direito da linha dos chips; com texto volta para a linha própria */
+@media (min-width:980px){
+  #pMes:has(#mSearch:placeholder-shown){position:relative;grid-template-rows:0 minmax(0,1fr)!important;row-gap:0!important}
+  #pMes:has(#mSearch:placeholder-shown)>.msearch{position:absolute;top:calc(var(--g-top) + 4px);right:0;width:min(22em,40%);margin:0!important;z-index:2}
+  #pMes>#mBody{grid-row:2}
+  #pMes:has(#mSearch:placeholder-shown) .mfbar>.mfrow:first-child{padding-right:calc(min(22em,40%) + 1em)}
+}
 </style>
 
 <div class="wrap">
