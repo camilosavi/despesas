@@ -4072,7 +4072,19 @@ function subOf(x){
 }
 /* assinatura cancelada (28/10/2026, pedido dele): cfg.subOff[nome] = 1º mês sem cobrança; vale enquanto não vier lançamento daquele mês em diante */
 const subOffOf=(name,lastYM)=>{const o=(cfg.subOff||{})[name];return o&&lastYM<o?o:""};
-const subShare=()=>cfg.subShare&&typeof cfg.subShare==="object"?cfg.subShare:{};
+/* divisão da assinatura: a de cfg.subShare (nomes, valor por pessoa) + a que vem das próprias cobranças (x.divide, marcada no lançamento); uma única divisão, vista nos dois lugares (05/11/2026) */
+let _shC=null;
+function subShare(){
+  const base=cfg.subShare&&typeof cfg.subShare==="object"?cfg.subShare:{};
+  if(_shC&&_shC.i===items&&_shC.b===base&&_shC.p===cfg.pp)return _shC.v;
+  const out={...base}, lo=shiftYM(curYM(),-4), pp=ppList(), seen=new Set();
+  [...items].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).forEach(x=>{
+    if((x.date||"").slice(0,7)<lo||typeOf(x)!=="desp")return;const k=subOf(x);if(!k||seen.has(k))return;seen.add(k);
+    const C=divCom(x);if(!C.length||x.divide.pagou||out[k])return;
+    const n=x.div>=2?x.div:C.length+1, each=Math.round(x.cents/n), P=C.map(c=>{const q=pp.find(z=>z.id===c.pid);return q?{nm:q.name,c:c.cents>=0&&c.cents!=null?c.cents:each}:null}).filter(Boolean);
+    if(P.length)out[k]={n:P.length,c:each,p:P}});
+  _shC={i:items,b:base,p:cfg.pp,v:out};return out;
+}
 /* partes de quem te paga: com valores diferentes vem de sh.p; senão n partes iguais de sh.c */
 const shParts=sh=>!sh?[]:Array.isArray(sh.p)&&sh.p.length?sh.p:Array.from({length:sh.n||0},()=>({nm:"",c:sh.c}));
 const shBack=sh=>shParts(sh).reduce((s,x)=>s+(x.c||0),0);
