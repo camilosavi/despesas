@@ -668,6 +668,7 @@ h2 button{padding:8px 0 8px 12px;margin:-8px 0}
 .recchips{margin-top:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.recchips::-webkit-scrollbar{display:none}
 .recchips .chip{flex:none;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.recchips .chip b{font-variant-numeric:tabular-nums;margin-left:4px;opacity:.7;font-weight:600}
 #tagField #tags{margin-top:8px}
+.lmore{margin:6px 0 0}.lmore>summary{cursor:pointer;color:var(--link,var(--accent));font-size:.9rem;padding:8px 0;list-style:none}.lmore>summary::-webkit-details-marker{display:none}
 #rcpField[hidden],#tags[hidden],#tagOn[hidden],#recChips[hidden]{display:none!important}
 .rulelist{display:grid;gap:2px;margin-bottom:10px}.rulerow{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:.88rem}.rulerow:first-child{border-top:0}
 .rulerow .rt{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.rulerow .rm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rulerow .rc{display:flex;align-items:center;gap:6px;font-weight:600}
@@ -2120,13 +2121,12 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <div class="amount"><span>R$</span><input id="amt" inputmode="numeric" placeholder="0,00" aria-label="Valor"></div>
   <div class="field"><label for="desc">Descrição</label><input type="text" id="desc" placeholder="Ex.: mercado, fatura Inter, salário" maxlength="80"><div class="chips recchips" id="recChips" hidden></div></div>
   <div class="field" id="catField"><span class="lbl">Categoria</span><button type="button" class="catpick-btn" id="catPickBtn"><span class="catpick-curr"><i class="dot" id="catPickDot"></i><span id="catPickName">Alimentação</span></span><span class="catpick-arrow">Escolher ›</span></button></div>
-  <div class="field" id="tagField"><button type="button" class="chip add" id="tagOn">+ Tags</button><input type="text" id="tags" hidden placeholder="#viagem #presente" maxlength="60" autocapitalize="none" autocomplete="off" aria-label="Tags"></div>
-  <div class="field" id="rcpField" hidden><span class="lbl">Recibo</span><div class="chips" id="rcpChips"></div><input type="file" id="rcpFile" accept="image/*" hidden></div>
+  <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div id="divNRow" style="display:flex;gap:10px;align-items:center" hidden><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"></div><div class="hint" id="divHint" style="margin:0 0 4px">Escolha com quem dividir</div><div class="chips" id="divPeople" style="margin-top:var(--g-gap)"></div></div>
+  <div class="field" id="ppayField" hidden><span class="lbl" id="ppayLbl">Pessoa</span><div class="chips" id="ppayChips"></div></div>
   <div class="field" id="payField"><span class="lbl">Pagamento</span><div class="chips" id="payChips"></div></div>
   <div class="field" id="acctField" hidden><span class="lbl" id="acctLbl">Conta</span><div class="chips" id="acctChips"></div></div>
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
-  <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div id="divNRow" style="display:flex;gap:10px;align-items:center" hidden><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"></div><div class="hint" id="divHint" style="margin:0 0 4px">Escolha com quem dividir</div><div class="chips" id="divPeople" style="margin-top:var(--g-gap)"></div></div>
   <div class="field" id="statusField"><span class="lbl">Situação</span><div class="seg" id="paidSeg" style="margin:0"><button type="button" data-paid="1">Pago</button><button type="button" data-paid="0">A pagar</button></div></div>
   <div class="field"><label for="date">Data</label><input type="date" id="date" min="2026-09-01"><p class="hint" id="dateHint" hidden style="margin:6px 0 0"></p></div>
   <div class="field" id="repField"><label for="rep">Parcelar ou repetir</label>
@@ -2142,6 +2142,10 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
     <div class="field" id="untilField" hidden style="margin:10px 0 4px"><label for="until">Repetir até</label><input type="month" id="until" min="2026-09"></div>
     <span class="hint" id="repHint"></span>
   </div>
+  <details class="lmore" id="lMore"><summary>Mais opções</summary>
+  <div class="field" id="tagField"><button type="button" class="chip add" id="tagOn">+ Tags</button><input type="text" id="tags" hidden placeholder="#viagem #presente" maxlength="60" autocapitalize="none" autocomplete="off" aria-label="Tags"></div>
+  <div class="field" id="rcpField" hidden><span class="lbl">Recibo</span><div class="chips" id="rcpChips"></div><input type="file" id="rcpFile" accept="image/*" hidden></div>
+  </details>
   <p class="err" id="err"></p>
   <div class="card" id="lancHelp" hidden style="padding:4px 14px;margin-bottom:10px"></div>
   <div class="row">
@@ -3914,19 +3918,33 @@ function divList(){
 }
 function divShareOf(cents){for(const d of divList()){const k=shareK(cents,d.unit);if(k&&d.parcN>1||Math.abs(cents-d.per)<=3)return {name:d.name,k:k||1}}return null}
 function divSection(){
+  return ""; /* 05/11/2026: unificado com Pessoas (divList/divShareOf continuam para o extrato) */
   const L=divList();if(!L.length) return "";
   const miss=L.reduce((s,d)=>s+d.miss,0);
   return `<section id="divSec"><h2>Contas divididas <small>${miss?`falta receber ${R(miss)}`:"tudo recebido ✓"}</small></h2><div class="card list">${L.map(d=>`<div class="divg"><div class="item rec-it">${catIco(d.cat,"desp")}<span class="t"><div class="d">${esc(d.name)}</div><div class="m">÷${d.n} · cada um ${R(d.per)}${d.parcN>1?` (${d.parcN}× ${R(d.unit)})`:""} · recebido ${R(d.got)} de ${R(d.back)}</div></span><span class="v ${d.miss?"":"pos"}">${d.miss?R(d.miss):"✓"}<small style="display:block;font-weight:500;color:var(--muted)">${d.miss?"falta":"recebido"}</small></span></div>
     ${d.miss?`<div style="padding:0 0 12px 50px"><a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi! Sua parte de ${d.name}: ${R(d.per)}${d.parcN>1?` (ou ${d.parcN}× ${R(d.unit)})`:""}. Pode mandar no Pix. Valeu!`)}">Cobrar no WhatsApp</a></div>`:""}</div>`).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
 }
-let divSel=[], divNew=false, divPayer="", divLegacy=false, divMe=true;
+let divSel=[], divNew=false, divPayer="", divLegacy=false, divMe=true, ppayPid="", ppayNew=false;
+/* outra pessoa pagou a despesa inteira: não sai da sua conta, então some Pagamento/Conta/Situação */
+const divByOther=()=>form.type==="desp"&&divMe&&!!divPayer&&divSel.includes(divPayer);
+/* pagamento ligado a uma pessoa (05/11/2026): receita "recebi de" abate o que ela te deve; despesa "paguei a" abate o que você deve a ela */
+function ppayDraw(){
+  const f=$("ppayField");if(!f)return;const L=ppList(), rec=form.type==="rec";
+  f.hidden=!(rec||(form.type==="desp"&&!divSel.length));
+  if(f.hidden)return;
+  $("ppayLbl").textContent=rec?"Recebido de uma pessoa":"Pagamento a uma pessoa";
+  $("ppayChips").innerHTML=L.map(q=>`<button type="button" class="chip" data-ppay="${esc(q.id)}" aria-pressed="${ppayPid===q.id}">${esc(ppFirst(q.name))}</button>`).join("")+
+    (ppayNew?`<span class="ppin" style="flex:1 1 100%"><input id="ppayNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="ppayNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="ppayNewOn">+ Pessoa</button>`)+
+    (ppayPid?`<span class="hint" style="flex:1 1 100%;margin:4px 0 0">${rec?"Abate o que essa pessoa te deve.":"Abate o que você deve a essa pessoa."}</span>`:"");
+}
 function divPeopleDraw(){const el=$("divPeople");if(!el)return;const L=ppList();
   el.innerHTML=(divSel.length?`<button type="button" class="chip" data-divme="1" aria-pressed="${divMe}">Eu</button>`:"")+L.map(p=>`<button type="button" class="chip" data-divp="${esc(p.id)}" aria-pressed="${divSel.includes(p.id)}">${esc(ppFirst(p.name))}</button>`).join("")+
     (divNew?`<span class="ppin" style="flex:1 1 100%"><input id="divNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" enterkeyhint="done" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="divNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="divNewOn">+ Pessoa</button>`+(divSel.length&&divMe?`<span style="flex:1 1 100%;margin-top:6px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Quem pagou</span><button type="button" class="chip" data-divpay="" aria-pressed="${!divPayer}">Eu</button>${divSel.map(id=>{const q=L.find(z=>z.id===id);return q?`<button type="button" class="chip" data-divpay="${esc(id)}" aria-pressed="${divPayer===id}">${esc(ppFirst(q.name))}</button>`:""}).join("")}`:""));
   const n=$("divN");
   if(n){if(divSel.length)n.value=divSel.length+(divMe?1:0);else if(!divLegacy)n.value=""}
-  if($("divNRow"))$("divNRow").hidden=!(divLegacy&&!divSel.length)}
+  if($("divNRow"))$("divNRow").hidden=!(divLegacy&&!divSel.length);
+  if(typeof chips==="function"&&$("payField"))chips()}
 function divHint(){const n=divSel.length?divSel.length+(divMe?1:0):parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
   if(divSel.length){$("divHint").textContent=`Dividido em ${n}${form.cents?` · ${R(Math.floor(form.cents/n))} cada`:""}${divMe?"":" · você não paga nada"}`;return}
   $("divHint").textContent=n>=2&&form.cents?`Dividido em ${n} · ${R(Math.floor(form.cents/n))} cada (sua parte)`:n>=2?`Dividido em ${n} pessoas`:"Escolha com quem dividir"}
@@ -5330,7 +5348,8 @@ const ppDerived=p=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="de
   if(x.divide.pagou)return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:-(x.cents||0),k:"d",t:cleanDesc(x),derived:true,x:x.id};
   const q=divParts(x).find(y=>y.pid===p.id);
   return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:q?q.c:0,k:"d",t:cleanDesc(x),derived:true,x:x.id}}).filter(e=>e.c!==0);
-const ppAll=p=>[...(p.e||[]),...ppDerived(p)];
+const ppPay=p=>typeof items==="undefined"?[]:items.filter(x=>x.ppay===p.id&&x.cents>0).map(x=>({id:"pg|"+x.id+"|"+p.id,d:x.buy||x.date,c:(typeOf(x)==="rec"?-1:1)*x.cents,k:"p",t:cleanDesc(x),derived:true,x:x.id}));
+const ppAll=p=>[...(p.e||[]),...ppDerived(p),...ppPay(p)];
 const ppBal=p=>ppAll(p).reduce((t,e)=>t+(e.c||0),0);
 const ppFirst=n=>titleCase((n||"").trim().split(/\s+/)[0]||"");
 const ppHue=n=>[...(n||"")].reduce((t,c)=>t+c.charCodeAt(0)*7,0)%360;
@@ -6632,6 +6651,12 @@ document.addEventListener("change",e=>{
 });
 const maskIds=new Set(["trVal","soV","cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","dbTotal","dbPer","dbVal","dmVal","fxEur","fxBrl","limTot","limFree","cdLimit","ppVal","ppItVal"]);
 document.addEventListener("click",async e=>{const t=e.target.closest?e.target:null;if(!t)return;
+  if(t.closest("#ppayNewOn")){ppayNew=true;ppayDraw();setTimeout(()=>$("ppayNewName")?.focus(),30);return}
+  if(t.closest("#ppayNewGo")){const n=($("ppayNewName")?.value||"").trim();if(!n){toast("Diga o nome da pessoa.");return}
+    if(ppList().some(p=>fold(p.name)===fold(n))){toast("Já existe alguém com esse nome.");return}
+    const id=ppNewId();try{await saveCfg({pp:[...ppList(),{id,name:n,e:[]}]})}catch(er){toast("Não deu para salvar. Tente de novo.");return}
+    ppayNew=false;ppayPid=id;ppayDraw();return}
+  {const pb=t.closest("[data-ppay]");if(pb){ppayPid=ppayPid===pb.dataset.ppay?"":pb.dataset.ppay;ppayDraw();return}}
   if(t.closest("#divNewOn")){divNew=true;divPeopleDraw();setTimeout(()=>$("divNewName")?.focus(),30);return}
   if(t.closest("#divNewGo")){const n=($("divNewName")?.value||"").trim();if(!n){toast("Diga o nome da pessoa.");return}
     if(ppList().some(p=>fold(p.name)===fold(n))){toast("Já existe alguém com esse nome.");return}
@@ -6823,6 +6848,8 @@ function chips(){
   $("statusField").hidden=form.type!=="desp"||form.pay==="Crédito";
   $("cardField").hidden=form.type!=="desp"||form.pay!=="Crédito";
   $("repField").hidden=!!(editing&&editing.parc);
+  if(divByOther()){["payField","acctField","cardField","statusField","splitField"].forEach(id=>{if($(id))$(id).hidden=true})}
+  ppayDraw();
   repHint();
 }
 const monthsSpan=(a,b)=>(+b.slice(0,4)-+a.slice(0,4))*12+(+b.slice(5)-+a.slice(5))+1;
@@ -6853,11 +6880,11 @@ function openSheet(x){
   form=x?{type:t,cents:x.divide&&x.divide.pagou&&x.div>=2?x.cents*x.div:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||""}:{type:t,cents:0,acct:form.acct||"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
   $("desc").value=x?x.desc||"":"";
-  {const tg=x&&x.tags&&x.tags.length;$("tags").value=tg?x.tags.map(t=>"#"+t).join(" "):"";$("tags").hidden=!tg;$("tagOn").hidden=!!tg}
+  {const tg=x&&x.tags&&x.tags.length;if($("lMore"))$("lMore").open=!!(tg||(x&&x.rcp));$("tags").value=tg?x.tags.map(t=>"#"+t).join(" "):"";$("tags").hidden=!tg;$("tagOn").hidden=!!tg}
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divLegacy=!!(x&&x.div>=2&&!divSel.length);divPayer=(x&&x.divide&&x.divide.pagou)||"";divMe=divEuIn(x);divNew=false;divPeopleDraw();divHint();
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divLegacy=!!(x&&x.div>=2&&!divSel.length);divPayer=(x&&x.divide&&x.divide.pagou)||"";divMe=divEuIn(x);divNew=false;ppayPid=(x&&x.ppay)||"";ppayNew=false;divPeopleDraw();divHint();
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
@@ -6915,10 +6942,11 @@ $("sheet").addEventListener("submit",async e=>{
   else if(rcpDel&&editing&&editing.rcp){rcpRemove(editing.rcp);base.rcp=""}
   if(isD) base.paid=benOf(base)?true:form.paid;
   /* o que você mesmo editou (nome, categoria) não é trocado por importação nem por mesclagem (05/11/2026) */
+  {const pid=ppList().some(q=>q.id===ppayPid)&&(!isD||!divSel.length)?ppayPid:"";if(pid)base.ppay=pid;else if(editing&&editing.ppay)base.ppay=""}
   if(editing){if((base.desc||"")!==(editing.desc||""))base.descEd=true;if(base.cat!==editing.cat)base.catEd=true}
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;const sel=divSel.filter(id=>ppList().some(p=>p.id===id));
     if(isD&&sel.length){base.div=sel.length+(divMe?1:0);base.divide={com:sel.map(pid=>({pid})),...(divMe?{}:{eu:false})};
-      if(divMe&&divPayer&&sel.includes(divPayer)){base.divide.pagou=divPayer;base.cents=Math.floor(form.cents/base.div);base.paid=true;base.paidAt=0}}
+      if(divMe&&divPayer&&sel.includes(divPayer)){base.pay="Pix";base.card="";base.divide.pagou=divPayer;base.cents=Math.floor(form.cents/base.div);base.paid=true;base.paidAt=0}}
     else if(isD&&dn>=2){base.div=dn;if(editing&&editing.divide)base.divide=null}
     else{if(editing&&editing.div)base.div=0;if(editing&&editing.divide)base.divide=null}}
   if(!editing&&isD&&base.card){const b=billDate(base.card,base.date);if(b!==base.date){base.buy=base.date;base.date=b}}
