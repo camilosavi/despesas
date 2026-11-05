@@ -2044,6 +2044,8 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 /* filtro por categoria no Mês */
 .mfcats{margin-top:var(--g-gap)}
 .mfcats .mfp small{margin-left:6px;opacity:.7;font-size:.78em;font-weight:600}
+.bolokids{padding-left:18px;border-left:2px solid var(--line);margin-left:20px}
+.item.bolo .m b{font-weight:700}
 </style>
 
 <div class="wrap">
@@ -3786,15 +3788,34 @@ function mesDayLabel(d){
   return `${w}, ${+d.slice(8)} ${MES[+d.slice(5,7)-1].toLowerCase()}`;
 }
 const virtHTML=x=>`<button class="item virt" data-virt="${esc(x.id)}">${catIco("sal","rec")}<span class="t"><div class="d"><span class="dn">${esc(x.desc)}</span></div><div class="m"><b>${+x.date.slice(8)} ${MES[+x.date.slice(5,7)-1].toLowerCase()}</b> · ${x.fell?`cai ${fmtDM(x.fell)} · `:""}${x.ov?"ajustado por você":"previsto pelos holerites"}</div></span><span class="a pos">+ ${R(x.cents)}</span></button>`;
+/* "Bolo" (05/11/2026, pedido dele: Gympass cobra em dias separados, juntar num só): cobranças de mesmo nome (Gympass/Wellhub/TotalPass) no mesmo cartão e mês viram uma linha com o total; tocar abre as cobranças. Só na exibição, nada muda nos lançamentos. */
+const BOLO_RE=/gympass|wellhub|totalpass/;
+const boloOpen=new Set();
+function boloGroups(L){
+  const G=new Map();
+  L.forEach(x=>{if(typeOf(x)!=="desp"||benOf(x)||x.cents<=0&&!amt(x))return;const m=BOLO_RE.exec(fold(cleanDesc(x)));if(!m)return;
+    const k=`${cardOf(x)||x.pay||""}|${(x.date||"").slice(0,7)}|${m[0]}`;if(!G.has(k))G.set(k,{k,name:m[0]==="wellhub"?"Wellhub":m[0]==="totalpass"?"TotalPass":"Gympass",items:[]});G.get(k).items.push(x)});
+  const out=new Map(), skip=new Set();
+  G.forEach(g=>{if(g.items.length<2)return;g.items.sort((a,b)=>whenOf(b).localeCompare(whenOf(a)));
+    g.total=g.items.reduce((t,x)=>t+amt(x),0);g.last=whenOf(g.items[0]);g.cat=g.items[0].cat;
+    g.items.forEach(x=>skip.add(x.id));out.set(g.k,g)});
+  return {groups:[...out.values()],skip,first:new Map([...out.values()].map(g=>[g.items.slice().sort((a,b)=>L.indexOf(a)-L.indexOf(b))[0].id,g]))};
+}
+function boloHTML(g){
+  const open=boloOpen.has(g.k), paid=g.items.every(isPaid), [,m,d]=g.last.split("-"), c=cardOf(g.items[0]);
+  return `<button class="item bolo" data-bolo="${esc(g.k)}" aria-expanded="${open}">${catIco(g.cat,"desp")}<span class="t"><div class="d"><span class="dn">${esc(g.name)}</span></div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${g.items.length} cobranças${c?" · "+esc(c):""} · ${open?"fechar":"ver cada uma"}</div></span><span class="a">${R(g.total)}<br>${paid?`<span class="m pos">pago</span>`:`<span class="tag">a pagar</span>`}</span></button>`+
+    (open?`<div class="bolokids">${g.items.map(itemHTML).join("")}</div>`:"");
+}
 function mesFeed(F){
   const L=F.filter(x=>!benOf(x)), V=mesF==="all"||mesF==="rec"?salVirt(view):[];
   if(!L.length&&!V.length) return `<div class="empty"><strong>Nada neste filtro</strong>Toque em Todos para ver o mês inteiro.</div>`;
-  if(mesOrd()==="az") return `<div class="card list">${sortAZ(L).map(itemHTML).join("")}</div>`;
-  const G={}, at=d=>G[d]=G[d]||{L:[],V:[]};
-  sortRecent(L).forEach(x=>at(whenOf(x)).L.push(x));V.forEach(x=>at(x.date).V.push(x));
+  const BG=boloGroups(L);
+  if(mesOrd()==="az") return `<div class="card list">${sortAZ(L).map(x=>BG.first.has(x.id)?boloHTML(BG.first.get(x.id)):BG.skip.has(x.id)?"":itemHTML(x)).join("")}</div>`;
+  const G={}, at=d=>G[d]=G[d]||{L:[],V:[],B:[]};
+  sortRecent(L.filter(x=>!BG.skip.has(x.id))).forEach(x=>at(whenOf(x)).L.push(x));V.forEach(x=>at(x.date).V.push(x));BG.groups.forEach(b=>at(b.last).B.push(b));
   return Object.keys(G).sort().reverse().map(d=>{const g=G[d],
-    out=g.L.filter(x=>typeOf(x)==="desp").reduce((s,x)=>s+amt(x),0), inn=g.L.filter(x=>typeOf(x)==="rec").reduce((s,x)=>s+x.cents,0);
-    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.L.map(itemHTML).join("")}</div></div>`}).join("");
+    out=g.L.filter(x=>typeOf(x)==="desp").reduce((s,x)=>s+amt(x),0)+g.B.reduce((s,b)=>s+b.total,0), inn=g.L.filter(x=>typeOf(x)==="rec").reduce((s,x)=>s+x.cents,0);
+    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.B.map(boloHTML).join("")}${g.L.map(itemHTML).join("")}</div></div>`}).join("");
 }
 function mesSummary(arr){
   const dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), paid=dA.filter(isPaid).reduce((s,x)=>s+amt(x),0), open=dA.filter(x=>!isPaid(x)).reduce((s,x)=>s+amt(x),0), all=paid+open;
@@ -4776,7 +4797,10 @@ function renderCards(){
   else{
     const endNext=L.filter(x=>{const p=parcInfo(x);return p&&p.left===0}).reduce((s,x)=>s+x.cents,0);
     const fk=c+"|"+view, fOpen=fatOpen.has(fk), fCut=L.length>FAT_N&&!fOpen;
-    h+=`</section><section><h2>Itens da fatura <small>${L.length}</small></h2><div class="card cardblock">`+(fCut?L.slice(0,FAT_N):L).map(x=>{const p=parcInfo(x);
+    const BGc=boloGroups(L);
+    h+=`</section><section><h2>Itens da fatura <small>${L.length}</small></h2><div class="card cardblock">`+(fCut?L.slice(0,FAT_N):L).map(x=>{if(BGc.first.has(x.id)){const g=BGc.first.get(x.id), op=boloOpen.has(g.k);
+        return `<button class="cline item bolo" data-bolo="${esc(g.k)}" aria-expanded="${op}"><span class="d">${esc(g.name)} <small class="muted">· ${g.items.length} cobranças</small></span><span class="v">${R(g.total)}</span><span class="meta"><span class="pill">${op?"fechar":"ver cada uma"}</span></span></button>`+(op?g.items.map(y=>`<button class="cline item bolokid" data-id="${esc(y.id)}"><span class="d">${esc(cleanDesc(y))} <small class="muted">· ${y.buy?fmtDM(y.buy):fmtDM(y.date)}</small></span><span class="v">${R(y.cents)}</span></button>`).join(""):"")}
+      if(BGc.skip.has(x.id))return "";const p=parcInfo(x);
       const meta=p?`<span class="pill ${p.left===0?"last":""}">${p.i}/${p.n}</span>${segs(p)}<span>${p.left===0?"última parcela":`faltam ${p.left} · até ${shortMonth(p.end)}`}</span>`:`<span class="pill">à vista</span><span>${esc(catOf(x.cat,"desp").n)}</span>`;
       const bt=x.buy?fmtDM(x.buy):"";
       return `<button class="cline item" data-id="${esc(x.id)}"><span class="d">${esc(cleanDesc(x))}${bt?` <small class="muted">· ${bt}</small>`:""}</span><span class="v">${R(x.cents)}</span><span class="meta">${meta}</span></button>`}).join("")+
@@ -6422,6 +6446,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="scrim"&&$("catSheet")&&!$("catSheet").hidden){$("catSheet").hidden=true;return}
   if(t.closest("[data-close]")||t.id==="scrim"){closeSheets();return}
   {const tg=t.closest("[data-oftog]");if(tg){const k=+tg.dataset.oftog;ofOpenAcc.has(k)?ofOpenAcc.delete(k):ofOpenAcc.add(k);render();return}}
+  {const bo=t.closest("[data-bolo]");if(bo){const k=bo.dataset.bolo;boloOpen.has(k)?boloOpen.delete(k):boloOpen.add(k);render();return}}
   {const fe=t.closest("[data-fatexp]");if(fe){const k=fe.dataset.fatexp;fatOpen.has(k)?fatOpen.delete(k):fatOpen.add(k);render();return}}
   if(t.id==="ofAll"){ofAutoAll(t);return}
   {const o=t.closest("[data-ofload],[data-offorget],[data-ofimp]");if(o){
