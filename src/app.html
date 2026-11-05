@@ -235,6 +235,11 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surfa
 input.limin{display:block;margin:0 0 10px}
 .catnew{display:inline-flex;gap:6px;align-items:center;flex:1 1 220px}
 .chip.add{border-style:dashed}
+#partsField .ptrow{display:grid;grid-template-columns:1fr 1fr 36px;gap:8px;margin:6px 0;align-items:center}
+#partsField .ptrow input{box-sizing:border-box;width:100%;min-width:0;height:44px;font:inherit;font-size:16px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
+#partsField .ptrow input[inputmode]{text-align:right;font-variant-numeric:tabular-nums}
+#partsField .ptrow .acdel{height:36px;width:36px;border:0;background:none;color:var(--muted);font-size:1.2rem}
+#partsField .hint{margin:6px 0 0}
 #splitField .two{margin:6px 0 8px}
 .splitin{width:100%;min-width:0;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
 #splitField .chips+.chips{margin-top:8px}
@@ -2152,6 +2157,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <div class="field" id="splitField" hidden></div>
   <div class="field" id="statusField"><span class="lbl">Situação</span><div class="seg" id="paidSeg" style="margin:0"><button type="button" data-paid="1">Pago</button><button type="button" data-paid="0">A pagar</button></div></div>
   <div class="field"><label for="date">Data</label><input type="date" id="date" min="2026-09-01"><p class="hint" id="dateHint" hidden style="margin:6px 0 0"></p></div>
+  <div class="field" id="partsField" hidden></div>
   <div class="field" id="repField"><label for="rep">Parcelar ou repetir</label>
     <select id="rep">
       <option value="1">Só uma vez</option>
@@ -4853,7 +4859,7 @@ function itemHTML(x){
   const t=typeOf(x),c=catOf(x.cat,t),[,m,d]=x.date.split("-"),p=parcInfo(x);
   /* "Fatura X" com itens lançados no mês vale 0 (só o valor do banco para conferir): não mostra "a pagar" */
   const chk=t==="desp"&&x.cents&&!amt(x);
-  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&(x.div>=2||divCom(x).length)?`÷${divCom(x).length?divCom(x).length+(divEuIn(x)?1:0):x.div}, sua parte ${R(divMine(x))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):"",(x.tags||[]).map(g=>"#"+g).join(" "),x.rcp?"📎":""].filter(Boolean).join(" · ");
+  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",x.pt?`parte ${x.pt.i} de ${x.pt.n} · total ${R(x.pt.tot)}`:"",t==="desp"&&(x.div>=2||divCom(x).length)?`÷${divCom(x).length?divCom(x).length+(divEuIn(x)?1:0):x.div}, sua parte ${R(divMine(x))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):"",(x.tags||[]).map(g=>"#"+g).join(" "),x.rcp?"📎":""].filter(Boolean).join(" · ");
   return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d"><span class="dn">${esc(cleanDesc(x))}</span></div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}"${chk?' style="color:var(--muted)"':""}>${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(chk?`<br><span class="m">conferir</span>`:isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
 }
 
@@ -6765,7 +6771,8 @@ document.addEventListener("input",e=>{
   const id=e.target.id;
   if(id==="mSearch"){mq=e.target.value;$("mClear").hidden=!mq;clearTimeout(renderMes.t);renderMes.t=setTimeout(renderMes,180)}
   if(id==="fQ"){F.q=e.target.value;clearTimeout(renderPlan.t);renderPlan.t=setTimeout(()=>{renderPlan();const q=$("fQ");q.focus();q.setSelectionRange(q.value.length,q.value.length)},250)}
-  if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
+  if(id&&(id.startsWith("b_")||id.startsWith("acv_")||id.startsWith("subPv_")||id.startsWith("ptV_")||maskIds.has(id))){const d=digits(e.target.value);e.target.value=d?brl(d):""}
+  if(id&&id.startsWith("ptV_"))partsHint();
   if(id&&id.startsWith("subPv_")&&$("subMine")){const tot=+($("subSave")?.dataset.subtot||0);let b=0,eu=0;document.querySelectorAll("[id^=subPv_]").forEach(i=>{const n=$("subPn_"+i.id.slice(6));if(n&&isEuNm(n.value))eu+=digits(i.value);else b+=digits(i.value)});$("subMine").textContent=b?`Recebe ${R(b)} · sai ${R(eu>0?eu:Math.max(0,tot-b))} para você`:"—"}
   if(id==="fxRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
   if(id==="svRt")e.target.value=e.target.value.replace(/\./g,",").replace(/[^\d,]/g,"").replace(/,(?=.*,)/g,"");
@@ -6942,6 +6949,7 @@ function chips(){
   $("repField").hidden=!!(editing&&editing.parc);
   if(divByOther()){["payField","acctField","cardField","statusField","splitField"].forEach(id=>{if($(id))$(id).hidden=true})}
   ppayDraw();
+  partsDraw();
   repHint();
 }
 const monthsSpan=(a,b)=>(+b.slice(0,4)-+a.slice(0,4))*12+(+b.slice(5)-+a.slice(5))+1;
@@ -6970,6 +6978,7 @@ function openSheet(x){
   editing=x||null;catTouched=!!x;rcpBlob=null;rcpDel=false;dupAck=null;mergeInto=null;shotAuto=null;shotImp=null;shotTs=0;serAck=null;
   const t=x?typeOf(x):form.type;
   form=x?{type:t,cents:x.divide&&x.divide.pagou&&x.div>=2?x.cents*x.div:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||""}:{type:t,cents:0,acct:form.acct||"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
+  form.parts=false;form.pr=[];if($("partsField"))$("partsField").dataset.key="";
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
   $("desc").value=x?x.desc||"":"";
   {const tg=x&&x.tags&&x.tags.length;if($("lMore"))$("lMore").open=!!(tg||(x&&x.rcp));$("tags").value=tg?x.tags.map(t=>"#"+t).join(" "):"";$("tags").hidden=!tg;$("tagOn").hidden=!!tg}
@@ -6997,9 +7006,9 @@ $("rcpFile").addEventListener("change",async e=>{const f=e.target.files&&e.targe
 $("tagOn").addEventListener("click",()=>{$("tagOn").hidden=true;$("tags").hidden=false;$("tags").focus()});
 $("typeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(b&&b.dataset.type!==form.type){const sa=shotAuto&&$("desc").value===shotAuto[form.type];if(sa)$("desc").value=shotAuto[b.dataset.type];form.type=b.dataset.type;form.cat=sa?(shotAuto.cat||{})[form.type]||(form.type==="desp"?"outros":"rout"):form.type==="desp"?"alim":CATS[form.type][0].k;chips();applyRule()}});
 $("paidSeg").addEventListener("click",e=>{const b=e.target.closest("[data-paid]");if(b){form.paid=b.dataset.paid==="1";chips()}});
-$("amt").addEventListener("input",e=>{form.cents=digits(e.target.value);setAmt();repHint()});
+$("amt").addEventListener("input",e=>{form.cents=digits(e.target.value);setAmt();repHint();if(form.parts)partsHint()});
 $("rep").addEventListener("change",repHint);$("until").addEventListener("change",repHint);
-$("date").addEventListener("change",()=>{dateTouched=true;dateHint();if(!editing){form.paid=$("date").value<=today();chips()}repHint()});
+$("date").addEventListener("change",()=>{dateTouched=true;if(form.parts)partsHint();dateHint();if(!editing){form.paid=$("date").value<=today();chips()}repHint()});
 $("desc").addEventListener("input",()=>{
   if(!editing&&!catTouched){const rc=catRuleGet(form.type,$("desc").value);if(rc&&rc!==form.cat){form.cat=rc;chips()}}
   applyRule();recChips()});
@@ -7013,6 +7022,29 @@ $("catPickBtn").addEventListener("click",()=>{catNewOpen=false;chips();$("catShe
 $("catSheetClose").addEventListener("click",()=>{$("catSheet").hidden=true});
 $("acctChips").addEventListener("click",e=>{const b=e.target.closest("[data-acct]");if(b){form.acct=b.dataset.acct;chips()}});
 $("payChips").addEventListener("click",e=>{const b=e.target.closest("[data-pay]");if(b){form.pay=b.dataset.pay;if(benOf({pay:form.pay}))form.paid=true;else if(form.pay==="Crédito"){if(!editing||editing.pay!=="Crédito")form.paid=false;else form.paid=isPaid(editing)}else if(!editing)form.paid=($("date").value||today())<=today();else if(editing.pay==="Crédito")form.paid=(editing.buy||editing.date)<=today();if(form.pay2===form.pay)form.pay2="";chips()}});
+/* Em partes (05/11/2026, pedido dele: "coloco o valor total mas explico que entra 7 mil, vai ser 4k e depois 3k"): o valor de cima é o total;
+   cada parte extra tem valor e data, e a 1ª (na data de cima) fica com o que sobra. Cada parte vira um lançamento (mesmo group "s…", x.pt={i,n,tot}). */
+function partsRead(){form.pr=(form.pr||[]).map((r,i)=>({c:$("ptV_"+i)?digits($("ptV_"+i).value):r.c,d:$("ptD_"+i)?$("ptD_"+i).value:r.d}))}
+function partsHint(){const h=$("ptHint");if(!h)return;partsRead();const tot=form.cents, o=form.pr.reduce((t,r)=>t+(r.c||0),0), d0=$("date").value;
+  if(!tot){h.className="hint";h.textContent="Digite o valor total lá em cima.";return}
+  const rest=tot-o;h.className="hint"+(rest<=0?" neg":"");
+  h.textContent=rest<=0?"As outras partes passam do total.":`Parte 1: ${R(rest)}${d0?" em "+fmtDM(d0):""}`+form.pr.map((r,i)=>r.c?` · Parte ${i+2}: ${R(r.c)}${r.d?" em "+fmtDM(r.d):""}`:"").join("")}
+function partsNextDate(){const d=$("date").value||today(), last=(form.pr||[]).map(r=>r.d).filter(Boolean).sort().pop()||d, ym=shiftYM(last.slice(0,7),1);return `${ym}-${pad(Math.min(+d.slice(8),lastDay(ym)))}`}
+function partsDraw(force){const f=$("partsField");if(!f)return;f.hidden=!!editing;if(f.hidden)return;
+  const rec=form.type==="rec", key=[form.type,!!form.parts,(form.pr||[]).length].join("|");
+  if(!force&&f.dataset.key===key){if(form.parts)partsHint();return}
+  f.dataset.key=key;
+  if(!form.parts){f.innerHTML=`<button type="button" class="chip add" id="ptOn">${rec?"+ Receber em partes":"+ Pagar em partes"}</button>`;return}
+  f.innerHTML=`<span class="lbl">${rec?"Entra em partes":"Sai em partes"} <button type="button" class="lk" id="ptOff">tirar</button></span>
+    ${(form.pr||[]).map((r,i)=>`<div class="ptrow"><input type="text" id="ptV_${i}" inputmode="numeric" placeholder="R$ 0,00" value="${r.c?brl(r.c):""}" aria-label="Valor da parte ${i+2}"><input type="date" id="ptD_${i}" min="${MIN_YM}-01" value="${esc(r.d||"")}" aria-label="Data da parte ${i+2}"><button type="button" class="acdel" data-ptdel="${i}" aria-label="Tirar parte ${i+2}">×</button></div>`).join("")}
+    <button type="button" class="chip add" id="ptAdd">+ outra parte</button><p class="hint" id="ptHint"></p>`;
+  partsHint()}
+$("partsField").addEventListener("click",e=>{
+  if(e.target.closest("#ptOn")){form.parts=true;form.pr=[{c:0,d:partsNextDate()}];partsDraw();$("ptV_0")?.focus();return}
+  if(e.target.closest("#ptOff")){form.parts=false;form.pr=[];partsDraw();return}
+  if(e.target.closest("#ptAdd")){partsRead();if(form.pr.length>=11){toast("No máximo 12 partes.");return}form.pr.push({c:0,d:partsNextDate()});partsDraw();$("ptV_"+(form.pr.length-1))?.focus();return}
+  const x=e.target.closest("[data-ptdel]");if(x){partsRead();form.pr.splice(+x.dataset.ptdel,1);if(!form.pr.length)form.parts=false;partsDraw()}});
+$("partsField").addEventListener("change",partsHint);
 function splitHint(){const h=$("splitHint");if(!h)return;const v=digits($("splitVal")?.value);h.textContent=v&&form.cents?(v<form.cents?`${form.pay}: ${R(form.cents-v)}`:"maior que o total"):""}
 $("splitField").addEventListener("click",e=>{
   if(e.target.closest("#splitOn")){form.split=true;chips();$("splitVal")?.focus();return}
@@ -7063,6 +7095,25 @@ $("sheet").addEventListener("submit",async e=>{
       else if(o.pay==="Crédito"){o.paid=false;delete o.paidAt}
       else{o.paid=paid0;if(paid0)o.paidAt=Date.now();else delete o.paidAt}};
       fitPart(base);fitPart(split)}}
+  if(!editing&&form.parts&&(form.pr||[]).length){partsRead();const P=form.pr;
+    if(split||$("rep").value!=="1"){err("err","Em partes funciona só com “Só uma vez” e sem “duas formas”.");return}
+    if(base.divide&&base.divide.pagou){err("err","Em partes não combina com “Quem pagou” da divisão.");return}
+    if(P.some(r=>!(r.c>0)||!r.d)){err("err","Preencha o valor e a data de cada parte.");return}
+    if(P.some(r=>r.d<MIN_YM+"-01")){err("err","O app começa em setembro/2026.");return}
+    const rest=base.cents-P.reduce((t,r)=>t+r.c,0);if(rest<=0){err("err","As outras partes somam mais que o total.");return}
+    const tot=base.cents, rawD=$("date").value, now=Date.now(), group="s"+now, n=P.length+1;
+    const mk=(raw,c,i)=>{const o={...base,cents:c,date:raw,group,pt:{i,n,tot}};delete o.buy;delete o.fell;delete o.paidAt;
+      if(isD){const cd=o.pay==="Crédito"&&o.card?o.card:"";
+        if(cd){const b=billDate(cd,raw);o.date=b;if(b!==raw)o.buy=raw;o.paid=false}
+        else if(benOf(o)){o.paid=true}
+        else{o.paid=raw<=today();if(o.paid)o.paidAt=Date.now()}}
+      else{const sh=salShift(o.cat,raw);if(sh){o.date=sh.date;o.fell=sh.fell}}
+      return o};
+    const L=[mk(rawD,rest,1),...P.map((r,i)=>mk(r.d,r.c,i+2))];
+    $("saveBtn").disabled=true;
+    try{for(let i=0;i<L.length;i++)await store.items.add({...L[i],createdAt:now+i});
+      toast(`Em ${n} partes: ${L.map(o=>R(o.cents)).join(" + ")}`,true);view=L[0].date.slice(0,7);closeSheets();render()}catch(x){err("err","Não deu para salvar. Tente de novo.")}
+    $("saveBtn").disabled=false;return}
   if(!editing&&split){$("saveBtn").disabled=true;
     try{const now=Date.now(),group="s"+now;await store.items.add({...base,group,createdAt:now});await store.items.add({...split,group,createdAt:now+1});
       toast(`Dividido: ${R(base.cents)} + ${R(split.cents)}`,true);view=base.date.slice(0,7);closeSheets();render()}catch(x){err("err","Não deu para salvar. Tente de novo.")}
