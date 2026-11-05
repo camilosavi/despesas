@@ -14,7 +14,7 @@
 :root{
   --bg:#F3F5F2; --surface:#FFFFFF; --ink:#13201D; --muted:#5E6E69; --line:#DDE3DF; --zebra:#F7F9F7;
   --head:#0E3B35; --head-ink:#EAF4F0; --head-muted:#9DBDB4;
-  --accent:#12A57E; --accent-ink:#FFFFFF; --btn:var(--accent); --btn-ink:var(--accent-ink); --pos:#0F8F6C; --neg:#C2412D; --warn:#B36E0C; --chip:#E8EEEB; --euro:#2F5FC4;
+  --accent:#12A57E; --accent-ink:#FFFFFF; --btn:var(--accent); --btn-ink:var(--accent-ink); --pos:#0F8F6C; --neg:#C2412D; --warn:#9A5B08; --chip:#E8EEEB; --euro:#2F5FC4;
   --display:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;
   --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   --c1:#12A57E; --c2:#E08A1E; --c3:#3D7BD9; --c4:#B5487F; --c5:#D9534F; --c6:#7A5CC7; --c7:#2E9BAA; --c8:#8A8F8C;
@@ -1328,9 +1328,9 @@ button.acone.cardgo{width:100%;background:none;border:0;color:inherit;text-align
   #sheet .field input:not([type=checkbox]),#sheet .field select,#sheet .catpick-btn{border-radius:16px!important}
 }
 /* tema Tostão (padrão, 21/10/2026): azul-marinho e dourado do logo "Um Tostão"; o verde antigo continua como tema "Verde" */
-:root[data-accent="tostao"]{--head:#14203A;--head-ink:#F3EEE2;--head-muted:#AAB4C9;--accent:#A67C2E;--accent-ink:#FFFFFF;--btn:#C9A25A;--btn-ink:#14203A;--pos:#12805F;--euro:#2F5FC4}
-@media (prefers-color-scheme:dark){:root[data-accent="tostao"]:not([data-theme="light"]){--head:#0E1830;--head-ink:#F3EEE2;--head-muted:#97A3BC;--accent:#D9B66F;--accent-ink:#14203A;--btn:#D9B66F;--btn-ink:#14203A}}
-:root[data-theme="dark"][data-accent="tostao"]{--head:#0E1830;--head-ink:#F3EEE2;--head-muted:#97A3BC;--accent:#D9B66F;--accent-ink:#14203A;--btn:#D9B66F;--btn-ink:#14203A}
+:root[data-accent="tostao"]{--head:#14203A;--head-ink:#F3EEE2;--head-muted:#AAB4C9;--accent:#8C6A1F;--accent-ink:#FFFFFF;--btn:#C9A25A;--btn-ink:#14203A;--pos:#12805F;--euro:#2F5FC4}
+@media (prefers-color-scheme:dark){:root[data-accent="tostao"]:not([data-theme="light"]){--head:#0E1830;--head-ink:#F3EEE2;--head-muted:#97A3BC;--accent:#D9B66F;--accent-ink:#14203A;--btn:#D9B66F;--btn-ink:#14203A;--pos:#34B07F}}
+:root[data-theme="dark"][data-accent="tostao"]{--head:#0E1830;--head-ink:#F3EEE2;--head-muted:#97A3BC;--accent:#D9B66F;--accent-ink:#14203A;--btn:#D9B66F;--btn-ink:#14203A;--pos:#34B07F}
 :root[data-accent="tostao"]:not([data-accent="verde"]){--bg:#F4F5F8;--zebra:#F8F9FB;--line:#E1E4EB;--chip:#ECEEF3;--muted:#5F6878;--ink:#141B2B}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"])[data-accent="tostao"]:not([data-accent="verde"]){--bg:#0A1226;--surface:#121C34;--zebra:#16213A;--line:#1F2B45;--chip:#1A2641;--muted:#97A3BC;--ink:#ECEFF5}}
 :root[data-theme="dark"][data-accent="tostao"]:not([data-accent="verde"]){--bg:#0A1226;--surface:#121C34;--zebra:#16213A;--line:#1F2B45;--chip:#1A2641;--muted:#97A3BC;--ink:#ECEFF5}
@@ -2102,6 +2102,10 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   html.hmin #pMes .mfbar{max-height:0!important;opacity:0;overflow:hidden;margin:0!important;pointer-events:none}
   html.hmin #pMes>.msearch{opacity:0;pointer-events:none}
 }
+/* acessibilidade (05/11/2026): região só para leitor de tela e área de toque maior nos links pequenos (sem mudar o layout) */
+.srlive{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.dlink,.h2act .lk{position:relative}
+.dlink::after,.h2act .lk::after{content:"";position:absolute;inset:-15px -6px}
 </style>
 
 <div class="wrap">
@@ -2162,7 +2166,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 <div class="scrim" id="scrim" hidden></div>
 <div class="drawer" id="drawer" hidden><div class="dwbox" id="dwBox" role="dialog" aria-label="Menu"></div></div>
 
-<form class="sheet" id="sheet" hidden autocomplete="off">
+<form class="sheet" id="sheet" hidden autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="grip"></div>
   <h3><span id="sheetTitle">Novo lançamento</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   <div class="row pdfpair" id="pdfAnyRow"><label class="btn soft pdfrow"><span id="pdfAnyLbl">Importar PDF ou print</span><input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>
@@ -2196,7 +2200,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <div class="field" id="tagField"><button type="button" class="chip add" id="tagOn">+ Tags</button><input type="text" id="tags" hidden placeholder="#viagem #presente" maxlength="60" autocapitalize="none" autocomplete="off" aria-label="Tags"></div>
   <div class="field" id="rcpField" hidden><span class="lbl">Recibo</span><div class="chips" id="rcpChips"></div><input type="file" id="rcpFile" accept="image/*" hidden></div>
   </details>
-  <p class="err" id="err"></p>
+  <p class="err" id="err" aria-live="polite"></p>
   <div class="card" id="lancHelp" hidden style="padding:4px 14px;margin-bottom:10px"></div>
   <div class="row">
     <button type="button" class="btn danger" id="delBtn" hidden>Excluir</button>
@@ -2230,7 +2234,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <datalist id="fxPlaces"><option value="Revolut"><option value="Wise"><option value="Nomad"><option value="Inter"><option value="Casa de câmbio"></datalist>
   <div class="field"><label for="fxObs">Obs</label><input type="text" id="fxObs" placeholder="Opcional" maxlength="80"></div>
   <label class="check" id="fxLinkRow"><input type="checkbox" id="fxLink" checked> Lançar também o valor em R$ como despesa (Câmbio)</label>
-  <p class="err" id="fxErr"></p>
+  <p class="err" id="fxErr" aria-live="polite"></p>
   <div class="row">
     <button type="button" class="btn danger" id="fxDel" hidden>Excluir</button>
     <button type="submit" class="btn primary" id="fxSave">Salvar</button>
@@ -2252,7 +2256,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   </div>
   <div class="field"><span class="lbl">Cor</span><div class="swatches" id="cdColors"></div></div>
   <p class="hint expl" id="cdHint" style="margin:-4px 0 14px">Depois é só lançar uma compra no <b>Crédito</b> e escolher este cartão.</p>
-  <p class="err" id="cdErr"></p>
+  <p class="err" id="cdErr" aria-live="polite"></p>
   <div class="row"><button type="submit" class="btn primary">Criar cartão</button></div>
 </form>
 <form class="sheet" id="impSheet" hidden autocomplete="off"></form>
@@ -2261,7 +2265,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 <div class="lock" id="lock" hidden aria-live="polite"></div>
 <div class="lock auth" id="auth" hidden></div>
 <label id="hapt" aria-hidden="true" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none"><input type="checkbox" switch tabindex="-1"></label>
-<div class="toast" id="toast" hidden></div>
+<div class="toast" id="toast" hidden aria-hidden="true"></div><div class="srlive" id="srLive" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script>
 const PWA=false;
@@ -7089,10 +7093,11 @@ function openSheet(x){
   if(!x) setTimeout(()=>$("amt").focus(),60);
 }
 function closeSheets(keep){if(!$("impSheet").hidden)setTimeout(()=>cardTheme(tab==="pCards"&&selCard?selCard:null));$("sheet").hidden=$("catSheet").hidden=$("fxSheet").hidden=$("cardSheet").hidden=$("impSheet").hidden=$("diagSheet").hidden=$("xlsSheet").hidden=true;if(!keep)$("scrim").hidden=true;editing=null;fxEditing=null}
-function toast(t,ok){const el=$("toast");el.hidden=true;el.classList.toggle("ok",!!ok);el.textContent=t;
+function srSay(t){const s=$("srLive");if(!s)return;s.textContent="";setTimeout(()=>{s.textContent=t},60)}
+function toast(t,ok){srSay(t);const el=$("toast");el.hidden=true;el.classList.toggle("ok",!!ok);el.textContent=t;
   if(ok){el.insertAdjacentHTML("afterbegin",'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>');haptic()}
   void el.offsetWidth;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
-function err(id,t){$(id).className="err";$(id).textContent=t}
+function err(id,t){$(id).className="err";$(id).textContent=t;if(id==="err"&&/valor/i.test(t)){const a=$("amt");if(a){a.setAttribute("aria-invalid","true");a.setAttribute("aria-describedby","err")}}}
 
 $("recChips").addEventListener("click",e=>{const b=e.target.closest("[data-rec]");if(b)recPick(+b.dataset.rec)});
 $("rcpChips").addEventListener("click",e=>{const b=e.target.closest("[data-rcp]");if(!b)return;const a=b.dataset.rcp;
@@ -9790,4 +9795,34 @@ document.addEventListener("scroll",e=>{
   const H=document.documentElement, on=H.classList.contains("hmin"), y=t.scrollTop, room=t.scrollHeight-t.clientHeight;
   if(!on&&y>24&&room>160)H.classList.add("hmin");else if(on&&y<=2)H.classList.remove("hmin");
 },true);
+
+/* acessibilidade (05/11/2026): toda folha (.sheet) é um diálogo: tem nome, prende o Tab dentro e devolve o foco a quem a abriu */
+(()=>{
+  const sheets=[...document.querySelectorAll(".sheet")], trig=new WeakMap(); let lastOut=null;
+  const focables=r=>[...r.querySelectorAll('button,a[href],input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(e=>!e.disabled&&e.type!=="hidden"&&e.getClientRects().length);
+  document.addEventListener("focusin",e=>{if(!e.target.closest(".sheet"))lastOut=e.target},true);
+  sheets.forEach(s=>{
+    s.setAttribute("role","dialog");s.setAttribute("aria-modal","true");
+    const sync=()=>{
+      if(!s.hidden){
+        if(!trig.has(s))trig.set(s,lastOut);
+        if(!s.getAttribute("aria-labelledby")){const h=s.querySelector("h3");s.setAttribute("aria-label",((h&&h.textContent)||"").replace("✕","").trim()||"Janela")}
+      }else if(trig.has(s)){
+        const t=trig.get(s);trig.delete(s);
+        if(t&&t.isConnected&&t.getClientRects().length&&!document.querySelector(".sheet:not([hidden])"))setTimeout(()=>t.focus({preventScroll:true}),0);
+      }
+    };
+    new MutationObserver(sync).observe(s,{attributes:true,attributeFilter:["hidden"]});
+  });
+  document.addEventListener("keydown",e=>{
+    if(e.key!=="Tab")return;
+    const open=sheets.filter(s=>!s.hidden).pop();if(!open)return;
+    const f=focables(open);if(!f.length)return;
+    const first=f[0],last=f[f.length-1],a=document.activeElement;
+    if(!open.contains(a)){e.preventDefault();first.focus();return}
+    if(e.shiftKey&&a===first){e.preventDefault();last.focus()}
+    else if(!e.shiftKey&&a===last){e.preventDefault();first.focus()}
+  },true);
+  const amt=$("amt");if(amt)amt.addEventListener("input",()=>amt.removeAttribute("aria-invalid"));
+})();
 </script>
