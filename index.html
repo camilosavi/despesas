@@ -2092,6 +2092,9 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 .dpg button:disabled{opacity:.3;cursor:default}
 .dpf{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
 .dpf button{padding:7px 10px;border-radius:10px;font-weight:600;color:var(--link,var(--accent))}.dpf button:hover{background:var(--chip)}
+/* Fatura na lista de Contas (05/11/2026) */
+.fatrow>.fi{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;overflow:hidden;font-weight:700;font-family:var(--display);font-size:calc(.95rem*var(--k,1))}
+.fatrow>.fi svg,.fatrow>.fi img{width:70%;height:70%;max-width:100%;max-height:100%}
 </style>
 
 <div class="wrap">
@@ -2144,8 +2147,8 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <div id="sbMenu"></div>
   <span class="tabbrand" aria-hidden="true">Um Tostão</span>
   <button class="tab" data-tab="pHome" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></button>
-  <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><path d="M4 7h13M4 12h16M4 17h10"/></svg><span>Transações</span></button>
-  <button class="tab" data-tab="pWal"><svg viewBox="0 0 24 24"><path d="M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M16 13.5h2.5"/></svg><span>Contas</span></button>
+  <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><path d="M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M16 13.5h2.5"/></svg><span>Contas</span></button>
+  <button class="tab" data-tab="pCards"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg><span>Cartões</span></button>
   <button class="tabav" id="tabAv" aria-label="Você: perfil e ajustes"></button>
 </nav>
 
@@ -3093,7 +3096,7 @@ function header0(){
   const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&["subs","debts","metas","pess"].includes(navSel))||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
-  const titles={pHome:"Início",pMes:"Transações",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Compromissos",debts:"Compromissos",subs:"Compromissos",pess:"Compromissos",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
+  const titles={pHome:"Início",pMes:"Contas",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Compromissos",debts:"Compromissos",subs:"Compromissos",pess:"Compromissos",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=tab==="pHome"?homeCardName():titles[tab]||"";$("ptitle").classList.toggle("hcedit",tab==="pHome"&&!IS_WIDE.matches);
   const sub=(tab==="pCards"&&!!selCard)||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
@@ -3635,7 +3638,7 @@ function recapCard(){
     ${lines.length?`<p>${lines.join(" ")}</p>`:""}<div class="row" style="margin:0"><button class="btn soft" id="recapOk">Ok</button><button class="btn primary" data-gomonth="${pm}">Ver ${nm.toLowerCase()}</button></div></div></section>`;
 }
 /* ---------- Visão geral (PC) — novo painel (29/10/2026) ---------- */
-const NAVS=[["pHome","Início","M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],["pMes","Transações","M4 7h13M4 12h16M4 17h10"],["pCards","Cartões","M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18"],["pWal","Contas","M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1M3 7h18v13H3zM16 13.5h2.5"]];
+const NAVS=[["pHome","Início","M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],["pMes","Contas","M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1M3 7h18v13H3zM16 13.5h2.5"],["pCards","Cartões","M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18"]];
 /* Metas, Assinaturas e Dívidas numa entrada só (05/11/2026, pedido dele): "Planejamento", com seletor no topo; por dentro cada uma segue com seu navSel */
 const NAVP=[["plan","Compromissos","M12 3v18M12 3l6 3-6 3"]];
 const PLAN=[["metas","Metas"],["subs","Assinaturas"],["debts","Dívidas"],["pess","Pessoas"]], isPlan=k=>PLAN.some(x=>x[0]===k);
@@ -3646,13 +3649,14 @@ function sidebarHtml(){
   return `<span class="sbbrand"><img src="tostao-logo.png" alt="Um Tostão"></span><div class="sbgrp"><small>Menu principal</small>${NAVS.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Planejamento</small>${NAVP.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Análises</small>${NAVA.map(x=>b(...x)).join("")}</div><button class="sb sbmin-b" data-sbmin title="Recolher ou abrir o menu" aria-label="Recolher ou abrir o menu"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Recolher menu</span></button>`;
 }
 let navSel=null;
-const navCur=()=>isPlan(navSel)?"plan":navSel||(tab==="pMe"?"pMe":tab==="pHome"?"pHome":tab==="pMes"||tab==="pOrc"?"pMes":tab==="pFx"?"plan":tab==="pCards"?"pCards":tab==="pAno"&&anoSubTab==="metas"?"pWal":tab==="pAno"?"rel":"pHome");
+const navCur=()=>isPlan(navSel)?"plan":navSel||(tab==="pMe"?"pMe":tab==="pHome"?"pHome":tab==="pMes"||tab==="pOrc"?"pMes":tab==="pFx"?"plan":tab==="pCards"?"pCards":tab==="pAno"&&anoSubTab==="metas"?"pMes":tab==="pAno"?"rel":"pHome");
 function navGo(k){
   if(k==="plan")k=lsGet("despesas.planTab")||"metas";
   if(isPlan(k))lsSet("despesas.planTab",k);
   navSel=null;
   if(k==="pMe"){go("pMe");return}
   if(k==="pCards")selCard=null;
+  if(k==="pWal")k="pMes";
   if(k==="pHome"||k==="pMes"||k==="pCards"||k==="pWal"){go(k);return}
   navSel=k;
   if(k==="metas"){go("pWal");navSel="metas";render();sbMark();window.scrollTo(0,0)}
@@ -3668,7 +3672,7 @@ function drawerOpen(on){
   else{d.classList.remove("on");setTimeout(()=>{if(!d.classList.contains("on"))d.hidden=true},220)}
 }
 function barMark(){
-  const k=navSel, cur=k==="metas"||k==="debts"||k==="pess"||k==="subs"||k==="plan"?"pWal":k==="rel"?"pMes":null;if(!cur)return;
+  const k=navSel, cur=k==="metas"||k==="debts"||k==="pess"||k==="subs"||k==="plan"||k==="rel"?"pMes":null;if(!cur)return;
   [...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).forEach((b,i)=>{
     if((b.dataset.tab||"more")===cur){b.setAttribute("aria-current","page");document.querySelector("nav.tabs").style.setProperty("--ti",i)}else b.removeAttribute("aria-current")});
 }
@@ -3806,7 +3810,7 @@ function dashHome(){
   const td0=today(), recLeft=accFlow(ym).inn, desLeft=aPagar(ym);
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
-   <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pWal">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
+   <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pMes">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
    <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Entrou</span><b>${R(rec)}</b><small>${recLeft?`a receber ${R(recLeft)}`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Gastou</span><b>${R(des)}</b><small>${desLeft?`a pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobra":"Falta"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
    <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p>${attHtml("in-saude")}</section>
    <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
@@ -3937,16 +3941,23 @@ function boloHTML(g){
 }
 /* transferências entre contas do mês: só em "Todos" e sem filtro de categoria; nunca entram em totais */
 const mesTr=()=>mesF==="all"&&!mesCat?trInMonth(view):[];
+/* Contas (05/11/2026, pedido dele: "contas e transações = entrada e saída de dinheiro; cartão vai tudo na aba Cartões"): compra no cartão não aparece
+   aqui; o cartão entra como UMA linha "Fatura X" no dia do vencimento (valor = billTot, o mesmo do cartão), que abre a tela do cartão. */
+function mesFat(){
+  if(mesCat||mesF==="rec"||mesF.startsWith("card:"))return [];
+  return credCards().map(c=>{const tot=billTot(c,view);if(!tot)return null;const its=cardItems(c,view),paid=its.length>0&&its.every(isPaid);
+    return {c,tot,paid,n:its.filter(x=>!genFat(x)).length,d:dueOf(c)?cardDue(c,view):`${view}-${pad(lastDay(view))}`}}).filter(f=>f&&(mesF==="open"?!f.paid:mesF==="paid"?f.paid:true))}
+const fatHTML=f=>`<button class="item fatrow" data-opencard="${esc(f.c)}" data-ym="${view}">${cardBadge(f.c)}<span class="t"><div class="d"><span class="dn">Fatura ${esc(f.c)}</span></div><div class="m"><b>${fmtDM(f.d)}</b> · ${f.n?`${f.n} ${f.n===1?"compra":"compras"} · `:""}cartão</div></span><span class="a">${R(f.tot)}<br><span class="m">${f.paid?"paga ✓":f.d<today()?"atrasada":"a pagar"}</span></span></button>`;
 function mesFeed(F){
-  const L=F.filter(x=>!benOf(x)), V=mesF==="all"||mesF==="rec"?salVirt(view):[], T=mesTr();
-  if(!L.length&&!V.length&&!T.length) return `<div class="empty"><strong>Nada neste filtro</strong>Toque em Todos para ver o mês inteiro.</div>`;
+  const L=F.filter(x=>!benOf(x)&&!cardOf(x)), V=mesF==="all"||mesF==="rec"?salVirt(view):[], T=mesTr(), FT=mesFat();
+  if(!L.length&&!V.length&&!T.length&&!FT.length) return `<div class="empty"><strong>Nada neste filtro</strong>Toque em Todos para ver o mês inteiro.</div>`;
   const BG=boloGroups(L);
-  if(mesOrd()==="az") return `<div class="card list">${sortAZ(L).map(x=>BG.first.has(x.id)?boloHTML(BG.first.get(x.id)):BG.skip.has(x.id)?"":itemHTML(x)).join("")}${T.map(trRowHTML).join("")}</div>`;
+  if(mesOrd()==="az") return `<div class="card list">${FT.map(fatHTML).join("")}${sortAZ(L).map(x=>BG.first.has(x.id)?boloHTML(BG.first.get(x.id)):BG.skip.has(x.id)?"":itemHTML(x)).join("")}${T.map(trRowHTML).join("")}</div>`;
   const G={}, at=d=>G[d]=G[d]||{L:[],V:[],B:[],T:[]};T.forEach(t=>at(t.date).T.push(t));
-  sortRecent(L.filter(x=>!BG.skip.has(x.id))).forEach(x=>at(whenOf(x)).L.push(x));V.forEach(x=>at(x.date).V.push(x));BG.groups.forEach(b=>at(b.last).B.push(b));
+  sortRecent(L.filter(x=>!BG.skip.has(x.id))).forEach(x=>at(whenOf(x)).L.push(x));V.forEach(x=>at(x.date).V.push(x));BG.groups.forEach(b=>at(b.last).B.push(b));FT.forEach(f=>(at(f.d).F=at(f.d).F||[]).push(f));
   return Object.keys(G).sort().reverse().map(d=>{const g=G[d],
-    out=g.L.filter(x=>typeOf(x)==="desp").reduce((s,x)=>s+amt(x),0)+g.B.reduce((s,b)=>s+b.total,0), inn=g.L.filter(x=>typeOf(x)==="rec").reduce((s,x)=>s+x.cents,0);
-    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.B.map(boloHTML).join("")}${g.L.map(itemHTML).join("")}${g.T.map(trRowHTML).join("")}</div></div>`}).join("");
+    out=g.L.filter(x=>typeOf(x)==="desp").reduce((s,x)=>s+amt(x),0)+g.B.reduce((s,b)=>s+b.total,0)+(g.F||[]).reduce((s,f)=>s+f.tot,0), inn=g.L.filter(x=>typeOf(x)==="rec").reduce((s,x)=>s+x.cents,0);
+    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${(g.F||[]).map(fatHTML).join("")}${g.B.map(boloHTML).join("")}${g.L.map(itemHTML).join("")}${g.T.map(trRowHTML).join("")}</div></div>`}).join("");
 }
 function mesSummary(arr){
   const dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), paid=dA.filter(isPaid).reduce((s,x)=>s+amt(x),0), open=aPagar(view), all=paid+open;
@@ -3986,7 +3997,7 @@ function mesCatRow(){
   return `<div class="mfrow mfcats">`+L.map(c=>`<button class="mfp ${mesCat===c.k?"on":""}" data-mescat="${esc(c.k)}">${esc(c.n)} <small>${R(c.v)}</small></button>`).join("")+`</div>`;
 }
 function mesFilterBar(){
-  const cs=credCards().filter(c=>billTot(c,view)||cardCfg(c).limit);
+  const cs=[];
   const chip=(k,t)=>`<button class="mfp ${mesF===k?"on":""}" data-mesf="${esc(k)}">${t}</button>`;
   return `<div class="mfbar"><div class="mfrow">`+chip("all","Todos")+
     cs.map(c=>`<button class="mfp mfc ${mesF==="card:"+c?"on":""}" data-mesf="card:${esc(c)}"><i style="background:${cardColor(c)}"></i>${esc(c)}</button>`).join("")+
@@ -3996,19 +4007,19 @@ function mesFilterBar(){
 function renderMes(){
   mesShell();
   if(mq.trim()){$("mBody").innerHTML=searchBody();return}
-  const arr=inMonth(view), dA=arr.filter(x=>typeOf(x)==="desp");
+  const arr=inMonth(view), dA=arr.filter(x=>typeOf(x)==="desp"), CB=contaBlock(false);
   if(!arr.length&&!salVirt(view).length&&!trInMonth(view).length){
-    $("mBody").innerHTML=`<div class="mes-split mes-empty"><section><div class="empty"><strong>Nada lançado em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}</strong>Registre um gasto ou uma receita para começar o mês.<button class="btn primary" id="mesEmptyAdd" type="button">+ Lançar</button></div></section>${cardStrip(view)}</div>`;
+    $("mBody").innerHTML=CB+`<div class="mes-split mes-empty"><section><div class="empty"><strong>Nada lançado em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}</strong>Registre um gasto ou uma receita para começar o mês.<button class="btn primary" id="mesEmptyAdd" type="button">+ Lançar</button></div></section>${cardStrip(view)}</div>`;
     return;
   }
-  const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0), F=mesApply(arr), o=mesOrd(), n=F.filter(x=>!benOf(x)).length+mesTr().length;
+  const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0), F=mesApply(arr), o=mesOrd(), n=F.filter(x=>!benOf(x)&&!cardOf(x)).length+mesTr().length+mesFat().length;
   const ord=(k,t)=>`<button type="button" class="mfp ${o===k?"on":""}" data-mesord="${k}" aria-pressed="${o===k}">${t}</button>`;
   const feed=`<section class="mlist"><h2>Lançamentos <small>${n}</small></h2><div class="mfrow mesord">${ord("rec","Recentes")}${ord("az","A–Z")}</div>${mesFeed(F)}</section>`;
-  const side=catsBlockHtml(arr,dA,tot,byC)+feeSection(view)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`;
+  const side=catsBlockHtml(arr,dA,tot,byC)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`;
   if(IS_WIDE.matches){
-    $("mBody").innerHTML=mesFilterBar()+`<div class="mes-split"><div class="mes-main">${feed}${mesBens(arr)}</div><aside class="mes-side">${mesSummary(arr)}${side}</aside></div>`;return}
+    $("mBody").innerHTML=mesFilterBar()+`<div class="mes-split"><div class="mes-main">${feed}${mesBens(arr)}</div><aside class="mes-side">${CB}${mesSummary(arr)}${side}</aside></div>`;return}
   const tab=k=>`aria-pressed="${(mesSubTab==="cats")===(k==="cats")}" data-mestab="${k}"`;
-  $("mBody").innerHTML=mesFilterBar()+mesSummary(arr)+`<div class="seg mseg" role="group" aria-label="Ver"><button type="button" ${tab("lanc")}>Lançamentos</button><button type="button" ${tab("cats")}>Categorias</button></div>`+
+  $("mBody").innerHTML=CB+mesFilterBar()+mesSummary(arr)+`<div class="seg mseg" role="group" aria-label="Ver"><button type="button" ${tab("lanc")}>Lançamentos</button><button type="button" ${tab("cats")}>Categorias</button></div>`+
     (mesSubTab==="cats"?side:feed+mesBens(arr)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`);
 }
 /* ---------- despesa dividida com outras pessoas (out/2026, pedido dele: "serve pra despesas também", ex.: Airbnb em 5) ----------
@@ -4097,7 +4108,7 @@ function onbCard(){
     <div class="row" style="margin-top:6px"><button class="btn soft" id="onbSkip">Pular</button><button class="btn soft" data-help="pHome">Como o app funciona</button></div></div></section>`;
 }
 function onbGo(k){
-  if(k==="conta"){if(!IS_WIDE.matches){go("pWal");setTimeout(()=>$("acEdit")?.click(),60)}else $("acEdit")?.click();setTimeout(()=>document.querySelector(".acrow")?.scrollIntoView({block:"center",behavior:"smooth"}),180);return}
+  if(k==="conta"){if(!IS_WIDE.matches){go("pMes");setTimeout(()=>$("acEdit")?.click(),60)}else $("acEdit")?.click();setTimeout(()=>document.querySelector(".acrow")?.scrollIntoView({block:"center",behavior:"smooth"}),180);return}
   if(k==="cartao"){backTo="pHome";selCard=null;go("pCards");setTimeout(openCardSheet,60);return}
   if(k==="renda"){form={...form,type:"rec"};openSheet()}
 }
@@ -4958,7 +4969,7 @@ function renderCards(){
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
       return `<button class="folder" data-opencard="${esc(c)}" data-ym="${fy}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${dueOf(c)?`vence ${fmtDM(cardDue(c,fy))} · `:`fatura de ${MES[+fy.slice(5)-1].toLowerCase()} · `}${n?`${n} ${n===1?"item":"itens"}`:"sem itens"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
         <span class="spark">${months.map((m,i)=>{const v=billTot(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
-      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
+      `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>${feeSection(view)}<div class="toolbar" style="justify-content:center;margin-top:14px"><button class="tbtn" id="canBuy">Posso comprar?</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
   if(isBen(selCard)){$("pCards").innerHTML=benDetail(selCard);return}
@@ -6437,7 +6448,7 @@ function go(t){
   homeEdit=false;svForm=null;svOpen=null;fatEditing=false;limEditing=false;navSel=null;
   tab=t;
   /* Carteira = caixinhas/contas/cartões/moedas (painel pAno com anoSubTab "metas"); Mês = Mês, Ano e Fixos */
-  const cur=inWal()?"pWal":t==="pOrc"||t==="pAno"?"pMes":t;
+  const cur=inWal()&&t!=="pCards"?"pMes":t==="pOrc"||t==="pAno"?"pMes":t;
   [...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).forEach((b,i)=>{
     if(b.dataset.tab===cur){b.setAttribute("aria-current","page");document.querySelector("nav.tabs").style.setProperty("--ti",i)}
     else b.removeAttribute("aria-current");
@@ -6509,7 +6520,7 @@ document.addEventListener("keydown",e=>{
 });
 document.querySelectorAll(".tab").forEach((b,i)=>{b.title=`${b.textContent.trim()} (${i+1})`});$("tabAv").title="Você: perfil e ajustes (5)";
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{if(b.id==="tabMore"){drawerOpen(true);return}if(b.dataset.tab==="pCards")selCard=null;go(b.dataset.tab)});
-$("backBtn").onclick=()=>{if(tab==="pFx"){navGo("metas");return}if(tab==="pOrc"){go("pMes");return}if(tab==="pCards"&&!selCard){go("pWal");return}selCard=null;go(backTo==="pMes"||backTo==="pHome"?backTo:"pCards")};
+$("backBtn").onclick=()=>{if(tab==="pFx"){navGo("metas");return}if(tab==="pOrc"){go("pMes");return}if(tab==="pCards"&&!selCard){go("pHome");return}selCard=null;go(backTo==="pMes"||backTo==="pHome"?backTo:"pCards")};
 $("prev").onclick=()=>{const fy=firstYM(),fY=firstYear();if(tab==="pAno"){if(year<=fY)return;year--;view=year+view.slice(4);if(view<fy)view=fy}else{if(view<=fy)return;view=shiftYM(view,-1)}render();slideIn($(tab),-1)};
 $("next").onclick=()=>{if(tab==="pAno"){year++;view=year+view.slice(4)}else view=shiftYM(view,1);render();slideIn($(tab),1)};
 
@@ -6561,7 +6572,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="bnSave"){saveBen();return}
   if(t.id==="bnDel"){if(benEditing!=="del"){benEditing="del";renderCards();return}
     const cur={...(cfg.cards||{})};delete cur[selCard];benEditing=false;await saveCfg({cards:cur});selCard=null;toast("Cartão apagado");go("pCards");return}
-  if(t.closest("#acEdit")){if(tab!=="pHome"&&!inWal())go(IS_WIDE.matches?"pHome":"pWal");const A=accts();acDraft=A.length?A.map(a=>({...a,free:!!a.name&&!ALL_BANKS().includes(a.name)})):[{name:ALL_BANKS()[0],cents:0}];rr();setTimeout(()=>$("acv_0")?.focus(),30);return}
+  if(t.closest("#acEdit")){if(tab!=="pHome"&&tab!=="pMes"&&!inWal())go(IS_WIDE.matches?"pHome":"pMes");const A=accts();acDraft=A.length?A.map(a=>({...a,free:!!a.name&&!ALL_BANKS().includes(a.name)})):[{name:ALL_BANKS()[0],cents:0}];rr();setTimeout(()=>$("acv_0")?.focus(),30);return}
   const acb=t.closest("[data-acbank]"); if(acb){acReadDraft();acDraft=acDraft.filter(a=>a.name||a.cents);acDraft.push({name:acb.dataset.acbank,cents:0});rr();setTimeout(()=>$("acv_"+(acDraft.length-1))?.focus(),30);return}
   if(t.id==="acAdd"){acReadDraft();acDraft.push({name:ALL_BANKS().find(c=>!acDraft.some(a=>a.name===c))||"",cents:0});rr();setTimeout(()=>$("acn_"+(acDraft.length-1))?.focus(),30);return}
   const acd=t.closest("[data-acdel]"); if(acd){acReadDraft();acDraft.splice(+acd.dataset.acdel,1);rr();return}
