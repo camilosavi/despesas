@@ -2046,6 +2046,8 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 .mfcats .mfp small{margin-left:6px;opacity:.7;font-size:.78em;font-weight:600}
 .bolokids{padding-left:18px;border-left:2px solid var(--line);margin-left:20px}
 .item.bolo .m b{font-weight:700}
+#planSeg{display:grid!important;grid-template-columns:repeat(3,1fr);margin:0 0 var(--g-gap)}
+#planSeg button{min-width:0;white-space:nowrap;padding-inline:4px}
 </style>
 
 <div class="wrap">
@@ -3008,7 +3010,7 @@ function header0(){
   const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&["subs","debts","metas"].includes(navSel))||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
-  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Metas",debts:"Dívidas",subs:"Assinaturas",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
+  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Planejamento",debts:"Planejamento",subs:"Planejamento",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=tab==="pHome"?homeCardName():titles[tab]||"";$("ptitle").classList.toggle("hcedit",tab==="pHome"&&!IS_WIDE.matches);
   const sub=(tab==="pCards"&&!!selCard)||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
@@ -3046,7 +3048,7 @@ function header0(){
   if(wal){
     const cash=hasAcc()?accBal():0, B=saves(), kR=B.reduce((x,b)=>x+svBrl(b),0), kE=B.reduce((x,b)=>x+svEur(b),0), kU=B.reduce((x,b)=>x+svUsd(b),0);
     const fo=[kE?E(kE):"",kU?M(kU,"USD"):""].filter(Boolean).join(" + ")||"—";
-    $("ptitle").textContent=({metas:"Metas",debts:"Dívidas",subs:"Assinaturas"})[navSel]||"Contas";
+    $("ptitle").textContent=({metas:"Planejamento",debts:"Planejamento",subs:"Planejamento"})[navSel]||"Contas";
     $("bigLabel").textContent=hasAcc()?"Nas contas":"Guardado em real";
     setBig("R$",hasAcc()?cash:kR);
     $("s1l").textContent=hasAcc()?"Guardado em real":"Em euro/dólar";$("s1").textContent=hasAcc()?R(kR):fo;
@@ -3512,7 +3514,9 @@ function recapCard(){
 }
 /* ---------- Visão geral (PC) — novo painel (29/10/2026) ---------- */
 const NAVS=[["pHome","Visão geral","M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],["pMes","Transações","M4 7h13M4 12h16M4 17h10"],["pCards","Cartões","M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18"],["pWal","Contas","M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1M3 7h18v13H3zM16 13.5h2.5"]];
-const NAVP=[["metas","Metas","M12 3v18M12 3l6 3-6 3"],["subs","Assinaturas","M4 12a8 8 0 1 0 3-6.2M4 4v4h4"],["debts","Dívidas","M12 3v18M17 7H9.5a2.5 2.5 0 0 0 0 5h5a2.5 2.5 0 0 1 0 5H7"]];
+/* Metas, Assinaturas e Dívidas numa entrada só (05/11/2026, pedido dele): "Planejamento", com seletor no topo; por dentro cada uma segue com seu navSel */
+const NAVP=[["plan","Planejamento","M12 3v18M12 3l6 3-6 3"]];
+const PLAN=[["metas","Metas"],["subs","Assinaturas"],["debts","Dívidas"]], isPlan=k=>PLAN.some(x=>x[0]===k);
 const NAVA=[["rel","Relatórios","M5 20V10M12 20V4M19 20v-7"]];
 function sidebarHtml(){
   const cur=navCur();
@@ -3520,8 +3524,10 @@ function sidebarHtml(){
   return `<span class="sbbrand"><img src="tostao-logo.png" alt="Um Tostão"></span><div class="sbgrp"><small>Menu principal</small>${NAVS.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Planejamento</small>${NAVP.map(x=>b(...x)).join("")}</div><div class="sbgrp"><small>Análises</small>${NAVA.map(x=>b(...x)).join("")}</div><button class="sb sbmin-b" data-sbmin title="Recolher ou abrir o menu" aria-label="Recolher ou abrir o menu"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg><span>Recolher menu</span></button>`;
 }
 let navSel=null;
-const navCur=()=>navSel||(tab==="pMe"?"pMe":tab==="pHome"?"pHome":tab==="pMes"||tab==="pOrc"?"pMes":tab==="pFx"?"metas":tab==="pCards"?"pCards":tab==="pAno"&&anoSubTab==="metas"?"pWal":tab==="pAno"?"rel":"pHome");
+const navCur=()=>isPlan(navSel)?"plan":navSel||(tab==="pMe"?"pMe":tab==="pHome"?"pHome":tab==="pMes"||tab==="pOrc"?"pMes":tab==="pFx"?"plan":tab==="pCards"?"pCards":tab==="pAno"&&anoSubTab==="metas"?"pWal":tab==="pAno"?"rel":"pHome");
 function navGo(k){
+  if(k==="plan")k=lsGet("despesas.planTab")||"metas";
+  if(isPlan(k))lsSet("despesas.planTab",k);
   navSel=null;
   if(k==="pMe"){go("pMe");return}
   if(k==="pCards")selCard=null;
@@ -6120,7 +6126,11 @@ function render(){
   if((tab==="pAno"&&anoSubTab!=="metas")||tab==="pMe") anoFold(tab);
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();nwSnap();sbMark();dcKeyAll();
-  {const P=$("pAno");if(P){const k=navSel||(tab==="pAno"&&anoSubTab==="metas"?"pWal":"");const f={pWal:"C",metas:"M",debts:"D",subs:"S"}[k];if(f&&tab==="pAno")P.dataset.f=f;else delete P.dataset.f;if(tab==="pAno"&&navSel)P.dataset.sect=navSel;else delete P.dataset.sect}}
+  {const P=$("pAno");if(P){const k=navSel||(tab==="pAno"&&anoSubTab==="metas"?"pWal":"");const f={pWal:"C",metas:"M",debts:"D",subs:"S"}[k];if(f&&tab==="pAno")P.dataset.f=f;else delete P.dataset.f;if(tab==="pAno"&&navSel)P.dataset.sect=navSel;else delete P.dataset.sect;
+    const ps=P.querySelector("#planSeg");
+    if(tab==="pAno"&&isPlan(navSel)){const h=`<div class="seg mseg" id="planSeg" role="group" aria-label="Planejamento">${PLAN.map(([k,n])=>`<button type="button" data-planseg="${k}" aria-pressed="${navSel===k}">${n}</button>`).join("")}</div>`;
+      if(!ps)P.insertAdjacentHTML("afterbegin",h);else if(ps.outerHTML!==h)ps.outerHTML=h}
+    else if(ps)ps.remove()}}
 }
 /* ---------- Patrimônio (29/10/2026): em R$ = contas + guardado − dívidas − limite usado dos cartões. € e US$ ficam à parte, sem converter.
    cfg.nw = {"AAAA-MM": centavos}: o app regrava o mês atual quando o valor muda, então o valor do último dia vira o fechamento do mês. ---------- */
@@ -6446,6 +6456,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="scrim"&&$("catSheet")&&!$("catSheet").hidden){$("catSheet").hidden=true;return}
   if(t.closest("[data-close]")||t.id==="scrim"){closeSheets();return}
   {const tg=t.closest("[data-oftog]");if(tg){const k=+tg.dataset.oftog;ofOpenAcc.has(k)?ofOpenAcc.delete(k):ofOpenAcc.add(k);render();return}}
+  {const pg=t.closest("[data-planseg]");if(pg){navGo(pg.dataset.planseg);return}}
   {const bo=t.closest("[data-bolo]");if(bo){const k=bo.dataset.bolo;boloOpen.has(k)?boloOpen.delete(k):boloOpen.add(k);render();return}}
   {const fe=t.closest("[data-fatexp]");if(fe){const k=fe.dataset.fatexp;fatOpen.has(k)?fatOpen.delete(k):fatOpen.add(k);render();return}}
   if(t.id==="ofAll"){ofAutoAll(t);return}
