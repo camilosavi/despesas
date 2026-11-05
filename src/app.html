@@ -5613,7 +5613,7 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(false)+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP gQ">${ppSection()}</div></div>
+      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP gQ">${ppSection()}</div></div>
       <div class="ano-col-side"><div class="gM">${fxRowSection()}</div><div class="gC gP">${divSection()}</div></div>
     </div>`;
   } else if(anoSubTab === "ano"){
