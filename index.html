@@ -3899,9 +3899,10 @@ function divSection(){
     ${d.miss?`<div style="padding:0 0 12px 50px"><a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi! Sua parte de ${d.name}: ${R(d.per)}${d.parcN>1?` (ou ${d.parcN}× ${R(d.unit)})`:""}. Pode mandar no Pix. Valeu!`)}">Cobrar no WhatsApp</a></div>`:""}</div>`).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
 }
-let divSel=[], divNew=false;
+let divSel=[], divNew=false, divPayer="";
 function divPeopleDraw(){const el=$("divPeople");if(!el)return;const L=ppList();
   el.innerHTML=L.map(p=>`<button type="button" class="chip" data-divp="${esc(p.id)}" aria-pressed="${divSel.includes(p.id)}">${esc(ppFirst(p.name))}</button>`).join("")+
+    (divSel.length?`<span class="lbl" style="flex:1 1 100%;margin-top:4px">Quem pagou</span><button type="button" class="chip" data-divpay="" aria-pressed="${!divPayer}">Eu</button>${divSel.map(id=>{const q=L.find(z=>z.id===id);return q?`<button type="button" class="chip" data-divpay="${esc(id)}" aria-pressed="${divPayer===id}">${esc(ppFirst(q.name))}</button>`:""}).join("")}`:"")+
     (divNew?`<span class="ppin" style="flex:1 1 100%"><input id="divNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" enterkeyhint="done" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="divNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="divNewOn">+ Pessoa</button>`);
   if(divSel.length){const n=$("divN");if(n){const t=Math.max(divSel.length+1,parseInt((n.value||"").replace(/\D/g,""),10)||0);n.value=t}}}
 function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
@@ -5242,10 +5243,13 @@ const ppList=()=>Array.isArray(cfg.pp)?cfg.pp:[];
 /* Divisão por pessoa (05/11/2026): lançamento com x.divide={com:[{pid}]} gera, na conta de cada pessoa, a parte dela (total ÷ (pessoas + você)).
    Nada é gravado em cfg.pp: as linhas "derivadas" (derived) saem do próprio lançamento, então editar/apagar o lançamento acerta a conta. */
 const divCom=x=>x&&x.divide&&Array.isArray(x.divide.com)?x.divide.com.filter(c=>c&&c.pid):[];
-function divParts(x){const C=divCom(x);if(!C.length)return [];const n=x.div>=2?x.div:C.length+1, each=Math.floor(x.cents/n);
+function divParts(x){const C=divCom(x);if(!C.length||x.divide.pagou)return [];const n=x.div>=2?x.div:C.length+1, each=Math.floor(x.cents/n);
   return C.map((c,i)=>({pid:c.pid,c:c.cents>=0&&c.cents!=null?c.cents:each}))}
-const ppDerived=p=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="desp"&&divCom(x).some(c=>c.pid===p.id)).map(x=>{const q=divParts(x).find(y=>y.pid===p.id);
-  return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:q?q.c:0,k:"d",t:cleanDesc(x),derived:true,x:x.id}}).filter(e=>e.c>0);
+/* "pagou" = outra pessoa pagou a despesa inteira: o lançamento guarda só a parte dele (cents) e ele deve isso a ela (c < 0) */
+const ppDerived=p=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="desp"&&divCom(x).some(c=>c.pid===p.id)&&(!x.divide.pagou||x.divide.pagou===p.id)).map(x=>{
+  if(x.divide.pagou)return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:-(x.cents||0),k:"d",t:cleanDesc(x),derived:true,x:x.id};
+  const q=divParts(x).find(y=>y.pid===p.id);
+  return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:q?q.c:0,k:"d",t:cleanDesc(x),derived:true,x:x.id}}).filter(e=>e.c!==0);
 const ppAll=p=>[...(p.e||[]),...ppDerived(p)];
 const ppBal=p=>ppAll(p).reduce((t,e)=>t+(e.c||0),0);
 const ppFirst=n=>titleCase((n||"").trim().split(/\s+/)[0]||"");
@@ -6539,8 +6543,9 @@ document.addEventListener("click",async e=>{const t=e.target.closest?e.target:nu
     if(ppList().some(p=>fold(p.name)===fold(n))){toast("Já existe alguém com esse nome.");return}
     const id=ppNewId();try{await saveCfg({pp:[...ppList(),{id,name:n,e:[]}]})}catch(er){toast("Não deu para salvar. Tente de novo.");return}
     divNew=false;divSel=[...divSel,id];divPeopleDraw();divHint();return}
+  const pb=t.closest("[data-divpay]");if(pb){divPayer=pb.dataset.divpay;divPeopleDraw();return}
   const b=t.closest("[data-divp]");if(!b)return;
-  const id=b.dataset.divp;divSel=divSel.includes(id)?divSel.filter(q=>q!==id):[...divSel,id];
+  const id=b.dataset.divp;divSel=divSel.includes(id)?divSel.filter(q=>q!==id):[...divSel,id];if(!divSel.includes(divPayer))divPayer="";
   if(!divSel.length&&$("divN"))$("divN").value="";divPeopleDraw();divHint()});
 document.addEventListener("input",e=>{
   if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
@@ -6750,14 +6755,14 @@ function openSheet(x){
   closeSheets(true);
   editing=x||null;catTouched=!!x;rcpBlob=null;rcpDel=false;dupAck=null;mergeInto=null;shotAuto=null;shotImp=null;shotTs=0;serAck=null;
   const t=x?typeOf(x):form.type;
-  form=x?{type:t,cents:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||""}:{type:t,cents:0,acct:form.acct||"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
+  form=x?{type:t,cents:x.divide&&x.divide.pagou&&x.div>=2?x.cents*x.div:x.cents,cat:x.cat,pay:x.pay||"Pix",paid:isPaid(x),card:cardOf(x)||"",acct:x.acct||""}:{type:t,cents:0,acct:form.acct||"",cat:t==="desp"?"alim":CATS[t][0].k,pay:[...PAYS,...bens().map(b=>b.name)].includes(form.pay)?form.pay:"Pix",paid:true};
   $("sheetTitle").textContent=x?"Editar lançamento":"Novo lançamento";
   $("desc").value=x?x.desc||"":"";
   {const tg=x&&x.tags&&x.tags.length;$("tags").value=tg?x.tags.map(t=>"#"+t).join(" "):"";$("tags").hidden=!tg;$("tagOn").hidden=!!tg}
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divNew=false;divPeopleDraw();divHint();
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divPayer=(x&&x.divide&&x.divide.pagou)||"";divNew=false;divPeopleDraw();divHint();
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
@@ -6817,7 +6822,8 @@ $("sheet").addEventListener("submit",async e=>{
   /* o que você mesmo editou (nome, categoria) não é trocado por importação nem por mesclagem (05/11/2026) */
   if(editing){if((base.desc||"")!==(editing.desc||""))base.descEd=true;if(base.cat!==editing.cat)base.catEd=true}
   {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;const sel=divSel.filter(id=>ppList().some(p=>p.id===id));
-    if(isD&&sel.length){base.div=Math.max(dn,sel.length+1);base.divide={com:sel.map(pid=>({pid}))}}
+    if(isD&&sel.length){base.div=Math.max(dn,sel.length+1);base.divide={com:sel.map(pid=>({pid}))};
+      if(divPayer&&sel.includes(divPayer)){base.divide.pagou=divPayer;base.cents=Math.floor(form.cents/base.div);base.paid=true;base.paidAt=0}}
     else if(isD&&dn>=2){base.div=dn;if(editing&&editing.divide)base.divide=null}
     else{if(editing&&editing.div)base.div=0;if(editing&&editing.divide)base.divide=null}}
   if(!editing&&isD&&base.card){const b=billDate(base.card,base.date);if(b!==base.date){base.buy=base.date;base.date=b}}
