@@ -2578,7 +2578,9 @@ function amtMap(){
   const G=new Map();items.forEach(x=>{if(genFat(x)&&has.has(key(x))){const k=key(x);if(!G.has(k))G.set(k,[]);G.get(k).push(x)}});
   if(G.size){const base=new Map(), add=(k,v)=>base.set(k,(base.get(k)||0)+v);
     items.forEach(x=>{if(!cardOf(x)||genFat(x))return;const k=key(x);let ry=null;try{ry=rollYM(x)}catch(e){}
-      if(!ry){if(G.has(k))add(k,x.cents||0)}else{const k2=cardOf(x)+"|"+ry;if(G.has(k2)&&!rollGone(x,ry))add(k2,x.cents||0)}});
+      /* o item sempre desconta do valor do banco do mês dele, mesmo se a fatura não foi paga e ele rolou para a próxima: ele já conta lá (05/11/2026: sem isso o valor aparecia duas vezes) */
+      if(G.has(k))add(k,x.cents||0);
+      if(ry){const k2=cardOf(x)+"|"+ry;if(G.has(k2)&&!rollGone(x,ry))add(k2,x.cents||0)}});
     for(const [k,L] of G){const g=L.reduce((t,x)=>t+(x.cents||0),0), d=Math.max(0,g-(base.get(k)||0));L.forEach((x,i)=>M.set(x.id,i?0:d))}}
   items.forEach(x=>{if(genFat(x)&&!M.has(x.id))M.set(x.id,has.has(key(x))?0:(x.cents||0))});
   _amtFor=items;_amtMap=M;return M;
