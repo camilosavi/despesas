@@ -4079,8 +4079,8 @@ function subShare(){
   if(_shC&&_shC.i===items&&_shC.b===base&&_shC.p===cfg.pp)return _shC.v;
   const out={...base}, lo=shiftYM(curYM(),-4), pp=ppList(), seen=new Set();
   [...items].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).forEach(x=>{
-    if((x.date||"").slice(0,7)<lo||typeOf(x)!=="desp")return;const k=subOf(x);if(!k||seen.has(k))return;seen.add(k);
-    const C=divCom(x);if(!C.length||x.divide.pagou||out[k])return;
+    if((x.date||"").slice(0,7)<lo||typeOf(x)!=="desp")return;const k=subOf(x);if(!k||seen.has(k))return;
+    const C=divCom(x);if(!C.length||x.divide.pagou)return;seen.add(k);if(out[k])return;
     const n=x.div>=2?x.div:C.length+1, each=Math.round(x.cents/n), P=C.map(c=>{const q=pp.find(z=>z.id===c.pid);return q?{nm:q.name,c:c.cents>=0&&c.cents!=null?c.cents:each}:null}).filter(Boolean);
     if(P.length)out[k]={n:P.length,c:each,p:P}});
   _shC={i:items,b:base,p:cfg.pp,v:out};return out;
@@ -4147,7 +4147,7 @@ let subEdit=null, subMode="eq", subRows=[], subSel=[], subNewOn=false;
 const subPidOf=nm=>{const q=ppList().find(p=>nmSame(p.name,nm));return q?q.id:""};
 /* abre o editor da divisão com o que já está salvo */
 function subOpen(name){const sh=subShare()[name];subMode=sh&&Array.isArray(sh.p)&&sh.p.length&&new Set(sh.p.map(x=>x.c)).size>1?"each":"eq";subNewOn=false;
-  {const L=items.filter(x=>subOf(x)===name).sort((a,b)=>b.date.localeCompare(a.date)), dv=L[0]?divCom(L[0]).map(c=>c.pid):[];
+  {const L=items.filter(x=>subOf(x)===name&&divCom(x).length).sort((a,b)=>b.date.localeCompare(a.date)), dv=L[0]?divCom(L[0]).map(c=>c.pid):[];
    subSel=dv.length?dv:sh?shParts(sh).map(x=>subPidOf(x.nm)).filter(Boolean):[]}
   subRows=subMode==="each"?[...(sh.euC>0?[{nm:"Eu",c:sh.euC}]:[]),...sh.p.map(x=>({...x}))]:[{nm:"",c:0},{nm:"",c:0}]}
 function subReadRows(){subRows=subRows.map((r,i)=>({nm:($("subPn_"+i)?.value??r.nm).trim(),c:$("subPv_"+i)?digits($("subPv_"+i).value):r.c}))}
