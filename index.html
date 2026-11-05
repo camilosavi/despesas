@@ -5490,6 +5490,7 @@ function ppSection(){
   const rec=L.reduce((t,x)=>t+(x.b>0?x.b:0),0), pay=L.reduce((t,x)=>t+(x.b<0?-x.b:0),0);
   let h=`<section id="ppSec"><h2>Pessoas ${ppAddOn?"":`<button id="ppAdd">+ Pessoa</button>`}</h2>`;
   if(ppAddOn) h+=`<div class="card ppnew"><input id="ppName" maxlength="24" placeholder="Nome (ex.: Mãe)" autocomplete="off" enterkeyhint="done" aria-label="Nome da pessoa"><button type="button" class="btn primary" id="ppCreate">Criar</button><button type="button" class="btn soft" id="ppCancel">Cancelar</button></div>`;
+  if(ppAddOn){const N=ppPixNames();if(N.length)h+=`<div class="ppsug" style="margin:0 0 12px"><div class="hint" style="margin:0 0 6px">Quem te mandou Pix</div><div class="chips">${N.map(q=>`<button type="button" class="chip" data-ppsug="${esc(q.n)}">${esc(q.n)}</button>`).join("")}</div></div>`}
   if(!L.length) return h+(ppAddOn?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa para anotar o que ela te deve e o que você deve a ela.</div>`)+`</section>`;
   h+=`<div class="card"><div class="ppsum"><div><small>A receber</small><b class="${rec?"pos":""}">${R(rec)}</b></div><div><small>A pagar</small><b class="${pay?"neg":""}">${R(pay)}</b></div></div>`+
     L.map(({p,b})=>`<button type="button" class="ppr" data-pp="${esc(p.id)}"><span class="ppav" style="--h:${ppHue(p.name)}">${esc((p.name.trim()[0]||"?").toUpperCase())}</span><span class="ppn"><b>${esc(ppLabel(p))}</b><small>${b?ppState(b):"quitado ✓"}${ppAll(p).length&&b?` · ${ppAll(p).length} ${ppAll(p).length===1?"lançamento":"lançamentos"}`:""}</small></span><span class="ppv ${b>0?"pos":b<0?"neg":""}">${b?R(Math.abs(b)):""}</span></button>`).join("")+`</div>`;
@@ -5532,6 +5533,11 @@ async function ppEntrySave(){
   const ok=await ppSave(ppList().map(q=>q.id!==p.id?q:{...q,e:ppEd?(q.e||[]).map(e=>e.id===ppEd?ent:e):[...(q.e||[]),ent]}),"");
   if(ok){const was=!!ppEd;ppEd=null;ppSheet({kind:ppKind,v:"",d:today(),t:""});toast(was?"Salvo":"Lançado",true)}
 }
+/* sugestões de nome (05/11/2026): quem te mandou Pix e ainda não está em Pessoas; só preenche o campo, a pessoa só nasce no "Criar" */
+function ppPixNames(){const seen=new Map(), L=ppList(), me=myName();
+  items.forEach(x=>{if(typeOf(x)!=="rec")return;const m=/^Pix de (.+)$/i.exec(x.desc||"")||/ · (.+)$/.exec(x.desc||"");if(!m)return;const n=titleCase(m[1].trim());
+    if(n.length<3||L.some(q=>nmSame(n,q.name))||(me&&nmSame(n,me)))return;const k=fold(n), o=seen.get(k);seen.set(k,{n,c:(o?o.c:0)+1,d:Math.max(o?o.d:"",x.date||"")})});
+  return [...seen.values()].sort((a,b)=>b.d>a.d?1:b.d<a.d?-1:b.c-a.c).slice(0,10)}
 async function ppCreate(){
   const name=($("ppName")?.value||"").trim();if(!name){toast("Diga o nome da pessoa.");return}
   if(ppList().some(p=>fold(p.name)===fold(name))){toast("Já existe alguém com esse nome.");return}
@@ -5579,6 +5585,7 @@ document.addEventListener("click",async e=>{
   const t=e.target;if(!t.closest)return;let b;
   if((b=t.closest("[data-subpp]"))){subToPP(b.dataset.subpp);return}
   if(t.closest("#ppAdd")){ppAddOn=true;renderAno();setTimeout(()=>$("ppName")?.focus(),30);return}
+  if((b=t.closest("[data-ppsug]"))){const i=$("ppName");if(i){i.value=b.dataset.ppsug;i.focus()}return}
   if(t.closest("#ppCancel")){ppAddOn=false;renderAno();return}
   if(t.closest("#ppCreate")){ppCreate();return}
   if((b=t.closest("[data-pp]"))){ppId=b.dataset.pp;ppEd=null;ppKind="ow";ppSheet();return}
