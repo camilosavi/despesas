@@ -4294,7 +4294,7 @@ function subSection(){
   return `<section id="subSec"><h2>Assinaturas <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">${[...L.filter(r=>!r.off),...L.filter(r=>r.off)].map(row).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
 }
-/* nome na descrição (Wellhub Maressa Pimenta): liga sozinho à pessoa de Pessoas pelo nome; o seu nome = você; quem já tem divisão/escolha não muda */
+/* nome na descrição (Wellhub Fulano Silva): liga sozinho à pessoa de Pessoas pelo nome; o seu nome = você; quem já tem divisão/escolha não muda */
 function chpName(x){const t=fold(cleanDesc(x)), m=SUBN.find(([re])=>re.test(t));if(!m)return null;
   const rest=t.replace(m[0],"").replace(/\s+/g," ").trim();if(rest.length<2)return null;
   if(myName()&&nmSame(rest,myName()))return "me";const q=ppList().find(z=>nmSame(rest,z.name));return q?q.id:null}
