@@ -2075,8 +2075,8 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
     <div class="big" id="big"><small>R$</small>0,00</div></div>
     <div class="hring" id="hRing" hidden aria-hidden="true"><svg viewBox="0 0 84 84"><circle class="bg" cx="42" cy="42" r="36"/><circle class="fg" cx="42" cy="42" r="36" stroke-dasharray="226.2" stroke-dashoffset="226.2"/></svg><span><b id="hRingPct">0%</b><small>gasto</small></span></div></div>
     <div class="split">
-      <div><span id="s1l">Receitas</span><b class="num" id="s1">R$ 0,00</b></div>
-      <div><span id="s2l">Despesas</span><b class="num" id="s2">R$ 0,00</b></div>
+      <div><span id="s1l">Entrou</span><b class="num" id="s1">R$ 0,00</b></div>
+      <div><span id="s2l">Gastou</span><b class="num" id="s2">R$ 0,00</b></div>
     </div>
     <div class="hbar" id="hBar" hidden></div>
     <div class="prog" id="hProg" hidden><i></i></div>
@@ -2217,8 +2217,8 @@ const pwaDownloads={save:async({filename,data})=>{
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);return{status:"saved"};
 }};
 const CATS={
- desp:[{k:"cartao",n:"Faturas de cartão",c:"var(--c5)"},{k:"interc",n:"Intercâmbio",c:"var(--c3)"},{k:"euro",n:"Câmbio (€/US$)",c:"var(--euro)"},{k:"cidad",n:"Cidadania",c:"var(--c6)"},{k:"alim",n:"Alimentação",c:"var(--c1)"},{k:"merc",n:"Mercado",c:"var(--c2)"},{k:"transp",n:"Transporte",c:"var(--c7)"},{k:"casa",n:"Casa e contas",c:"var(--c7)"},{k:"lazer",n:"Lazer",c:"var(--c4)"},{k:"esporte",n:"Esporte",c:"var(--c1)"},{k:"saude",n:"Saúde",c:"var(--c5)"},{k:"compras",n:"Compras",c:"var(--c6)"},{k:"educ",n:"Educação",c:"var(--c3)"},{k:"assin",n:"Assinaturas",c:"var(--c4)"},{k:"outros",n:"Outros",c:"var(--c8)"}],
- rec:[{k:"sal",n:"Salário",c:"var(--c1)"},{k:"d13",n:"13º salário",c:"var(--c4)"},{k:"extra",n:"Aulas / bicos",c:"var(--c7)"},{k:"caixa",n:"Saldo anterior",c:"var(--c8)"},{k:"rend",n:"Rendimentos",c:"var(--c3)"},{k:"divid",n:"Divisões",c:"var(--c7)"},{k:"rout",n:"Outras receitas",c:"var(--c8)"}]
+ desp:[{k:"cartao",n:"Faturas de cartão",c:"var(--c5)"},{k:"euro",n:"Câmbio (€/US$)",c:"var(--euro)"},{k:"alim",n:"Alimentação",c:"var(--c1)"},{k:"merc",n:"Mercado",c:"var(--c2)"},{k:"transp",n:"Transporte",c:"var(--c7)"},{k:"casa",n:"Casa e contas",c:"var(--c7)"},{k:"lazer",n:"Lazer",c:"var(--c4)"},{k:"saude",n:"Saúde",c:"var(--c5)"},{k:"compras",n:"Compras",c:"var(--c6)"},{k:"educ",n:"Educação",c:"var(--c3)"},{k:"assin",n:"Assinaturas",c:"var(--c4)"},{k:"outros",n:"Outros",c:"var(--c8)"}],
+ rec:[{k:"sal",n:"Salário",c:"var(--c1)"},{k:"d13",n:"13º salário",c:"var(--c4)"},{k:"extra",n:"Extras",c:"var(--c7)"},{k:"caixa",n:"Saldo anterior",c:"var(--c8)"},{k:"rend",n:"Rendimentos",c:"var(--c3)"},{k:"divid",n:"Divisões",c:"var(--c7)"},{k:"rout",n:"Outras",c:"var(--c8)"}]
 };
 const ICO={
  cartao:'<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18M7 15h4"/>',
@@ -2260,6 +2260,37 @@ let _dm1=false,_itemsIn=false;
 let _cp1=false, _d13=false;
 /* 13º separado do salário (30/10/2026, pedido dele: "holerite de 13 não entre como salário fixo, pq desbalanceia"):
    receitas de 13º lançadas como Salário viram a categoria própria d13; holerite de 13º guardado como folha (k "sal") vira d131/d132 */
+/* Categorias básicas (05/11/2026): Esporte → Lazer; Intercâmbio e Cidadania → Outros (o nome vira tag). Uma vez só (cfg.catB), com cópia
+   do que mudou em despesas.antesCat1 para desfazer na tela Você → Categorias. */
+let _catB=false;
+async function migrateCat1(){
+  if(_catB||!cfgLoaded||!_itemsIn||cfg.catB) return;_catB=true;
+  const MP={esporte:["lazer","esporte"],interc:["outros","intercâmbio"],cidad:["outros","cidadania"]};
+  try{
+    const undo={};
+    for(const x of items){const m=MP[x.cat];if(!m)continue;undo[x.id]={cat:x.cat,tags:x.tags||null};
+      const tg=[...(x.tags||[])];if(!tg.includes(m[1]))tg.push(m[1]);
+      await store.items.update(x.id,{cat:m[0],tags:tg.slice(0,5)})}
+    if(Object.keys(undo).length)lsSet("despesas.antesCat1",JSON.stringify(undo));
+    const patch={catB:"v1"};
+    const B={...(cfg.budgets||{})};let bc=false;
+    for(const [o,m] of Object.entries(MP)){if(B[o]!=null){B[m[0]]=(B[m[0]]||0)+B[o];delete B[o];bc=true}}
+    if(bc)patch.budgets=B;
+    const L={...(cfg.catLearn||{})};let lc=false;
+    for(const k of Object.keys(L)){if(MP[L[k]]){L[k]=MP[L[k]][0];lc=true}}
+    if(lc)patch.catLearn=L;
+    await saveCfg(patch);
+  }catch(e){_catB=false}
+}
+function catUndoHtml(){
+  let n=0;try{n=Object.keys(JSON.parse(lsGet("despesas.antesCat1")||"{}")).length}catch(e){}
+  return n?`<section><div class="card rate"><div class="hint">${n} ${n===1?"lançamento mudou":"lançamentos mudaram"} de categoria (Esporte → Lazer, Intercâmbio e Cidadania → Outros).</div><button class="btn soft" id="catUndo">Desfazer essa mudança</button></div></section>`:"";
+}
+async function undoCat1(){
+  let U={};try{U=JSON.parse(lsGet("despesas.antesCat1")||"{}")}catch(e){}
+  for(const [id,u] of Object.entries(U)){if(items.some(x=>x.id===id))await store.items.update(id,{cat:u.cat,tags:u.tags||[]})}
+  lsSet("despesas.antesCat1","");await saveCfg({catB:"off"});toast("Categorias antigas de volta",true);render();
+}
 async function migrate13(){
   if(_d13||!cfgLoaded||!_itemsIn||cfg.d13m==="v1") return;_d13=true;
   try{
@@ -2321,15 +2352,16 @@ const benNext=b=>{if(!b.day)return "";const ym=curYM(), d=`${ym}-${pad(Math.min(
 const isPaid=x=>typeOf(x)==="rec"||x.paid!==false;
 /* categorias de despesa da pessoa: cfg.cats=[{k:"u_…",n,c}] (criadas) e cfg.catHide=[k] (padrão apagadas).
    Faturas de cartão, Câmbio e Outros não saem (o app depende delas). Apagar move os lançamentos para Outros. */
+/* categorias do sistema (fatura, câmbio, saldo anterior, divisões): existem para o app, mas não aparecem para escolher (base nova, 05/11/2026) */
+const CAT_SYS=["cartao","euro","caixa","divid"], catsPick=t=>CATS[t].filter(c=>!CAT_SYS.includes(c.k));
 const BASE_REC=CATS.rec.slice(), BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_LOCK_REC=["sal","d13","divid","rout"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
 function applyCats(){
-  const hide=Array.isArray(cfg.catHide)?cfg.catHide:[], mine=Array.isArray(cfg.cats)?cfg.cats:[];
-  const ed=cfg.catEdit&&typeof cfg.catEdit==="object"?cfg.catEdit:{}, ap=c=>ed[c.k]?{...c,...ed[c.k]}:c;
-  CATS.desp=[...BASE_DESP.filter(c=>c.k!=="outros"&&!hide.includes(c.k)),...mine,BASE_DESP.find(c=>c.k==="outros")].map(ap);
+  const mine=Array.isArray(cfg.cats)?cfg.cats:[];
+  const ed=cfg.catEdit&&typeof cfg.catEdit==="object"?cfg.catEdit:{}, ap=c=>/^ur?_/.test(c.k)&&ed[c.k]?{...c,...ed[c.k]}:c;
+  CATS.desp=[...BASE_DESP.filter(c=>c.k!=="outros"),...mine,BASE_DESP.find(c=>c.k==="outros")].map(ap);
   /* receitas: as padrão ficam; as criadas (cfg.catsRec, chave "ur_…") entram antes de "Outras receitas" */
   const mr=Array.isArray(cfg.catsRec)?cfg.catsRec:[];
-  const hr=Array.isArray(cfg.catHideRec)?cfg.catHideRec:[];
-  CATS.rec=[...BASE_REC.filter(c=>c.k!=="rout"&&!hr.includes(c.k)),...mr,BASE_REC.find(c=>c.k==="rout")].map(ap);
+  CATS.rec=[...BASE_REC.filter(c=>c.k!=="rout"),...mr,BASE_REC.find(c=>c.k==="rout")].map(ap);
 }
 async function addCat(name,type){
   name=(name||"").trim().replace(/\s+/g," ").slice(0,24);if(!name){toast("Digite o nome da categoria.");return null}
@@ -2339,12 +2371,11 @@ async function addCat(name,type){
     await saveCfg({catsRec:[...mr,c]});applyCats();return c.k;
   }
   const ex=CATS.desp.find(c=>fold(c.n)===fold(name));if(ex){toast("Essa categoria já existe.");return ex.k}
-  const hb=BASE_DESP.find(c=>fold(c.n)===fold(name));
-  if(hb){await saveCfg({catHide:(cfg.catHide||[]).filter(k=>k!==hb.k)});applyCats();return hb.k}
   const mine=Array.isArray(cfg.cats)?cfg.cats:[], c={k:"u_"+Date.now().toString(36),n:name,c:CAT_COLS[mine.length%CAT_COLS.length]};
   await saveCfg({cats:[...mine,c]});applyCats();return c.k;
 }
 async function delCat(k){
+  if(!/^ur?_/.test(k)) return;
   if(k.startsWith("ur_")||(BASE_REC.some(c=>c.k===k)&&!CAT_LOCK_REC.includes(k))){
     const c=catOf(k,"rec"), L=items.filter(x=>x.cat===k);
     if(!confirm(`Apagar a categoria “${c.n}”?${L.length?` ${L.length} ${L.length===1?"lançamento vai":"lançamentos vão"} para Outras receitas.`:""}`)) return;
@@ -2375,7 +2406,9 @@ async function catEdSave(){
   if(!n){toast("Digite o nome da categoria.");return}
   const dup=(t==="rec"?CATS.rec:CATS.desp).find(c=>c.k!==k&&fold(c.n)===fold(n));if(dup){toast("Já existe uma categoria com esse nome.");return}
   await saveCfg({catEdit:{...(cfg.catEdit||{}),[k]:{n,c:col}}});catEd=null;applyCats();toast("Categoria salva",true);render()}
-const catOf=(k,t)=>(CATS[t]||CATS.desp).find(c=>c.k===k)||CATS.desp.find(c=>c.k===k)||CATS.rec.find(c=>c.k===k)||(k&&k.startsWith("u_")?{k:"outros",n:"Outros",c:"var(--c8)"}:BASE_DESP.find(c=>c.k===k))||{k,n:"Outros",c:"var(--c8)"};
+/* categorias antigas: só para mostrar o nome de quem ainda tem uma (ex.: depois de desfazer a migração); não aparecem para escolher */
+const LEGACY_CATS=[{k:"interc",n:"Intercâmbio",c:"var(--c3)"},{k:"cidad",n:"Cidadania",c:"var(--c6)"},{k:"esporte",n:"Esporte",c:"var(--c1)"}];
+const catOf=(k,t)=>(CATS[t]||CATS.desp).find(c=>c.k===k)||CATS.desp.find(c=>c.k===k)||CATS.rec.find(c=>c.k===k)||(k&&k.startsWith("u_")?{k:"outros",n:"Outros",c:"var(--c8)"}:BASE_DESP.find(c=>c.k===k))||LEGACY_CATS.find(c=>c.k===k)||{k,n:"Outros",c:"var(--c8)"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const brl=c=>(c/100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -2458,7 +2491,7 @@ async function initStore(){
     }
   }catch(e){}
   let loaded=0;
-  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1();migrate13()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;render();if(first)animIn();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();migrate13();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
+  store.subscribe(a=>{items=a;loaded|=1;_itemsIn=true;render();migrateDue1();migrateCredPaid1();migrate13();migrateCat1()},c=>{const first=!cfgLoaded;cfg={...(c||{})};cfgLoaded=true;render();if(first)animIn();migrateSave1();migrateBankCol1();migrateBen1();migrateDue1();migrateCredPaid1();migrate13();migrateCat1();if(first)setTimeout(ofAuto,3000)},a=>{fx=a;loaded|=4;render()});
   note(store.synced?"Salvo na sua conta Claude — igual no iPhone e no computador.":PWA?"Salvo neste iPhone. Faça um backup de vez em quando.":"Salvo só neste navegador.");
   if(PWA){
     try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -2996,9 +3029,9 @@ function header0(){
     const open=acc?accFlow(ym).out:arr.filter(x=>typeOf(x)==="desp"&&!isPaid(x)).reduce((s,x)=>s+amt(x),0);
     $("bigLabel").textContent=acc?`Na conta hoje`:`Saldo de ${mn}`;
     setBig("R$",acc?accBal():rec-desp);
-    if(acc){$("s1l").textContent="Fim de "+mn;$("s1").textContent=R(endBal(ym))}
+    if(acc){$("s1l").textContent="Fim do mês";$("s1").textContent=R(endBal(ym))}
     else{$("s1l").textContent="Entrou";$("s1").textContent=R(rec)}
-    $("s2l").textContent="Falta pagar";$("s2").textContent=R(open);
+    $("s2l").textContent="A pagar";$("s2").textContent=R(open);
     /* novo app (out/2026): no celular, embaixo do "Na conta hoje" vai a barra do mês (pago / a pagar / entrou) */
     if(!IS_WIDE.matches){
       const paidS=arr.filter(x=>typeOf(x)==="desp"&&isPaid(x)&&!benOf(x)).reduce((s,x)=>s+amt(x),0), virt=salVirt(ym).reduce((s,x)=>s+x.cents,0);
@@ -3063,10 +3096,10 @@ function header0(){
   const arr=isYear?items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=firstYM()):inMonth(view);
   const rec=sumT(arr,"rec"),desp=sumT(arr,"desp"),chain=!isYear&&view>=curYM(),saldo=chain?endBal(view):rec-desp;
   const vmn=monthLabel(view).split(" ")[0].toLowerCase();
-  $("bigLabel").textContent=isYear?"Saldo do ano":chain?(hasAcc()?`Na conta no fim de ${vmn}`:`Saldo no fim de ${vmn}`):"Saldo do mês";
+  $("bigLabel").textContent=isYear?"Saldo do ano":chain?`Fim do mês · ${vmn}`:"Saldo do mês";
   setBig("R$",saldo);
-  $("s1l").textContent="Receitas";$("s1").textContent=R(rec);
-  $("s2l").textContent="Despesas";$("s2").textContent=R(desp);
+  $("s1l").textContent="Entrou";$("s1").textContent=R(rec);
+  $("s2l").textContent="Gastou";$("s2").textContent=R(desp);
   const parts=[];
   if(!isYear){
     /* banco limpo (out/2026): "na conta hoje", "vem de" e "a pagar" já estão no começo da linha do tempo; aqui fica uma frase só */
@@ -3084,11 +3117,11 @@ function header0(){
     const sob=rec-desp;
     $("bigLabel").textContent=`Gastou em ${vmn}`;setBig("R$",desp);
     $("s1l").textContent="Entrou";$("s1").textContent=R(rec);
-    $("s2l").textContent=chain&&hasAcc()?"Na conta no fim":"Sobra";$("s2").textContent=R(chain&&hasAcc()?saldo:sob);
+    $("s2l").textContent=chain&&hasAcc()?"Fim do mês":"Sobra";$("s2").textContent=R(chain&&hasAcc()?saldo:sob);
   } else {
     const cur=curYM(), M=[0,1,2,3,4,5].map(i=>shiftYM(cur,i)), V=M.map(endBal), last=M[5];
-    $("bigLabel").textContent=`${hasAcc()?"Na conta em":"Saldo em"} ${shortMonth(last).toLowerCase()}`;setBig("R$",V[5]);
-    $("s1l").textContent=`Fim de ${MES[+cur.slice(5)-1].toLowerCase()}`;$("s1").textContent=R(V[0]);
+    $("bigLabel").textContent=`Fim do mês · ${shortMonth(last).toLowerCase()}`;setBig("R$",V[5]);
+    $("s1l").textContent=`Fim do mês · ${MES[+cur.slice(5)-1].toLowerCase()}`;$("s1").textContent=R(V[0]);
     $("s2l").textContent="Salário previsto";$("s2").textContent=salPrevOn()?"ligado":"desligado";
   }
 }
@@ -3295,14 +3328,14 @@ function contaBlock(withCards){
   if(!IS_WIDE.matches) return `<section><h2>${withCards?"Contas e cartões":"Na conta"} ${ext}</h2><div class="card">`+
     A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${[a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:"",acEqTxt(a)].filter(Boolean).join(" · ")}</span></span><span class="v">${acVal(a)}</span></div>`).join("")+
     (acctsR().length>1?`<div class="acone"><span class="t"><b>Total</b></span><span class="v">${R(tot)}</span></div>`:"")+
-    (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
+    (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que há a pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
     (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+
     (withCards?walCardRows():"")+`</div></section>`;
   return `<section><h2>Saldo na conta ${ext}</h2><div class="card rate">
     <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div></div></div>
     ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${acVal(a)}</b></div>`).join("")}</div>`:""}
     ${fl.late?`<div class="cmp"><div><span>Atrasado de meses anteriores</span><b class="neg">${R(fl.late)}</b></div></div>`:""}
-    ${after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que falta pagar em ${mn}. Faltam ${R(-after)}.</div>`:""}
+    ${after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que há a pagar em ${mn}. Faltam ${R(-after)}.</div>`:""}
     ${old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:""}</div></section>`;
 }
 const BEN_PICK=["Alelo","Pluxee","VR","Ticket","Flash","Caju"];
@@ -3476,7 +3509,7 @@ function recapCard(){
   if(dp){const v=Math.round((desp-dp)/dp*100);lines.push(v<0?`Você gastou <b>${-v}% menos</b> que em ${monthLabel(pp).split(" ")[0].toLowerCase()}.`:v>0?`Gastos <b>${v}% maiores</b> que em ${monthLabel(pp).split(" ")[0].toLowerCase()}.`:`Gastos iguais aos de ${monthLabel(pp).split(" ")[0].toLowerCase()}.`)}
   if(top) lines.push(`Onde mais foi: <b>${esc(catOf(top,"desp").n)}</b> (${R(bc[top])}).`);
   return `<section><div class="card banner recap"><strong>${nm} fechou ${sob>=0?"no azul":"no vermelho"}</strong>
-    <div class="rg"><div><span>Entrou</span><b>${R(rec)}</b></div><div><span>Gastou</span><b>${R(desp)}</b></div><div><span>${sob>=0?"Sobrou":"Faltou"}</span><b class="${sob>=0?"pos":"neg"}">${R(Math.abs(sob))}</b></div></div>
+    <div class="rg"><div><span>Entrou</span><b>${R(rec)}</b></div><div><span>Gastou</span><b>${R(desp)}</b></div><div><span>${sob>=0?"Sobra":"Falta"}</span><b class="${sob>=0?"pos":"neg"}">${R(Math.abs(sob))}</b></div></div>
     ${lines.length?`<p>${lines.join(" ")}</p>`:""}<div class="row" style="margin:0"><button class="btn soft" id="recapOk">Ok</button><button class="btn primary" data-gomonth="${pm}">Ver ${nm.toLowerCase()}</button></div></div></section>`;
 }
 /* ---------- Visão geral (PC) — novo painel (29/10/2026) ---------- */
@@ -3634,7 +3667,7 @@ function dashHome(){
   const f0=shiftYM(ym,-5)<MIN_YM?MIN_YM:shiftYM(ym,-5);const ms=[0,1,2,3,4,5].map(d=>shiftYM(f0,d)).map(m=>{const a=inMonth(m);return{m,r:sumT(a,"rec"),d:sumT(a,"desp")}});
   const mx=Math.max(1,...ms.flatMap(x=>[x.r,x.d]));
   const flux=`<div class="fl">${ms.map(x=>`<div class="flc${x.m===ym?" now":""}"><div class="flb"><i class="r" style="height:${x.r/mx*100}%"></i><i class="d" style="height:${x.d/mx*100}%"></i></div><small>${MES[+x.m.slice(5)-1].slice(0,3)}</small></div>`).join("")}</div>`;
-  const fleg=`<span class="flleg"><span><i class="r"></i>Receitas</span><span><i class="d"></i>Despesas</span></span>`;
+  const fleg=`<span class="flleg"><span><i class="r"></i>Entrou</span><span><i class="d"></i>Gastou</span></span>`;
   /* categorias */
   const bc=byCat(mi,"desp");const arr=Object.entries(bc).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);const tot=arr.reduce((s,x)=>s+x[1],0);
   const top=arr.slice(0,5).map(([k,v])=>({k,v,c:catOf(k,"desp").c,n:catOf(k,"desp").n}));const rest=tot-top.reduce((s,x)=>s+x.v,0);if(rest>0)top.push({k:"_",v:rest,c:"var(--muted)",n:"Outras categorias"});
@@ -3647,7 +3680,7 @@ function dashHome(){
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
    <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pWal">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
-   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receitas</span><b>${R(rec)}</b><small>${recLeft?`a receber ${R(recLeft)}`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesas</span><b>${R(des)}</b><small>${desLeft?`a pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobrou":"Faltou"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
+   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Entrou</span><b>${R(rec)}</b><small>${recLeft?`a receber ${R(recLeft)}`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Gastou</span><b>${R(des)}</b><small>${desLeft?`a pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobra":"Falta"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
    <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p>${attHtml("in-saude")}</section>
    <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
    <section class="db d-gastos"><h3>Gastos</h3>${cats}</section>
@@ -3947,7 +3980,7 @@ function canBuySheet(){
       if(ebA!=null&&ebA<0&&!(eb<0)) probs.push(`a conta fica negativa no fim de ${shortMonth(m)}`);
       rows.push(`<div class="hlrow"><span>${shortMonth(m)}${fat?`<small class="muted" style="display:block">${fat}</small>`:""}</span><b class="${ebA!=null&&ebA<0?"neg":""}">${eb==null?"–":`${eb<0?"−":""}${R(Math.abs(eb))} → ${ebA<0?"−":""}${R(Math.abs(ebA))}`}</b></div>`)}
     res=`<div class="card" style="padding:12px 14px;margin:12px 0 0"><div class="hint" style="margin:0 0 8px;font-weight:600;color:${probs.length?"var(--neg)":"var(--pos)"}">${probs.length?"Cuidado: "+[...new Set(probs)].join(" e ")+".":"Cabe ✓ "+(card&&n>1?`${n}× ${R(parc)} na fatura de ${shortMonth(ym0)} em diante.`:"O saldo continua positivo.")}</div>
-      <div class="hint" style="margin:0 0 6px">${hasAcc()?"Na conta no fim de cada mês, antes → depois da compra:":"Saldo do mês (receitas − despesas), antes → depois:"}</div>${rows.join("")}</div>`;
+      <div class="hint" style="margin:0 0 6px">${hasAcc()?"Fim do mês, antes → depois da compra:":"Saldo do mês (receitas − despesas), antes → depois:"}</div>${rows.join("")}</div>`;
   }
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Posso comprar?</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
     <div class="svedit" style="padding:0;border:0;background:none"><div class="svrow2"><input id="cbV" class="limin" inputmode="numeric" placeholder="Valor R$ 0,00" value="${cbuy.v?brl(cbuy.v):""}" aria-label="Valor"><select id="cbN" aria-label="Parcelas">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${cbuy.n===i+1?"selected":""}>${i+1}×</option>`).join("")}</select></div>
@@ -5473,7 +5506,7 @@ function renderAno(){
       (rows||`<tr><td colspan="${NM+2}" style="color:var(--muted)">Sem despesas em ${year}</td></tr>`)+
       line("Total despesas",despM,"sum sep")+recRows+line("Total receitas",recM,"sum sep")+
       `<tr class="sum sep"><td>Saldo do mês</td>${saldoM.map(v=>`<td class="r ${v<0?"neg":v>0?"pos":""}">${v?(v<0?"−":"")+brl(Math.abs(v)):"–"}</td>`).join("")}<td class="r"><b>${signR(acc).replace("R$ ","")}</b></td></tr>`+
-      (hasAcc()?`<tr><td>Na conta no fim</td>${idx.map(i=>{const v=endBal(`${year}-${pad(i+1)}`);return v==null?`<td class="r"><span style='color:var(--muted)'>–</span></td>`:`<td class="r ${v<0?"neg":""}">${(v<0?"−":"")+brl(Math.abs(v))}</td>`}).join("")}<td></td></tr>`
+      (hasAcc()?`<tr><td>Fim do mês</td>${idx.map(i=>{const v=endBal(`${year}-${pad(i+1)}`);return v==null?`<td class="r"><span style='color:var(--muted)'>–</span></td>`:`<td class="r ${v<0?"neg":""}">${(v<0?"−":"")+brl(Math.abs(v))}</td>`}).join("")}<td></td></tr>`
         :`<tr><td>Acumulado</td>${accM.map(v=>`<td class="r ${v<0?"neg":""}">${(v<0?"−":"")+brl(Math.abs(v))}</td>`).join("")}<td></td></tr>`)+
       `</tbody></table></div></section>`;
 
@@ -5521,12 +5554,12 @@ function catRulesSection(){
 }
 function renderMe(){
   let h=lookSection()+secSection()+pushSection()+syncSection()+ofSection()+calibSection();
-  h+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${CATS.desp.map(c=>`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="desp" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")}</div>${catEditor("desp")}
+  h+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${catsPick("desp").map(c=>/^u_/.test(c.k)?`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="desp" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`:`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</span>`).join("")}</div>${catEditor("desp")}
     <div class="catadd"><input type="text" id="catAddIn" maxlength="24" placeholder="Nova categoria (ex.: Celular)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtn">Criar</button></div>
-    <div class="hint expl">Toque numa categoria para mudar o nome e a cor, ou apagar. Ao apagar, os lançamentos dela vão para Outros. Faturas de cartão, Câmbio e Outros ficam fixas.</div></div></section>`;
-  h+=`<section id="catRecSec"><h2>Categorias de receita</h2><div class="card rate"><div class="catlist">${CATS.rec.map(c=>`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="rec" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")}</div>${catEditor("rec")}
+    <div class="hint expl">As categorias básicas são fixas e iguais em todas as telas. As que você cria aparecem aqui: toque para mudar o nome e a cor, ou apagar (os lançamentos vão para Outros).</div></div></section>`;
+  h+=`<section id="catRecSec"><h2>Categorias de receita</h2><div class="card rate"><div class="catlist">${catsPick("rec").map(c=>/^ur_/.test(c.k)?`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="rec" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`:`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</span>`).join("")}</div>${catEditor("rec")}
     <div class="catadd"><input type="text" id="catAddInR" maxlength="24" placeholder="Nova categoria (ex.: Freelance)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtnR">Criar</button></div></div></section>`;
-  h+=catRulesSection();
+  h+=catUndoHtml();
   h+=`<section><h2>Backup e exportação</h2><div class="card rate"><div class="${daysSince(cfg.lastBackup)>=7?"warn":"pos"}" style="font-size:.88rem;font-weight:600">${cfg.lastBackup?(daysSince(cfg.lastBackup)===0?"Último backup: hoje ✓":`Último backup: há ${daysSince(cfg.lastBackup)} ${daysSince(cfg.lastBackup)===1?"dia":"dias"}`):"Você ainda não fez nenhum backup"}</div><div class="hint">Backup: arquivo com todos os lançamentos, compras de euro, limites e previstos; guarde no iCloud Drive. Excel: lançamentos de ${shortMonth(curYM())} até ${shortMonth(shiftYM(curYM(),11))}, para abrir numa planilha.</div>
     <div class="row" style="margin:0;flex-wrap:wrap">${downloads?`<button class="btn soft" id="bkExport">Exportar backup</button><button class="btn soft" id="csvBtn">Excel (.csv) · 12 meses</button>`:""}${PWA?`<label class="btn soft" style="text-align:center;cursor:pointer">Importar backup<input type="file" id="bkImport" accept=".json,application/json" hidden></label>`:""}</div></div></section>`;
   h+=`<section><h2>Importar planilha</h2><div class="card rate"><div class="hint expl">Traga os gastos de uma planilha (Excel, CSV, Google Planilhas baixada, Numbers exportada). Serve lista com data e valor ou planilha com os meses nas colunas; você confere antes de lançar.</div>
@@ -6242,6 +6275,7 @@ document.addEventListener("click",async e=>{
      for(const x of items){if(typeOf(x)===ruleT&&nope.includes(x.cat)&&!genFat(x)&&fold(cleanDesc(x)+" "+(x.desc||"")).includes(fold(m))){await store.items.update(x.id,{cat});n++}}
      toast(n?`Regra criada · ${n} ${n===1?"lançamento mudou":"lançamentos mudaram"} de categoria`:"Regra criada",true);render();return}}
   if(t.id==="catAddBtnR"){const v=$("catAddInR").value;if(await addCat(v,"rec")){toast("Categoria criada",true);render();setTimeout(()=>$("catRecSec")?.scrollIntoView({block:"start"}),30)}return}
+  if(t.id==="catUndo"){await undoCat1();return}
   if(t.id==="catAddBtn"){const v=$("catAddIn").value;if(await addCat(v)){toast("Categoria criada",true);render();setTimeout(()=>$("catSec")?.scrollIntoView({block:"start"}),30)}return}
   if(t.id==="homeEditBtn"){homeEdit=true;renderHome();updateFab();window.scrollTo(0,0);return}
   if(t.id==="homeDone"){homeEdit=false;renderHome();updateFab();toast("Ordem salva");return}
@@ -6618,7 +6652,7 @@ function chips(){
   const curCat=catOf(form.cat,form.type);
   if($("catPickDot")) $("catPickDot").style.background=curCat.c||"var(--accent)";
   if($("catPickName")) $("catPickName").textContent=curCat.n||"Escolher categoria";
-  $("catChips").innerHTML=CATS[form.type].map(c=>`<button type="button" class="catitem-btn" data-cat="${c.k}" aria-pressed="${form.cat===c.k}"><i class="dot" style="background:${c.c}"></i><span>${esc(c.n)}</span></button>`).join("")+
+  $("catChips").innerHTML=catsPick(form.type).map(c=>`<button type="button" class="catitem-btn" data-cat="${c.k}" aria-pressed="${form.cat===c.k}"><i class="dot" style="background:${c.c}"></i><span>${esc(c.n)}</span></button>`).join("")+
     (true?(catNewOpen?`<div class="catnew" style="grid-column:1/-1;display:flex;gap:8px;padding:4px 0"><input type="text" id="catNewIn" maxlength="24" placeholder="Nova categoria" enterkeyhint="done" autocomplete="off" style="flex:1"><button type="button" class="btn primary" id="catNewOk" style="flex:none;padding:10px 18px">Criar</button></div>`:`<button type="button" class="catitem-btn add" id="catNewBtn" style="grid-column:1/-1;justify-content:center;border-style:dashed;color:var(--muted)">+ Nova categoria</button>`):"");
   {const A=acctsR(), ben=form.type==="desp"&&benOf({pay:form.pay});
     $("acctField").hidden=A.length<2||ben;
@@ -7235,7 +7269,7 @@ function parsePicPay(pages){
    próximas importações. cfg.catLearn["desp|nome"] = cat */
 const learnK=(t,d)=>t+"|"+fold(d||"").replace(/\s*parc\.?\s*\d+\s*\/\s*\d+.*$/,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim().slice(0,40);
 /* Regras de categoria (29/10/2026): "contém X → categoria Y", valem antes do que o app aprendeu; cfg.catRules=[{t:"desp"|"rec",m,cat}] */
-const catRuleGet=(t,d)=>{const f=fold(d||"");if(!f)return null;const tt=t==="rec"?"rec":"desp";
+const catRuleGet=(t,d)=>{return null;const f=fold(d||"");if(!f)return null;const tt=t==="rec"?"rec":"desp";
   const r=(cfg.catRules||[]).find(r=>r.t===tt&&r.m&&f.includes(fold(r.m))&&CATS[tt].some(c=>c.k===r.cat));return r?r.cat:null};
 const catLearnGet=(t,d)=>{const rr=catRuleGet(t,d);if(rr)return rr;const k=(cfg.catLearn||{})[learnK(t,d)];return k&&CATS[t==="rec"?"rec":"desp"].some(c=>c.k===k)?k:null};
 function catLearnSet(t,d,cat){const k=learnK(t,d);if(k.length<4)return;const L={...(cfg.catLearn||{})};if(L[k]===cat)return;L[k]=cat;
@@ -7259,7 +7293,7 @@ function invoiceEntry(r){
   const t=(r.shop+" "+r.desc+" "+(r.who||"")).toLowerCase();
   const cat=fee?"outros":/supermerc|(?<!mercado\*)mercado(?!\*| ?livre)|atacad|hortifr|assai|carrefour|pao de acucar/.test(t)?"merc":
     /restaur|burg|bar\b|pub|sorvet|lanch|pizza|cafe|padaria|ifood|food|steak|outback|nutri/.test(t)?"alim":
-    /wellhub|gympass|academ|smart ?fit|decathlon|centauro|netshoes|nike|adidas|under armour|track ?& ?field|esporte|sport|futebol/.test(t)?"esporte":
+    /wellhub|gympass|academ|smart ?fit|decathlon|centauro|netshoes|nike|adidas|under armour|track ?& ?field|esporte|sport|futebol/.test(t)?"lazer":
     /farm|drog|clinic|saude|otica/.test(t)?"saude":
     /cine|parque|show|ingresso|teatro|steam|playstation|\bpsn\b|xbox|nintendo|epic ?games|riot|blizzard|roblox|garena/.test(t)?"lazer":
     /xsolla|ubisoft|game ?pass|ps ?plus|anthropic|claude|netflix|spotify|youtube|apple[. ]com|google|prime|disney|hbo|assinat|patreon|udemy|subscription/.test(t)?"assin":
@@ -8319,11 +8353,11 @@ function xlCat(label,type){
     /caixa|saldo|sobrou|anterior/.test(t)?"caixa":/rend|juros|dividend|cdb|poupanc|tesouro/.test(t)?"rend":"rout";
   const own=CATS.desp.find(c=>fold(c.n)===t.trim());if(own) return own.k;
   if(xlCard(label)) return "cartao";
-  const k=/intercamb/.test(t)?"interc":/cidadan/.test(t)?"cidad":/\beuro|dolar|cambio|moeda/.test(t)?"euro":
+  const k=/intercamb/.test(t)?"outros":/cidadan/.test(t)?"outros":/\beuro|dolar|cambio|moeda/.test(t)?"euro":
     /aluguel|condomin|\bluz\b|energia|\bagua\b|internet|\bgas\b|claro|vivo|\btim\b|telefon|iptu|conta de/.test(t)?"casa":
     /supermerc|mercado|atacad|hortifr|feira|acougue/.test(t)?"merc":
     /restaur|lanch|pizza|ifood|padaria|cafe|almoco|jantar|comida|alimenta/.test(t)?"alim":
-    /academ|esporte|futebol|smart ?fit|decathlon|centauro|netshoes|nike|adidas/.test(t)?"esporte":
+    /academ|esporte|futebol|smart ?fit|decathlon|centauro|netshoes|nike|adidas/.test(t)?"lazer":
     /farm|drog|medic|consulta|dentist|plano de saude|saude|exame/.test(t)?"saude":
     /cinema|show|ingresso|viage|passeio|lazer|bar\b/.test(t)?"lazer":
     /netflix|spotify|youtube|prime|disney|hbo|assinat|icloud|claude/.test(t)?"assin":
