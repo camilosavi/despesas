@@ -83,3 +83,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,sy
 .dclogo img{border-radius:0;transform:scale(var(--ls,1));transform-origin:left center}
 .dclogo svg,.dclogo img{width:100%;height:100%;object-fit:contain;object-position:left center;display:block;color:#fff}
 .dclogo.lt{font-weight:800;font-size:1rem}
+
+.dtop .orgbtn{background:var(--surface);border:1px solid var(--line);width:2.6em;height:2.6em}.dtop .orgbtn.on{background:var(--accent);border-color:var(--accent)}.dtop .orgbtn.on svg{stroke:#14203a}
+.orgbar.edit{position:sticky;top:0;z-index:20;background:var(--bg);border:1px solid var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.12);padding:.7em 1em}
+.orgbar.edit>span{color:var(--ink)}.orgbar.edit .btn{min-height:2.4em}
+.ctl{gap:.6em;padding:.3em .4em;margin:-.5em -.5em .7em}
+.ctl .grip{min-width:2.6em;min-height:2.6em;display:grid;place-items:center;font-size:1.25rem;background:var(--accent);color:#14203a;border-radius:.6em}
+.ctl .tamb{display:flex;align-items:center;gap:.5em;min-height:2.6em;padding:.3em .8em;font-weight:700;font-size:.8rem}
+.mini-s{display:grid;width:1.3em;height:1.3em;border:1.5px solid currentColor;border-radius:3px;position:relative}.mini-s::after{content:"";position:absolute;left:1px;top:1px;width:calc(var(--w)*20% + 8%);height:calc(var(--h)*14% + 8%);max-width:calc(100% - 2px);max-height:calc(100% - 2px);background:currentColor;border-radius:1px}
+.ctl .xb{min-width:2.6em;min-height:2.6em;border-radius:50%;font-size:.9rem}
+.dgrid.edit{--u:6.6em}

@@ -26,14 +26,14 @@ const redesenhar = () => ULT && desenhar(...ULT);
 function grade() {
   return LAYOUT.ordem.filter(id => !LAYOUT.oculto.includes(id)).map(id => {
     const [w, h] = tamDe(id);
-    const ctl = EDIT ? `<div class="ctl"><button class="grip" data-grip="${id}" aria-label="Arrastar ${esc(TAM[id].n)}">⠿</button><span>${esc(TAM[id].n)}</span><button data-tam="${id}">Tamanho ${w}×${h}</button><button data-ocultar="${id}" aria-label="Ocultar">✕</button></div>` : "";
+    const ctl = EDIT ? `<div class="ctl"><button class="grip" data-grip="${id}" aria-label="Arrastar ${esc(TAM[id].n)}">⠿</button><span>${esc(TAM[id].n)}</span><button class="tamb" data-tam="${id}" aria-label="Mudar tamanho, agora ${w} por ${h}"><i class="mini-s" style="--w:${w};--h:${h}"></i>${w}×${h}</button><button class="xb" data-ocultar="${id}" aria-label="Ocultar ${esc(TAM[id].n)}">✕</button></div>` : "";
     return `<section class="db d-${id}" data-w="${id}" style="--w:${w};--h:${h}">${ctl}${WID[id] || ""}</section>`;
   }).join("");
 }
 function editBar() {
-  if (!EDIT) return `<div class="orgbar"><button class="dlink" data-org="1">Organizar widgets</button></div>`;
+  if (!EDIT) return "";
   const ocultos = LAYOUT.oculto.map(id => `<button class="chip" data-mostrar="${id}">+ ${esc(TAM[id].n)}</button>`).join("");
-  return `<div class="orgbar edit"><span>Arraste pelo ⠿ para encaixar. Toque em Tamanho para mudar o quadro.</span><button class="btn" data-pronto="1">Pronto</button><button class="btn ghost" data-reset="1">Restaurar padrão</button>${ocultos ? `<div class="bandeja">${ocultos}</div>` : ""}</div>`;
+  return `<div class="orgbar edit"><span><b>Organizando</b> · arraste pelo ⠿ para encaixar, toque no tamanho para mudar o quadro</span><button class="btn ghost" data-reset="1">Restaurar padrão</button><button class="btn" data-pronto="1">Pronto</button>${ocultos ? `<div class="bandeja">${ocultos}</div>` : ""}</div>`;
 }
 document.addEventListener("click", ev => {
   const q = s => ev.target.closest(s);
