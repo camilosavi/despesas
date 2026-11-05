@@ -3398,6 +3398,42 @@ function walCardRows(){
     return row(c,[f!=null?(f<0?`passou ${R(-f)} do limite`:`livre ${R(f)}`):"",due].filter(Boolean).join(" · "),R(tot),f!=null&&f<0)}).join("")+
     B.map(b=>{const v=benBal(b), nx=benNext(b);return row(b.name,nx?`crédito ${fmtDM(nx)}`:"vale",R(v),v<0)}).join("");
 }
+/* Movimentos da conta (05/11/2026, ele: "lanço meu extrato e não vejo o que tem nele"): toque na conta em Contas → lista por mês do que já mexeu nela, com o saldo depois de cada linha.
+   Só leitura: despesa paga (itens de cartão agrupados por fatura paga), receita que já caiu, transferência e caixinha ligada à conta. Saldo de hoje = accBalOf. */
+function accMovList(a){
+  const name=a.name, td=today(), loc=t=>{const d=new Date(t);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
+  const L=[], cardG={};
+  items.forEach(x=>{if(accOf(x)!==name||benOf(x))return;
+    if(typeOf(x)==="desp"){if(!x.paid&&!x.paidAt)return;if(!x.paid)return;
+      const d=x.paidAt?loc(x.paidAt):x.date;if(d>td||d<MIN_YM+"-01")return;
+      const c=cardOf(x);
+      if(c){const k=c+"|"+d;(cardG[k]=cardG[k]||{d,c,n:0,v:0,t:x.paidAt||0});cardG[k].n++;cardG[k].v+=amt(x);return}
+      L.push({d,t:x.paidAt||0,v:-amt(x),n:cleanDesc(x),id:x.id,pp:x.ppay})}
+    else{const d=recDay(x);if(d>td||d<MIN_YM+"-01")return;L.push({d,t:x.createdAt||0,v:x.cents,n:cleanDesc(x),id:x.id,pp:x.ppay})}});
+  Object.values(cardG).forEach(g=>L.push({d:g.d,t:g.t,v:-g.v,n:`Fatura ${g.c}`,m:`${g.n} ${g.n===1?"item":"itens"}`}));
+  (cfg.transf||[]).forEach(t=>{if((t.date||"")>td||(t.date||"")<MIN_YM+"-01")return;
+    if(t.from===name)L.push({d:t.date,t:t.ts||0,v:-t.cents,n:`Para ${t.to}`,m:"entre contas"});
+    if(t.to===name)L.push({d:t.date,t:t.ts||0,v:t.cents,n:`De ${t.from}`,m:"entre contas"})});
+  const AR=acctsR();
+  (cfg.save||[]).forEach(b=>(b.moves||[]).forEach(m=>{if(!m.acct||(AR.some(z=>z.name===m.acct)?m.acct:AR[0].name)!==name)return;if(m.cur&&m.cur!=="BRL"&&!m.brl)return;
+    const d=m.date||"";if(d>td||d<MIN_YM+"-01")return;const v=Math.abs(m.cur&&m.cur!=="BRL"?m.brl:(m.brl||m.cents));
+    L.push({d,t:m.ts||0,v:m.cents<0?v:-v,n:m.cents<0?`Tirou da caixinha ${b.name}`:`Guardou em ${b.name}`,m:"caixinha"})}));
+  L.sort((x,y)=>y.d.localeCompare(x.d)||y.t-x.t);
+  let bal=accBalOf(a);L.forEach(r=>{r.after=bal;bal-=r.v});
+  return L}
+function accMovSheet(name){
+  const a=acctsR().find(z=>z.name===name);if(!a)return;
+  const L=accMovList(a), MAX=200, V=L.slice(0,MAX);let h="",cur="";
+  V.forEach(r=>{const ym=r.d.slice(0,7);if(ym!==cur){cur=ym;h+=`<div class="hint" style="margin:14px 0 4px;text-transform:uppercase;letter-spacing:.06em">${esc(monthLabel(ym))}</div>`}
+    const q=r.pp?ppList().find(z=>z.id===r.pp):null, sub=[fmtDM(r.d),r.m||"",q?`em Pessoas: ${ppTag(q)}`:""].filter(Boolean).join(" · ");
+    h+=`<${r.id?`button type="button" data-mvopen="${esc(r.id)}"`:"div"} class="item" style="width:100%;text-align:left;border:0;background:none;color:inherit;font:inherit;padding:8px 0;display:flex;gap:10px;align-items:center"><span style="flex:1;min-width:0"><b style="display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.n)}</b><span class="hint" style="margin:0">${esc(sub)}</span></span><span style="text-align:right;white-space:nowrap"><b class="${r.v>0?"pos":""}" style="display:block">${r.v>0?"+ ":"− "}${R(Math.abs(r.v))}</b><span class="hint" style="margin:0">saldo ${R(r.after)}</span></span></${r.id?"button":"div"}>`});
+  closeSheets(true);
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>${esc(name)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <div class="imphead"><b>${R(accBalOf(a))}</b><span class="hint">saldo de hoje${a.at?` · informado em ${fmtDate(a.at)}`:""}</span></div>
+  ${V.length?`<div class="card" style="padding:0 14px;margin:0 0 12px">${h}</div>${L.length>MAX?`<p class="hint">Mostrando os ${MAX} mais recentes de ${L.length}.</p>`:""}`:`<p class="hint" style="padding:12px 0">Nada lançado nesta conta ainda. Importe o extrato em Extrato.</p>`}
+  <p class="hint">O saldo depois de cada linha parte do saldo de hoje. Cartão entra por fatura paga.</p>`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
 function contaBlock(withCards){
   const ym=curYM(), mn=monthLabel(ym).split(" ")[0].toLowerCase(), A=accts();
   if(acDraft) return `<section><h2>Saldo na conta</h2><div class="card rate"><div class="src">Veja o saldo no app do banco e digite aqui. Fica só neste aparelho.</div>`+
@@ -3412,14 +3448,14 @@ function contaBlock(withCards){
   const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain" hidden></label>${acctsR().length>1?`<button class="lk" id="trOpen">Transferências</button>`:""}<button id="acEdit">Atualizar</button></span>`;
   /* banco limpo (out/2026): no celular, uma linha por conta; "ainda entra / falta pagar / sobra" já estão no topo */
   if(!IS_WIDE.matches) return `<section><h2>${withCards?"Contas e cartões":"Na conta"} ${ext}</h2><div class="card">`+
-    A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${[a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:"",acEqTxt(a)].filter(Boolean).join(" · ")}</span></span><span class="v">${acVal(a)}</span></div>`).join("")+
+    A.map(a=>`<div class="acone" ${acCur(a)==="BRL"&&a.name?`data-acmov="${esc(a.name)}" role="button" tabindex="0" style="cursor:pointer"`:""}>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${[a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:"",acEqTxt(a)].filter(Boolean).join(" · ")}</span></span><span class="v">${acVal(a)}</span></div>`).join("")+
     (acctsR().length>1?`<div class="acone"><span class="t"><b>Total</b></span><span class="v">${R(tot)}</span></div>`:"")+
     (after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que há a pagar em ${mn}. Faltam ${R(-after)}.</div>`:"")+
     (old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:"")+
     (withCards?walCardRows():"")+`</div></section>`;
   return `<section><h2>Saldo na conta ${ext}</h2><div class="card rate">
-    <div class="top"><div><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div></div></div>
-    ${A.length>1?`<div class="aclist">${A.map(a=>`<div>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${acVal(a)}</b></div>`).join("")}</div>`:""}
+    <div class="top"><div ${A.length===1&&acCur(A[0])==="BRL"&&A[0].name?`data-acmov="${esc(A[0].name)}" role="button" tabindex="0" style="cursor:pointer"`:""}><div class="val"><small>R$</small>${brl(tot)}</div><div class="src">${[A.length===1&&A[0].name?esc(A[0].name):"",at?`atualizado ${at===today()?"hoje":fmtDate(at)}`:""].filter(Boolean).join(" · ")}</div></div></div>
+    ${A.length>1?`<div class="aclist">${A.map(a=>`<div ${acCur(a)==="BRL"&&a.name?`data-acmov="${esc(a.name)}" role="button" tabindex="0" style="cursor:pointer"`:""}>${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span>${esc(a.name||"Conta")}</span><b>${acVal(a)}</b></div>`).join("")}</div>`:""}
     ${fl.late?`<div class="cmp"><div><span>Atrasado de meses anteriores</span><b class="neg">${R(fl.late)}</b></div></div>`:""}
     ${after<0?`<div class="limwarn over" style="font-size:.88rem">O saldo não cobre o que há a pagar em ${mn}. Faltam ${R(-after)}.</div>`:""}
     ${old?`<div class="hint">Saldo de ${fmtDate(at)}. Toque em Atualizar para conferir com o banco.</div>`:""}</div></section>`;
@@ -5584,6 +5620,8 @@ async function subToPP(name){
 document.addEventListener("click",async e=>{
   const t=e.target;if(!t.closest)return;let b;
   if((b=t.closest("[data-subpp]"))){subToPP(b.dataset.subpp);return}
+  if((b=t.closest("[data-acmov]"))){accMovSheet(b.dataset.acmov);return}
+  if((b=t.closest("[data-mvopen]"))){const x=items.find(z=>z.id===b.dataset.mvopen);if(x){closeSheets();openSheet(x)}return}
   if(t.closest("#ppAdd")){ppAddOn=true;renderAno();setTimeout(()=>$("ppName")?.focus(),30);return}
   if((b=t.closest("[data-ppsug]"))){const i=$("ppName");if(i){i.value=b.dataset.ppsug;i.focus()}return}
   if(t.closest("#ppCancel")){ppAddOn=false;renderAno();return}
