@@ -2102,6 +2102,17 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   #pMes>#mBody{grid-row:2}
   #pMes:has(#mSearch:placeholder-shown) .mfbar>.mfrow:first-child{padding-right:calc((100% - 1em)/2.7 + 1em)}
 }
+/* Topo que minimiza ao rolar no PC (05/11/2026, pedido dele): descendo a lista, o cartão do topo vira uma faixa baixa e a linha de filtros/busca recolhe; volta ao subir até o início */
+@media (min-width:980px){
+  header.top,header.top .big,header.top .split div{transition:padding .25s ease,font-size .25s ease}
+  #pMes .mfbar,#pMes>.msearch{transition:max-height .25s ease,opacity .2s ease,margin .25s ease}
+  html.hmin header.top{padding-top:.4em!important;padding-bottom:.4em!important}
+  html.hmin body:not(:has(#pHome:not([hidden]))) header.top .bigrow .label,html.hmin body:not(:has(#pHome:not([hidden]))) header.top .label,html.hmin header.top .hring,html.hmin header.top .foot{display:none!important}
+  html.hmin body:not(:has(#pHome:not([hidden]))) header.top .big{font-size:1.5rem!important;line-height:1.1}
+  html.hmin header.top .split div,html.hmin header.top .split div+div{padding:.25em .9em!important;display:flex!important;align-items:baseline;gap:.5em}
+  html.hmin #pMes .mfbar{max-height:0!important;opacity:0;overflow:hidden;margin:0!important;pointer-events:none}
+  html.hmin #pMes>.msearch{opacity:0;pointer-events:none}
+}
 </style>
 
 <div class="wrap">
@@ -9772,6 +9783,14 @@ render();initStore();setTimeout(pushClear,1000);setTimeout(avCheck,300);
   document.addEventListener("keydown",e=>{if(el&&e.key==="Escape"){e.stopPropagation();close()}},true);
   addEventListener("resize",()=>el&&place());document.addEventListener("scroll",e=>{if(el&&!el.contains(e.target)){if(!inp.isConnected||!inp.offsetParent)close();else place()}},true);
 })();
+/* topo minimizado ao rolar (PC): histerese 24/2 px e só se sobra rolagem (evita piscar quando o topo encolhe e a lista ganha altura) */
+document.addEventListener("scroll",e=>{
+  if(!IS_WIDE.matches){document.documentElement.classList.remove("hmin");return}
+  const t=e.target===document?document.scrollingElement:e.target;if(!t||t.nodeType!==1)return;
+  const root=t.closest?.("#pHome,#pMes,#pAno,#pCards,#pFx,#pMe");if(!root&&t!==document.scrollingElement)return;
+  const H=document.documentElement, on=H.classList.contains("hmin"), y=t.scrollTop, room=t.scrollHeight-t.clientHeight;
+  if(!on&&y>24&&room>160)H.classList.add("hmin");else if(on&&y<=2)H.classList.remove("hmin");
+},true);
 </script>
 
 </body></html>
