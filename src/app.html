@@ -2087,9 +2087,9 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 /* Busca ao lado dos filtros no PC (05/11/2026, pedido dele): sem texto digitado a busca fica no canto direito da linha dos chips; com texto volta para a linha própria */
 @media (min-width:980px){
   #pMes:has(#mSearch:placeholder-shown){position:relative;grid-template-rows:0 minmax(0,1fr)!important;row-gap:0!important}
-  #pMes:has(#mSearch:placeholder-shown)>.msearch{position:absolute;top:calc(var(--g-top) + 4px);right:0;width:min(22em,40%);margin:0!important;z-index:2}
+  #pMes:has(#mSearch:placeholder-shown)>.msearch{position:absolute;top:calc(var(--g-top) + 4px);right:0;width:calc((100% - 1em)/2.7);margin:0!important;z-index:2}
   #pMes>#mBody{grid-row:2}
-  #pMes:has(#mSearch:placeholder-shown) .mfbar>.mfrow:first-child{padding-right:calc(min(22em,40%) + 1em)}
+  #pMes:has(#mSearch:placeholder-shown) .mfbar>.mfrow:first-child{padding-right:calc((100% - 1em)/2.7 + 1em)}
 }
 </style>
 
@@ -3963,7 +3963,7 @@ function mesSummary(arr){
       fim=(hasBal?endBal(view):entrou(view)-sumT(arr,"desp"))-Math.round(vari/day*(last-day))}}
   else if(view>curYM()&&hasBal) fim=endBal(view);
   return `<section class="mssum"><div class="msbar" role="img" aria-label="${all?Math.round(paid/all*100):0}% do mês já pago"><i style="width:${all?Math.round(paid/all*100):0}%"></i></div>
-    <div class="msrow"><div><small>Pago</small><b>${R(paid)}</b></div><div><small>A pagar</small><b class="${open?"":"mut"}">${R(open)}</b></div>${fim===null?"":`<div><small>${cur?"Fecha com":"Termina com"}</small><b class="${fim<0?"neg":""}">${fim<0?"−":""}${R(Math.abs(fim))}</b></div>`}</div></section>`;
+    <div class="msrow"><div><small>Pago</small><b>${R(paid)}</b></div><div><small>A pagar</small><b class="${open?"":"mut"}">${R(open)}</b></div></div></section>`;
 }
 const mesBens=arr=>bens().map(b=>{const L=arr.filter(x=>x.pay===b.name&&typeOf(x)==="desp").sort((a,c)=>c.date.localeCompare(a.date));if(!L.length)return "";
   return `<section><h2>Pago com ${esc(b.name)} <small>${R(L.reduce((s,x)=>s+x.cents,0))}${view===curYM()?` · saldo ${R(benBal(b))}`:""}</small></h2><div class="card list">${L.map(itemHTML).join("")}</div></section>`}).join("");
