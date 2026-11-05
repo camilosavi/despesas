@@ -4294,6 +4294,13 @@ function subSection(){
   return `<section id="subSec"><h2>Assinaturas <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">${[...L.filter(r=>!r.off),...L.filter(r=>r.off)].map(row).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
 }
+/* nome na descrição (Wellhub Maressa Pimenta): liga sozinho à pessoa de Pessoas pelo nome; o seu nome = você; quem já tem divisão/escolha não muda */
+function chpName(x){const t=fold(cleanDesc(x)), m=SUBN.find(([re])=>re.test(t));if(!m)return null;
+  const rest=t.replace(m[0],"").replace(/\s+/g," ").trim();if(rest.length<2)return null;
+  if(myName()&&nmSame(rest,myName()))return "me";const q=ppList().find(z=>nmSame(rest,z.name));return q?q.id:null}
+async function chpAuto(){if(chpAuto.b)return;chpAuto.b=1;try{const L=items.filter(x=>!x.cpid&&!x.divide&&!x.div&&typeOf(x)==="desp"&&subOf(x)&&(x.date||"")>=MIN_YM&&(()=>{const i=chpName(x);return i&&i!=="me"})());
+  for(const x of L){const pid=chpName(x);await store.items.update(x.id,{cpid:pid,div:1,divide:{com:[{pid,cents:x.cents}],eu:false}})}
+  if(L.length)render()}catch(e){}finally{chpAuto.b=0}}
 async function chpSet(id,pid){const it=items.find(z=>z.id===id);if(!it)return;const name=subOf(it);if(!name)return;
   const day=+(it.buy||it.date).slice(8,10), cur=curYM(), lo=it.date.slice(0,7)<cur?it.date.slice(0,7):cur;
   try{for(const x of items.filter(z=>typeOf(z)==="desp"&&subOf(z)===name&&(z.date||"").slice(0,7)>=lo&&+(z.buy||z.date).slice(8,10)===day)){
@@ -6306,7 +6313,7 @@ function appBadge(){if(!("setAppBadge" in navigator)||!cfgLoaded)return;
   try{const n=avUnread();n?navigator.setAppBadge(n).catch(()=>{}):navigator.clearAppBadge().catch(()=>{});
     if("caches" in window)caches.open("despesas-av").then(c=>c.put("n",new Response(String(n)))).catch(()=>{})}catch(e){}}
 function render(){
-  applyCats();header();clearTimeout(appBadge.t);appBadge.t=setTimeout(appBadge,400);clearTimeout(pushSync.t);pushSync.t=setTimeout(pushSync,2000);renderImport();updateFab();$("note").hidden=tab!=="pMe";
+  clearTimeout(chpAuto.t);chpAuto.t=setTimeout(chpAuto,1200);applyCats();header();clearTimeout(appBadge.t);appBadge.t=setTimeout(appBadge,400);clearTimeout(pushSync.t);pushSync.t=setTimeout(pushSync,2000);renderImport();updateFab();$("note").hidden=tab!=="pMe";
   ({pHome:renderHome,pMes:renderMes,pCards:renderCards,pPlan:renderPlan,pFx:renderFx,pAno:renderAno,pOrc:renderOrc,pMe:renderMe})[tab]();
   if((tab==="pAno"&&anoSubTab!=="metas")||tab==="pMe") anoFold(tab);
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
