@@ -6822,6 +6822,7 @@ document.addEventListener("change",e=>{
   if(e.target.id==="svCur")svEqHint();
   if(e.target.id==="svBk"||e.target.id==="mvBk"){const n=$(e.target.id+"New");if(n){n.hidden=e.target.value!=="__new";if(!n.hidden)n.focus()}return}
   if(e.target.dataset&&e.target.dataset.extoth!=null&&ext){const p=ext.plan[+e.target.dataset.extoth];if(p){const v=e.target.value;p.other=v&&v!=="__no"?v:"";p.on=!!p.other;extRender()}return}
+  if(e.target.dataset&&e.target.dataset.extnp!=null&&ext){const p=ext.plan[+e.target.dataset.extnp];if(p){p.np=e.target.checked;extRender()}return}
   if(e.target.dataset&&e.target.dataset.ext!=null&&ext){const p=ext.plan[+e.target.dataset.ext];if(p){p.on=e.target.checked;extRender()}return}
   if(e.target.id==="exBal"&&ext){ext.setBal=e.target.checked;return}
   if(/^acn_\d+$/.test(e.target.id)&&e.target.tagName==="SELECT"){const i=+e.target.id.slice(4);acReadDraft();e.target.blur();
@@ -8001,9 +8002,13 @@ function billPaidBy(e,r,cents){
   return best;
 }
 /* Pix já importado/lançado (05/11/2026): se o nome bate com alguém de Pessoas, o extrato oferece ligar o lançamento a ela (x.ppay) */
-function extLink(r,hit,out,base){if(!hit||hit.ppay||hit.divide||hit.div||!r.who||!/pix/.test(fold(r.kind)))return null;
-  const q=ppList().find(z=>nmSame(r.who,z.name));if(!q)return null;
+function extLink(r,hit,out,base){if(!hit||hit.ppay||hit.divide||hit.div||hit.cat==="divid"||!r.who||!/pix/.test(fold(r.kind)))return null;
+  const q=ppList().find(z=>nmSame(r.who,z.name));
+  if(!q){const nn=extNewP(r);return nn?{...base,act:"link",on:true,match:hit.id,newp:nn,np:true,note:`cria ${nn} em Pessoas e liga`}:null}
   return {...base,act:"link",on:true,match:hit.id,pid:q.id,pname:ppTag(q),note:`liga a ${ppTag(q)} em Pessoas`}}
+/* nome de quem não está em Pessoas ainda (06/11/2026): o extrato oferece criar a pessoa (caixa por linha, ligada por padrão; só nasce ao confirmar) */
+function extNewP(r){const n=titleCase((r.who||"").trim()), me=myName();
+  if(n.length<3||!/[a-zà-ú]{2}/i.test(n)||(me&&nmSame(n,me)))return "";return n}
 function extPlan(e){
   const me=[fold(e.holder),fold(myName())].filter(Boolean), used=new Set();
   return e.rows.map((r,i)=>{
@@ -8037,12 +8042,12 @@ function extPlan(e){
     if(hit){used.add(hit.id);
       if(base.type==="desp"&&!isPaid(hit)) return {...base,act:"pay",on:true,match:hit.id,note:`marca como pago “${cleanDesc(hit)}”`};
       return extLink(r,hit,out,base)||{...base,act:"done",match:hit.id,note:`já lançado como “${cleanDesc(hit)}”`}}
-    let desc,cat,pay,pq=null;
+    let desc,cat,pay,pq=null,nw="";
     if(r.shop){const g=invoiceEntry({desc:r.shop,shop:r.shop});desc=g.name;cat=g.cat;pay="Débito"}
     else if(/pix/.test(k)){const sd=!out&&(subShareOf(cents,r.who)||divShareOf(cents));
-      desc=sd?`${sd.name} (divisão${sd.k>1?` ×${sd.k}`:""}) · ${titleCase(r.who||"")}`:out?`Pix para ${titleCase(r.who||"")}`:`Pix de ${titleCase(r.who||"")}`;cat=sd?"divid":out?"outros":"rout";pay="Pix";if(!sd&&r.who)pq=ppList().find(q=>nmSame(r.who,q.name))||null}
+      desc=sd?`${sd.name} (divisão${sd.k>1?` ×${sd.k}`:""}) · ${titleCase(r.who||"")}`:out?`Pix para ${titleCase(r.who||"")}`:`Pix de ${titleCase(r.who||"")}`;cat=sd?"divid":out?"outros":"rout";pay="Pix";if(!sd&&r.who){pq=ppList().find(q=>nmSame(r.who,q.name))||null;if(!pq)nw=extNewP(r)}}
     else {desc=titleCase(r.det||r.kind);cat=out?"outros":"rout";pay=/debito|d[eé]bito/.test(k)?"Débito":"Pix"}
-    return {...base,act:"add",on:true,desc:desc.trim(),cat:catLearnGet(base.type,desc)||cat,pay,...(pq?{pid:pq.id,pname:ppTag(pq)}:{})};
+    return {...base,act:"add",on:true,desc:desc.trim(),cat:catLearnGet(base.type,desc)||cat,pay,...(pq?{pid:pq.id,pname:ppTag(pq)}:{}),...(nw?{newp:nw,np:true}:{})};
   });
 }
 function openExtrato(e){
@@ -8056,14 +8061,14 @@ function extRender(){
   const ins=vis.filter(p=>p.type==="rec"&&p.act!=="skip"&&!p.xfer).reduce((s,p)=>s+p.cents,0), outs=vis.filter(p=>p.type==="desp"&&p.act!=="skip"&&!p.xfer).reduce((s,p)=>s+p.cents,0);
   const row=p=>{const[,m,d]=p.date.split("-"), can=p.act==="add"||p.act==="pay"||p.act==="payBill"||p.act==="link";
     if(p.act==="transf") return `<div class="irow ${p.on?"":"off"}"><input type="checkbox" data-ext="${p.i}" ${p.on?"checked":""} ${p.other?"":"disabled"} aria-label="Registrar transferência"><span class="d">${p.out?"Para":"De"} outra conta sua</span><span class="v">⇄ ${R(p.cents)}</span><span class="m">${d}/${m} · ${p.out?`${esc(p.mine)} →`:"→ "+esc(p.mine)} <select data-extoth="${p.i}" class="acsel" aria-label="Outra conta" style="min-height:0;padding:2px 6px;font-size:.76rem;width:auto"><option value="">escolha a conta</option>${p.others.map(n=>`<option ${n===p.other?"selected":""}>${esc(n)}</option>`).join("")}<option value="__no">não registrar</option></select></span></div>`;
-    return `<label class="irow ${p.on?"":can?"off":"exskip"}"><input type="checkbox" data-ext="${p.i}" ${p.on?"checked":""} ${can?"":"disabled"}><span class="d">${esc(p.desc||p.lbl)}</span><span class="v ${p.type==="rec"?"pos":""}">${p.type==="rec"?"+ ":"− "}${R(p.cents)}</span><span class="m">${d}/${m}${p.act==="add"?` · ${esc(catOf(p.cat,p.type).n)} · ${esc(p.pay)}${p.pid?` · em Pessoas: ${esc(p.pname)}`:""}`:p.note?` · ${esc(p.note)}`:""}</span></label>`};
-  const nAdd=P.filter(p=>p.on&&p.act==="add").length, nPay=P.filter(p=>p.on&&(p.act==="pay"||p.act==="payBill")).length, nTr=P.filter(p=>p.on&&p.act==="transf"&&p.other).length, nLk=P.filter(p=>p.on&&p.act==="link").length;
+    return `<label class="irow ${p.on?"":can?"off":"exskip"}"><input type="checkbox" data-ext="${p.i}" ${p.on?"checked":""} ${can?"":"disabled"}><span class="d">${esc(p.desc||p.lbl)}</span><span class="v ${p.type==="rec"?"pos":""}">${p.type==="rec"?"+ ":"− "}${R(p.cents)}</span><span class="m">${d}/${m}${p.act==="add"?` · ${esc(catOf(p.cat,p.type).n)} · ${esc(p.pay)}${p.pid?` · em Pessoas: ${esc(p.pname)}`:""}`:p.note&&!p.newp?` · ${esc(p.note)}`:""}${p.newp&&(p.act==="add"||p.act==="link")?` · <label class="exnp" style="display:inline-flex;gap:4px;align-items:center"><input type="checkbox" data-extnp="${p.i}" ${p.np?"checked":""} style="width:auto;min-height:0"> criar ${esc(p.newp)} em Pessoas</label>`:""}</span></label>`};
+  const nNew=new Set(P.filter(p=>p.on&&p.np&&p.newp).map(p=>fold(p.newp).split(" ")[0])).size, nAdd=P.filter(p=>p.on&&p.act==="add").length, nPay=P.filter(p=>p.on&&(p.act==="pay"||p.act==="payBill")).length, nTr=P.filter(p=>p.on&&p.act==="transf"&&p.other).length, nLk=P.filter(p=>p.on&&p.act==="link").length;
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Extrato ${esc(e.bank)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   ${e.bal!=null?`<div class="imphead"><b>${R(e.bal)}</b><span class="hint">saldo em ${fmtDM(e.at)}${e.from?` · extrato de ${fmtDM(e.from)} a ${fmtDM(e.to)}`:""}</span></div>
   <label class="check"><input type="checkbox" id="exBal" ${e.setBal&&!older?"checked":""} ${older?"disabled":""}> ${older?`O saldo na conta ${esc(acc.name)} é mais novo que este extrato`:`Usar como Saldo na conta ${esc(acc?acc.name:e.bank)}${acc?` (hoje: ${R(acc.cents)})`:""}`}</label>`:""}
   <p class="hint" style="margin:8px 0">Desde ${shortMonth(MIN_YM)}: entrou ${R(ins)}, saiu ${R(outs)} (sem transferências entre suas contas, investimento e fatura).${nOld?` ${nOld} ${nOld===1?"movimento":"movimentos"} antes disso ficam de fora.`:""}</p>
   <div class="card" style="padding:0 14px;margin:0 0 12px">${vis.map(row).join("")||`<p class="hint" style="padding:12px 0">Nenhum movimento a partir de ${shortMonth(MIN_YM)}.</p>`}</div>
-  <div class="row"><button type="button" class="btn primary" id="exGo">${[nAdd?`Lançar ${nAdd}`:"",nPay?`marcar ${nPay} pago${nPay>1?"s":""}`:"",nTr?`${nTr} transferência${nTr>1?"s":""}`:"",nLk?`ligar ${nLk} a Pessoas`:"",""].filter(Boolean).join(" e ")||"Só atualizar o saldo"}</button></div>`;
+  <div class="row"><button type="button" class="btn primary" id="exGo">${[nAdd?`Lançar ${nAdd}`:"",nPay?`marcar ${nPay} pago${nPay>1?"s":""}`:"",nTr?`${nTr} transferência${nTr>1?"s":""}`:"",nLk?`ligar ${nLk} a Pessoas`:"",nNew?`criar ${nNew} ${nNew>1?"pessoas":"pessoa"}`:"",""].filter(Boolean).join(" e ")||"Só atualizar o saldo"}</button></div>`;
 }
 async function extApply(btn){
   const e=ext;if(!e)return;btn.disabled=true;
@@ -8071,6 +8076,11 @@ async function extApply(btn){
   let n=0;
   try{
     const trNew=[];
+    /* cria em Pessoas quem está marcado (uma vez por nome) e liga os lançamentos */
+    const mk=e.plan.filter(p=>p.on&&p.np&&p.newp&&!p.pid);
+    if(mk.length){const L=[...ppList()];
+      for(const p of mk){let q=L.find(z=>nmSame(p.newp,z.name));if(!q){q={id:ppNewId(),name:p.newp,e:[]};L.push(q)}p.pid=q.id}
+      await saveCfg({pp:L})}
     for(const p of e.plan){if(!p.on)continue;
       if(p.act==="transf"){if(!p.other)continue;trNew.push({id:"t"+Date.now()+Math.random().toString(36).slice(2,6)+trNew.length,ts:midnight(p.date),date:p.date,from:p.out?p.mine:p.other,to:p.out?p.other:p.mine,cents:p.cents,imp:p.tag});n++;continue}
       if(p.act==="payBill"){for(const id of p.ids) await store.items.update(id,{paid:true,paidAt:midnight(p.date)});n++;continue}
