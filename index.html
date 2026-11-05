@@ -2129,7 +2129,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <div class="field" id="acctField" hidden><span class="lbl" id="acctLbl">Conta</span><div class="chips" id="acctChips"></div></div>
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
-  <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div style="display:flex;gap:10px;align-items:center"><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"><span class="hint" id="divHint" style="margin:0">quantas pessoas, contando você</span></div><div class="chips" id="divPeople" style="margin-top:var(--g-gap)"></div></div>
+  <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div id="divNRow" style="display:flex;gap:10px;align-items:center" hidden><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"></div><div class="hint" id="divHint" style="margin:0 0 4px">Escolha com quem dividir</div><div class="chips" id="divPeople" style="margin-top:var(--g-gap)"></div></div>
   <div class="field" id="statusField"><span class="lbl">Situação</span><div class="seg" id="paidSeg" style="margin:0"><button type="button" data-paid="1">Pago</button><button type="button" data-paid="0">A pagar</button></div></div>
   <div class="field"><label for="date">Data</label><input type="date" id="date" min="2026-09-01"><p class="hint" id="dateHint" hidden style="margin:6px 0 0"></p></div>
   <div class="field" id="repField"><label for="rep">Parcelar ou repetir</label>
@@ -3899,14 +3899,15 @@ function divSection(){
     ${d.miss?`<div style="padding:0 0 12px 50px"><a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi! Sua parte de ${d.name}: ${R(d.per)}${d.parcN>1?` (ou ${d.parcN}× ${R(d.unit)})`:""}. Pode mandar no Pix. Valeu!`)}">Cobrar no WhatsApp</a></div>`:""}</div>`).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
 }
-let divSel=[], divNew=false, divPayer="";
+let divSel=[], divNew=false, divPayer="", divLegacy=false;
 function divPeopleDraw(){const el=$("divPeople");if(!el)return;const L=ppList();
   el.innerHTML=L.map(p=>`<button type="button" class="chip" data-divp="${esc(p.id)}" aria-pressed="${divSel.includes(p.id)}">${esc(ppFirst(p.name))}</button>`).join("")+
-    (divSel.length?`<span class="lbl" style="flex:1 1 100%;margin-top:4px">Quem pagou</span><button type="button" class="chip" data-divpay="" aria-pressed="${!divPayer}">Eu</button>${divSel.map(id=>{const q=L.find(z=>z.id===id);return q?`<button type="button" class="chip" data-divpay="${esc(id)}" aria-pressed="${divPayer===id}">${esc(ppFirst(q.name))}</button>`:""}).join("")}`:"")+
-    (divNew?`<span class="ppin" style="flex:1 1 100%"><input id="divNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" enterkeyhint="done" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="divNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="divNewOn">+ Pessoa</button>`);
-  if(divSel.length){const n=$("divN");if(n){const t=Math.max(divSel.length+1,parseInt((n.value||"").replace(/\D/g,""),10)||0);n.value=t}}}
+    (divNew?`<span class="ppin" style="flex:1 1 100%"><input id="divNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" enterkeyhint="done" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="divNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="divNewOn">+ Pessoa</button>`+(divSel.length?`<span style="flex:1 1 100%;margin-top:6px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)">Quem pagou</span><button type="button" class="chip" data-divpay="" aria-pressed="${!divPayer}">Eu</button>${divSel.map(id=>{const q=L.find(z=>z.id===id);return q?`<button type="button" class="chip" data-divpay="${esc(id)}" aria-pressed="${divPayer===id}">${esc(ppFirst(q.name))}</button>`:""}).join("")}`:""));
+  const n=$("divN");
+  if(n){if(divSel.length)n.value=divSel.length+1;else if(!divLegacy)n.value=""}
+  if($("divNRow"))$("divNRow").hidden=!(divLegacy&&!divSel.length)}
 function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
-  $("divHint").textContent=n>=2&&form.cents?`${R(Math.floor(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
+  $("divHint").textContent=n>=2&&form.cents?`Dividido em ${n} · ${R(Math.floor(form.cents/n))} cada (sua parte)`:n>=2?`Dividido em ${n} pessoas`:"Escolha com quem dividir"}
 /* Ano (out/2026): as 3 primeiras seções (próximos meses, dinheiro guardado, gráfico) ficam abertas; as outras ficam
    recolhidas mostrando só o título com o total; tocar abre. Lembra o que ficou aberto (despesas.anoOpen, só no aparelho). */
 const FOLD={pAno:{keep:3,key:"despesas.anoOpen"},pMe:{keep:0,key:"despesas.meOpen"}};
@@ -6762,7 +6763,7 @@ function openSheet(x){
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divPayer=(x&&x.divide&&x.divide.pagou)||"";divNew=false;divPeopleDraw();divHint();
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divLegacy=!!(x&&x.div>=2&&!divSel.length);divPayer=(x&&x.divide&&x.divide.pagou)||"";divNew=false;divPeopleDraw();divHint();
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
