@@ -5764,7 +5764,7 @@ function projSection(){
   const ms=nextMonths(12), cur=curYM();
   const hA=hasAcc();let acc=hA?accBal():0;
   const rows=ms.map(ym=>{
-    const arr=inMonth(ym), r=entrou(ym), d=sumT(arr,"desp"), v=r-d;
+    const arr=inMonth(ym), r=entrou(ym), d=sumT(arr,"desp"), v=r-d, sv=salVirt(ym).length>0;
     if(hA){const f=accFlow(ym);acc+=f.inn-f.out}else acc+=v;
     const[y,m]=ym.split("-");
     return `<tr class="${ym===cur?"now":""} ${!r&&!d&&ym!==cur?"zero":""}" data-gomonth="${ym}"><td>${MES[+m-1].toLowerCase()}/${y.slice(2)}</td><td class="r pos">${r?brl(r):"–"}${sv?`<sup title="inclui salário previsto">*</sup>`:""}</td><td class="r neg">${d?brl(d):"–"}</td>${hA?"":`<td class="r ${v<0?"neg":""}">${v<0?"−":""}${brl(Math.abs(v))}</td>`}<td class="r ${acc<0?"neg":""}"><b>${acc<0?"−":""}${brl(Math.abs(acc))}</b></td></tr>`;
