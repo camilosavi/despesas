@@ -4085,6 +4085,13 @@ function shMatch(sh,cents,who){const P=shParts(sh).filter(x=>x.c);
 /* assinaturas que costumam cair neste cartão e ainda não estão lançadas no mês visto (out/2026, pedido dele: "o que é
    assinatura aparecer como gasto previsto no cartão que cobra"). Só informativo: não entra nos totais. */
 function subDayOf(name,x){const d=(cfg.subDay||{})[name];if(d>=1&&d<=31)return {d,manual:true};const ds=(x&&(x.buy||x.date)||"").slice(8,10);return {d:+ds||0,manual:false}}
+/* datas de cobrança vindas dos lançamentos no cartão (pode ser mais de uma por mês, ex.: Wellhub): [{d,cents}] do último mês lançado */
+function subDays(name){
+  const L=items.filter(x=>typeOf(x)==="desp"&&subOf(x)===name&&(x.date||"")>="2000");if(!L.length)return [];
+  const last=L.map(x=>x.date.slice(0,7)).sort().pop(), M={};
+  L.filter(x=>x.date.startsWith(last)).forEach(x=>{const d=+(x.buy||x.date).slice(8,10);M[d]=(M[d]||0)+amt(x)});
+  return Object.keys(M).map(Number).sort((a,b)=>a-b).map(d=>({d,cents:M[d]}));
+}
 function subPlanned(c,ym){
   const cur=curYM();
   if(ym<cur||ym>shiftYM(cur,3)||ym<MIN_YM) return [];
@@ -4097,7 +4104,9 @@ function subPlanned(c,ym){
     L.sort((a,b)=>(a.date||"").localeCompare(b.date||""));
     const yms=[...new Set(L.map(x=>x.date.slice(0,7)))].sort(), last=yms[yms.length-1];
     if(last>=ym||last>shiftYM(cur,1)||last<shiftYM(ym,-3)) return;
-    const lastL=L[L.length-1], {d}=subDayOf(name,lastL);
+    const lastL=L[L.length-1], {d,manual}=subDayOf(name,lastL), DS=!manual?subDays(name):[];
+    if(DS.length>=2){DS.forEach(q=>{let w=null;for(const m of [shiftYM(ym,-2),shiftYM(ym,-1),ym]){const dt=`${m}-${pad(Math.min(q.d,lastDay(m)))}`;const b=dueOf(c)?billDate(c,dt):dt;if((b||dt).slice(0,7)===ym){w=dt;break}}
+      out.push({name,cents:q.cents,cat:L[0].cat,day:q.d,when:w,charged:!!(w&&w<=now)})});return}
     let when=null;
     if(d){for(const m of [shiftYM(ym,-2),shiftYM(ym,-1),ym]){const dt=`${m}-${pad(Math.min(d,lastDay(m)))}`;const b=dueOf(c)?billDate(c,dt):dt;if((b||dt).slice(0,7)===ym){when=dt;break}}}
     out.push({name,cents:L.filter(x=>x.date.startsWith(last)).reduce((t,x)=>t+amt(x),0),cat:L[0].cat,day:d,when,charged:!!(when&&when<=now)});
@@ -4131,14 +4140,18 @@ const waLink=t=>"https://wa.me/?text="+encodeURIComponent(t);
 /* quantas partes um valor recebido representa (1 a 3 meses), aceitando arredondamento de até 3 centavos por parte */
 const shareK=(cents,c)=>{for(let k=1;k<=3;k++)if(Math.abs(cents-k*c)<=3*k)return k;return 0};
 const isEuNm=n=>/^eu$/i.test((n||"").trim());
-let subEdit=null, subMode="eq", subRows=[], subSel=[], subNewOn=false;
+let subEdit=null, subMode="eq", subRows=[], subSel=[], subNewOn=false, subVals={}, subEu=0;
 /* assinatura ↔ Pessoas (05/11/2026): quem divide a assinatura é escolhido entre as pessoas cadastradas; vale para o lançamento de todos os meses (x.divide) e entra na conta de cada pessoa */
 const subPidOf=nm=>{const q=ppList().find(p=>nmSame(p.name,nm));return q?q.id:""};
 /* abre o editor da divisão com o que já está salvo */
 function subOpen(name){const sh=subShare()[name];subMode=sh&&Array.isArray(sh.p)&&sh.p.length&&new Set(sh.p.map(x=>x.c)).size>1?"each":"eq";subNewOn=false;
   {const L=items.filter(x=>subOf(x)===name&&divCom(x).length).sort((a,b)=>b.date.localeCompare(a.date)), dv=L[0]?divCom(L[0]).map(c=>c.pid):[];
    subSel=dv.length?dv:sh?shParts(sh).map(x=>subPidOf(x.nm)).filter(Boolean):[]}
-  subRows=subMode==="each"?[...(sh.euC>0?[{nm:"Eu",c:sh.euC}]:[]),...sh.p.map(x=>({...x}))]:[{nm:"",c:0},{nm:"",c:0}]}
+  subVals={};subEu=sh&&sh.euC>0?sh.euC:0;
+  if(sh&&Array.isArray(sh.p)){const leg=[];sh.p.forEach(x=>{const id=subPidOf(x.nm);if(id){if(!subSel.includes(id))subSel.push(id);subVals[id]=x.c}else leg.push({nm:x.nm,c:x.c})});subRows=leg}
+  else subRows=[];
+}
+function subReadVals(){subSel.forEach(id=>{const el=$("subVp_"+id);if(el)subVals[id]=digits(el.value)});if($("subEu"))subEu=digits($("subEu").value)}
 function subReadRows(){subRows=subRows.map((r,i)=>({nm:($("subPn_"+i)?.value??r.nm).trim(),c:$("subPv_"+i)?digits($("subPv_"+i).value):r.c}))}
 function subEditor(r){
   const each=subMode==="each", back=subRows.filter(x=>!isEuNm(x.nm)).reduce((s,x)=>s+(x.c||0),0), euRow=subRows.filter(x=>isEuNm(x.nm)).reduce((s,x)=>s+(x.c||0),0);
@@ -4147,11 +4160,16 @@ function subEditor(r){
   const eq=`<div class="chips" id="subPeople">${PL.map(q=>`<button type="button" class="chip" data-subp="${esc(q.id)}" aria-pressed="${subSel.includes(q.id)}">${esc(ppFirst(q.name))}</button>`).join("")}${subNewOn?`<span class="ppin" style="flex:1 1 100%"><input id="subNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="subNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="subNewOn">+ Pessoa</button>`}</div>
     <p class="hint" id="subEach" style="margin:8px 0 0" data-subtot="${r.cents}">${nSel>=2?`Dividido em ${nSel} · ${R(Math.round(r.cents/nSel))} cada`:"Escolha com quem divide"}</p>
     ${!subSel.length&&nOld?`<p class="hint" style="margin:4px 0 0">Hoje está dividida em ${nOld} sem nomes. Escolha as pessoas para ligar à conta de cada uma.</p>`:""}`;
-  const ea=`<p class="hint expl" style="margin:0 0 8px">Quem te paga e quanto (sem contar você).</p>
-    <div class="subrows">${subRows.map((x,i)=>{const nm=(x.nm||"").trim();return `<div class="subrow"><input type="text" id="subPn_${i}" maxlength="24" placeholder="Nome" value="${esc(x.nm||"")}" aria-label="Nome da pessoa ${i+1}" autocomplete="off"><input type="text" id="subPv_${i}" inputmode="numeric" placeholder="R$ 0,00" value="${x.c?brl(x.c):""}" aria-label="Quanto a pessoa ${i+1} paga"><button type="button" class="acdel" data-subdel="${i}" aria-label="Tirar pessoa ${i+1}" ${subRows.length<2?"hidden":""}>×</button></div>`}).join("")}</div>
-    <div class="toolbar" style="margin:10px 0 0"><button type="button" class="tbtn" id="subAdd">+ Outra linha</button></div>
-    <p class="hint" id="subMine" style="margin:8px 0 0">${back?`Recebe ${R(back)} · sai ${R(euRow>0?euRow:Math.max(0,r.cents-back))} para você`:"—"}</p>`;
-  const dd=subDayOf(r.name,r.last), dayBox=`<div class="subday"><label>Dia da cobrança no cartão${dd.manual?"":" (visto nos lançamentos)"}<input id="subDay" inputmode="numeric" maxlength="2" placeholder="Dia (1 a 31)" value="${dd.d||""}" aria-label="Dia da cobrança"></label><button type="button" class="btn soft" id="subDaySave">Salvar dia</button></div>`;
+  const share=subSel.length?Math.round(r.cents/(subSel.length+1)):0;
+  const ea=`<div class="chips" id="subPeople">${PL.map(q=>`<button type="button" class="chip" data-subp="${esc(q.id)}" aria-pressed="${subSel.includes(q.id)}">${esc(ppFirst(q.name))}</button>`).join("")}${subNewOn?`<span class="ppin" style="flex:1 1 100%"><input id="subNewName" maxlength="24" placeholder="Nome da pessoa" autocomplete="off" aria-label="Nome da pessoa"><button type="button" class="btn soft" id="subNewGo">Criar</button></span>`:`<button type="button" class="chip add" id="subNewOn">+ Pessoa</button>`}</div>
+    <div class="subrows">${subSel.map(id=>{const q=PL.find(z=>z.id===id);return q?`<div class="subrow" style="grid-template-columns:1fr 9em"><span class="subnm">${esc(q.name)}</span><input type="text" id="subVp_${esc(id)}" inputmode="numeric" placeholder="R$ 0,00" value="${brl(subVals[id]>0?subVals[id]:share)}" aria-label="Quanto ${esc(q.name)} paga"></div>`:""}).join("")}
+    ${subRows.map((x,i)=>`<div class="subrow"><input type="text" id="subPn_${i}" maxlength="24" placeholder="Nome (sem cadastro)" value="${esc(x.nm||"")}" aria-label="Nome ${i+1}" autocomplete="off"><input type="text" id="subPv_${i}" inputmode="numeric" placeholder="R$ 0,00" value="${x.c?brl(x.c):""}" aria-label="Quanto paga"><button type="button" class="acdel" data-subdel="${i}" aria-label="Tirar">×</button></div>`).join("")}</div>
+    <div class="subrow" style="grid-template-columns:1fr 9em;margin-top:6px"><span class="subnm">Você (opcional)</span><input type="text" id="subEu" inputmode="numeric" placeholder="resto" value="${subEu?brl(subEu):""}" aria-label="Quanto você paga"></div>
+    <p class="hint" style="margin:8px 0 0">${subSel.length||subRows.length?"As pessoas são as mesmas da aba Pessoas.":"Escolha as pessoas e o valor de cada uma."}</p>`;
+  const dd=subDayOf(r.name,r.last), DS=subDays(r.name);
+  const dayBox=!dd.manual&&DS.length>=2
+    ?`<div class="subday" style="display:block"><label style="display:block;margin-bottom:6px">Datas da cobrança no cartão (seguem os lançamentos)</label><div class="chips">${DS.map(q=>`<span class="chip" style="pointer-events:none">dia ${q.d} · ${R(q.cents)}</span>`).join("")}</div><button type="button" class="tbtn" id="subDayOne" style="margin-top:8px">Usar um dia só</button></div>`
+    :`<div class="subday"><label>Dia da cobrança no cartão${dd.manual?"":" (visto nos lançamentos)"}<input id="subDay" inputmode="numeric" maxlength="2" placeholder="Dia (1 a 31)" value="${dd.d||""}" aria-label="Dia da cobrança"></label><button type="button" class="btn soft" id="subDaySave">Salvar dia</button></div>${dd.manual&&DS.length?`<button type="button" class="tbtn" id="subDayFollow" style="margin:6px 0 10px">Seguir as datas do cartão${DS.length>1?` (${DS.map(q=>q.d).join(", ")})`:""}</button>`:""}`;
   return `<div class="svedit">${dayBox}${seg}${each?ea:eq}<p class="hint expl" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
     <div class="svbtns">${r.off?`<button class="btn soft" id="subBack">Reativar</button>`:`<button class="btn soft" id="subKill">Cancelada</button>`}${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary wide" id="subSave" data-subtot="${r.cents}">Salvar</button></div></div>`;
 }
@@ -4174,7 +4192,11 @@ function subSection(){
 async function subSave(off){
   const S={...subShare()};
   if(off) delete S[subEdit];
-  else if(subMode==="each"){subReadRows();const euC=subRows.filter(x=>isEuNm(x.nm)).reduce((a,x)=>a+(x.c||0),0), P=subRows.filter(x=>x.c>0&&!isEuNm(x.nm)).map(x=>({nm:x.nm,c:x.c}));
+  else if(subMode==="each"){subReadRows();subReadVals();const euC=subEu||0;
+    /* nomes antigos sem cadastro viram pessoas (as mesmas da aba Pessoas) */
+    const legacy=subRows.filter(x=>x.c>0&&(x.nm||"").trim()&&!isEuNm(x.nm));
+    if(legacy.some(x=>!subPidOf(x.nm))){const PP=[...ppList()];legacy.forEach(x=>{if(!PP.some(q=>nmSame(q.name,x.nm)))PP.push({id:ppNewId(),name:x.nm.trim(),e:[]})});await saveCfg({pp:PP})}
+    const P=[...subSel.map(id=>({nm:(ppList().find(q=>q.id===id)||{}).name,c:subVals[id]})).filter(x=>x.nm&&x.c>0),...legacy.map(x=>({nm:x.nm,c:x.c}))];
     if(!P.length){toast("Diga quanto pelo menos uma pessoa paga.");return}
     S[subEdit]={n:P.length,c:Math.round(P.reduce((s,x)=>s+x.c,0)/P.length),p:P,...(euC>0?{euC}:{})}}
   else{const sel=subSel.filter(id=>ppList().some(q=>q.id===id)), tot=+($("subEach")?.dataset.subtot||0), p=sel.length+1, c=Math.round(tot/p);
@@ -4185,7 +4207,10 @@ async function subSave(off){
     const mine=items.filter(x=>subOf(x)===subEdit&&typeOf(x)==="desp"&&(x.date||"").slice(0,7)>=shiftYM(curYM(),-1));
     let com=[];
     if(!off){const P=S[subEdit]?shParts(S[subEdit]):[];com=P.map(x=>({pid:subPidOf(x.nm),c:x.c})).filter(x=>x.pid).map(x=>subMode==="each"?{pid:x.pid,cents:x.c}:{pid:x.pid})}
-    for(const x of mine)await store.items.update(x.id,com.length?{div:(S[subEdit].n||0)+1,divide:{com}}:{div:0,divide:null});
+    /* valor por pessoa é do mês; com várias cobranças no mês (ex.: Wellhub em 4 datas) cada cobrança leva a parte proporcional dela */
+    const MT={};mine.forEach(x=>{const k=x.date.slice(0,7);MT[k]=(MT[k]||0)+Math.abs(x.cents||0)});
+    for(const x of mine){const cx=com.map(q=>q.cents!=null?{pid:q.pid,cents:MT[x.date.slice(0,7)]?Math.round(q.cents*Math.abs(x.cents||0)/MT[x.date.slice(0,7)]):q.cents}:q);
+      await store.items.update(x.id,com.length?{div:(S[subEdit].n||0)+1,divide:{com:cx}}:{div:0,divide:null})}
     await saveCfg({subShare:S});subEdit=null;toast(off?"Divisão tirada":"Divisão salva",true);render()}catch(e){toast("Não deu para salvar.")}
 }
 /* Pix recebido que é a parte de alguém numa assinatura dividida (1 a 3 meses de uma vez) */
@@ -6438,16 +6463,18 @@ document.addEventListener("click",async e=>{
   if(t.id==="fatDel"){if(!t.classList.contains("sure")){t.classList.add("sure");t.textContent="Toque de novo para tirar";return}saveFat(true);return}
   if(t.id==="limCancel"){limEditing=false;renderCards();return}
   if(t.id==="limSave"){saveLimit();return}
-  {const sp=t.closest("[data-subp]");if(sp){const id=sp.dataset.subp;subSel=subSel.includes(id)?subSel.filter(q=>q!==id):[...subSel,id];render();return}}
+  {const sp=t.closest("[data-subp]");if(sp){const id=sp.dataset.subp;if(subMode==="each"){subReadRows();subReadVals()}subSel=subSel.includes(id)?subSel.filter(q=>q!==id):[...subSel,id];render();return}}
   if(t.closest("#subNewOn")){subNewOn=true;render();setTimeout(()=>$("subNewName")?.focus(),30);return}
   if(t.closest("#subNewGo")){const n=($("subNewName")?.value||"").trim();if(!n){toast("Diga o nome da pessoa.");return}
     if(ppList().some(q=>fold(q.name)===fold(n))){toast("Já existe alguém com esse nome.");return}
     const id=ppNewId();saveCfg({pp:[...ppList(),{id,name:n,e:[]}]}).then(()=>{subNewOn=false;subSel=[...subSel,id];render()}).catch(()=>toast("Não deu para salvar. Tente de novo."));return}
   {const sb=t.closest("[data-subdiv]");if(sb){subEdit=subEdit===sb.dataset.subdiv?null:sb.dataset.subdiv;if(subEdit)subOpen(subEdit);render();if(subEdit)setTimeout(()=>($("subN")||$("subPn_0"))?.focus(),30);return}}
-  {const sm=t.closest("[data-submode]");if(sm){if(subMode==="each")subReadRows();subMode=sm.dataset.submode;render();setTimeout(()=>($(subMode==="each"?"subPn_0":"subN"))?.focus(),30);return}}
+  {const sm=t.closest("[data-submode]");if(sm){if(subMode==="each"){subReadRows();subReadVals()}subMode=sm.dataset.submode;render();setTimeout(()=>($(subMode==="each"?"subPn_0":"subN"))?.focus(),30);return}}
   {const sd=t.closest("[data-subdel]");if(sd){subReadRows();subRows.splice(+sd.dataset.subdel,1);render();return}}
   if(t.id==="subAdd"){subReadRows();subRows.push({nm:"",c:0});render();setTimeout(()=>$("subPn_"+(subRows.length-1))?.focus(),30);return}
   if(t.id==="subSave"){subSave(false);return}
+  if(t.id==="subDayOne"){const d=(subDays(subEdit)[0]||{}).d||1;saveCfg({subDay:{...(cfg.subDay||{}),[subEdit]:d}}).then(()=>render()).catch(()=>toast("Não deu para salvar."));return}
+  if(t.id==="subDayFollow"){const m={...(cfg.subDay||{})};delete m[subEdit];saveCfg({subDay:m}).then(()=>{toast("Segue o cartão",true);render()}).catch(()=>toast("Não deu para salvar."));return}
   if(t.id==="subDaySave"){const d=parseInt(($("subDay").value||"").replace(/\D/g,""),10)||0;if(d<1||d>31){toast("Dia de 1 a 31.");return}saveCfg({subDay:{...(cfg.subDay||{}),[subEdit]:d}}).then(()=>{toast("Dia salvo",true);render()}).catch(()=>toast("Não deu para salvar."));return}
   if(t.closest("#canBuy")){canBuySheet();return}
   {const fh=t.closest("section.fold > h2");if(fh&&!t.closest("button:not(h2),a,input,label,select")){anoToggle(fh.parentElement);return}}
