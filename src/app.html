@@ -4160,6 +4160,11 @@ function subShare(){
   const base=cfg.subShare&&typeof cfg.subShare==="object"?cfg.subShare:{};
   if(_shC&&_shC.i===items&&_shC.b===base&&_shC.p===cfg.pp)return _shC.v;
   const out={...base}, lo=shiftYM(curYM(),-4), pp=ppList(), seen=new Set();
+  /* cobrança por pessoa (05/11/2026, Wellhub: cada cobrança é de uma pessoa): x.cpid; vale mais que a divisão digitada e soma por pessoa no mês mais recente */
+  {const byK={};items.forEach(x=>{if(!x.cpid||typeOf(x)!=="desp")return;const k=subOf(x);if(!k||(x.date||"").slice(0,7)<lo)return;(byK[k]=byK[k]||[]).push(x)});
+   Object.entries(byK).forEach(([k,L])=>{const last=L.map(x=>x.date.slice(0,7)).sort().pop(), P=[];
+     L.filter(x=>x.date.startsWith(last)).forEach(x=>{const q=pp.find(z=>z.id===x.cpid);if(!q)return;const o=P.find(z=>z.nm===q.name);if(o)o.c+=x.cents;else P.push({nm:q.name,c:x.cents})});
+     if(P.length){out[k]={n:P.length,c:Math.round(P.reduce((t,r)=>t+r.c,0)/P.length),p:P,cpid:1};seen.add(k)}})}
   [...items].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).forEach(x=>{
     if((x.date||"").slice(0,7)<lo||typeOf(x)!=="desp")return;const k=subOf(x);if(!k||seen.has(k))return;
     const C=divCom(x);if(!C.length||x.divide.pagou)return;seen.add(k);if(out[k])return;
@@ -4267,7 +4272,10 @@ function subEditor(r){
   const dayBox=!dd.manual&&DS.length>=2
     ?`<div class="subday" style="display:block"><label style="display:block;margin-bottom:6px">Datas da cobrança no cartão (seguem os lançamentos)</label><div class="chips">${DS.map(q=>`<span class="chip" style="pointer-events:none">dia ${q.d} · ${R(q.cents)}</span>`).join("")}</div><button type="button" class="tbtn" id="subDayOne" style="margin-top:8px">Usar um dia só</button></div>`
     :`<div class="subday"><label>Dia da cobrança no cartão${dd.manual?"":" (visto nos lançamentos)"}<input id="subDay" inputmode="numeric" maxlength="2" placeholder="Dia (1 a 31)" value="${dd.d||""}" aria-label="Dia da cobrança"></label><button type="button" class="btn soft" id="subDaySave">Salvar dia</button></div>${dd.manual&&DS.length?`<button type="button" class="tbtn" id="subDayFollow" style="margin:6px 0 10px">Seguir as datas do cartão${DS.length>1?` (${DS.map(q=>q.d).join(", ")})`:""}</button>`:""}`;
-  return `<div class="svedit">${dayBox}${seg}${each?ea:eq}<p class="hint expl" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
+  /* de quem é cada cobrança (Wellhub: uma por pessoa): liga o lançamento já feito a uma pessoa de Pessoas */
+  const CH=items.filter(x=>typeOf(x)==="desp"&&subOf(x)===r.name&&(x.date||"").slice(0,7)===r.ym).sort((a,b)=>(a.buy||a.date).localeCompare(b.buy||b.date));
+  const chBox=CH.length>=2?`<div class="subday" style="display:block"><label style="display:block;margin-bottom:6px">De quem é cada cobrança (${esc(shortMonth(r.ym))})</label>${CH.map(x=>`<div style="margin:0 0 10px"><div style="font-weight:600;margin-bottom:6px">dia ${+(x.buy||x.date).slice(8,10)} · ${R(amt(x)||x.cents)}</div><div class="chips"><button type="button" class="chip" data-chp="${esc(x.id)}|" aria-pressed="${!x.cpid}">Eu</button>${PL.map(q=>`<button type="button" class="chip" data-chp="${esc(x.id)}|${esc(q.id)}" aria-pressed="${x.cpid===q.id}">${esc(ppTag(q))}</button>`).join("")}</div></div>`).join("")}${PL.length?"":`<p class="hint">Crie as pessoas em Contas → Pessoas.</p>`}<p class="hint expl">Vale para as cobranças do mesmo dia nos meses seguintes e entra na conta da pessoa em Pessoas.</p></div>`:"";
+  return `<div class="svedit">${dayBox}${chBox}${seg}${each?ea:eq}<p class="hint expl" style="margin:8px 0 0">Os Pix desses valores viram “${esc(r.name)} (divisão)” na importação do extrato.</p>
     <div class="svbtns">${r.off?`<button class="btn soft" id="subBack">Reativar</button>`:`<button class="btn soft" id="subKill">Cancelada</button>`}${r.sh?`<button class="btn soft" id="subOff">Não divido mais</button>`:`<button class="btn soft" id="subCancel">Cancelar</button>`}<button class="btn primary wide" id="subSave" data-subtot="${r.cents}">Salvar</button></div></div>`;
 }
 function subSection(){
@@ -4286,6 +4294,11 @@ function subSection(){
   return `<section id="subSec"><h2>Assinaturas <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">${[...L.filter(r=>!r.off),...L.filter(r=>r.off)].map(row).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
 }
+async function chpSet(id,pid){const it=items.find(z=>z.id===id);if(!it)return;const name=subOf(it);if(!name)return;
+  const day=+(it.buy||it.date).slice(8,10), cur=curYM(), lo=it.date.slice(0,7)<cur?it.date.slice(0,7):cur;
+  try{for(const x of items.filter(z=>typeOf(z)==="desp"&&subOf(z)===name&&(z.date||"").slice(0,7)>=lo&&+(z.buy||z.date).slice(8,10)===day)){
+      await store.items.update(x.id,pid?{cpid:pid,div:1,divide:{com:[{pid,cents:x.cents}],eu:false}}:{cpid:"",div:0,divide:null})}
+    toast(pid?"Cobrança ligada à pessoa":"Cobrança é sua",true);render()}catch(e){toast("Não deu para salvar.")}}
 async function subSave(off){
   const S={...subShare()};
   if(off) delete S[subEdit];
@@ -4306,7 +4319,7 @@ async function subSave(off){
     if(!off){const P=S[subEdit]?shParts(S[subEdit]):[];com=P.map(x=>({pid:subPidOf(x.nm),c:x.c})).filter(x=>x.pid).map(x=>subMode==="each"?{pid:x.pid,cents:x.c}:{pid:x.pid})}
     /* valor por pessoa é do mês; com várias cobranças no mês (ex.: Wellhub em 4 datas) cada cobrança leva a parte proporcional dela */
     const MT={};mine.forEach(x=>{const k=x.date.slice(0,7);MT[k]=(MT[k]||0)+Math.abs(x.cents||0)});
-    for(const x of mine){const cx=com.map(q=>q.cents!=null?{pid:q.pid,cents:MT[x.date.slice(0,7)]?Math.round(q.cents*Math.abs(x.cents||0)/MT[x.date.slice(0,7)]):q.cents}:q);
+    for(const x of mine){if(x.cpid)continue;const cx=com.map(q=>q.cents!=null?{pid:q.pid,cents:MT[x.date.slice(0,7)]?Math.round(q.cents*Math.abs(x.cents||0)/MT[x.date.slice(0,7)]):q.cents}:q);
       await store.items.update(x.id,com.length?{div:(S[subEdit].n||0)+(subMe?1:0),divide:{com:cx,...(subMe?{}:{eu:false})}}:{div:0,divide:null})}
     await saveCfg({subShare:S});subEdit=null;toast(off?"Divisão tirada":"Divisão salva",true);render()}catch(e){toast("Não deu para salvar.")}
 }
@@ -6601,6 +6614,7 @@ document.addEventListener("click",async e=>{
   {const sd=t.closest("[data-subdel]");if(sd){subReadRows();subRows.splice(+sd.dataset.subdel,1);render();return}}
   if(t.id==="subAdd"){subReadRows();subRows.push({nm:"",c:0});render();setTimeout(()=>$("subPn_"+(subRows.length-1))?.focus(),30);return}
   if(t.id==="subSave"){subSave(false);return}
+  {const ch=t.closest("[data-chp]");if(ch){chpSet(...ch.dataset.chp.split("|"));return}}
   if(t.id==="subDayOne"){const d=(subDays(subEdit)[0]||{}).d||1;saveCfg({subDay:{...(cfg.subDay||{}),[subEdit]:d}}).then(()=>render()).catch(()=>toast("Não deu para salvar."));return}
   if(t.id==="subDayFollow"){const m={...(cfg.subDay||{})};delete m[subEdit];saveCfg({subDay:m}).then(()=>{toast("Segue o cartão",true);render()}).catch(()=>toast("Não deu para salvar."));return}
   if(t.id==="subDaySave"){const d=parseInt(($("subDay").value||"").replace(/\D/g,""),10)||0;if(d<1||d>31){toast("Dia de 1 a 31.");return}saveCfg({subDay:{...(cfg.subDay||{}),[subEdit]:d}}).then(()=>{toast("Dia salvo",true);render()}).catch(()=>toast("Não deu para salvar."));return}
