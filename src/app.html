@@ -503,7 +503,7 @@ body{background:var(--bg);min-height:100vh;min-height:100dvh}
 .anim .spark i{transform-origin:bottom;animation:growy .45s cubic-bezier(.2,.8,.2,1) both}
 .anim svg rect.bar-r{transform-box:fill-box;transform-origin:bottom;animation:growy .5s cubic-bezier(.2,.8,.2,1) both}
 /* toast com check */
-.toast.ok{display:flex;align-items:center;gap:8px}
+.toast.ok{display:flex;align-items:center;gap:8px}.toast[hidden]{display:none}
 .toast svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--accent);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .toast svg path{stroke-dasharray:24;stroke-dashoffset:24;animation:draw .45s .05s ease-out forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
@@ -663,7 +663,7 @@ h2 button{padding:8px 0 8px 12px;margin:-8px 0}
 .rcpview{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}.rcpview img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}.rcpview .x{position:absolute;top:max(14px,env(safe-area-inset-top));right:14px;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:1.1rem}
 .nwrows{display:grid;gap:0;margin-top:6px}.nwrows>div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:.9rem}.nwrows>div:first-child{border-top:0}.nwrows span{color:var(--muted)}.nwrows b{font-variant-numeric:tabular-nums}
 .nwbars{display:flex;align-items:flex-end;gap:6px;height:84px;margin-top:12px}.nwb{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}.nwb i{display:block;width:100%;max-width:26px;border-radius:6px 6px 3px 3px;background:var(--accent);opacity:.85}.nwb em{font-style:normal;font-size:.68rem;color:var(--muted)}
-.trlist{display:grid;gap:2px;margin-top:6px}.trrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:.9rem}.trrow:first-child{border-top:0}.trrow small{display:block;color:var(--muted);font-size:.76rem}
+.trlist{display:grid;gap:2px;margin-top:6px}.trrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:.9rem}.trrow:first-child{border-top:0}.trrow small{display:block;color:var(--muted);font-size:.76rem}.trbtn{width:100%;background:none;border:0;border-top:1px solid var(--line);text-align:left;color:inherit;font:inherit;cursor:pointer}.trbtn:first-child{border-top:0}.trmh{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 2px;font-size:.9rem}.trmh small{color:var(--muted)}
 #trErr:empty{display:none}
 .recchips{margin-top:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.recchips::-webkit-scrollbar{display:none}
 .recchips .chip{flex:none;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.recchips .chip b{font-variant-numeric:tabular-nums;margin-left:4px;opacity:.7;font-weight:600}
@@ -2882,27 +2882,62 @@ function cardAcctBox(c){
     ${a?`<button class="svdel" id="cardBalDel">Tirar este saldo</button>`:""}</div></section>`;
 }
 /* grava o saldo de UMA conta sem desmontar as outras: os pagamentos/recebimentos desde o último saldo entram na 1ª das outras contas */
-/* ---------- transferência entre contas ---------- */
-function trSheet(msg){
-  const A=acctsR().map(a=>a.name), ts=accTs(), L=[...(cfg.transf||[])].sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,5);
-  const from=$("trFrom")?.value||A[0], to=$("trTo")?.value||A.find(n=>n!==from)||A[1], val=$("trVal")?.value||"";
+/* ---------- transferência entre contas ----------
+   cfg.transf=[{id,ts,date,from,to,cents,desc?,imp?}]. Não é lançamento: não entra em despesa, receita, categoria nem orçamento.
+   Só move saldo entre as contas (accMoves) quando `ts` é depois do último saldo informado e `date` já chegou.
+   Histórico completo (05/11/2026): data escolhida, descrição, editar e excluir a qualquer momento; aparece em Transações (trRowHTML)
+   e o extrato importado cria a transferência quando o Pix é para ele mesmo (extPlan, act "transf"). */
+const trAll=()=>[...(cfg.transf||[])].sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.ts||0)-(a.ts||0));
+const trInMonth=ym=>trAll().filter(t=>(t.date||"").startsWith(ym));
+let trFil="";
+function trRowHTML(t){
+  const [,m,d]=(t.date||"0000-00-00").split("-");
+  return `<button type="button" class="item trit" data-tredit="${esc(t.id)}"><span class="ico cat" style="--cc:#7a8699" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4"/></svg></span><span class="t"><div class="d"><span class="dn">${esc(t.desc||"Transferência")}</span></div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(t.from)} → ${esc(t.to)}${t.date>today()?" · agendada":""}</div></span><span class="a" style="color:var(--muted)">${R(t.cents)}<br><span class="m">entre contas</span></span></button>`;
+}
+function trList(){
+  const A=acctsR().map(a=>a.name), all=trAll(), L=trFil&&A.includes(trFil)?all.filter(t=>t.from===trFil||t.to===trFil):all, G={};
+  L.forEach(t=>{const k=(t.date||"").slice(0,7);(G[k]=G[k]||[]).push(t)});
+  const chips=A.length>2?`<div class="mfrow" style="margin:0 0 8px"><button type="button" class="mfp ${trFil?"":"on"}" data-trfil="">Todas</button>${A.map(n=>`<button type="button" class="mfp ${trFil===n?"on":""}" data-trfil="${esc(n)}">${esc(n)}</button>`).join("")}</div>`:"";
+  const row=t=>`<button type="button" class="trrow trbtn" data-tredit="${esc(t.id)}"><span>${esc(t.from)} → ${esc(t.to)}<small>${fmtDM(t.date)}${t.date>today()?" · agendada":""}${t.desc?" · "+esc(t.desc):""}${t.imp?" · do extrato":""}</small></span><b>${R(t.cents)}</b><span class="m">›</span></button>`;
   closeSheets(true);$("toast").hidden=true;
-  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Transferir entre contas</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="field"><label for="trFrom">Sai de</label><select id="trFrom" class="acsel">${A.map(n=>`<option ${n===from?"selected":""}>${esc(n)}</option>`).join("")}</select></div>
-  <div class="field"><label for="trTo">Entra em</label><select id="trTo" class="acsel">${A.map(n=>`<option ${n===to?"selected":""}>${esc(n)}</option>`).join("")}</select></div>
-  <div class="field"><label for="trVal">Valor</label><input type="text" id="trVal" class="limin" inputmode="numeric" placeholder="R$ 0,00" value="${esc(val)}"></div>
-  <p class="err info" id="trErr">${esc(msg||"")}</p>
-  <div class="row" style="margin:0"><button type="button" class="btn primary" id="trGo">Transferir</button></div>
-  ${L.length?`<h3 style="margin-top:18px;font-size:.95rem"><span>Últimas</span></h3><div class="trlist">${L.map(t=>`<div class="trrow"><span>${esc(t.from)} → ${esc(t.to)}<small>${fmtDate(t.date)}</small></span><b>${R(t.cents)}</b>${(t.ts||0)>ts?`<button type="button" class="lk" data-trdel="${esc(t.id)}">desfazer</button>`:""}</div>`).join("")}</div>`:""}`;
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Transferências</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <div class="row" style="margin:0 0 10px"><button type="button" class="btn primary" id="trNew">+ Nova transferência</button></div>${chips}
+  ${Object.keys(G).sort().reverse().map(k=>`<div class="trmh"><b>${esc(monthLabel(k))}</b><small>${G[k].length} · ${R(G[k].reduce((s,t)=>s+t.cents,0))}</small></div><div class="trlist">${G[k].map(row).join("")}</div>`).join("")||`<p class="hint" style="margin:14px 0">Nenhuma transferência${trFil?" nesta conta":" ainda"}.</p>`}`;
   $("scrim").hidden=$("diagSheet").hidden=false;
 }
-async function trGo(){
-  const f=$("trFrom").value, t=$("trTo").value, c=digits($("trVal").value);
-  if(f===t){trSheet("Escolha duas contas diferentes.");return}
-  if(!c){trSheet("Digite o valor.");return}
-  const id="t"+Date.now()+Math.random().toString(36).slice(2,5);
-  await saveCfg({transf:[...(cfg.transf||[]),{id,ts:Date.now(),date:today(),from:f,to:t,cents:c}].slice(-60)});
-  closeSheets();toast("Transferido",true);render();
+function trForm(id,msg,keep){
+  const A=acctsR().map(a=>a.name), t=id?(cfg.transf||[]).find(x=>x.id===id):null;
+  if(id&&!t){trList();return}
+  const rd=k=>keep&&$(k)?$(k).value:null;
+  const from=rd("trFrom")??(t?t.from:A[0]), to=rd("trTo")??(t?t.to:A.find(n=>n!==from)||A[1]), val=rd("trVal")??(t?brl(t.cents):""), date=rd("trDate")||(t?t.date:today()), desc=rd("trDesc")??(t?t.desc||"":"");
+  const O=[...new Set([...A,from,to].filter(Boolean))], opt=v=>O.map(n=>`<option ${n===v?"selected":""}>${esc(n)}</option>`).join("");
+  closeSheets(true);$("toast").hidden=true;
+  $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>${t?"Editar transferência":"Nova transferência"}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
+  <div class="field"><label for="trFrom">Sai de</label><select id="trFrom" class="acsel">${opt(from)}</select></div>
+  <div class="field"><label for="trTo">Entra em</label><select id="trTo" class="acsel">${opt(to)}</select></div>
+  <div class="field"><label for="trVal">Valor</label><input type="text" id="trVal" class="limin" inputmode="numeric" placeholder="R$ 0,00" value="${esc(val)}"></div>
+  <div class="field"><label for="trDate">Data</label><input type="date" id="trDate" value="${esc(date)}" min="${MIN_YM}-01"></div>
+  <div class="field"><label for="trDesc">Descrição <small>(opcional)</small></label><input type="text" id="trDesc" maxlength="60" placeholder="Ex.: salário, reserva…" value="${esc(desc)}" autocomplete="off"></div>
+  ${t&&(t.ts||0)<=accTs()?`<p class="hint" style="margin:0 0 8px">Já está no saldo que você informou: mudar o valor aqui não altera o saldo das contas, só o histórico.</p>`:""}
+  <p class="err info" id="trErr">${esc(msg||"")}</p>
+  <div class="row" style="margin:0"><button type="button" class="btn primary" id="trGo" data-trid="${esc(id||"")}">${t?"Salvar":"Transferir"}</button><button type="button" class="btn soft" id="trBack">‹ Histórico</button></div>
+  ${t?`<button type="button" class="svdel" id="trDel" data-trid="${esc(id)}">Excluir esta transferência</button>`:""}`;
+  $("scrim").hidden=$("diagSheet").hidden=false;
+}
+async function trGo(btn){
+  const id0=btn.dataset.trid||"", f=$("trFrom").value, t=$("trTo").value, c=digits($("trVal").value), d=$("trDate").value||today(), desc=($("trDesc").value||"").trim().replace(/\s+/g," ").slice(0,60);
+  if(f===t){trForm(id0,"Escolha duas contas diferentes.",true);return}
+  if(!c){trForm(id0,"Digite o valor.",true);return}
+  const L=[...(cfg.transf||[])];
+  if(id0){const i=L.findIndex(x=>x.id===id0);if(i<0){trList();return}const o={...L[i],from:f,to:t,cents:c,date:d,desc};if(!desc)delete o.desc;L[i]=o}
+  else{const o={id:"t"+Date.now()+Math.random().toString(36).slice(2,5),ts:Date.now(),date:d,from:f,to:t,cents:c,desc};if(!desc)delete o.desc;L.push(o)}
+  await saveCfg({transf:L.slice(-500)});
+  render();trList();toast(id0?"Transferência salva":"Transferido",true);
+}
+async function trDelGo(btn){
+  if(!btn.classList.contains("sure")){btn.classList.add("sure");btn.textContent="Toque de novo para excluir";return}
+  await saveCfg({transf:(cfg.transf||[]).filter(x=>x.id!==btn.dataset.trid)});
+  render();trList();toast("Transferência excluída");
 }
 async function setAcctBal(name,cents){
   const A=accts().map(a=>({...a})), others=A.filter(a=>a.name!==name), now=Date.now();
@@ -3283,7 +3318,7 @@ function accMoves(name){const ts=accTs(), now=today(), mine=x=>!name||accOf(x)==
   const A=acctsR(), sv=!A.length?0:(cfg.save||[]).flatMap(b=>b.moves||[]).filter(m=>m.acct&&(m.ts||0)>ts&&(!name||(A.some(a=>a.name===m.acct)?m.acct:A[0].name)===name))
     .reduce((s,m)=>s+(m.cents<0?-1:1)*Math.abs(m.cur&&m.cur!=="BRL"?(m.brl||0):(m.brl||m.cents)),0);
   /* transferência entre contas (29/10/2026): cfg.transf=[{id,ts,date,from,to,cents}]; só mexe no saldo de cada conta (a soma das contas não muda) e não é receita nem despesa */
-  const tr=name?(cfg.transf||[]).filter(t=>(t.ts||0)>ts):[], trOut=tr.filter(t=>t.from===name).reduce((s,t)=>s+t.cents,0), trIn=tr.filter(t=>t.to===name).reduce((s,t)=>s+t.cents,0);
+  const tr=name?(cfg.transf||[]).filter(t=>(t.ts||0)>ts&&(t.date||"")<=now):[], trOut=tr.filter(t=>t.from===name).reduce((s,t)=>s+t.cents,0), trIn=tr.filter(t=>t.to===name).reduce((s,t)=>s+t.cents,0);
   return {out:out+(sv>0?sv:0)+trOut,inn:inn+(sv<0?-sv:0)+trIn}}
 const accBal=()=>{const A=acctsR();if(!A.length)return 0;const m=accMoves();return A.reduce((s,a)=>s+a.cents,0)+m.inn-m.out};
 /* em que conta cada lançamento entra/sai: x.acct (nome); sem conta ou conta que não existe mais = 1ª conta. A soma das contas = accBal() */
@@ -3357,7 +3392,7 @@ function contaBlock(withCards){
   if(!A.length) return `<section><h2>Saldo na conta</h2><button class="hcard" id="acEdit"><div class="hhead"><b>Quanto tem na conta?</b><span>›</span></div><span class="hint expl">Digite o saldo do banco e veja quanto sobra depois de pagar o que falta em ${mn}.</span></button><label class="linkbtn" style="display:inline-block;margin-top:8px">ou importe o extrato da conta (PDF ou OFX)<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain" hidden></label></section>`;
   const tot=accBal(), mv=accMoves(), fl=accFlow(ym), open=fl.out, after=endBal(ym);
   const at=A.map(a=>a.at).filter(Boolean).sort()[0], old=at&&at<addDays(today(),-3);
-  const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain" hidden></label>${acctsR().length>1?`<button class="lk" id="trOpen">Transferir</button>`:""}<button id="acEdit">Atualizar</button></span>`;
+  const ext=`<span class="h2act"><label class="lk" style="cursor:pointer">Extrato<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain" hidden></label>${acctsR().length>1?`<button class="lk" id="trOpen">Transferências</button>`:""}<button id="acEdit">Atualizar</button></span>`;
   /* banco limpo (out/2026): no celular, uma linha por conta; "ainda entra / falta pagar / sobra" já estão no topo */
   if(!IS_WIDE.matches) return `<section><h2>${withCards?"Contas e cartões":"Na conta"} ${ext}</h2><div class="card">`+
     A.map(a=>`<div class="acone">${a.name?cardBadge(a.name):`<span class="fi acfi">?</span>`}<span class="t"><b>${esc(a.name||"Conta")}</b><span>${[a.at?`atualizado ${a.at===today()?"hoje":fmtDate(a.at)}`:"",acEqTxt(a)].filter(Boolean).join(" · ")}</span></span><span class="v">${acVal(a)}</span></div>`).join("")+
@@ -3847,16 +3882,18 @@ function boloHTML(g){
   return `<button class="item bolo" data-bolo="${esc(g.k)}" aria-expanded="${open}">${catIco(g.cat,"desp")}<span class="t"><div class="d"><span class="dn">${esc(g.name)}</span></div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${g.items.length} cobranças${c?" · "+esc(c):""} · ${open?"fechar":"ver cada uma"}</div></span><span class="a">${R(g.total)}<br>${paid?`<span class="m pos">pago</span>`:`<span class="tag">a pagar</span>`}</span></button>`+
     (open?`<div class="bolokids">${g.items.map(itemHTML).join("")}</div>`:"");
 }
+/* transferências entre contas do mês: só em "Todos" e sem filtro de categoria; nunca entram em totais */
+const mesTr=()=>mesF==="all"&&!mesCat?trInMonth(view):[];
 function mesFeed(F){
-  const L=F.filter(x=>!benOf(x)), V=mesF==="all"||mesF==="rec"?salVirt(view):[];
-  if(!L.length&&!V.length) return `<div class="empty"><strong>Nada neste filtro</strong>Toque em Todos para ver o mês inteiro.</div>`;
+  const L=F.filter(x=>!benOf(x)), V=mesF==="all"||mesF==="rec"?salVirt(view):[], T=mesTr();
+  if(!L.length&&!V.length&&!T.length) return `<div class="empty"><strong>Nada neste filtro</strong>Toque em Todos para ver o mês inteiro.</div>`;
   const BG=boloGroups(L);
-  if(mesOrd()==="az") return `<div class="card list">${sortAZ(L).map(x=>BG.first.has(x.id)?boloHTML(BG.first.get(x.id)):BG.skip.has(x.id)?"":itemHTML(x)).join("")}</div>`;
-  const G={}, at=d=>G[d]=G[d]||{L:[],V:[],B:[]};
+  if(mesOrd()==="az") return `<div class="card list">${sortAZ(L).map(x=>BG.first.has(x.id)?boloHTML(BG.first.get(x.id)):BG.skip.has(x.id)?"":itemHTML(x)).join("")}${T.map(trRowHTML).join("")}</div>`;
+  const G={}, at=d=>G[d]=G[d]||{L:[],V:[],B:[],T:[]};T.forEach(t=>at(t.date).T.push(t));
   sortRecent(L.filter(x=>!BG.skip.has(x.id))).forEach(x=>at(whenOf(x)).L.push(x));V.forEach(x=>at(x.date).V.push(x));BG.groups.forEach(b=>at(b.last).B.push(b));
   return Object.keys(G).sort().reverse().map(d=>{const g=G[d],
     out=g.L.filter(x=>typeOf(x)==="desp").reduce((s,x)=>s+amt(x),0)+g.B.reduce((s,b)=>s+b.total,0), inn=g.L.filter(x=>typeOf(x)==="rec").reduce((s,x)=>s+x.cents,0);
-    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.B.map(boloHTML).join("")}${g.L.map(itemHTML).join("")}</div></div>`}).join("");
+    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.B.map(boloHTML).join("")}${g.L.map(itemHTML).join("")}${g.T.map(trRowHTML).join("")}</div></div>`}).join("");
 }
 function mesSummary(arr){
   const dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), paid=dA.filter(isPaid).reduce((s,x)=>s+amt(x),0), open=aPagar(view), all=paid+open;
@@ -3907,11 +3944,11 @@ function renderMes(){
   mesShell();
   if(mq.trim()){$("mBody").innerHTML=searchBody();return}
   const arr=inMonth(view), dA=arr.filter(x=>typeOf(x)==="desp");
-  if(!arr.length&&!salVirt(view).length){
+  if(!arr.length&&!salVirt(view).length&&!trInMonth(view).length){
     $("mBody").innerHTML=`<div class="mes-split mes-empty"><section><div class="empty"><strong>Nada lançado em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}</strong>Registre um gasto ou uma receita para começar o mês.<button class="btn primary" id="mesEmptyAdd" type="button">+ Lançar</button></div></section>${cardStrip(view)}</div>`;
     return;
   }
-  const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0), F=mesApply(arr), o=mesOrd(), n=F.filter(x=>!benOf(x)).length;
+  const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0), F=mesApply(arr), o=mesOrd(), n=F.filter(x=>!benOf(x)).length+mesTr().length;
   const ord=(k,t)=>`<button type="button" class="mfp ${o===k?"on":""}" data-mesord="${k}" aria-pressed="${o===k}">${t}</button>`;
   const feed=`<section class="mlist"><h2>Lançamentos <small>${n}</small></h2><div class="mfrow mesord">${ord("rec","Recentes")}${ord("az","A–Z")}</div>${mesFeed(F)}</section>`;
   const side=catsBlockHtml(arr,dA,tot,byC)+feeSection(view)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`;
@@ -6448,9 +6485,13 @@ document.addEventListener("click",async e=>{
   {const cc=t.closest("[data-catcol]");if(cc&&catEd){catEd.n=$("catEdName")?.value??catEd.n;catEd.col=cc.dataset.catcol;render();return}}
   if(t.id==="catEdCancel"){catEd=null;render();return}
   if(t.id==="catEdSave"){await catEdSave();return}
-  if(t.closest("#trOpen")){trSheet();return}
-  if(t.id==="trGo"){await trGo();return}
-  {const td=t.closest("[data-trdel]");if(td){await saveCfg({transf:(cfg.transf||[]).filter(x=>x.id!==td.dataset.trdel)});toast("Transferência desfeita");render();trSheet();return}}
+  if(t.closest("#trOpen")){trList();return}
+  if(t.closest("#trNew")){trForm();return}
+  if(t.closest("#trBack")){trList();return}
+  if(t.closest("#trGo")){await trGo(t.closest("#trGo"));return}
+  if(t.closest("#trDel")){await trDelGo(t.closest("#trDel"));return}
+  {const te=t.closest("[data-tredit]");if(te){trForm(te.dataset.tredit);return}}
+  {const tf=t.closest("[data-trfil]");if(tf){trFil=tf.dataset.trfil;trList();return}}
   {const rt=t.closest("[data-rulet]");if(rt){ruleTxt=$("ruleIn")?.value||"";ruleT=rt.dataset.rulet;render();return}
    const rd=t.closest("[data-ruledel]");if(rd){const L=[...(cfg.catRules||[])];L.splice(+rd.dataset.ruledel,1);await saveCfg({catRules:L});toast("Regra apagada");render();return}
    if(t.id==="ruleAdd"){const m=($("ruleIn").value||"").trim().replace(/\s+/g," "), cat=$("ruleCat").value;
@@ -6674,6 +6715,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("change",e=>{
   if(e.target.id==="svCur")svEqHint();
   if(e.target.id==="svBk"||e.target.id==="mvBk"){const n=$(e.target.id+"New");if(n){n.hidden=e.target.value!=="__new";if(!n.hidden)n.focus()}return}
+  if(e.target.dataset&&e.target.dataset.extoth!=null&&ext){const p=ext.plan[+e.target.dataset.extoth];if(p){const v=e.target.value;p.other=v&&v!=="__no"?v:"";p.on=!!p.other;extRender()}return}
   if(e.target.dataset&&e.target.dataset.ext!=null&&ext){const p=ext.plan[+e.target.dataset.ext];if(p){p.on=e.target.checked;extRender()}return}
   if(e.target.id==="exBal"&&ext){ext.setBal=e.target.checked;return}
   if(/^acn_\d+$/.test(e.target.id)&&e.target.tagName==="SELECT"){const i=+e.target.id.slice(4);acReadDraft();e.target.blur();
@@ -7818,7 +7860,18 @@ function extPlan(e){
     if(/sal[aá]rio/.test(k)){const sh=items.find(x=>typeOf(x)==="rec"&&x.cat==="sal"&&closeC(x.cents,cents)&&Math.abs((new Date(x.fell||x.date)-new Date(r.date))/864e5)<=5);
       return {...base,act:sh?"done":"skip",match:sh?sh.id:undefined,note:sh?`já lançado como “${cleanDesc(sh)}”`:"salário: lance pelo holerite (o valor líquido é o do holerite)"}}
     const selfT=r.self||r.who&&me.some(n=>n&&(fold(r.who)===n||fold(r.who).startsWith(n.split(" ").slice(0,2).join(" "))));
-    if(selfT) return {...base,act:"skip",note:out?"transferência para outra conta sua":"transferência de outra conta sua"};
+    if(selfT){
+      /* transferência entre contas suas (05/11/2026): se este banco e outra conta em R$ estão no app, vira transferência (não é despesa nem receita) */
+      const A=acctsR().map(a=>a.name), mine=A.find(n=>fold(n)===fold(e.bank))||A.find(n=>fold(n).includes(fold(e.bank))), others=A.filter(n=>n!==mine);
+      const nd=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
+      if(mine&&others.length){
+        if((cfg.transf||[]).some(t=>t.imp===tag||(t.cents===cents&&nd(t.date,r.date)<=1&&(out?t.from===mine:t.to===mine))))
+          return {...base,xfer:1,act:"done",note:"transferência já registrada"};
+        const other=others.length===1?others[0]:"";
+        return {...base,xfer:1,act:"transf",on:!!other,mine,others,other,out,note:out?"transferência para outra conta sua":"transferência de outra conta sua"};
+      }
+      return {...base,xfer:1,act:"skip",note:out?"transferência para outra conta sua":"transferência de outra conta sua"};
+    }
     if(/resgate|aplica|cdb|poupan|invest/.test(k+" "+fold(r.det))) return {...base,act:"skip",note:"investimento"};
     if(/fatura|parcelamento/.test(k+" "+fold(r.det))){const b=billPaidBy(e,r,cents);
       if(b&&b.ids.length&&closeC(b.sum,cents)) return {...base,act:"payBill",on:true,ids:b.ids,note:`dá baixa na fatura ${b.card} de ${shortMonth(b.ym)}`};
@@ -7845,27 +7898,31 @@ function extRender(){
   const e=ext, P=e.plan, A=accts(), acc=A.find(a=>fold(a.name)===fold(e.bank))||A.find(a=>fold(a.name).includes(fold(e.bank)));
   const older=acc&&(acc.atTs||0)>e.atTs;
   const vis=P.filter(p=>p.act!=="old"), nOld=P.length-vis.length;
-  const ins=vis.filter(p=>p.type==="rec"&&p.act!=="skip").reduce((s,p)=>s+p.cents,0), outs=vis.filter(p=>p.type==="desp"&&p.act!=="skip").reduce((s,p)=>s+p.cents,0);
+  const ins=vis.filter(p=>p.type==="rec"&&p.act!=="skip"&&!p.xfer).reduce((s,p)=>s+p.cents,0), outs=vis.filter(p=>p.type==="desp"&&p.act!=="skip"&&!p.xfer).reduce((s,p)=>s+p.cents,0);
   const row=p=>{const[,m,d]=p.date.split("-"), can=p.act==="add"||p.act==="pay"||p.act==="payBill";
+    if(p.act==="transf") return `<div class="irow ${p.on?"":"off"}"><input type="checkbox" data-ext="${p.i}" ${p.on?"checked":""} ${p.other?"":"disabled"} aria-label="Registrar transferência"><span class="d">${p.out?"Para":"De"} outra conta sua</span><span class="v">⇄ ${R(p.cents)}</span><span class="m">${d}/${m} · ${p.out?`${esc(p.mine)} →`:"→ "+esc(p.mine)} <select data-extoth="${p.i}" class="acsel" aria-label="Outra conta" style="min-height:0;padding:2px 6px;font-size:.76rem;width:auto"><option value="">escolha a conta</option>${p.others.map(n=>`<option ${n===p.other?"selected":""}>${esc(n)}</option>`).join("")}<option value="__no">não registrar</option></select></span></div>`;
     return `<label class="irow ${p.on?"":can?"off":"exskip"}"><input type="checkbox" data-ext="${p.i}" ${p.on?"checked":""} ${can?"":"disabled"}><span class="d">${esc(p.desc||p.lbl)}</span><span class="v ${p.type==="rec"?"pos":""}">${p.type==="rec"?"+ ":"− "}${R(p.cents)}</span><span class="m">${d}/${m}${p.act==="add"?` · ${esc(catOf(p.cat,p.type).n)} · ${esc(p.pay)}`:p.note?` · ${esc(p.note)}`:""}</span></label>`};
-  const nAdd=P.filter(p=>p.on&&p.act==="add").length, nPay=P.filter(p=>p.on&&(p.act==="pay"||p.act==="payBill")).length;
+  const nAdd=P.filter(p=>p.on&&p.act==="add").length, nPay=P.filter(p=>p.on&&(p.act==="pay"||p.act==="payBill")).length, nTr=P.filter(p=>p.on&&p.act==="transf"&&p.other).length;
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Extrato ${esc(e.bank)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   ${e.bal!=null?`<div class="imphead"><b>${R(e.bal)}</b><span class="hint">saldo em ${fmtDM(e.at)}${e.from?` · extrato de ${fmtDM(e.from)} a ${fmtDM(e.to)}`:""}</span></div>
   <label class="check"><input type="checkbox" id="exBal" ${e.setBal&&!older?"checked":""} ${older?"disabled":""}> ${older?`O saldo na conta ${esc(acc.name)} é mais novo que este extrato`:`Usar como Saldo na conta ${esc(acc?acc.name:e.bank)}${acc?` (hoje: ${R(acc.cents)})`:""}`}</label>`:""}
-  <p class="hint" style="margin:8px 0">Desde ${shortMonth(MIN_YM)}: entrou ${R(ins)}, saiu ${R(outs)} (sem transferências suas, investimento e fatura).${nOld?` ${nOld} ${nOld===1?"movimento":"movimentos"} antes disso ficam de fora.`:""}</p>
+  <p class="hint" style="margin:8px 0">Desde ${shortMonth(MIN_YM)}: entrou ${R(ins)}, saiu ${R(outs)} (sem transferências entre suas contas, investimento e fatura).${nOld?` ${nOld} ${nOld===1?"movimento":"movimentos"} antes disso ficam de fora.`:""}</p>
   <div class="card" style="padding:0 14px;margin:0 0 12px">${vis.map(row).join("")||`<p class="hint" style="padding:12px 0">Nenhum movimento a partir de ${shortMonth(MIN_YM)}.</p>`}</div>
-  <div class="row"><button type="button" class="btn primary" id="exGo">${[nAdd?`Lançar ${nAdd}`:"",nPay?`marcar ${nPay} pago${nPay>1?"s":""}`:"",""].filter(Boolean).join(" e ")||"Só atualizar o saldo"}</button></div>`;
+  <div class="row"><button type="button" class="btn primary" id="exGo">${[nAdd?`Lançar ${nAdd}`:"",nPay?`marcar ${nPay} pago${nPay>1?"s":""}`:"",nTr?`${nTr} transferência${nTr>1?"s":""}`:"",""].filter(Boolean).join(" e ")||"Só atualizar o saldo"}</button></div>`;
 }
 async function extApply(btn){
   const e=ext;if(!e)return;btn.disabled=true;
   const midnight=d=>new Date(d+"T00:00:00").getTime();
   let n=0;
   try{
+    const trNew=[];
     for(const p of e.plan){if(!p.on)continue;
+      if(p.act==="transf"){if(!p.other)continue;trNew.push({id:"t"+Date.now()+Math.random().toString(36).slice(2,6)+trNew.length,ts:midnight(p.date),date:p.date,from:p.out?p.mine:p.other,to:p.out?p.other:p.mine,cents:p.cents,imp:p.tag});n++;continue}
       if(p.act==="payBill"){for(const id of p.ids) await store.items.update(id,{paid:true,paidAt:midnight(p.date)});n++;continue}
       if(p.act==="pay"){await store.items.update(p.match,{paid:true,paidAt:midnight(p.date)});n++}
       else if(p.act==="add"){const ts=midnight(p.date);
         await store.items.add({type:p.type,desc:p.desc,cat:p.cat,cents:p.cents,date:p.date,pay:p.type==="desp"?p.pay:"",paid:true,...(p.type==="desp"?{paidAt:ts}:{}),imp:p.tag,createdAt:ts});n++}}
+    if(trNew.length) await saveCfg({transf:[...(cfg.transf||[]),...trNew].slice(-500)});
     if($("exBal")&&$("exBal").checked&&e.bal!=null){
       const A=accts().map(a=>({...a})), i=A.findIndex(a=>fold(a.name)===fold(e.bank)), j=i>=0?i:A.findIndex(a=>fold(a.name).includes(fold(e.bank)));
       const row={name:e.bank,cents:e.bal,at:e.at,atTs:e.atTs};
