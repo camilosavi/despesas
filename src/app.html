@@ -2041,6 +2041,9 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 :is(#pMe,#pAno) section.fold.open>h2{align-items:center!important}
 @media (min-width:980px){body:has(#pMe:not([hidden])) header.top #ptitle{display:none!important}}
 @media (max-width:979px){body:has(#pMe:not([hidden])) .hmenu{margin-left:-11px}}
+/* filtro por categoria no Mês */
+.mfcats{margin-top:var(--g-gap)}
+.mfcats .mfp small{margin-left:6px;opacity:.7;font-size:.78em;font-weight:600}
 </style>
 
 <div class="wrap">
@@ -3806,8 +3809,12 @@ function mesSummary(arr){
 const mesBens=arr=>bens().map(b=>{const L=arr.filter(x=>x.pay===b.name&&typeOf(x)==="desp").sort((a,c)=>c.date.localeCompare(a.date));if(!L.length)return "";
   return `<section><h2>Pago com ${esc(b.name)} <small>${R(L.reduce((s,x)=>s+x.cents,0))}${view===curYM()?` · saldo ${R(benBal(b))}`:""}</small></h2><div class="card list">${L.map(itemHTML).join("")}</div></section>`}).join("");
 
-let mesF="all";
+let mesF="all", mesCat="", mesCatOn=false;
+/* filtro por categoria no Mês (05/11/2026, pedido dele: "não tenho onde acessar lançamentos por categoria") */
 function mesApply(arr){
+  const r=mesApply0(arr);return mesCat?r.filter(x=>x.cat===mesCat||catOf(x.cat,typeOf(x)).k===mesCat):r;
+}
+function mesApply0(arr){
   if(mesF==="open") return arr.filter(x=>typeOf(x)==="desp"&&!isPaid(x));
   if(mesF==="paid") return arr.filter(x=>typeOf(x)==="desp"&&isPaid(x));
   if(mesF==="rec") return arr.filter(x=>typeOf(x)==="rec");
@@ -3819,12 +3826,20 @@ function mesPayBtn(){
   const c=mesF.slice(5), L=cardItems(c,view);if(!L.length)return "";
   const mn=MES[+view.slice(5)-1].toLowerCase(), paid=L.every(isPaid);
   return `<button class="btn ${paid?"soft":"primary"} paytop" id="mesPay">${paid?`Fatura de ${mn} paga ✓ · ver a próxima`:`Marcar fatura de ${mn} como paga`}</button>`}
+function mesCatRow(){
+  if(!mesCatOn&&!mesCat)return "";
+  const T={};inMonth(view).filter(x=>!benOf(x)).forEach(x=>{const t=typeOf(x), k=catOf(x.cat,t).k;const o=T[k]||(T[k]={k,t,n:catOf(x.cat,t).n,v:0});o.v+=Math.abs(amt(x))});
+  const L=Object.values(T).sort((a,b)=>b.v-a.v);
+  if(!L.length)return "";
+  return `<div class="mfrow mfcats">`+L.map(c=>`<button class="mfp ${mesCat===c.k?"on":""}" data-mescat="${esc(c.k)}">${esc(c.n)} <small>${R(c.v)}</small></button>`).join("")+`</div>`;
+}
 function mesFilterBar(){
   const cs=credCards().filter(c=>cardTotal(c,view)||cardCfg(c).limit);
   const chip=(k,t)=>`<button class="mfp ${mesF===k?"on":""}" data-mesf="${esc(k)}">${t}</button>`;
   return `<div class="mfbar"><div class="mfrow">`+chip("all","Todos")+
     cs.map(c=>`<button class="mfp mfc ${mesF==="card:"+c?"on":""}" data-mesf="card:${esc(c)}"><i style="background:${cardColor(c)}"></i>${esc(c)}</button>`).join("")+
-    chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+`</div>${mesPayBtn()}</div>`;
+    chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+
+    `<button class="mfp ${mesCat?"on":""}" data-mescatopen="1" aria-expanded="${mesCatOn||!!mesCat}">${mesCat?esc(catOf(mesCat,"desp").n):"Categoria"} ▾</button></div>${mesCatRow()}${mesPayBtn()}</div>`;
 }
 function renderMes(){
   mesShell();
@@ -6233,6 +6248,8 @@ document.addEventListener("click",async e=>{
   if(t.id==="mesPay"){(async()=>{const c=mesF.slice(5), L=cardItems(c,view);
     try{if(!L.every(isPaid)){for(const x of L){if(!isPaid(x)) await store.items.update(x.id,paidPatch(true))}toast("Fatura marcada como paga",true)}
       view=shiftYM(view,1);render();slideIn($(tab),1)}catch(e){toast("Não deu para salvar. Tente de novo.")}})();return}
+  if(t.closest("[data-mescatopen]")){if(mesCat){mesCat="";mesCatOn=false}else mesCatOn=!mesCatOn;renderMes();return}
+  const mcc=t.closest("[data-mescat]"); if(mcc){const k=mcc.dataset.mescat;mesCat=mesCat===k?"":k;if(!mesCat)mesCatOn=true;mesSubTab="lanc";renderMes();return}
   const mf=t.closest("[data-mesf]"); if(mf){const k=mf.dataset.mesf;mesF=(k===mesF||k==="all")?"all":k;renderMes();cardTheme(mesF.startsWith("card:")?mesF.slice(5):null);return}
   {const mo=t.closest("[data-mesord]");if(mo){try{localStorage.setItem("despesas.mesOrd",mo.dataset.mesord)}catch(e){}renderMes();return}}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
