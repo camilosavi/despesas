@@ -2066,6 +2066,27 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 @media (max-width:400px){#planSeg button{font-size:.74rem!important;padding-inline:1px!important;letter-spacing:-.01em}}
 /* Adicionar cartão: título centralizado com o "+" (05/11/2026) */
 .folder.foladd{align-items:center}.folder.foladd .fn{grid-row:1/3;align-self:center}.folder.foladd .fi{border-radius:13px;width:46px;height:46px}
+/* calendário próprio (05/11/2026) */
+@media (hover:hover) and (pointer:fine){input[type=date]::-webkit-calendar-picker-indicator,input[type=month]::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer;filter:var(--dpi,none)}}
+[data-theme=dark] input[type=date],[data-theme=dark] input[type=month]{--dpi:invert(1)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]) input[type=date],:root:not([data-theme=light]) input[type=month]{--dpi:invert(1)}}
+.dpk{position:fixed;z-index:9999;width:18.5rem;padding:12px;border-radius:18px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 18px 48px rgba(0,0,0,.28);font-family:inherit}
+.dpk button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.dpk svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.dph{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px}
+.dpt{display:inline-flex;align-items:center;gap:4px;padding:6px 8px;border-radius:10px;font-weight:700;font-size:1rem;text-transform:capitalize}
+.dpt:hover,.dpn button:hover{background:var(--chip)}
+.dpn{display:flex;gap:2px}.dpn button{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}
+.dpw,.dpg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dpw span{font-size:.72rem;font-weight:700;color:var(--muted);text-align:center;padding:4px 0}
+.dpg button{height:36px;border-radius:10px;font-size:.92rem;font-variant-numeric:tabular-nums}
+.dpg3{grid-template-columns:repeat(3,1fr);gap:6px}.dpg3 button{height:44px;text-transform:capitalize}
+.dpg button:hover:not(:disabled){background:var(--chip)}
+.dpg button.now{box-shadow:inset 0 0 0 1.5px var(--btn,var(--accent))}
+.dpg button.on{background:var(--btn,var(--accent));color:var(--btn-ink,#fff);font-weight:700}
+.dpg button:disabled{opacity:.3;cursor:default}
+.dpf{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.dpf button{padding:7px 10px;border-radius:10px;font-weight:600;color:var(--link,var(--accent))}.dpf button:hover{background:var(--chip)}
 </style>
 
 <div class="wrap">
@@ -9500,6 +9521,55 @@ function metric(name,once){
 const standalone=()=>!!(navigator.standalone||window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
 if(!sessionStorage.getItem("despesas.m.sess")){sessionStorage.setItem("despesas.m.sess","1");metric("app");if(standalone())metric("instalou",true);if(shareName()==="1"&&userName()&&authData())metric(personPath())}
 render();initStore();setTimeout(pushClear,1000);setTimeout(avCheck,300);
+
+/* ---------- calendário próprio (05/11/2026, pedido dele: o do Chrome "feio demais") ----------
+   No computador, todo <input type=date|month> abre este calendário nas cores do app; digitar no campo continua valendo.
+   No celular fica o seletor do aparelho (a roda do iPhone). Respeita min/max. */
+(()=>{if(!IS_PC)return;
+  const MS=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"], MF=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+  let el=null, inp=null, mode="d", vy=0, vm=0;
+  const iso=(y,m,d)=>`${y}-${String(m+1).padStart(2,"0")}`+(d?`-${String(d).padStart(2,"0")}`:"");
+  const td=()=>{const t=new Date();return [t.getFullYear(),t.getMonth(),t.getDate()]};
+  const ok=v=>!(inp.min&&v<inp.min.slice(0,v.length))&&!(inp.max&&v>inp.max.slice(0,v.length));
+  function close(){if(el){el.remove();el=null}inp=null;document.removeEventListener("pointerdown",outside,true)}
+  function outside(e){if(el&&!el.contains(e.target)&&e.target!==inp)close()}
+  function set(v){const i=inp;i.value=v;i.dispatchEvent(new Event("input",{bubbles:true}));i.dispatchEvent(new Event("change",{bubbles:true}));close();i.focus()}
+  function draw(){
+    const [ty,tm,tdd]=td(), cur=inp.value||"", isM=inp.type==="month";
+    let head,body;
+    if(mode==="y"){const y0=vy-vy%12;head=`${y0} – ${y0+11}`;
+      body=`<div class="dpg dpg3">${Array.from({length:12},(_,i)=>y0+i).map(y=>`<button type="button" data-dpy="${y}" class="${String(y)===cur.slice(0,4)?"on":""} ${y===ty?"now":""}" ${ok(String(y))?"":"disabled"}>${y}</button>`).join("")}</div>`}
+    else if(mode==="m"){head=String(vy);
+      body=`<div class="dpg dpg3">${MS.map((n,i)=>{const v=iso(vy,i);return `<button type="button" data-dpm="${i}" class="${cur.slice(0,7)===v?"on":""} ${vy===ty&&i===tm?"now":""}" ${ok(v)?"":"disabled"}>${n}</button>`}).join("")}</div>`}
+    else{head=`${MF[vm]} ${vy}`;
+      const first=new Date(vy,vm,1).getDay(), n=new Date(vy,vm+1,0).getDate();let c="";
+      for(let i=0;i<first;i++)c+=`<span></span>`;
+      for(let d=1;d<=n;d++){const v=iso(vy,vm,d);c+=`<button type="button" data-dpd="${d}" class="${cur===v?"on":""} ${vy===ty&&vm===tm&&d===tdd?"now":""}" ${ok(v)?"":"disabled"}>${d}</button>`}
+      body=`<div class="dpw">${["D","S","T","Q","Q","S","S"].map(x=>`<span>${x}</span>`).join("")}</div><div class="dpg">${c}</div>`}
+    el.innerHTML=`<div class="dph"><button type="button" class="dpt" data-dpt>${head}<svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg></button><span class="dpn"><button type="button" data-dpnav="-1" aria-label="Anterior"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><button type="button" data-dpnav="1" aria-label="Próximo"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></span></div>${body}
+      <div class="dpf"><button type="button" data-dpclr>Limpar</button><button type="button" data-dptoday>${isM?"Este mês":"Hoje"}</button></div>`;
+  }
+  function place(){const r=inp.getBoundingClientRect(), w=el.offsetWidth, h=el.offsetHeight;
+    let x=Math.min(Math.max(8,r.left),innerWidth-w-8), y=r.bottom+6;if(y+h>innerHeight-8)y=Math.max(8,r.top-h-6);
+    el.style.left=x+"px";el.style.top=y+"px"}
+  function open(i){close();inp=i;const v=i.value, [ty,tm]=td();vy=v?+v.slice(0,4):ty;vm=v&&v.length>=7?+v.slice(5,7)-1:tm;mode=i.type==="month"?"m":"d";
+    el=document.createElement("div");el.className="dpk";el.setAttribute("role","dialog");draw();document.body.appendChild(el);place();
+    setTimeout(()=>document.addEventListener("pointerdown",outside,true),0)}
+  window.addEventListener("click",e=>{const i=e.target.closest&&e.target.closest('input[type="date"],input[type="month"]');
+    if(i&&!i.disabled&&!i.readOnly){e.preventDefault();if(inp===i)close();else open(i);return}
+    if(!el||!el.contains(e.target))return;const b=e.target.closest("button");if(!b||b.disabled)return;e.preventDefault();
+    const isM=inp.type==="month";
+    if(b.dataset.dpnav){const k=+b.dataset.dpnav;if(mode==="d"){vm+=k;if(vm<0){vm=11;vy--}if(vm>11){vm=0;vy++}}else vy+=mode==="y"?12*k:k;draw();return}
+    if(b.hasAttribute("data-dpt")){mode=mode==="d"?"m":mode==="m"?"y":(isM?"m":"d");draw();return}
+    if(b.dataset.dpy){vy=+b.dataset.dpy;mode="m";draw();return}
+    if(b.dataset.dpm){vm=+b.dataset.dpm;if(isM){set(iso(vy,vm));return}mode="d";draw();return}
+    if(b.dataset.dpd){set(iso(vy,vm,+b.dataset.dpd));return}
+    if(b.hasAttribute("data-dpclr")){set("");return}
+    if(b.hasAttribute("data-dptoday")){const [y,m,d]=td();set(isM?iso(y,m):iso(y,m,d));return}
+  },true);
+  document.addEventListener("keydown",e=>{if(el&&e.key==="Escape"){e.stopPropagation();close()}},true);
+  addEventListener("resize",()=>el&&place());document.addEventListener("scroll",e=>{if(el&&!el.contains(e.target)){if(!inp.isConnected||!inp.offsetParent)close();else place()}},true);
+})();
 </script>
 
 </body></html>
