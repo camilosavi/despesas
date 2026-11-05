@@ -2107,7 +2107,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <div id="sbMenu"></div>
   <span class="tabbrand" aria-hidden="true">Um Tostão</span>
   <button class="tab" data-tab="pHome" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Início</span></button>
-  <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><path d="M4 7h13M4 12h16M4 17h10"/></svg><span>Mês</span></button>
+  <button class="tab" data-tab="pMes"><svg viewBox="0 0 24 24"><path d="M4 7h13M4 12h16M4 17h10"/></svg><span>Transações</span></button>
   <button class="tab" data-tab="pWal"><svg viewBox="0 0 24 24"><path d="M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1"/><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M16 13.5h2.5"/></svg><span>Contas</span></button>
   <button class="tabav" id="tabAv" aria-label="Você: perfil e ajustes"></button>
 </nav>
@@ -3020,7 +3020,7 @@ function header0(){
   const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&["subs","debts","metas","pess"].includes(navSel))||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
-  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Compromissos",debts:"Compromissos",subs:"Compromissos",pess:"Compromissos",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
+  const titles={pHome:"Início",pMes:"Transações",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Compromissos",debts:"Compromissos",subs:"Compromissos",pess:"Compromissos",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=tab==="pHome"?homeCardName():titles[tab]||"";$("ptitle").classList.toggle("hcedit",tab==="pHome"&&!IS_WIDE.matches);
   const sub=(tab==="pCards"&&!!selCard)||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
@@ -3035,8 +3035,8 @@ function header0(){
     return;
   }
   if(isHome){
-    const ym=curYM(), arr=inMonth(ym), rec=sumT(arr,"rec"), desp=sumT(arr,"desp"), acc=hasAcc(), mn=monthLabel(ym).split(" ")[0].toLowerCase();
-    const open=acc?accFlow(ym).out:arr.filter(x=>typeOf(x)==="desp"&&!isPaid(x)).reduce((s,x)=>s+amt(x),0);
+    const ym=curYM(), arr=inMonth(ym), rec=entrou(ym), desp=sumT(arr,"desp"), acc=hasAcc(), mn=monthLabel(ym).split(" ")[0].toLowerCase();
+    const open=aPagar(ym);
     $("bigLabel").textContent=acc?`Na conta hoje`:`Saldo de ${mn}`;
     setBig("R$",acc?accBal():rec-desp);
     if(acc){$("s1l").textContent="Fim do mês";$("s1").textContent=R(endBal(ym))}
@@ -3045,7 +3045,7 @@ function header0(){
     /* novo app (out/2026): no celular, embaixo do "Na conta hoje" vai a barra do mês (pago / a pagar / entrou) */
     if(!IS_WIDE.matches){
       const paidS=arr.filter(x=>typeOf(x)==="desp"&&isPaid(x)&&!benOf(x)).reduce((s,x)=>s+amt(x),0), virt=salVirt(ym).reduce((s,x)=>s+x.cents,0);
-      const inn=rec+virt, tot=Math.max(inn,paidS+open,1), end=acc?endBal(ym):inn-paidS-open, w=v=>Math.max(0,Math.min(100,v/tot*100)).toFixed(1);
+      const inn=rec, tot=Math.max(inn,paidS+open,1), end=acc?endBal(ym):inn-paidS-open, w=v=>Math.max(0,Math.min(100,v/tot*100)).toFixed(1);
       document.querySelector("header.top .split").hidden=true;$("hBar").hidden=false;
       $("hBar").innerHTML=`<div class="hbtop"><span>${esc(monthLabel(ym).split(" ")[0])}</span><span>${acc?"fim do mês":end>=0?"sobra":"falta"} <b class="${end<0?"neg":""}">${R(Math.abs(end))}</b></span></div>
         <div class="hbtrack"><i style="width:${w(paidS)}%"></i><i class="op" style="width:${w(open)}%"></i></div>
@@ -3095,7 +3095,7 @@ function header0(){
     $("s1l").textContent=selCard?"Vencimento":"Cartões";
     $("s1").textContent=selCard?(dueOf(selCard)?fmtDM(cardDue(selCard,view)):"—"):String(cs.length);
     $("s2l").textContent="A pagar";$("s2").textContent=R(open);
-    const nx=cs.reduce((s,c)=>s+cardTotal(c,shiftYM(view,1)),0);
+    const nx=cs.reduce((s,c)=>s+billTot(c,shiftYM(view,1)),0);
     {const t0=tot;$("hFoot").textContent=`próximo mês: ${R(nx)}${t0?` (${nx<=t0?"−":"+"} ${R(Math.abs(t0-nx))})`:""}`}
     return;
   }
@@ -3104,7 +3104,7 @@ function header0(){
   $("next").disabled=isYear?year>=new Date().getFullYear()+2:view>=shiftYM(curYM(),24);
   $("prev").disabled=isYear?year<=firstYear():view<=firstYM();
   const arr=isYear?items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=firstYM()):inMonth(view);
-  const rec=sumT(arr,"rec"),desp=sumT(arr,"desp"),chain=!isYear&&view>=curYM(),saldo=chain?endBal(view):rec-desp;
+  const rec=isYear?sumT(arr,"rec"):entrou(view),desp=sumT(arr,"desp"),chain=!isYear&&view>=curYM(),saldo=chain?endBal(view):rec-desp;
   const vmn=monthLabel(view).split(" ")[0].toLowerCase();
   $("bigLabel").textContent=isYear?"Saldo do ano":chain?`Fim do mês · ${vmn}`:"Saldo do mês";
   setBig("R$",saldo);
@@ -3291,6 +3291,9 @@ const rollGone=(x,m)=>{const c=cardOf(x);if(!c||(x.date||"").startsWith(m))retur
 /* itens que vieram de faturas anteriores não pagas para a fatura de `c` em `ym` */
 const rolledIn=(c,ym)=>items.filter(x=>cardOf(x)===c&&rollYM(x)===ym&&!rollGone(x,ym));
 const rollAmt=(c,ym)=>rolledIn(c,ym).reduce((s,x)=>s+amt(x),0);
+/* números únicos (05/11/2026): toda tela usa estes. Entrou = receitas lançadas + salário previsto; A pagar = o que ainda falta pagar no mês (fatura que rolou conta no mês para onde foi; no mês atual entram os atrasados) */
+const entrou=ym=>sumT(inMonth(ym),"rec")+salVirt(ym).reduce((t,x)=>t+x.cents,0);
+const aPagar=ym=>accFlow(ym).out;
 function accFlow(ym){
   const cur=curYM(), now=today(), inM=x=>{const m=(x.date||"").slice(0,7);return ym===cur?(m===cur||(m<cur&&x.date>=MIN_DUE)):m===ym};
   let inn=0,out=0,late=0;
@@ -3314,7 +3317,7 @@ const paidPatch=to=>to?{paid:true,paidAt:Date.now()}:{paid:false,paidAt:0};
 function acReadDraft(){if(!acDraft)return;acDraft=acDraft.map((a,i)=>({...a,name:($("acn_"+i)?.value??a.name).trim(),free:a.free,cents:$("acv_"+i)?digits($("acv_"+i).value):a.cents,cur:$("acc_"+i)?$("acc_"+i).value:a.cur}))}
 /* Contas (celular): os cartões entram na mesma lista das contas (21/10/2026, pedido dele: "juntar Na conta com os cartões") */
 function walCardRows(){
-  const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
+  const ym=curYM(), cs=credCards().filter(c=>billTot(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
   if(!cs.length&&!B.length) return "";
   const row=(c,sub,val,neg)=>`<button class="acone cardgo" data-opencard="${esc(c)}">${cardBadge(c)}<span class="t"><b>${esc(c)}</b><span>${sub}</span></span><span class="v ${neg?"neg":""}">${val}</span></button>`;
   return `<div class="acsub">Cartões <button class="lk" data-gocards="1">Ver todos</button></div>`+cs.map(c=>{const k=cardCfg(c), bs=billShown(c,ym), tot=billShow(c,bs.ym), due=dueOf(c)?`vence ${fmtDM(cardDue(c,bs.ym))}`:shortMonth(bs.ym);
@@ -3401,7 +3404,7 @@ function homeBlock(k){
      :`<div class="ok">Nada vencendo nos próximos 10 dias ✓</div>`)+`</div>${late.length?`<p class="hint" style="margin-top:8px;color:var(--neg)">${late.length} ${late.length===1?"conta atrasada":"contas atrasadas"}. Toque para marcar como pago.</p>`:""}</section>`;
   }
   if(k==="cards"){
-    const cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
+    const cs=credCards().filter(c=>billTot(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
     if(!cs.length) return "";
     const lim=cs.reduce((a,c)=>{const L=cardCfg(c).limit;if(!L)return a;a.l+=L;a.u+=L-cardFree(c).free;return a},{l:0,u:0}), pu=lim.l?Math.max(0,Math.min(100,lim.u/lim.l*100)):0;
     const sum=lim.l?`<div class="cdsum pconly"><div class="cdsumtop"><span>${Math.round(pu)}% do limite usado</span><span>Limite ${R(lim.l)}</span></div><div class="mini"><i style="width:${pu}%;background:${pu>=100?"var(--neg)":pu>=80?"var(--warn)":"var(--accent)"}"></i></div><div class="cdsumtop"><span>Usado ${R(lim.u)}</span><span>Livre ${R(Math.max(0,lim.l-lim.u))}</span></div></div>`:"";
@@ -3484,7 +3487,7 @@ function possoComprarCard(){
 }
 /* Hoje (celular): cartões em estilo Apple Wallet — limite livre (ou a fatura, sem limite) e benefícios com o saldo */
 function hojeCards(){
-  const ym=curYM(), cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
+  const ym=curYM(), cs=credCards().filter(c=>billTot(c,ym)||cardCfg(c).limit||billShown(c,ym).from), B=bens();
   if(!cs.length&&!B.length) return "";
   const tile=(c,lab,val,bar,sub,neg)=>{
     const col=cardColor(c), best=isBestDay(c);
@@ -3523,7 +3526,7 @@ function recapCard(){
     ${lines.length?`<p>${lines.join(" ")}</p>`:""}<div class="row" style="margin:0"><button class="btn soft" id="recapOk">Ok</button><button class="btn primary" data-gomonth="${pm}">Ver ${nm.toLowerCase()}</button></div></div></section>`;
 }
 /* ---------- Visão geral (PC) — novo painel (29/10/2026) ---------- */
-const NAVS=[["pHome","Visão geral","M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],["pMes","Transações","M4 7h13M4 12h16M4 17h10"],["pCards","Cartões","M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18"],["pWal","Contas","M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1M3 7h18v13H3zM16 13.5h2.5"]];
+const NAVS=[["pHome","Início","M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],["pMes","Transações","M4 7h13M4 12h16M4 17h10"],["pCards","Cartões","M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18"],["pWal","Contas","M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1M3 7h18v13H3zM16 13.5h2.5"]];
 /* Metas, Assinaturas e Dívidas numa entrada só (05/11/2026, pedido dele): "Planejamento", com seletor no topo; por dentro cada uma segue com seu navSel */
 const NAVP=[["plan","Compromissos","M12 3v18M12 3l6 3-6 3"]];
 const PLAN=[["metas","Metas"],["subs","Assinaturas"],["debts","Dívidas"],["pess","Pessoas"]], isPlan=k=>PLAN.some(x=>x[0]===k);
@@ -3556,7 +3559,7 @@ function drawerOpen(on){
   else{d.classList.remove("on");setTimeout(()=>{if(!d.classList.contains("on"))d.hidden=true},220)}
 }
 function barMark(){
-  const k=navSel, cur=k==="metas"||k==="debts"||k==="pess"?"pWal":k==="subs"||k==="rel"?"more":null;if(!cur)return;
+  const k=navSel, cur=k==="metas"||k==="debts"||k==="pess"||k==="subs"||k==="plan"?"pWal":k==="rel"?"pMes":null;if(!cur)return;
   [...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).forEach((b,i)=>{
     if((b.dataset.tab||"more")===cur){b.setAttribute("aria-current","page");document.querySelector("nav.tabs").style.setProperty("--ti",i)}else b.removeAttribute("aria-current")});
 }
@@ -3666,7 +3669,7 @@ document.addEventListener("click",e=>{
   if(g){const it=items.find(i=>i.id===g.dataset.attid);if(it){e.preventDefault();e.stopPropagation();openSheet(it)}}
 },true);
 function dashHome(){
-  const ym=curYM(), mi=inMonth(ym), rec=sumT(mi,"rec"), des=sumT(mi,"desp"), sob=rec-des;
+  const ym=curYM(), mi=inMonth(ym), rec=entrou(ym), des=sumT(mi,"desp"), sob=rec-des;
   const nm=(myName()||(typeof userName==="function"?userName():"")||"").replace(/^@/,"").split(" ")[0], h=new Date().getHours(), gr=h<12?"Bom dia":h<18?"Boa tarde":"Boa noite";
   const dt=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
   const hasAcc=acctsR().length>0, bal=hasAcc?accBal():null;
@@ -3679,7 +3682,7 @@ function dashHome(){
   if(hasAcc&&bal<0){score-=20;why.push("conta no vermelho")}
   score=Math.max(0,score);const sl=score>=80?"Muito boa":score>=60?"Boa":score>=40?"Atenção":"Crítica", sc=score>=80?"var(--pos)":score>=60?"var(--c1)":score>=40?"var(--warn)":"var(--neg)";
   /* fluxo 6 meses */
-  const f0=shiftYM(ym,-5)<MIN_YM?MIN_YM:shiftYM(ym,-5);const ms=[0,1,2,3,4,5].map(d=>shiftYM(f0,d)).map(m=>{const a=inMonth(m);return{m,r:sumT(a,"rec"),d:sumT(a,"desp")}});
+  const f0=shiftYM(ym,-5)<MIN_YM?MIN_YM:shiftYM(ym,-5);const ms=[0,1,2,3,4,5].map(d=>shiftYM(f0,d)).map(m=>{const a=inMonth(m);return{m,r:entrou(m),d:sumT(a,"desp")}});
   const mx=Math.max(1,...ms.flatMap(x=>[x.r,x.d]));
   const flux=`<div class="fl">${ms.map(x=>`<div class="flc${x.m===ym?" now":""}"><div class="flb"><i class="r" style="height:${x.r/mx*100}%"></i><i class="d" style="height:${x.d/mx*100}%"></i></div><small>${MES[+x.m.slice(5)-1].slice(0,3)}</small></div>`).join("")}</div>`;
   const fleg=`<span class="flleg"><span><i class="r"></i>Entrou</span><span><i class="d"></i>Gastou</span></span>`;
@@ -3687,11 +3690,11 @@ function dashHome(){
   const bc=byCat(mi,"desp");const arr=Object.entries(bc).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);const tot=arr.reduce((s,x)=>s+x[1],0);
   const top=arr.slice(0,5).map(([k,v])=>({k,v,c:catOf(k,"desp").c,n:catOf(k,"desp").n}));const rest=tot-top.reduce((s,x)=>s+x.v,0);if(rest>0)top.push({k:"_",v:rest,c:"var(--muted)",n:"Outras categorias"});
   const cats=tot?`<div class="dnw"><div class="dnb">${donutHtml(top,tot)}<div class="dnc"><small>Maior gasto</small><b>${(top[0].v/tot*100).toLocaleString("pt-BR",{maximumFractionDigits:1})}%</b><small class="dnn">${esc(top[0].n)}</small></div></div><ul class="dleg">${top.map(x=>`<li title="${Math.round(x.v/tot*100)}%"><i style="background:${x.c}"></i><span>${esc(x.n)}</span><b>${R(x.v)}</b><em>${Math.round(x.v/tot*100)}%</em></li>`).join("")}</ul></div>`:`<p class="dempty">Nenhum gasto neste mês ainda.</p>`;
-  const cs=credCards().filter(c=>cardTotal(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
+  const cs=credCards().filter(c=>billTot(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
   const cardsH=cs.length?`<div class="dcar"><div class="dcards" id="dcar">${cs.map(c=>dashCard(c,true)).join("")}</div>${cs.length>1?`<button class="dside l" data-dcar="-1" aria-label="Cartão anterior" hidden>‹</button><button class="dside r" data-dcar="1" aria-label="Próximo cartão">›</button>`:""}</div>`:`<p class="dempty">Nenhum cartão ainda.</p>`;
   const last=items.filter(x=>!genFat(x)).slice().sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0)).slice(0,7);
   const tr=last.length?last.map(x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,t).n)} · ${esc(cardOf(x)||x.acct||(t==="rec"?"Conta":x.pay)||"")}</small></span><span class="dtv"><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b><small>${fmtDM(whenOf(x))}</small></span></div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
-  const td0=today(), recLeft=mi.filter(x=>typeOf(x)==="rec"&&recDay(x)>td0).reduce((s,x)=>s+amt(x),0), desLeft=mi.filter(x=>typeOf(x)==="desp"&&!isPaid(x)&&!benOf(x)).reduce((s,x)=>s+amt(x),0);
+  const td0=today(), recLeft=accFlow(ym).inn, desLeft=aPagar(ym);
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
    <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pWal">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
@@ -3835,11 +3838,11 @@ function mesFeed(F){
     return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.B.map(boloHTML).join("")}${g.L.map(itemHTML).join("")}</div></div>`}).join("");
 }
 function mesSummary(arr){
-  const dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), paid=dA.filter(isPaid).reduce((s,x)=>s+amt(x),0), open=dA.filter(x=>!isPaid(x)).reduce((s,x)=>s+amt(x),0), all=paid+open;
+  const dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), paid=dA.filter(isPaid).reduce((s,x)=>s+amt(x),0), open=aPagar(view), all=paid+open;
   const cur=view===curYM(), hasBal=acctsR().length>0;let fim=null;
   if(cur){const now=today(),day=+now.slice(8),last=lastDay(view);
     if(day>=3&&day<last){const vari=dA.filter(x=>!cardOf(x)&&!x.group&&!parcInfo(x)&&!["cartao","casa","assin","educ","interc","cidad","euro"].includes(x.cat)&&x.date<=now).reduce((s,x)=>s+amt(x),0);
-      fim=(hasBal?endBal(view):sumT(arr,"rec")-sumT(arr,"desp"))-Math.round(vari/day*(last-day))}}
+      fim=(hasBal?endBal(view):entrou(view)-sumT(arr,"desp"))-Math.round(vari/day*(last-day))}}
   else if(view>curYM()&&hasBal) fim=endBal(view);
   return `<section class="mssum"><div class="msbar" role="img" aria-label="${all?Math.round(paid/all*100):0}% do mês já pago"><i style="width:${all?Math.round(paid/all*100):0}%"></i></div>
     <div class="msrow"><div><small>Pago</small><b>${R(paid)}</b></div><div><small>A pagar</small><b class="${open?"":"mut"}">${R(open)}</b></div>${fim===null?"":`<div><small>${cur?"Fecha com":"Termina com"}</small><b class="${fim<0?"neg":""}">${fim<0?"−":""}${R(Math.abs(fim))}</b></div>`}</div></section>`;
@@ -3872,7 +3875,7 @@ function mesCatRow(){
   return `<div class="mfrow mfcats">`+L.map(c=>`<button class="mfp ${mesCat===c.k?"on":""}" data-mescat="${esc(c.k)}">${esc(c.n)} <small>${R(c.v)}</small></button>`).join("")+`</div>`;
 }
 function mesFilterBar(){
-  const cs=credCards().filter(c=>cardTotal(c,view)||cardCfg(c).limit);
+  const cs=credCards().filter(c=>billTot(c,view)||cardCfg(c).limit);
   const chip=(k,t)=>`<button class="mfp ${mesF===k?"on":""}" data-mesf="${esc(k)}">${t}</button>`;
   return `<div class="mfbar"><div class="mfrow">`+chip("all","Todos")+
     cs.map(c=>`<button class="mfp mfc ${mesF==="card:"+c?"on":""}" data-mesf="card:${esc(c)}"><i style="background:${cardColor(c)}"></i>${esc(c)}</button>`).join("")+
@@ -3989,7 +3992,7 @@ function onbGo(k){
 }
 /* ---------- resumo do mês em imagem (out/2026): cartão 1080×1350 para guardar ou mandar ---------- */
 async function mesShare(ym){
-  const a=inMonth(ym), inn=sumT(a,"rec"), out=sumT(a,"desp"), bal=inn-out, by=byCat(a,"desp"), fee=a.filter(isFee).reduce((s,x)=>s+amt(x),0);
+  const a=inMonth(ym), inn=entrou(ym), out=sumT(a,"desp"), bal=inn-out, by=byCat(a,"desp"), fee=a.filter(isFee).reduce((s,x)=>s+amt(x),0);
   const ks=Object.keys(by).filter(k=>by[k]>0).sort((p,q)=>by[q]-by[p]).slice(0,6), mx=Math.max(1,...ks.map(k=>by[k]));
   const cs=getComputedStyle(document.documentElement), cv=v=>{const m=/var\((--[\w-]+)\)/.exec(v);return m?cs.getPropertyValue(m[1]).trim()||"#888":v};
   const col=n=>cs.getPropertyValue(n).trim(), font=getComputedStyle(document.body).fontFamily||"system-ui";
@@ -4044,7 +4047,7 @@ function canBuySheet(){
     const last=shiftYM(ym0,Math.max(n,3)-1);
     for(let m=card?ym0:cur, i=0;m<=last&&i<12;m=shiftYM(m,1),i++){
       const k=monthsBetween(ym0,m), paidSoFar=card?Math.min(n,Math.max(0,k+1))*parc:(m>=cur?cbuy.v:0), eb=endBal(m), ebA=eb==null?null:eb-paidSoFar;
-      const fat=card&&k>=0&&k<n?`fatura ${R(cardTotal(card,m))} → ${R(cardTotal(card,m)+parc)}`:"";
+      const fat=card&&k>=0&&k<n?`fatura ${R(billTot(card,m))} → ${R(billTot(card,m)+parc)}`:"";
       if(ebA!=null&&ebA<0&&!(eb<0)) probs.push(`a conta fica negativa no fim de ${shortMonth(m)}`);
       rows.push(`<div class="hlrow"><span>${shortMonth(m)}${fat?`<small class="muted" style="display:block">${fat}</small>`:""}</span><b class="${ebA!=null&&ebA<0?"neg":""}">${eb==null?"–":`${eb<0?"−":""}${R(Math.abs(eb))} → ${ebA<0?"−":""}${R(Math.abs(ebA))}`}</b></div>`)}
     res=`<div class="card" style="padding:12px 14px;margin:12px 0 0"><div class="hint" style="margin:0 0 8px;font-weight:600;color:${probs.length?"var(--neg)":"var(--pos)"}">${probs.length?"Cuidado: "+[...new Set(probs)].join(" e ")+".":"Cabe ✓ "+(card&&n>1?`${n}× ${R(parc)} na fatura de ${shortMonth(ym0)} em diante.`:"O saldo continua positivo.")}</div>
@@ -4156,6 +4159,8 @@ function subPayers(name,sh){
   const ok=x=>{if(typeOf(x)!=="rec")return false;const m=shMatch(sh,x.cents,who(x));return m&&(x.cat==="divid"&&(x.desc||"").startsWith(name)||/^Pix de /i.test(x.desc||""))};
   const L=items.filter(x=>ok(x)&&(x.date||"").slice(0,7)>=shiftYM(cur,-3));
   const paid=[...new Set(L.filter(x=>x.date.startsWith(cur)).map(who).filter(Boolean))];
+  /* pagamento registrado na conta da pessoa (Pessoas) no mês também conta como pago */
+  shParts(sh).forEach(q=>{if(!q.nm||paid.some(n=>nmSame(n,q.nm)))return;const pr=ppList().find(z=>nmSame(z.name,q.nm));if(pr&&ppAll(pr).some(e=>e.k==="p"&&e.c<0&&(e.d||"").startsWith(cur)))paid.push(q.nm)});
   const named=shParts(sh).map(x=>x.nm).filter(Boolean);
   const all=[...new Set([...named,...L.map(who).filter(Boolean)])].filter((n,i,a)=>a.findIndex(o=>nmSame(o,n))===i);
   return {paid,miss:all.filter(n=>!paid.some(p=>nmSame(p,n)))};
@@ -4212,7 +4217,7 @@ function subSection(){
       ${ed&&r.sh?(()=>{const P=subPayers(r.name,r.sh), mn=monthLabel(cur).split(" ")[0].toLowerCase(), first=n=>titleCase(n.split(" ")[0]);
         return `<div class="svedit" style="padding-bottom:0"><p class="hint" style="margin:0 0 6px">${P.paid.length?`Pagaram em ${mn}: ${esc(P.paid.map(first).join(", "))}.`:`Ninguém pagou em ${mn} ainda.`}${P.miss.length?` Faltam: ${esc(P.miss.map(first).join(", "))}.`:""}</p>
         ${P.miss.length?`<div class="btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">${P.miss.map(n=>`<a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi, ${first(n)}! Falta o ${r.name} de ${mn}: ${R(shOwe(r.sh,n))}. Valeu!`)}">Cobrar ${esc(first(n))} no WhatsApp</a>`).join("")}</div>`:""}
-        ${P.miss.length&&!divCom(r.last).length?`<div class="btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"><button type="button" class="tbtn" data-subpp="${esc(r.name)}">Lançar ${P.miss.length>1?"as cobranças":"a cobrança"} em Pessoas</button></div>`:""}<p class="hint expl" style="margin:0">Quem pagou nos últimos 3 meses entra na lista. O WhatsApp abre com a mensagem pronta; você escolhe o contato.</p></div>`})():""}
+        <p class="hint expl" style="margin:0">Quem pagou nos últimos 3 meses entra na lista. O WhatsApp abre com a mensagem pronta; você escolhe o contato.</p></div>`})():""}
       ${ed?subEditor(r):""}</div>`};
   return `<section id="subSec"><h2>Assinaturas <small>${R(tot)}/mês · ${R(tot*12)}/ano</small></h2><div class="card list">${[...L.filter(r=>!r.off),...L.filter(r=>r.off)].map(row).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">${mine!==tot?`Com as divisões, sai ${R(mine)}/mês do seu bolso. `:""}Toque numa assinatura para dizer se divide com alguém. Conta o que veio nos últimos meses (cartão e débito).</p></section>`;
@@ -4818,10 +4823,10 @@ function renderCards(){
       if(isBen(c)){const b=bens().find(x=>x.name===c), v=benBal(b), nx=benNext(b);
         return `<button class="folder" data-opencard="${esc(c)}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv ${v<0?"neg":""}">${R(v)}</span><span class="fm">saldo do vale${nx?` · crédito ${fmtDM(nx)}`:""}</span></button>`}
       if(IS_WIDE.matches) return dashCard(c,true);
-      const fy=billShown(c,view).ym, tot=billShow(c,fy), n=cardItems(c,fy).filter(x=>!genFat(x)).length, max=Math.max(...months.map(m=>cardTotal(c,m)),1);
+      const fy=billShown(c,view).ym, tot=billShow(c,fy), n=cardItems(c,fy).filter(x=>!genFat(x)).length, max=Math.max(...months.map(m=>billTot(c,m)),1);
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
       return `<button class="folder" data-opencard="${esc(c)}" data-ym="${fy}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${dueOf(c)?`vence ${fmtDM(cardDue(c,fy))} · `:`fatura de ${MES[+fy.slice(5)-1].toLowerCase()} · `}${n?`${n} ${n===1?"item":"itens"}`:"sem itens"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
-        <span class="spark">${months.map((m,i)=>{const v=cardTotal(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
+        <span class="spark">${months.map((m,i)=>{const v=billTot(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
       `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
@@ -4912,9 +4917,9 @@ function renderCards(){
   const side=h;h="";
   h+=`<section><h2>Limite do cartão</h2>${limitBox(c)}</section>`;
   h+=cardAcctBox(c);
-  const months=Array.from({length:12},(_,i)=>shiftYM(view,i)).filter((m,i)=>i===0||cardTotal(c,m));
-  const max=Math.max(...months.map(m=>cardTotal(c,m)),1);
-  h+=`<section><h2>Próximas faturas <small>já comprometido</small></h2><div class="card flist">`+months.map(m=>{const v=cardTotal(c,m);
+  const months=Array.from({length:12},(_,i)=>shiftYM(view,i)).filter((m,i)=>i===0||billTot(c,m));
+  const max=Math.max(...months.map(m=>billTot(c,m)),1);
+  h+=`<section><h2>Próximas faturas <small>já comprometido</small></h2><div class="card flist">`+months.map(m=>{const v=billTot(c,m);
     return `<button class="frow ${m===view?"sel":""}" data-cardmonth="${m}"><span>${shortMonth(m)}</span><span class="b"><i style="width:${v/max*100}%"></i></span><span>${R(v)}</span></button>`}).join("")+`</div></section>`;
   {const histM=[...new Set(items.filter(x=>cardOf(x)===c&&!genFat(x)&&(x.date||"").slice(0,7)<=curYM()).map(x=>x.date.slice(0,7)))].sort();
    if(histM.some(m=>m<curYM())){
@@ -5167,7 +5172,7 @@ function svNeedTxt(b){
   if(g==="EUR"||g==="USD"){
     return `Para chegar lá, guarde ~${svMoney(per,g)} por mês até ${shortMonth(b.target)}.`;
   }
-  const a=inMonth(curYM()), rec=sumT(a,"rec"), sob=rec-sumT(a,"desp"), mn=monthLabel(curYM()).split(" ")[0].toLowerCase();
+  const a=inMonth(curYM()), rec=entrou(curYM()), sob=rec-sumT(a,"desp"), mn=monthLabel(curYM()).split(" ")[0].toLowerCase();
   if(!rec) return `Para chegar lá, guarde ~${R(per)} por mês. Quando lançar a receita de ${mn}, mostro quanto da sobra cobre isso.`;
   if(sob<=0) return `Para chegar lá, guarde ~${R(per)} por mês. A previsão de ${mn} está sem sobra.`;
   const pct=Math.round(sob/per*100);
@@ -5351,7 +5356,9 @@ const divMine=x=>divCom(x).length?(divEuIn(x)?x.cents-divParts(x).reduce((s,q)=>
 function divParts(x){const C=divCom(x);if(!C.length||x.divide.pagou)return [];const n=x.div>=1&&x.div>=C.length?x.div:C.length+(divEuIn(x)?1:0), each=Math.floor(x.cents/n);
   return C.map((c,i)=>({pid:c.pid,c:c.cents>=0&&c.cents!=null?c.cents:each}))}
 /* "pagou" = outra pessoa pagou a despesa inteira: o lançamento guarda só a parte dele (cents) e ele deve isso a ela (c < 0) */
-const ppDerived=p=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="desp"&&divCom(x).some(c=>c.pid===p.id)&&(!x.divide.pagou||x.divide.pagou===p.id)).map(x=>{
+/* cobranças de meses que ainda não chegaram (parcelas, repetição) só contam quando o mês chega: até o mês que vem (05/11/2026) */
+const ppHi=()=>shiftYM(curYM(),1);
+const ppDerived=(p,fut)=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="desp"&&divCom(x).some(c=>c.pid===p.id)&&(!x.divide.pagou||x.divide.pagou===p.id)&&(((x.date||"").slice(0,7)>ppHi())===!!fut)).map(x=>{
   if(x.divide.pagou)return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:-(x.cents||0),k:"d",t:cleanDesc(x),derived:true,x:x.id};
   const q=divParts(x).find(y=>y.pid===p.id);
   return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:q?q.c:0,k:"d",t:cleanDesc(x),derived:true,x:x.id}}).filter(e=>e.c!==0);
@@ -5363,7 +5370,10 @@ const ppSubs=p=>{if(typeof items==="undefined"||!cfg.subShare||typeof cfg.subSha
     const sh=e[1],q=sh.p.find(z=>z&&z.nm&&nmSame(z.nm,p.name)),n=sh.p.length+(sh.noMe?0:1),c=new Set(sh.p.map(z=>z.c)).size>1?(q.c||0):Math.round(x.cents/n);
     if(c>0)out.push({id:"sb|"+x.id+"|"+p.id,d:x.buy||x.date,c,k:"d",t:cleanDesc(x),derived:true,x:x.id})});
   return out};
-const ppAll=p=>[...(p.e||[]),...ppDerived(p),...ppSubs(p),...ppPay(p)];
+/* Pix recebido marcado como divisão ("… (divisão) · Fulano") abate na conta da pessoa de mesmo nome */
+const ppDivRec=p=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="rec"&&x.cat==="divid"&&!x.ppay&&x.cents>0&&(x.date||"")>=MIN_YM&&nmSame(shWho(x),p.name)).map(x=>({id:"dr|"+x.id+"|"+p.id,d:x.date,c:-x.cents,k:"p",t:cleanDesc(x),derived:true,x:x.id}));
+const ppFut=p=>ppDerived(p,true).reduce((s,e)=>s+e.c,0);
+const ppAll=p=>[...(p.e||[]),...ppDerived(p),...ppSubs(p),...ppPay(p),...ppDivRec(p)];
 const ppBal=p=>ppAll(p).reduce((t,e)=>t+(e.c||0),0);
 const ppFirst=n=>titleCase((n||"").trim().split(/\s+/)[0]||"");
 const ppHue=n=>[...(n||"")].reduce((t,c)=>t+c.charCodeAt(0)*7,0)%360;
@@ -5403,7 +5413,7 @@ function ppSheet(draft){
   const msg=b>0?`Oi, ${f}! Fechando nossa conta: ${R(b)} em aberto.\n${ppOpenLines(p).join("\n")}\nPode me mandar por Pix? Valeu!`:"";
   closeSheets(true);$("toast").hidden=true;
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>${esc(p.name)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
-  <div class="ppbal ${b>0?"pos":b<0?"neg":""}"><small>${b>0?`${esc(f)} te deve`:b<0?`Você deve a ${esc(f)}`:"Tudo certo"}</small><b>${R(Math.abs(b))}</b></div>
+  <div class="ppbal ${b>0?"pos":b<0?"neg":""}"><small>${b>0?`${esc(f)} te deve`:b<0?`Você deve a ${esc(f)}`:"Tudo certo"}</small><b>${R(Math.abs(b))}</b>${(fu=>fu?`<small style="display:block;margin-top:4px;text-transform:none;letter-spacing:0">${fu>0?"+ ":"− "}${R(Math.abs(fu))} nas próximas parcelas (entram quando o mês chegar)</small>`:"")(ppFut(p))}</div>
   ${b?`<div class="ppact">${b>0?`<a class="btn soft" target="_blank" rel="noopener" href="${waLink(msg)}">Cobrar no WhatsApp</a>`:""}<button type="button" class="btn soft" id="ppAll">${b>0?`${esc(f)} pagou tudo`:"Eu paguei tudo"}</button></div>`:""}
   <div class="ppform"><span class="lbl">${ed?"Editar lançamento":"Novo lançamento"}</span>
     <div class="ppkinds" role="group" aria-label="Tipo">${PP_KINDS.map(k=>`<button type="button" class="chip" data-ppk="${k[0]}" aria-pressed="${k[0]===draft.kind}">${esc(k[3](f))}</button>`).join("")}</div>
@@ -5591,7 +5601,7 @@ function projSection(){
   const ms=nextMonths(12), cur=curYM();
   const hA=hasAcc();let acc=hA?accBal():0;
   const rows=ms.map(ym=>{
-    const arr=inMonth(ym), sv=salVirt(ym).reduce((s,x)=>s+x.cents,0), r=sumT(arr,"rec")+sv, d=sumT(arr,"desp"), v=r-d;
+    const arr=inMonth(ym), r=entrou(ym), d=sumT(arr,"desp"), v=r-d;
     if(hA){const f=accFlow(ym);acc+=f.inn-f.out}else acc+=v;
     const[y,m]=ym.split("-");
     return `<tr class="${ym===cur?"now":""} ${!r&&!d&&ym!==cur?"zero":""}" data-gomonth="${ym}"><td>${MES[+m-1].toLowerCase()}/${y.slice(2)}</td><td class="r pos">${r?brl(r):"–"}${sv?`<sup title="inclui salário previsto">*</sup>`:""}</td><td class="r neg">${d?brl(d):"–"}</td>${hA?"":`<td class="r ${v<0?"neg":""}">${v<0?"−":""}${brl(Math.abs(v))}</td>`}<td class="r ${acc<0?"neg":""}"><b>${acc<0?"−":""}${brl(Math.abs(acc))}</b></td></tr>`;
@@ -5612,7 +5622,7 @@ function renderAno(){
   const fy=firstYM(), yArr=items.filter(x=>(x.date||"").startsWith(year+"-")&&x.date.slice(0,7)>=fy);
   const mon=m=>yArr.filter(x=>x.date.slice(5,7)===pad(m+1));
   const idx=MES.map((_,i)=>i).filter(i=>`${year}-${pad(i+1)}`>=fy), NM=idx.length || 1;
-  const recM=idx.map(i=>sumT(mon(i),"rec")), despM=idx.map(i=>sumT(mon(i),"desp"));
+  const recM=idx.map(i=>entrou(`${year}-${pad(i+1)}`)), despM=idx.map(i=>sumT(mon(i),"desp"));
   const recTot=recM.reduce((a,b)=>a+b,0), despTot=despM.reduce((a,b)=>a+b,0), saldoTot=recTot-despTot;
 
   if(anoSubTab!=="metas"&&anoSubTab!=="fixos") anoSubTab="ano";
@@ -5620,7 +5630,7 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP gQ">${ppSection()}</div></div>
+      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(false)+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP gQ">${ppSection()}</div></div>
       <div class="ano-col-side"><div class="gM">${fxRowSection()}</div><div class="gC gP">${divSection()}</div></div>
     </div>`;
   } else if(anoSubTab === "ano"){
