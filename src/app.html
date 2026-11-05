@@ -2048,6 +2048,10 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 .item.bolo .m b{font-weight:700}
 #planSeg{display:grid!important;grid-template-columns:repeat(3,1fr);margin:0 0 var(--g-gap)}
 #planSeg button{min-width:0;white-space:nowrap;padding-inline:4px}
+#pAno[data-f="Q"] :is(.gM,.gD,.gS,.gX),#pAno[data-f="Q"] .gC:not(.gQ){display:none!important}
+#pAno[data-f="Q"] .gP{display:block!important}
+#planSeg{grid-template-columns:repeat(4,1fr)!important}
+@media (max-width:400px){#planSeg button{font-size:.74rem!important;padding-inline:1px!important;letter-spacing:-.01em}}
 </style>
 
 <div class="wrap">
@@ -3007,10 +3011,10 @@ function header(){header0();hTlUpdate()}
 function header0(){
   $("s1").parentElement.hidden=false;
   const wal=tab==="pAno"&&anoSubTab==="metas", isYear=tab==="pAno"&&!wal, isFx=tab==="pFx", isHome=tab==="pHome";
-  const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&["subs","debts","metas"].includes(navSel))||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
+  const isMe=tab==="pMe";$("hBar").hidden=true;document.querySelector("header.top .split").hidden=false;$("mpill").hidden=isFx||isHome||isMe||wal||(tab==="pAno"&&["subs","debts","metas","pess"].includes(navSel))||(tab==="pAno"&&!IS_WIDE.matches);$("meHead").hidden=!isMe;document.querySelector("header.top .bigrow").hidden=isMe;$("hAv").hidden=true;$("tabAv").innerHTML=avInner();$("hFxSeg").hidden=!isFx;bellUpdate();
   $("hFxSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.fxcur===fxCur));$("prev").disabled=false;
   cardTheme(imp&&!$("impSheet").hidden?imp.card:tab==="pCards"&&selCard?selCard:tab==="pMes"&&typeof mesF==="string"&&mesF.startsWith("card:")?mesF.slice(5):null);
-  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Planejamento",debts:"Planejamento",subs:"Planejamento",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
+  const titles={pHome:"Hoje",pMes:"Mês",pCards:selCard||"Cartões",pPlan:"Planilha",pFx:"Moedas",pAno:({metas:"Compromissos",debts:"Compromissos",subs:"Compromissos",pess:"Compromissos",rel:"Relatórios"})[navSel]||(wal?"Contas":"Relatórios"),pOrc:"Orçamento",pMe:"Você"};
   $("ptitle").textContent=tab==="pHome"?homeCardName():titles[tab]||"";$("ptitle").classList.toggle("hcedit",tab==="pHome"&&!IS_WIDE.matches);
   const sub=(tab==="pCards"&&!!selCard)||tab==="pOrc"||tab==="pFx";
   $("backBtn").hidden=!sub;
@@ -3048,7 +3052,7 @@ function header0(){
   if(wal){
     const cash=hasAcc()?accBal():0, B=saves(), kR=B.reduce((x,b)=>x+svBrl(b),0), kE=B.reduce((x,b)=>x+svEur(b),0), kU=B.reduce((x,b)=>x+svUsd(b),0);
     const fo=[kE?E(kE):"",kU?M(kU,"USD"):""].filter(Boolean).join(" + ")||"—";
-    $("ptitle").textContent=({metas:"Planejamento",debts:"Planejamento",subs:"Planejamento"})[navSel]||"Contas";
+    $("ptitle").textContent=({metas:"Compromissos",debts:"Compromissos",subs:"Compromissos",pess:"Compromissos"})[navSel]||"Contas";
     $("bigLabel").textContent=hasAcc()?"Nas contas":"Guardado em real";
     setBig("R$",hasAcc()?cash:kR);
     $("s1l").textContent=hasAcc()?"Guardado em real":"Em euro/dólar";$("s1").textContent=hasAcc()?R(kR):fo;
@@ -3515,8 +3519,8 @@ function recapCard(){
 /* ---------- Visão geral (PC) — novo painel (29/10/2026) ---------- */
 const NAVS=[["pHome","Visão geral","M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"],["pMes","Transações","M4 7h13M4 12h16M4 17h10"],["pCards","Cartões","M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 10h18"],["pWal","Contas","M5 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v1M3 7h18v13H3zM16 13.5h2.5"]];
 /* Metas, Assinaturas e Dívidas numa entrada só (05/11/2026, pedido dele): "Planejamento", com seletor no topo; por dentro cada uma segue com seu navSel */
-const NAVP=[["plan","Planejamento","M12 3v18M12 3l6 3-6 3"]];
-const PLAN=[["metas","Metas"],["subs","Assinaturas"],["debts","Dívidas"]], isPlan=k=>PLAN.some(x=>x[0]===k);
+const NAVP=[["plan","Compromissos","M12 3v18M12 3l6 3-6 3"]];
+const PLAN=[["metas","Metas"],["subs","Assinaturas"],["debts","Dívidas"],["pess","Pessoas"]], isPlan=k=>PLAN.some(x=>x[0]===k);
 const NAVA=[["rel","Relatórios","M5 20V10M12 20V4M19 20v-7"]];
 function sidebarHtml(){
   const cur=navCur();
@@ -3535,6 +3539,7 @@ function navGo(k){
   navSel=k;
   if(k==="metas"){go("pWal");navSel="metas";render();sbMark();window.scrollTo(0,0)}
   else if(k==="debts"){go("pWal");navSel="debts";render();sbMark();window.scrollTo(0,0)}
+  else if(k==="pess"){go("pWal");navSel="pess";render();sbMark();window.scrollTo(0,0)}
   else if(k==="subs"){anoSubTab="fixos";lsSet("despesas.anoTab","fixos");go("pAno");navSel="subs";render();sbMark()}
   else if(k==="rel"){anoSubTab="ano";lsSet("despesas.anoTab","ano");go("pAno");navSel="rel";render();sbMark()}
   barMark()
@@ -3545,7 +3550,7 @@ function drawerOpen(on){
   else{d.classList.remove("on");setTimeout(()=>{if(!d.classList.contains("on"))d.hidden=true},220)}
 }
 function barMark(){
-  const k=navSel, cur=k==="metas"||k==="debts"?"pWal":k==="subs"||k==="rel"?"more":null;if(!cur)return;
+  const k=navSel, cur=k==="metas"||k==="debts"||k==="pess"?"pWal":k==="subs"||k==="rel"?"more":null;if(!cur)return;
   [...document.querySelectorAll(".tab")].filter(b=>b.offsetParent).forEach((b,i)=>{
     if((b.dataset.tab||"more")===cur){b.setAttribute("aria-current","page");document.querySelector("nav.tabs").style.setProperty("--ti",i)}else b.removeAttribute("aria-current")});
 }
@@ -5576,7 +5581,7 @@ function renderAno(){
 
   if(anoSubTab === "metas"){
     h += `<div class="ano-grid ano-metas-grid">
-      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP">${ppSection()}</div></div>
+      <div class="ano-col-main"><div class="gC">${(()=>{const m=!IS_WIDE.matches&&accts().length&&!acDraft;return contaBlock(m)+(m?"":hojeCards())+nwSection()})()}</div><div class="gM">${saveSection()}</div><div class="gD">${debtSection()}</div><div class="gC gP gQ">${ppSection()}</div></div>
       <div class="ano-col-side"><div class="gM">${fxRowSection()}</div><div class="gC gP">${divSection()}</div></div>
     </div>`;
   } else if(anoSubTab === "ano"){
@@ -6175,9 +6180,9 @@ function render(){
   if((tab==="pAno"&&anoSubTab!=="metas")||tab==="pMe") anoFold(tab);
   {const P=$(tab);if(P&&HELP[tab]&&!P.querySelector(".helpbar"))P.insertAdjacentHTML("beforeend",helpLink(tab))}
   svCelCheck();nwSnap();sbMark();dcKeyAll();
-  {const P=$("pAno");if(P){const k=navSel||(tab==="pAno"&&anoSubTab==="metas"?"pWal":"");const f={pWal:"C",metas:"M",debts:"D",subs:"S"}[k];if(f&&tab==="pAno")P.dataset.f=f;else delete P.dataset.f;if(tab==="pAno"&&navSel)P.dataset.sect=navSel;else delete P.dataset.sect;
+  {const P=$("pAno");if(P){const k=navSel||(tab==="pAno"&&anoSubTab==="metas"?"pWal":"");const f={pWal:"C",metas:"M",debts:"D",subs:"S",pess:"Q"}[k];if(f&&tab==="pAno")P.dataset.f=f;else delete P.dataset.f;if(tab==="pAno"&&navSel)P.dataset.sect=navSel;else delete P.dataset.sect;
     const ps=P.querySelector("#planSeg");
-    if(tab==="pAno"&&isPlan(navSel)){const h=`<div class="seg mseg" id="planSeg" role="group" aria-label="Planejamento">${PLAN.map(([k,n])=>`<button type="button" data-planseg="${k}" aria-pressed="${navSel===k}">${n}</button>`).join("")}</div>`;
+    if(tab==="pAno"&&isPlan(navSel)){const h=`<div class="seg mseg" id="planSeg" role="group" aria-label="Compromissos">${PLAN.map(([k,n])=>`<button type="button" data-planseg="${k}" aria-pressed="${navSel===k}">${n}</button>`).join("")}</div>`;
       if(!ps)P.insertAdjacentHTML("afterbegin",h);else if(ps.outerHTML!==h)ps.outerHTML=h}
     else if(ps)ps.remove()}}
 }
