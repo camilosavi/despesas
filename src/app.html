@@ -2115,7 +2115,7 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
   <div class="field" id="acctField" hidden><span class="lbl" id="acctLbl">Conta</span><div class="chips" id="acctChips"></div></div>
   <div class="field" id="cardField"><span class="lbl">Qual cartão</span><div class="chips" id="cardChips"></div></div>
   <div class="field" id="splitField" hidden></div>
-  <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div style="display:flex;gap:10px;align-items:center"><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"><span class="hint" id="divHint" style="margin:0">quantas pessoas, contando você</span></div></div>
+  <div class="field" id="divField"><label for="divN">Dividir com outras pessoas</label><div style="display:flex;gap:10px;align-items:center"><input type="text" id="divN" inputmode="numeric" placeholder="Só eu" maxlength="2" style="max-width:120px" aria-label="Dividido entre quantas pessoas, contando você"><span class="hint" id="divHint" style="margin:0">quantas pessoas, contando você</span></div><div class="chips" id="divPeople" style="margin-top:var(--g-gap)"></div></div>
   <div class="field" id="statusField"><span class="lbl">Situação</span><div class="seg" id="paidSeg" style="margin:0"><button type="button" data-paid="1">Pago</button><button type="button" data-paid="0">A pagar</button></div></div>
   <div class="field"><label for="date">Data</label><input type="date" id="date" min="2026-09-01"><p class="hint" id="dateHint" hidden style="margin:6px 0 0"></p></div>
   <div class="field" id="repField"><label for="rep">Parcelar ou repetir</label>
@@ -3869,8 +3869,13 @@ function divSection(){
     ${d.miss?`<div style="padding:0 0 12px 50px"><a class="tbtn go" style="text-decoration:none" target="_blank" rel="noopener" href="${waLink(`Oi! Sua parte de ${d.name}: ${R(d.per)}${d.parcN>1?` (ou ${d.parcN}× ${R(d.unit)})`:""}. Pode mandar no Pix. Valeu!`)}">Cobrar no WhatsApp</a></div>`:""}</div>`).join("")}</div>
     <p class="hint expl" style="margin:8px 2px 0">Para dividir, abra o lançamento e diga em quantas pessoas (contando você); numa compra parcelada vale para todas as parcelas. Os Pix com o valor da parte entram aqui na importação do extrato.</p></section>`;
 }
+let divSel=[];
+function divPeopleDraw(){const el=$("divPeople");if(!el)return;const L=ppList();
+  el.innerHTML=L.map(p=>`<button type="button" class="chip" data-divp="${esc(p.id)}" aria-pressed="${divSel.includes(p.id)}">${esc(ppFirst(p.name))}</button>`).join("");
+  el.hidden=!L.length;
+  if(divSel.length){const n=$("divN");if(n){const t=Math.max(divSel.length+1,parseInt((n.value||"").replace(/\D/g,""),10)||0);n.value=t}}}
 function divHint(){const n=parseInt(($("divN")?.value||"").replace(/\D/g,""),10)||0;if(!$("divHint"))return;
-  $("divHint").textContent=n>=2&&form.cents?`${R(Math.round(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
+  $("divHint").textContent=n>=2&&form.cents?`${R(Math.floor(form.cents/n))} cada (sua parte)`:"quantas pessoas, contando você"}
 /* Ano (out/2026): as 3 primeiras seções (próximos meses, dinheiro guardado, gráfico) ficam abertas; as outras ficam
    recolhidas mostrando só o título com o total; tocar abre. Lembra o que ficou aberto (despesas.anoOpen, só no aparelho). */
 const FOLD={pAno:{keep:3,key:"despesas.anoOpen"},pMe:{keep:0,key:"despesas.meOpen"}};
@@ -4660,7 +4665,7 @@ function itemHTML(x){
   const t=typeOf(x),c=catOf(x.cat,t),[,m,d]=x.date.split("-"),p=parcInfo(x);
   /* "Fatura X" com itens lançados no mês vale 0 (só o valor do banco para conferir): não mostra "a pagar" */
   const chk=t==="desp"&&x.cents&&!amt(x);
-  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):"",(x.tags||[]).map(g=>"#"+g).join(" "),x.rcp?"📎":""].filter(Boolean).join(" · ");
+  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(x.cents-divParts(x).reduce((s,q)=>s+q.c,0)||Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):"",(x.tags||[]).map(g=>"#"+g).join(" "),x.rcp?"📎":""].filter(Boolean).join(" · ");
   return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d"><span class="dn">${esc(cleanDesc(x))}</span></div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}"${chk?' style="color:var(--muted)"':""}>${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(chk?`<br><span class="m">conferir</span>`:isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
 }
 
@@ -5204,7 +5209,15 @@ function dbMvForm(m){
    c > 0 = ela te deve; c < 0 = você deve a ela. k "d" = dívida/cobrança, "p" = pagamento. Saldo = soma de c.
    Nada é ligado sozinho: só entra o que você lança (na própria tela ou pelo menu "Cobrar de uma pessoa…" de um lançamento). */
 const ppList=()=>Array.isArray(cfg.pp)?cfg.pp:[];
-const ppBal=p=>(p.e||[]).reduce((t,e)=>t+(e.c||0),0);
+/* Divisão por pessoa (05/11/2026): lançamento com x.divide={com:[{pid}]} gera, na conta de cada pessoa, a parte dela (total ÷ (pessoas + você)).
+   Nada é gravado em cfg.pp: as linhas "derivadas" (derived) saem do próprio lançamento, então editar/apagar o lançamento acerta a conta. */
+const divCom=x=>x&&x.divide&&Array.isArray(x.divide.com)?x.divide.com.filter(c=>c&&c.pid):[];
+function divParts(x){const C=divCom(x);if(!C.length)return [];const n=x.div>=2?x.div:C.length+1, each=Math.floor(x.cents/n);
+  return C.map((c,i)=>({pid:c.pid,c:c.cents>=0&&c.cents!=null?c.cents:each}))}
+const ppDerived=p=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="desp"&&divCom(x).some(c=>c.pid===p.id)).map(x=>{const q=divParts(x).find(y=>y.pid===p.id);
+  return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:q?q.c:0,k:"d",t:cleanDesc(x),derived:true,x:x.id}}).filter(e=>e.c>0);
+const ppAll=p=>[...(p.e||[]),...ppDerived(p)];
+const ppBal=p=>ppAll(p).reduce((t,e)=>t+(e.c||0),0);
 const ppFirst=n=>titleCase((n||"").trim().split(/\s+/)[0]||"");
 const ppHue=n=>[...(n||"")].reduce((t,c)=>t+c.charCodeAt(0)*7,0)%360;
 /* 4 tipos de lançamento: [chave, sinal do saldo, k, texto] */
@@ -5222,24 +5235,24 @@ function ppSection(){
   if(ppAddOn) h+=`<div class="card ppnew"><input id="ppName" maxlength="24" placeholder="Nome (ex.: Mãe)" autocomplete="off" enterkeyhint="done" aria-label="Nome da pessoa"><button type="button" class="btn primary" id="ppCreate">Criar</button><button type="button" class="btn soft" id="ppCancel">Cancelar</button></div>`;
   if(!L.length) return h+(ppAddOn?"":`<div class="empty"><strong>Ninguém ainda</strong>Crie uma pessoa para anotar o que ela te deve e o que você deve a ela.</div>`)+`</section>`;
   h+=`<div class="card"><div class="ppsum"><div><small>A receber</small><b class="${rec?"pos":""}">${R(rec)}</b></div><div><small>A pagar</small><b class="${pay?"neg":""}">${R(pay)}</b></div></div>`+
-    L.map(({p,b})=>`<button type="button" class="ppr" data-pp="${esc(p.id)}"><span class="ppav" style="--h:${ppHue(p.name)}">${esc((p.name.trim()[0]||"?").toUpperCase())}</span><span class="ppn"><b>${esc(p.name)}</b><small>${b?ppState(b):"quitado ✓"}${(p.e||[]).length&&b?` · ${(p.e||[]).length} ${(p.e||[]).length===1?"lançamento":"lançamentos"}`:""}</small></span><span class="ppv ${b>0?"pos":b<0?"neg":""}">${b?R(Math.abs(b)):""}</span></button>`).join("")+`</div>`;
+    L.map(({p,b})=>`<button type="button" class="ppr" data-pp="${esc(p.id)}"><span class="ppav" style="--h:${ppHue(p.name)}">${esc((p.name.trim()[0]||"?").toUpperCase())}</span><span class="ppn"><b>${esc(p.name)}</b><small>${b?ppState(b):"quitado ✓"}${ppAll(p).length&&b?` · ${ppAll(p).length} ${ppAll(p).length===1?"lançamento":"lançamentos"}`:""}</small></span><span class="ppv ${b>0?"pos":b<0?"neg":""}">${b?R(Math.abs(b)):""}</span></button>`).join("")+`</div>`;
   return h+`</section>`;
 }
 /* o que compõe o saldo em aberto (para a mensagem de cobrança): cobranças mais novas primeiro até cobrir o saldo */
 function ppOpenLines(p){
   let left=ppBal(p);const out=[];
-  [...(p.e||[])].filter(e=>e.k==="d"&&e.c>0).sort((a,b)=>b.d.localeCompare(a.d)).forEach(e=>{if(left<=0)return;const v=Math.min(e.c,left);left-=v;out.push(`• ${e.t||"Cobrança"} (${fmtDM(e.d)}): ${R(v)}`)});
+  ppAll(p).filter(e=>e.k==="d"&&e.c>0).sort((a,b)=>b.d.localeCompare(a.d)).forEach(e=>{if(left<=0)return;const v=Math.min(e.c,left);left-=v;out.push(`• ${e.t||"Cobrança"} (${fmtDM(e.d)}): ${R(v)}`)});
   return out;
 }
 function ppSheet(draft){
   const p=ppList().find(q=>q.id===ppId);if(!p){closeSheets();return}
-  const f=ppFirst(p.name), b=ppBal(p), E=p.e||[], ed=ppEd?E.find(e=>e.id===ppEd):null;
+  const f=ppFirst(p.name), b=ppBal(p), E=ppAll(p), ed=ppEd?E.find(e=>e.id===ppEd&&!e.derived):null;
   draft=draft||(ed?{kind:ppKindOf(ed),v:ed.c?brl(Math.abs(ed.c)):"",d:ed.d,t:ed.t||""}:{kind:ppKind,v:"",d:today(),t:""});
   ppKind=draft.kind;
   /* extrato: saldo depois de cada lançamento, do mais novo para o mais antigo */
   let run=0;const rows=E.map((e,i)=>({e,i})).sort((a,b)=>a.e.d.localeCompare(b.e.d)||a.i-b.i).map(({e})=>({e,after:(run+=e.c)}));rows.reverse();
   const byM={};rows.forEach(r=>{(byM[r.e.d.slice(0,7)]=byM[r.e.d.slice(0,7)]||[]).push(r)});
-  const list=Object.keys(byM).sort().reverse().map(ym=>`<div class="ppm">${monthLabel(ym)}</div>`+byM[ym].map(({e,after})=>`<button type="button" class="ppe" data-ppe="${esc(e.id)}" aria-pressed="${e.id===ppEd}"><span class="ppt"><b>${esc(e.t||(e.k==="p"?"Pagamento":"Cobrança"))}</b><small>${ppWord(p,e)} · ${fmtDM(e.d)}</small></span><span class="ppa"><b class="${e.k==="p"?"ppok":""}">${R(Math.abs(e.c))}</b><small>${after?`${after>0?"te deve":"você deve"} ${R(Math.abs(after))}`:"quitado"}</small></span></button>`).join("")).join("");
+  const list=Object.keys(byM).sort().reverse().map(ym=>`<div class="ppm">${monthLabel(ym)}</div>`+byM[ym].map(({e,after})=>`<button type="button" class="ppe" ${e.derived?`data-ppx="${esc(e.x)}"`:`data-ppe="${esc(e.id)}"`} aria-pressed="${e.id===ppEd}"><span class="ppt"><b>${esc(e.t||(e.k==="p"?"Pagamento":"Cobrança"))}</b><small>${ppWord(p,e)} · ${fmtDM(e.d)}</small></span><span class="ppa"><b class="${e.k==="p"?"ppok":""}">${R(Math.abs(e.c))}</b><small>${after?`${after>0?"te deve":"você deve"} ${R(Math.abs(after))}`:"quitado"}</small></span></button>`).join("")).join("");
   const msg=b>0?`Oi, ${f}! Fechando nossa conta: ${R(b)} em aberto.\n${ppOpenLines(p).join("\n")}\nPode me mandar por Pix? Valeu!`:"";
   closeSheets(true);$("toast").hidden=true;
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>${esc(p.name)}</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
@@ -5274,7 +5287,7 @@ function ppFromItem(x){
 }
 function ppItemSheet(keep){
   const I=ppItem;if(!I)return;const x=I.x, L=ppList(), sel=L.find(p=>p.id===I.pid), f=sel?ppFirst(sel.name):"";
-  const v=keep?keep.v:brl(x.div>=2?Math.round(x.cents/x.div):x.cents), t=keep?keep.t:cleanDesc(x);
+  const v=keep?keep.v:brl(x.div>=2?Math.floor(x.cents/x.div):x.cents), t=keep?keep.t:cleanDesc(x);
   closeSheets(true);$("toast").hidden=true;
   $("diagSheet").innerHTML=`<div class="grip"></div><h3><span>Cobrar de uma pessoa</span><button type="button" class="x" data-close aria-label="Fechar">✕</button></h3>
   <div class="field"><span class="lbl">Quem</span><div class="chips">${L.map(p=>`<button type="button" class="chip" data-ppipick="${esc(p.id)}" aria-pressed="${p.id===I.pid}">${esc(p.name)}</button>`).join("")}<button type="button" class="chip add" id="ppiNewOn" aria-expanded="${I.nova}">+ Nova pessoa</button></div>
@@ -5313,6 +5326,7 @@ document.addEventListener("click",async e=>{
   if(t.closest("#ppCreate")){ppCreate();return}
   if((b=t.closest("[data-pp]"))){ppId=b.dataset.pp;ppEd=null;ppKind="ow";ppSheet();return}
   if((b=t.closest("[data-ppk]"))){ppKind=b.dataset.ppk;document.querySelectorAll("[data-ppk]").forEach(z=>z.setAttribute("aria-pressed",String(z===b)));return}
+  if((b=t.closest("[data-ppx]"))){const it=items.find(y=>y.id===b.dataset.ppx);if(it){closeSheets();openSheet(it)}return}
   if((b=t.closest("[data-ppe]"))){ppEd=ppEd===b.dataset.ppe?null:b.dataset.ppe;ppSheet();return}
   if(t.closest("#ppSaveE")){ppEntrySave();return}
   if(t.closest("#ppEdCancel")){ppEd=null;ppSheet();return}
@@ -6487,6 +6501,9 @@ document.addEventListener("change",e=>{
   if(e.target.id==="mimpFuture"&&multiImp){multiImp.future=e.target.checked;multiImpRender();return}
 });
 const maskIds=new Set(["trVal","soV","cardBal","cdBal","cdCredit","bnBal","bnCredit","splitVal","mvVal","fatVal","fxGoal","exVal","svVal","svGoal","dbTotal","dbPer","dbVal","dmVal","fxEur","fxBrl","limTot","limFree","cdLimit","ppVal","ppItVal"]);
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-divp]");if(!b)return;
+  const id=b.dataset.divp;divSel=divSel.includes(id)?divSel.filter(q=>q!==id):[...divSel,id];
+  if(!divSel.length&&$("divN"))$("divN").value="";divPeopleDraw();divHint()});
 document.addEventListener("input",e=>{
   if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
   if(e.target.id==="subN"){const p=parseInt(e.target.value.replace(/\D/g,""),10)||0, t=+e.target.dataset.subtot||0;if($("subEach"))$("subEach").textContent=p>=2?R(Math.round(t/p))+" cada":"—";return}
@@ -6702,7 +6719,7 @@ function openSheet(x){
   $("date").value=x?x.date:(view===curYM()?today():view+"-01");
   if(!x) form.paid=$("date").value<=today();
   dateTouched=false;
-  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divHint();
+  $("lancHelp").hidden=true;$("rep").value="1";$("until").value="";$("untilField").hidden=true;$("divN").value=x&&x.div>=2?x.div:"";divSel=divCom(x).map(c=>c.pid);divPeopleDraw();divHint();
   $("delBtn").hidden=!x;$("delBtn").textContent="Excluir";$("pdfAnyRow").style.display=x?"none":"";
   $("err").className="err info";$("err").textContent=x&&x.parc?`Esta é a parcela ${x.parc}. Alterar ou excluir mexe só nela.`:"";
   setAmt();chips();
@@ -6759,7 +6776,10 @@ $("sheet").addEventListener("submit",async e=>{
   if(rcpBlob){try{base.rcp=await rcpUpload(rcpBlob);if(editing&&editing.rcp)rcpRemove(editing.rcp)}catch(er){toast("Salvei o lançamento, mas a foto não subiu: "+er.message)}}
   else if(rcpDel&&editing&&editing.rcp){rcpRemove(editing.rcp);base.rcp=""}
   if(isD) base.paid=benOf(base)?true:form.paid;
-  {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;if(isD&&dn>=2)base.div=dn;else if(editing&&editing.div)base.div=0}
+  {const dn=parseInt(($("divN").value||"").replace(/\D/g,""),10)||0;const sel=divSel.filter(id=>ppList().some(p=>p.id===id));
+    if(isD&&sel.length){base.div=Math.max(dn,sel.length+1);base.divide={com:sel.map(pid=>({pid}))}}
+    else if(isD&&dn>=2){base.div=dn;if(editing&&editing.divide)base.divide=null}
+    else{if(editing&&editing.div)base.div=0;if(editing&&editing.divide)base.divide=null}}
   if(!editing&&isD&&base.card){const b=billDate(base.card,base.date);if(b!==base.date){base.buy=base.date;base.date=b}}
   if(editing){const eb=editBill(base.date);if(eb){base.date=eb.date;base.buy=eb.buy}}
   /* compra no Crédito só fica paga quando a fatura vence/é paga (antes vinha "Pago" do dia da compra e os meses seguintes já apareciam pagos) */
@@ -6799,7 +6819,7 @@ $("sheet").addEventListener("submit",async e=>{
   /* série (parcelas ou repetição): pergunta se muda só esta ou todas (29/10/2026, pedido dele: lançamento cobrado da mãe, não dele) */
   const serL=editing&&$("rep").value==="1"?editSeries(editing):[];
   /* só pergunta se mudou algo que pode valer para a série (nome, categoria, conta, pagamento, cartão, valor, divisão) */
-  const serChg=serL.length&&(["desc","cat","acct","pay"].some(k=>(base[k]||"")!==(editing[k]||""))||(base.card||"")!==(cardOf(editing)||"")||base.cents!==editing.cents||(base.div||0)!==(editing.div||0));
+  const serChg=serL.length&&(["desc","cat","acct","pay"].some(k=>(base[k]||"")!==(editing[k]||""))||(base.card||"")!==(cardOf(editing)||"")||base.cents!==editing.cents||(base.div||0)!==(editing.div||0)||JSON.stringify(base.divide||null)!==JSON.stringify(editing.divide||null));
   if(serL.length&&!serChg&&!serAck) serAck="one";
   if(serL.length&&!serAck){
     const p=parcInfo(editing), what=p?`a parcela ${p.i}/${p.n}`:"este mês";
@@ -6819,7 +6839,7 @@ $("sheet").addEventListener("submit",async e=>{
     if(rep==="u"){const n=until?monthsSpan(base.date.slice(0,7),until):0;
       if(n<1||n>120){err("err",!until?"Escolha até que mês repetir.":n<1?"O mês final tem que ser igual ou depois da data.":"No máximo 10 anos.");$("saveBtn").disabled=false;return}
       rep="m"+n}
-    if(editing&&serAck!=="one"&&(base.div||0)!==(editing.div||0)) for(const y of buySeries(editing)) await store.items.update(y.id,{div:base.div||0});
+    if(editing&&serAck!=="one"&&((base.div||0)!==(editing.div||0)||JSON.stringify(base.divide||null)!==JSON.stringify(editing.divide||null))) for(const y of buySeries(editing)) await store.items.update(y.id,{div:base.div||0,divide:base.divide||null});
     if(editing&&base.cat&&editing.cat!==base.cat) catLearnSet(base.type||typeOf(editing),cleanDesc({...editing,...base}),base.cat);
     if(rep==="1"){
       if(editing){await store.items.update(editing.id,base);
@@ -6830,7 +6850,7 @@ $("sheet").addEventListener("submit",async e=>{
           if((base.pay||"")!==(editing.pay||""))pt.pay=base.pay||"";
           if((base.card||"")!==(cardOf(editing)||""))pt.card=base.card||"";
           if(base.cents!==editing.cents)pt.cents=base.cents;
-          if(base.type==="desp"&&(base.div||0)!==(editing.div||0))pt.div=base.div||0;}
+          if(base.type==="desp"&&((base.div||0)!==(editing.div||0)||JSON.stringify(base.divide||null)!==JSON.stringify(editing.divide||null))){pt.div=base.div||0;pt.divide=base.divide||null}}
         const ser=serAck==="one"?[]:Object.keys(pt).length?editSeries(editing):[];
         for(const y of ser){const q={...pt};
           if(("card" in q||"pay" in q)&&typeOf(y)==="desp"){const nc=(q.pay||y.pay)==="Crédito"?(q.card!=null?q.card:cardOf(y)):"", dd=nc?dueOf(nc):0;
