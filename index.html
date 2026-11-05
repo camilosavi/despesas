@@ -5367,7 +5367,14 @@ const ppDerived=p=>typeof items==="undefined"?[]:items.filter(x=>typeOf(x)==="de
   const q=divParts(x).find(y=>y.pid===p.id);
   return {id:"dv|"+x.id+"|"+p.id,d:x.buy||x.date,c:q?q.c:0,k:"d",t:cleanDesc(x),derived:true,x:x.id}}).filter(e=>e.c!==0);
 const ppPay=p=>typeof items==="undefined"?[]:items.filter(x=>x.ppay===p.id&&x.cents>0).map(x=>({id:"pg|"+x.id+"|"+p.id,d:x.buy||x.date,c:(typeOf(x)==="rec"?-1:1)*x.cents,k:"p",t:cleanDesc(x),derived:true,x:x.id}));
-const ppAll=p=>[...(p.e||[]),...ppDerived(p),...ppPay(p)];
+/* assinatura dividida só pelo nome (cfg.subShare antigo, sem divisão nos lançamentos): cada cobrança do mês cai na conta da pessoa de mesmo nome (05/11/2026) */
+const ppSubs=p=>{if(typeof items==="undefined"||!cfg.subShare||typeof cfg.subShare!=="object")return [];const hi=shiftYM(curYM(),1),out=[];
+  const E=Object.entries(cfg.subShare).filter(([,sh])=>sh&&Array.isArray(sh.p)&&sh.p.some(q=>q&&q.nm&&nmSame(q.nm,p.name)));if(!E.length)return [];
+  items.forEach(x=>{const ym=(x.date||"").slice(0,7);if(typeOf(x)!=="desp"||ym<MIN_YM||ym>hi||divCom(x).length||!(x.cents>0))return;const k=subOf(x),e=E.find(z=>z[0]===k);if(!e)return;
+    const sh=e[1],q=sh.p.find(z=>z&&z.nm&&nmSame(z.nm,p.name)),n=sh.p.length+(sh.noMe?0:1),c=new Set(sh.p.map(z=>z.c)).size>1?(q.c||0):Math.round(x.cents/n);
+    if(c>0)out.push({id:"sb|"+x.id+"|"+p.id,d:x.buy||x.date,c,k:"d",t:cleanDesc(x),derived:true,x:x.id})});
+  return out};
+const ppAll=p=>[...(p.e||[]),...ppDerived(p),...ppSubs(p),...ppPay(p)];
 const ppBal=p=>ppAll(p).reduce((t,e)=>t+(e.c||0),0);
 const ppFirst=n=>titleCase((n||"").trim().split(/\s+/)[0]||"");
 const ppHue=n=>[...(n||"")].reduce((t,c)=>t+c.charCodeAt(0)*7,0)%360;
