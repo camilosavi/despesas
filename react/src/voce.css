@@ -1,0 +1,37 @@
+/* ===== VOCÊ ===== */
+.voce { padding-bottom: 7.5rem; max-width: 40rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--g-gap); align-content: start }
+.voce section { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; gap: var(--sp-3); padding: var(--g-pad); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3) }
+.voce h1 { font-size: var(--fs-lg); font-weight: 700 }
+.voce h2 { margin: 0; font-size: var(--fs-md); font-weight: 700 }
+.vtop { display: flex; align-items: center; gap: var(--sp-3) }
+.vtop .dlink { min-height: 44px; border: 0; background: none; color: var(--ink); font-size: var(--fs-sm); cursor: pointer; padding: 0 .4em }
+.voce .lgrupo { display: grid; gap: .4em }
+.vseg { display: flex; gap: var(--sp-2); flex-wrap: wrap }
+.vseg button, .vcor { min-height: 44px; padding: 0 1em; border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--ink); font-size: var(--fs-sm); cursor: pointer }
+.vseg button { flex: 1 1 5em }
+.vseg button[aria-pressed="true"], .vcor[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 700 }
+.vcores { display: flex; flex-wrap: wrap; gap: var(--sp-2) }
+.vcor { display: inline-flex; align-items: center; gap: .5em }
+.vcor i { width: 1.1em; height: 1.1em; border-radius: 50%; border: 1px solid var(--line) }
+.vlinha { display: flex; gap: var(--sp-2) }
+.vlinha input { flex: 1; min-width: 0; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-2); padding: 0 1em; font: inherit; font-size: var(--fs-sm); background: var(--bg); color: var(--ink) }
+.vacoes { display: flex; flex-wrap: wrap; gap: var(--sp-2) }
+.vacoes .btn { flex: 1 1 12em }
+.vwide { width: 100% }
+.voce .lnota { margin: 0; font-size: var(--fs-xs); color: var(--muted) }
+
+/* cores do app (o Tostão é o padrão, sem atributo) */
+:root[data-accent="verde"] { --head: #1f5d46; --accent: #2f7d5e; --on-accent: #fff; --focus: #1f5d46 }
+:root[data-accent="azul"] { --head: #1f3f8f; --accent: #2f5fc4; --on-accent: #fff; --focus: #2f5fc4 }
+:root[data-accent="bordo"] { --head: #6e1f33; --accent: #9b2f48; --on-accent: #fff; --focus: #9b2f48 }
+:root[data-accent="grafite"] { --head: #2b303c; --accent: #3b4252; --on-accent: #fff; --focus: #3b4252 }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"])[data-accent="verde"] { --head: #1b3f33; --accent: #5fc99c; --on-accent: #0d1119; --focus: #5fc99c }
+  :root:not([data-theme="light"])[data-accent="azul"] { --head: #1b2c5c; --accent: #7fa2f0; --on-accent: #0d1119; --focus: #7fa2f0 }
+  :root:not([data-theme="light"])[data-accent="bordo"] { --head: #4a1a29; --accent: #e07a93; --on-accent: #0d1119; --focus: #e07a93 }
+  :root:not([data-theme="light"])[data-accent="grafite"] { --head: #232733; --accent: #aeb7cc; --on-accent: #0d1119; --focus: #aeb7cc }
+}
+:root[data-theme="dark"][data-accent="verde"] { --head: #1b3f33; --accent: #5fc99c; --on-accent: #0d1119; --focus: #5fc99c }
+:root[data-theme="dark"][data-accent="azul"] { --head: #1b2c5c; --accent: #7fa2f0; --on-accent: #0d1119; --focus: #7fa2f0 }
+:root[data-theme="dark"][data-accent="bordo"] { --head: #4a1a29; --accent: #e07a93; --on-accent: #0d1119; --focus: #e07a93 }
+:root[data-theme="dark"][data-accent="grafite"] { --head: #232733; --accent: #aeb7cc; --on-accent: #0d1119; --focus: #aeb7cc }

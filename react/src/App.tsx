@@ -15,12 +15,16 @@ import { Fixos } from "./Fixos";
 import { Categorias } from "./Categorias";
 import { Relatorios } from "./Relatorios";
 import { Transferencias } from "./Transferencias";
+import { Voce } from "./Voce";
+import { aplicarVisual, guardarVisual, lerVisual, zerarLancamentos } from "./voce";
+import type { Visual } from "./voce";
 import { assinaturas } from "./assinaturas";
 import { marcarVarios, transfs, vazio } from "./loja";
 import type { Backup } from "./loja";
 import { hojeISO } from "./format";
 
 const CHAVE = "despesas.react.backup";
+const CH_ANTES = "despesas.react.antesZerar";
 function guardado(): Backup | null {
   try { const t = localStorage.getItem(CHAVE); return t ? (JSON.parse(t) as Backup) : null; } catch { return null; }
 }
@@ -36,7 +40,9 @@ export function App() {
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
-  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf">("inicio");
+  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf" | "voce">("inicio");
+  const [visual, setVisual] = useState<Visual>(lerVisual);
+  const [antes, setAntes] = useState<Backup | null>(() => { try { const t = localStorage.getItem(CH_ANTES); return t ? (JSON.parse(t) as Backup) : null; } catch { return null; } });
   const arq = useRef<HTMLInputElement>(null);
   const hoje = hojeISO();
   const c: Carga = useMemo(() => (b ? cargaDe(b, hoje) : erro ? { ...exemplo(), erro } : exemplo()), [b, hoje, erro]);
@@ -53,6 +59,17 @@ export function App() {
     a.href = URL.createObjectURL(new Blob([JSON.stringify(b)], { type: "application/json" }));
     a.download = `um-tostao-backup-${hoje}.json`; a.click(); URL.revokeObjectURL(a.href);
   };
+  const mudarVisual = (v: Visual) => { setVisual(v); guardarVisual(v); aplicarVisual(v); };
+  const zerar = () => {
+    if (!b) return;
+    try { localStorage.setItem(CH_ANTES, JSON.stringify(b)); } catch { /* sem armazenamento */ }
+    setAntes(b); salvar(zerarLancamentos(b));
+  };
+  const desfazer = () => {
+    if (!antes) return;
+    salvar(antes); setAntes(null); try { localStorage.removeItem(CH_ANTES); } catch { /* ok */ }
+    setAviso("Lançamentos de volta.");
+  };
   const lancar = (p: Pedido) => {
     if (!b) { setAviso("Para lançar, escolha “Começar do zero” ou “Usar meus dados”. O exemplo é só para olhar."); return; }
     setAviso(""); setPedido(p);
@@ -64,7 +81,7 @@ export function App() {
     else if (d === "pessoas") setTela("pessoas");
     else if (d === "lancar-rec") lancar({ tipo: "rec" });
     else if (d === "lancar-desp") lancar({ tipo: "desp" });
-    else if (d === "menu") { if (b) setAjustes(true); else setAviso("Escolha “Começar do zero” ou “Usar meus dados” para configurar contas e cartões."); }
+    else if (d === "menu") setTela("voce");
     else setAviso(`${AINDA[d]} ainda está só no app atual; entra no React na próxima etapa.`);
   };
   const r = c.resumo;
@@ -83,7 +100,9 @@ export function App() {
         </span>
       </div>
       {aviso && <p className="aviso" role="status">{aviso}</p>}
-      {tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
+      {tela === "voce" ? <Voce b={b} hoje={hoje} visual={visual} desfazer={antes ? antes.items.length : 0} onVisual={mudarVisual} onSalvar={salvar} onBaixar={baixar} onAbrir={abrir}
+          onZerar={zerar} onDesfazer={desfazer} onContas={() => b ? setAjustes(true) : undefined} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
+        : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} />
         : tela === "transf" ? <Transferencias b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("contas")} />
         : tela === "relatorios" ? <Relatorios e={c.estado} pers={c.pers} onVoltar={() => setTela("metas")} />
