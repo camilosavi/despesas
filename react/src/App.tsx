@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Inicio } from "./Inicio";
 import { Contas } from "./Contas";
+import { Cartoes } from "./Cartoes";
 import type { Destino } from "./blocos";
 import { exemplo, lerArquivo, lerBackup } from "./dados";
 import type { Carga } from "./dados";
@@ -14,7 +15,7 @@ const AINDA: Record<Destino, string> = {
 export function App() {
   const [c, setC] = useState<Carga>(exemplo);
   const [aviso, setAviso] = useState("");
-  const [tela, setTela] = useState<"inicio" | "contas">("inicio");
+  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes">("inicio");
   const arq = useRef<HTMLInputElement>(null);
   const abrir = async (f?: File) => {
     if (!f) return;
@@ -24,6 +25,7 @@ export function App() {
   };
   const ir = (d: Destino) => {
     if (d === "contas" || d === "transacoes") { setTela("contas"); setAviso(""); return; }
+    if (d === "cartoes") { setTela("cartoes"); setAviso(""); return; }
     setAviso(`${AINDA[d]} ainda está só no app atual; entra no React na próxima etapa.`);
   };
   const r = c.resumo;
@@ -40,13 +42,13 @@ export function App() {
         </span>
       </div>
       {aviso && <p className="aviso" role="status">{aviso}</p>}
-      {tela === "inicio"
-        ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
-        : <Contas e={c.estado} pers={c.pers} onIr={ir} />}
+      {tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
+        : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} />
+        : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} />}
       <nav className="bar" aria-label="Telas">
         <button type="button" aria-current={tela === "inicio" ? "page" : undefined} onClick={() => { setTela("inicio"); setAviso(""); }}>Início</button>
         <button type="button" aria-current={tela === "contas" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
-        <button type="button" onClick={() => ir("cartoes")}>Cartões</button>
+        <button type="button" aria-current={tela === "cartoes" ? "page" : undefined} onClick={() => { setTela("cartoes"); setAviso(""); }}>Cartões</button>
       </nav>
     </>
   );

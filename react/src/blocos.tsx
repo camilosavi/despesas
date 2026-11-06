@@ -168,7 +168,7 @@ export function Pagar({ e }: BlocoProps) {
 
 export function Trans({ e, pers, onIr }: BlocoProps) {
   const ult = e.lancamentos.slice()
-    .sort((a, b) => (b.compra || b.caiu || b.data).localeCompare(a.compra || a.caiu || a.data) || b.id.localeCompare(a.id)).slice(0, 9);
+    .sort((a, b) => (b.compra || b.caiu || b.data).localeCompare(a.compra || a.caiu || a.data) || (b.id || "").localeCompare(a.id || "")).slice(0, 9);
   return (
     <>
       <h3>Últimas transações <Ver para="transacoes" onIr={onIr}>Ver todas</Ver></h3>

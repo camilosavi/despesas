@@ -51,6 +51,7 @@ export function deAppAtual(b, hoje) {
       ...(x.paidAt ? { pagoEm: x.paidAt } : {}), ...(x.createdAt ? { criadoEm: x.createdAt } : {}),
       ...(x.acct ? { conta: x.acct } : {}), ...(c && tipo === "desp" && !pagoCom ? { cartao: c } : {}), ...(pagoCom ? { pagoCom } : {}),
       ...(x.buy ? { compra: x.buy } : {}), ...(x.fell ? { caiu: x.fell } : {}),
+      ...(x.parc && /^\d+\/\d+$/.test(x.parc) ? { parcela: x.parc } : {}),
       ...(x.group && !x.parc && tipo === "desp" ? { recorrente: true } : {}),
       ...(/^Saldo da fatura anterior/i.test(semPrefixo(x.desc, c)) ? { saldoAnterior: true } : {}),
     };

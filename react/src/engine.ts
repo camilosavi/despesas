@@ -9,7 +9,7 @@ export { deAppAtual, normalizarBackup } from "../../novo/base/importar.mjs";
 export interface Lancamento {
   id: string; nome: string; tipo: "desp" | "rec"; cat?: string; cents: number; data: string;
   pago?: boolean; cartao?: string; conta?: string; compra?: string; caiu?: string; pagoCom?: string;
-  recorrente?: boolean; saldoAnterior?: boolean;
+  recorrente?: boolean; saldoAnterior?: boolean; parcela?: string;
 }
 export interface Estado {
   hoje: string; inicio?: string;

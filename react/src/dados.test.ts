@@ -29,3 +29,16 @@ describe("ler backup do app atual", () => {
     expect(exemplo().estado.contas[0].nome).toBe("Conta principal");
   });
 });
+
+describe("parcela vinda do backup", () => {
+  it("guarda 'i/n' no lançamento do cartão e ignora texto estranho", () => {
+    const b = { app: "minhas-despesas", v: 1, fx: [], cfg: { cards: { Inter: { due: 10 } } }, items: [
+      { id: "a", type: "desp", desc: "Inter · Tênis", cat: "compras", cents: 1000, date: "2026-11-10", pay: "Crédito", card: "Inter", paid: false, parc: "3/10" },
+      { id: "b", type: "desp", desc: "Inter · Livro", cat: "compras", cents: 500, date: "2026-11-10", pay: "Crédito", card: "Inter", paid: false, parc: "x" },
+    ] };
+    const c = lerBackup(JSON.stringify(b), "2026-11-06");
+    const l = c.estado.lancamentos;
+    expect(l.find(x => x.id === "a")?.parcela).toBe("3/10");
+    expect(l.find(x => x.id === "b")?.parcela).toBeUndefined();
+  });
+});
