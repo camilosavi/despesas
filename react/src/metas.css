@@ -4,3 +4,9 @@
 .mbar { display: block; height: 6px; margin-top: .4em; border-radius: 3px; background: linear-gradient(90deg, var(--accent) var(--p), var(--line) var(--p)) }
 .mrow b { font-variant-numeric: tabular-nums }
 .lfolha select { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-2); padding: 0 1em; background: var(--bg); color: var(--ink); font: inherit; font-size: var(--fs-sm) }
+/* formulários em linha (fora da folha): mesmo desenho dos campos da .lfolha */
+.metas .lgrupo { gap: var(--sp-2); margin: var(--sp-2) 0 }
+.metas .lgrupo label { display: grid; gap: .3em; min-width: 0; font-size: var(--fs-xs); color: var(--muted) }
+.metas .lgrupo input:not([type=checkbox]), .metas .lgrupo select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-2); padding: 0 1em; font: inherit; font-size: var(--fs-sm); background: var(--bg); color: var(--ink) }
+.metas .lduas > * { min-width: 0 }
+.metas .lacoes { position: static; flex-wrap: wrap }

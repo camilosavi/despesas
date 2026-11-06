@@ -2,6 +2,7 @@ import { demo } from "../../novo/visao-geral/demo.mjs";
 import { deAppAtual, normalizarBackup } from "./engine";
 import type { Estado, Pers } from "./engine";
 import type { Backup } from "./loja";
+import { previstos } from "./salario";
 
 export interface Carga {
   estado: Estado; pers: Pers; nome: string; real: boolean;
@@ -31,7 +32,8 @@ function comPessoas(bruto: any, b: Backup) {
 
 export function cargaDe(b: Backup, hoje: string): Carga {
   const { estado: bruto0, resumo } = deAppAtual(b, hoje);
-  const estado = comPessoas(bruto0, b) as unknown as Estado;
+  const comP = comPessoas(bruto0, b) as any;
+  const estado = { ...comP, previstos: (ym: string) => previstos(b, ym, hoje).map(p => ({ data: p.data, cents: p.cents, ...(p.caiu ? { caiu: p.caiu } : {}) })) } as unknown as Estado;
   return { estado, pers: (estado.pers as Pers) ?? {}, nome: (b.cfg && (b.cfg.name || b.cfg.userName)) || "", real: true, resumo };
 }
 
