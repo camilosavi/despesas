@@ -5,7 +5,7 @@ import { notaDeSaude } from "./saude";
 import { marcaDe } from "./marcas";
 import type { CSSProperties } from "react";
 
-export type Destino = "contas" | "cartoes" | "transacoes" | "lancar-rec" | "lancar-desp" | "menu" | "busca" | "avisos";
+export type Destino = "contas" | "pessoas" | "cartoes" | "transacoes" | "lancar-rec" | "lancar-desp" | "menu" | "busca" | "avisos";
 export interface BlocoProps { e: Estado; pers: Pers; onIr: (d: Destino) => void }
 type Lim = { livre: number; passou?: number; pct: number } | null | undefined;
 const cinza = "#8A8F98";          // "Outras categorias"

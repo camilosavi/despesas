@@ -1,4 +1,4 @@
-import { marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
+import { ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
 import type { Form } from "./loja";
 import { cargaDe } from "./dados";
 import * as C from "./engine";
@@ -57,5 +57,15 @@ describe("loja (gravação)", () => {
     const b = salvarConta(base(), "Nubank", 5, AGORA + 9, HOJE);
     expect(b.cfg.accts).toHaveLength(1); expect(b.cfg.accts[0].cents).toBe(5);
     expect(salvarCartao(b, "Inter", { limit: 1 }).cfg.cards.Inter).toMatchObject({ due: 10, limit: 1 });
+  });
+  it("pessoas: saldo por pessoa, quitar e aparecer no motor", () => {
+    let b = ppCriar(base(), "Ana", "a1");
+    expect(ppCriar(b, "ana", "x")).toBe(b);
+    b = ppLancar(b, "a1", { id: "e1", d: "2026-10-01", ...ppSinal("elaDeve", 10000), t: "Airbnb" });
+    b = ppLancar(b, "a1", { id: "e2", d: "2026-10-05", ...ppSinal("elaPagou", 2500) });
+    expect(ppSaldo(ppDe(b)[0])).toBe(7500);
+    expect(C.saldosPorPessoa(cargaDe(b, HOJE).estado)).toEqual([{ pessoa: "Ana", cents: 7500 }]);
+    expect(ppSaldo(ppDe(ppQuitar(b, "a1", HOJE, "e3"))[0])).toBe(0);
+    expect(ppDe(ppExcluir(b, "a1"))).toHaveLength(0);
   });
 });

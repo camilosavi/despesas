@@ -107,3 +107,36 @@ export function salvarCartao(b: Backup, nome: string, dados: { due?: number; lim
 export function marcarVarios(b: Backup, ids: string[], pago: boolean, agora: number): Backup {
   return ids.reduce((acc, id) => marcarPago(acc, id, pago, agora), b);
 }
+
+// ===== Pessoas: conta corrente por pessoa (cfg.pp, mesmo modelo do app atual) =====
+// c > 0 = ela te deve · c < 0 = você deve a ela · k "d" = cobrança/dívida, "p" = pagamento
+export interface PPEntrada { id: string; d: string; c: number; k: "d" | "p"; t?: string }
+export interface PP { id: string; name: string; e: PPEntrada[] }
+export type PPTipo = "elaDeve" | "euDevo" | "elaPagou" | "euPaguei";
+export const ppSinal = (t: PPTipo, cents: number): Pick<PPEntrada, "c" | "k"> => {
+  const v = Math.abs(Math.round(cents));
+  return t === "elaDeve" ? { c: v, k: "d" } : t === "euDevo" ? { c: -v, k: "d" } : t === "elaPagou" ? { c: -v, k: "p" } : { c: v, k: "p" };
+};
+export const ppDe = (b: Backup): PP[] => (Array.isArray(b.cfg.pp) ? (b.cfg.pp as PP[]) : []);
+const comPP = (b: Backup, pp: PP[]): Backup => ({ ...b, cfg: { ...b.cfg, pp } });
+export const ppSaldo = (p: PP) => p.e.reduce((s, x) => s + x.c, 0);
+
+export function ppCriar(b: Backup, nome: string, id: string): Backup {
+  const n = nome.trim();
+  if (!n || ppDe(b).some(p => p.name.toLowerCase() === n.toLowerCase())) return b;
+  return comPP(b, [...ppDe(b), { id, name: n, e: [] }]);
+}
+export const ppRenomear = (b: Backup, pid: string, nome: string): Backup =>
+  nome.trim() ? comPP(b, ppDe(b).map(p => (p.id === pid ? { ...p, name: nome.trim() } : p))) : b;
+export const ppExcluir = (b: Backup, pid: string): Backup => comPP(b, ppDe(b).filter(p => p.id !== pid));
+export function ppLancar(b: Backup, pid: string, e: PPEntrada): Backup {
+  if (!e.c) return b;
+  return comPP(b, ppDe(b).map(p => (p.id !== pid ? p : { ...p, e: p.e.some(x => x.id === e.id) ? p.e.map(x => (x.id === e.id ? e : x)) : [...p.e, e] })));
+}
+export const ppApagarEntrada = (b: Backup, pid: string, eid: string): Backup =>
+  comPP(b, ppDe(b).map(p => (p.id === pid ? { ...p, e: p.e.filter(x => x.id !== eid) } : p)));
+// "pagou tudo": lança um pagamento que zera o saldo
+export function ppQuitar(b: Backup, pid: string, data: string, id: string): Backup {
+  const p = ppDe(b).find(x => x.id === pid), s = p ? ppSaldo(p) : 0;
+  return s ? ppLancar(b, pid, { id, d: data, c: -s, k: "p", t: s > 0 ? "Pagou tudo" : "Paguei tudo" }) : b;
+}

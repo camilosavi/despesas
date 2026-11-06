@@ -8,6 +8,7 @@ import type { Carga } from "./dados";
 import { Lancar } from "./Lancar";
 import type { Pedido } from "./Lancar";
 import { Ajustes } from "./Ajustes";
+import { Pessoas } from "./Pessoas";
 import { marcarVarios, vazio } from "./loja";
 import type { Backup } from "./loja";
 import { hojeISO } from "./format";
@@ -28,7 +29,7 @@ export function App() {
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
-  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes">("inicio");
+  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas">("inicio");
   const arq = useRef<HTMLInputElement>(null);
   const hoje = hojeISO();
   const c: Carga = useMemo(() => (b ? cargaDe(b, hoje) : erro ? { ...exemplo(), erro } : exemplo()), [b, hoje, erro]);
@@ -53,6 +54,7 @@ export function App() {
     setAviso("");
     if (d === "contas" || d === "transacoes") setTela("contas");
     else if (d === "cartoes") setTela("cartoes");
+    else if (d === "pessoas") setTela("pessoas");
     else if (d === "lancar-rec") lancar({ tipo: "rec" });
     else if (d === "lancar-desp") lancar({ tipo: "desp" });
     else if (d === "menu") { if (b) setAjustes(true); else setAviso("Escolha “Começar do zero” ou “Usar meus dados” para configurar contas e cartões."); }
@@ -76,12 +78,14 @@ export function App() {
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} />
+        : tela === "pessoas" ? <Pessoas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} />}
       <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>
       <nav className="bar" aria-label="Telas">
         <button type="button" aria-current={tela === "inicio" ? "page" : undefined} onClick={() => { setTela("inicio"); setAviso(""); }}>Início</button>
         <button type="button" aria-current={tela === "contas" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
         <button type="button" aria-current={tela === "cartoes" ? "page" : undefined} onClick={() => { setTela("cartoes"); setAviso(""); }}>Cartões</button>
+        <button type="button" aria-current={tela === "pessoas" ? "page" : undefined} onClick={() => { setTela("pessoas"); setAviso(""); }}>Pessoas</button>
       </nav>
       {pedido && b && <Lancar key={pedido.id ?? pedido.tipo} b={b} pers={c.pers} hoje={hoje} pedido={pedido} onSalvar={salvar} onFechar={() => setPedido(null)} />}
       {ajustes && b && <Ajustes b={b} hoje={hoje} onSalvar={salvar} onBaixar={baixar} onFechar={() => setAjustes(false)} />}

@@ -1,0 +1,21 @@
+.ppresumo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-bottom: var(--sp-3) }
+.ppresumo div, .ppsaldo { display: grid; gap: .2em; padding: var(--sp-3); border: 1px solid var(--line); border-radius: var(--r-2) }
+.ppresumo small, .ppsaldo small { font-size: var(--fs-xs); color: var(--muted) }
+.ppresumo b, .ppsaldo b { font-size: 1.4rem; font-variant-numeric: tabular-nums }
+.ppnova { display: flex; gap: var(--sp-2); margin-bottom: var(--sp-3) }
+.ppnova input { flex: 1; min-width: 0; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-2); padding: 0 1em; font: inherit; font-size: var(--fs-sm); background: var(--bg); color: var(--ink) }
+.ppnova .btn, .pessoas .btn { min-height: 44px; padding: 0 1em; border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--ink); font-size: var(--fs-sm); cursor: pointer }
+.pplista { list-style: none; margin: 0; padding: 0 }
+.pprow { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sp-3); width: 100%; min-height: 56px; padding: .4em 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer }
+.ppav { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 700 }
+.ppnm { display: grid; font-size: var(--fs-sm) } .ppnm em { font-style: normal; font-size: var(--fs-xs); color: var(--muted) }
+.pptipos { flex-wrap: wrap } .pptipos button { flex: 1 1 45% }
+.ppwa { display: grid; place-items: center; text-decoration: none }
+.lfolha .btn.principal { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700 }
+.lfolha .lacoes .btn { min-height: 48px }
+.pph { margin: var(--sp-2) 0 0; font-size: var(--fs-md) }
+.ppext { list-style: none; margin: 0; padding: 0 }
+.ppext li { border-bottom: 1px solid var(--line) }
+.ppext li > button:first-child { display: flex; justify-content: space-between; gap: 1em; width: 100%; min-height: 48px; padding: .3em 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: var(--fs-sm); text-align: left; cursor: pointer }
+.ppext em { display: block; font-style: normal; font-size: var(--fs-xs); color: var(--muted) }
+.ppext b { font-variant-numeric: tabular-nums; align-self: center }

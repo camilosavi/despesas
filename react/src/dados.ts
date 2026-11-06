@@ -21,9 +21,17 @@ export function abrirBackup(texto: string): { backup?: Backup; erro?: string } {
   } catch (err) { return { erro: err instanceof Error ? err.message : "Não consegui ler o arquivo." }; }
 }
 
+// Pessoas (cfg.pp) entram no motor como "acertos": saldo = o que as divisões devem − acertos, então c > 0 vira acerto negativo.
+function comPessoas(bruto: any, b: Backup) {
+  const pp = Array.isArray(b.cfg.pp) ? b.cfg.pp : [];
+  if (!pp.length) return bruto;
+  const ac = pp.flatMap((p: any) => (p.e || []).map((x: any) => ({ id: x.id, pessoa: p.name, cents: -x.c, data: x.d })));
+  return { ...bruto, acertos: [...(bruto.acertos || []), ...ac] };
+}
+
 export function cargaDe(b: Backup, hoje: string): Carga {
-  const { estado: bruto, resumo } = deAppAtual(b, hoje);
-  const estado = bruto as unknown as Estado;
+  const { estado: bruto0, resumo } = deAppAtual(b, hoje);
+  const estado = comPessoas(bruto0, b) as unknown as Estado;
   return { estado, pers: (estado.pers as Pers) ?? {}, nome: (b.cfg && (b.cfg.name || b.cfg.userName)) || "", real: true, resumo };
 }
 
