@@ -92,3 +92,27 @@ describe("loja (gravação)", () => {
     expect(r).toHaveLength(1); expect(r[0].cents).toBe(4500); expect(b).toBeTruthy();
   });
 });
+
+import { fxApagar, fxAviso, fxCompras, fxCotacao, fxCriar, fxTotais } from "./loja";
+describe("moedas", () => {
+  it("cria, soma e tira o preço médio", () => {
+    let b = vazio();
+    b = fxCriar(b, "a", "EUR", 100000, 600000, "2026-10-01", " Wise ");
+    b = fxCriar(b, "b", "EUR", 50000, 330000, "2026-11-01");
+    b = fxCriar(b, "c", "USD", 10000, 55000, "2026-11-02");
+    expect(fxTotais(b, "EUR")).toMatchObject({ valor: 150000, brl: 930000, n: 2 });
+    expect(fxTotais(b, "EUR").medio).toBeCloseTo(6.2);
+    expect(fxCompras(b, "USD")).toHaveLength(1);
+    expect(fxCompras(b, "EUR")[0].id).toBe("b");
+    expect((b.fx[0] as any).where).toBe("Wise");
+    expect(fxApagar(b, "a").fx).toHaveLength(2);
+  });
+  it("ignora valor inválido e avisa cotação estranha", () => {
+    const b = vazio();
+    expect(fxCriar(b, "x", "EUR", 0, 100, "2026-10-01")).toBe(b);
+    expect(fxCotacao(600, 100)).toBe(6);
+    expect(fxAviso(6, 6)).toBe("ok");
+    expect(fxAviso(0.17, 6)).toBe("inversa");
+    expect(fxAviso(60, 6)).toBe("fora");
+  });
+});

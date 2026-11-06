@@ -177,3 +177,33 @@ export const dividaMover = (b: Backup, did: string, m: DvMov): Backup =>
   m.cents ? setCfg(b, "debts", dividas(b).map(d => (d.id === did ? { ...d, moves: [...d.moves, m] } : d))) : b;
 export const dividaApagarMov = (b: Backup, did: string, mid: string) =>
   setCfg(b, "debts", dividas(b).map(d => (d.id === did ? { ...d, moves: d.moves.filter(m => m.id !== mid) } : d)));
+
+// ---- Moedas (compras de euro e dólar, mesmo formato do app atual) ----
+export type Moeda = "EUR" | "USD";
+export interface FxCompra { id?: string; cur?: "USD"; eur?: number; usd?: number; brl: number; date: string; where?: string; obs?: string }
+export const fxDe = (b: Backup): FxCompra[] => (Array.isArray(b.fx) ? (b.fx as FxCompra[]) : []);
+export const fxMoeda = (x: FxCompra): Moeda => (x.cur === "USD" ? "USD" : "EUR");
+// valor comprado na moeda (centavos de € ou US$)
+export const fxValor = (x: FxCompra) => (fxMoeda(x) === "USD" ? x.usd ?? 0 : x.eur ?? 0);
+export const fxCompras = (b: Backup, m: Moeda) => fxDe(b).filter(x => fxMoeda(x) === m).sort((a, c) => (a.date < c.date ? 1 : a.date > c.date ? -1 : 0));
+export function fxTotais(b: Backup, m: Moeda) {
+  const ls = fxCompras(b, m), valor = ls.reduce((s, x) => s + fxValor(x), 0), brl = ls.reduce((s, x) => s + x.brl, 0);
+  return { valor, brl, medio: valor > 0 ? brl / valor : 0, n: ls.length };
+}
+// cotação = R$ pago ÷ valor recebido (ambos em centavos)
+export const fxCotacao = (brl: number, valor: number) => (valor > 0 ? brl / valor : 0);
+// avisa cotação fora de 0,6×–1,6× a de hoje; "inversa" quando € e R$ parecem trocados
+export function fxAviso(cot: number, hoje: number): "ok" | "fora" | "inversa" {
+  if (!(cot > 0) || !(hoje > 0)) return "ok";
+  if (cot >= hoje * 0.6 && cot <= hoje * 1.6) return "ok";
+  const inv = 1 / cot;
+  return inv >= hoje * 0.6 && inv <= hoje * 1.6 ? "inversa" : "fora";
+}
+export function fxCriar(b: Backup, id: string, m: Moeda, valor: number, brl: number, date: string, where?: string): Backup {
+  if (!(valor > 0) || !(brl > 0) || !date) return b;
+  const w = where?.trim();
+  const x: FxCompra = m === "USD" ? { id, cur: "USD", usd: valor, brl, date } : { id, eur: valor, brl, date };
+  if (w) x.where = w;
+  return { ...b, fx: [...fxDe(b), x] };
+}
+export const fxApagar = (b: Backup, id: string): Backup => ({ ...b, fx: fxDe(b).filter(x => x.id !== id) });

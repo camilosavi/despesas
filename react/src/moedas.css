@@ -1,0 +1,12 @@
+.moedas .lseg { margin: var(--sp-2) 0 }
+.mcot { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin: var(--sp-2) 0 }
+.mcot b { font-variant-numeric: tabular-nums }
+.mcot em { display: block; font-style: normal; font-size: var(--fs-sm); color: var(--muted) }
+.mcot em.pos { color: var(--pos) } .mcot em.neg { color: var(--neg, var(--muted)) }
+.mtot { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); margin: var(--sp-2) 0 var(--sp-3) }
+.mtot dt { font-size: var(--fs-sm); color: var(--muted) } .mtot dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums }
+.mform { margin: var(--sp-2) 0 }
+.mdica { font-size: var(--fs-sm); color: var(--muted); margin: 0 }
+.mlink { border: 0; background: none; color: var(--link, var(--accent)); font: inherit; min-height: 44px; padding: 0 .4em; cursor: pointer; text-decoration: underline }
+.mfx em { display: block; font-style: normal; font-size: var(--fs-sm); color: var(--muted) }
+@container (max-width: 360px) { .mtot { grid-template-columns: 1fr } }
