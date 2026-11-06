@@ -12,7 +12,7 @@ const semItens = "#A08F7A";       // "Faturas sem itens lançados": cor própria
 function Ver({ para, onIr, children }: { para: Destino; onIr: (d: Destino) => void; children: string }) {
   return <button type="button" className="dlink" onClick={() => onIr(para)}>{children}</button>;
 }
-const catDe = (k: string, t: "desp" | "rec", pers: Pers): { n: string; c: string } =>
+export const catDe = (k: string, t: "desp" | "rec", pers: Pers): { n: string; c: string } =>
   k === "_falta" ? { n: "Faturas sem itens lançados", c: semItens } : C.categoria(t, k, pers);
 
 export function Saldo({ e, onIr }: BlocoProps) {

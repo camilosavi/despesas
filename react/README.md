@@ -18,7 +18,7 @@ npm run typecheck && npm run build
 Testes do motor: `node --test "novo/teste/*.test.mjs"` (na raiz).
 
 ## O que já tem
-Início (Visão geral): Na conta hoje, Resumo do mês, Nota de saúde (só quando há o que dizer), Fluxo de caixa (com tabela para leitor de tela), Gastos (rosca com legenda e valor), Cartões, Vence em 10 dias, Últimas transações, Pessoas. "Usar meus dados" lê o backup JSON.
+Início (Visão geral) e Contas (saldos, resumo, filtros, lista por dia com cartão como uma linha "Fatura X", categorias): Na conta hoje, Resumo do mês, Nota de saúde (só quando há o que dizer), Fluxo de caixa (com tabela para leitor de tela), Gastos (rosca com legenda e valor), Cartões, Vence em 10 dias, Últimas transações, Pessoas. "Usar meus dados" lê o backup JSON.
 
 ## O que ainda NÃO tem (continua no app atual)
-Contas, Cartões (tela), lançar/editar, leitores de PDF/OFX/holerite/print, Open Finance, login/sincronização Supabase, avisos, temas, organizar widgets (arrastar/redimensionar do protótipo), logos dos bancos (`novo/marcas`), "Merece atenção". Os botões que levam a essas telas mostram um aviso.
+Cartões (tela), lançar/editar, leitores de PDF/OFX/holerite/print, Open Finance, login/sincronização Supabase, avisos, temas, organizar widgets (arrastar/redimensionar do protótipo), logos dos bancos (`novo/marcas`), "Merece atenção". Os botões que levam a essas telas mostram um aviso.
