@@ -1028,7 +1028,8 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
 .catleg span{display:inline-flex;align-items:center;gap:6px}.catleg i{width:8px;height:8px;border-radius:4px}
 .bline{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--surface);font-size:.92rem;border-top:0!important;margin-top:18px;border:1px solid var(--line);box-shadow:var(--card-shadow)}
 .bline .bt{flex:1;min-width:0}.bline .bdot{width:8px;height:8px;border-radius:4px;background:var(--warn);flex:none}
-.bline .lk{padding:4px 0}.bline #bkLater{color:var(--muted);font-weight:500}
+.bline .lk{padding:4px 0;position:relative}
+@media (max-width:360px){.bline{gap:8px;padding:12px}}.bline .lk::after{content:"";position:absolute;inset:-10px -6px}.bline #bkLater{color:var(--muted);font-weight:500}
 .ht-best{font-size:.74rem;font-weight:700;color:var(--warn);margin-top:auto;position:relative;z-index:1}
 .canbuy-card{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 10%,var(--surface)) 0%,var(--surface) 75%);border:1px solid color-mix(in srgb,var(--accent) 24%,var(--line));box-shadow:var(--card-shadow);transition:transform .12s ease,box-shadow .12s ease;margin-bottom:14px}
 .canbuy-card:active{transform:scale(.98)}
@@ -1867,6 +1868,8 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
 #pHome .dqa svg,#pHome .drc svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #pHome .drs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6em}
 #pHome .drc{display:grid;gap:.2em;padding:.7em .8em;border-radius:.8em;min-width:0;background:color-mix(in srgb,var(--pos) 13%,transparent)}
+.nw{white-space:nowrap}
+#pHome .drc{align-content:start}
 #pHome .drc.out{background:color-mix(in srgb,var(--neg) 12%,transparent)}
 #pHome .drc>span{display:flex;align-items:center;gap:.35em;font-size:.8rem;font-weight:600}
 #pHome .drc>b{font-size:clamp(.74rem,3.9cqi,1.15rem);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
@@ -1995,6 +1998,7 @@ section>h2 .tbtn.go{color:var(--btn-ink)!important}
 #pHome .datb b{display:block;font-size:.84rem;font-weight:700;line-height:1.3;color:var(--ink);white-space:normal}
 #pHome .datb small{display:block;margin-top:.1em;font-size:.74rem;line-height:1.3;color:var(--muted)}
 #pHome .datx{flex:none;min-width:32px;min-height:32px;margin:-.4em -.3em 0 0;border:0;background:none;font-size:1.15rem;line-height:1;color:var(--muted);cursor:pointer}
+@media (max-width:979px){#pHome .dqa button,#pHome .datb{min-height:44px}#pHome .datx{min-width:44px;min-height:44px}}
 #pHome .datmore{display:block;margin-top:.2em;font-size:.74rem;color:var(--muted)}
 .tag.dn{background:color-mix(in srgb,var(--pos) 16%,transparent);color:var(--pos)}
 
@@ -3179,11 +3183,11 @@ function header0(){
     const L=cs.flatMap(c=>cardItems(c,ymOf(c))), open=L.filter(x=>!isPaid(x)&&!rollYM(x)).reduce((s,x)=>s+amt(x),0)+cs.reduce((s,c)=>s+rollAmt(c,ymOf(c)),0);
     $("bigLabel").textContent=selCard?`Fatura ${selCard}`:"Faturas em aberto";
     setBig("R$",tot);
-    $("s1l").textContent=selCard?"Vencimento":"Cartões";
-    $("s1").textContent=selCard?(dueOf(selCard)?fmtDM(cardDue(selCard,view)):"—"):String(cs.length);
-    $("s2l").textContent="A pagar";$("s2").textContent=R(open);
+    $("s1l").textContent=selCard?"Vencimento":"Limite livre";
+    $("s1").textContent=selCard?(dueOf(selCard)?fmtDM(cardDue(selCard,view)):"—"):(()=>{const f=cs.map(c=>cardFree(c)).filter(Boolean);return f.length?R(f.reduce((t,x)=>t+x.free,0)):"—"})();
+    $("s2l").textContent=selCard?"A pagar":"Próximo mês";$("s2").textContent=selCard?R(open):R(cs.reduce((s,c)=>s+billTot(c,shiftYM(view,1)),0));
     const nx=cs.reduce((s,c)=>s+billTot(c,shiftYM(view,1)),0);
-    {const t0=tot;$("hFoot").textContent=`próximo mês: ${R(nx)}${t0?` (${nx<=t0?"−":"+"} ${R(Math.abs(t0-nx))})`:""}`}
+    {const t0=tot;$("hFoot").textContent=selCard?`próximo mês: ${R(nx)}${t0?` (${nx<=t0?"−":"+"} ${R(Math.abs(t0-nx))})`:""}`:""}
     return;
   }
   $("period").textContent=isYear?String(year):monthLabel(view);
@@ -3259,7 +3263,7 @@ function backupBanner(){
   if(daysSince(cfg.lastBackup)<7||daysSince(cfg.backupSnooze)<2) return "";
   const nd=daysSince(cfg.lastBackup);
   /* novo app (out/2026): no celular o lembrete é uma linha só */
-  return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Nenhum backup ainda":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
+  return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Sem backup":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
 }
 
 /* ---------- "quem está usando": nome de usuário, só com permissão ---------- */
@@ -3822,7 +3826,7 @@ function dashHome(){
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid">
    <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pMes">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
-   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Entrou</span><b>${R(rec)}</b><small>${recLeft?`a receber ${R(recLeft)}`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Gastou</span><b>${R(des)}</b><small>${desLeft?`a pagar ${R(desLeft)}`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobra":"Falta"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
+   <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Entrou</span><b>${R(rec)}</b><small>${recLeft?`a receber <span class="nw">${R(recLeft)}</span>`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Gastou</span><b>${R(des)}</b><small>${desLeft?`a pagar <span class="nw">${R(desLeft)}</span>`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobra":"Falta"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
    <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p>${attHtml("in-saude")}</section>
    <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
    <section class="db d-gastos"><h3>Gastos</h3>${cats}</section>
@@ -4978,8 +4982,8 @@ function renderCards(){
       if(IS_WIDE.matches) return dashCard(c,true);
       const fy=billShown(c,view).ym, tot=billShow(c,fy), n=cardItems(c,fy).filter(x=>!genFat(x)).length, max=Math.max(...months.map(m=>billTot(c,m)),1);
       const parc=new Set(items.filter(x=>cardOf(x)===c&&x.date.slice(0,7)>=view&&parcInfo(x)).map(seriesKey)).size;
-      return `<button class="folder" data-opencard="${esc(c)}" data-ym="${fy}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${dueOf(c)?`vence ${fmtDM(cardDue(c,fy))} · `:`fatura de ${MES[+fy.slice(5)-1].toLowerCase()} · `}${n?`${n} ${n===1?"item":"itens"}`:"sem itens"}${parc?` · ${parc} parcelamentos`:""}${cardCfg(c).limit?` · livre ${R(cardFree(c).free)}`:""}${limTag(c)}</span><span class="fa">abrir ›</span>
-        <span class="spark">${months.map((m,i)=>{const v=billTot(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span></button>`}).join("")+
+      return `<button class="folder" data-opencard="${esc(c)}" data-ym="${fy}">${cardBadge(c)}<span class="fn">${esc(c)}</span><span class="fv">${R(tot)}</span><span class="fm">${[dueOf(c)?`vence ${fmtDM(cardDue(c,fy))}`:`fatura de ${MES[+fy.slice(5)-1].toLowerCase()}`,n?`${n} ${n===1?"item":"itens"}`:"sem itens",parc?`${parc} parcelamentos`:"",cardCfg(c).limit?`livre ${R(cardFree(c).free)}`:""].filter(Boolean).map(t=>`<span class="nw">${t}</span>`).join(" · ")}${limTag(c)}</span><span class="fa">abrir ›</span>
+        ${months.some(m=>billTot(c,m))?`<span class="spark">${months.map((m,i)=>{const v=billTot(c,m);return `<div><i class="${i===0?"now":""}" style="height:${v?Math.max(3,v/max*18):2}px"></i><span>${MES[+m.slice(5)-1]}</span></div>`}).join("")}</span>`:""}</button>`}).join("")+
       `<button type="button" class="folder foladd" id="cardNew2"><span class="fi">+</span><span class="fn">Adicionar cartão</span></button></div><div class="row pdfpair" style="margin-top:14px"><label class="btn soft pdfrow">Importar PDF ou print<input type="file" class="pdfany" accept="application/pdf,.pdf,.ofx,.qfx,application/x-ofx,application/vnd.intu.qfx,.csv,text/csv,text/plain,image/*" multiple hidden></label><button type="button" class="btn soft pdfrow pdfpaste">Colar</button></div>${feeSection(view)}<div class="toolbar" style="justify-content:center;margin-top:14px"><button class="tbtn" id="canBuy">Posso comprar?</button></div><p class="hint expl" style="margin-top:10px">O app reconhece de qual cartão é a fatura (ou se é uma conta, como a Claro, um holerite ou o extrato da conta). Para uma compra cair num cartão, escolha <b>Crédito</b> e o cartão ao lançar.</p>${readsBox()}</section>`;
     return;
   }
