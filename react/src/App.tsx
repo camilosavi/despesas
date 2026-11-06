@@ -10,6 +10,7 @@ import type { Pedido } from "./Lancar";
 import { Ajustes } from "./Ajustes";
 import { Pessoas } from "./Pessoas";
 import { Metas } from "./Metas";
+import { assinaturas } from "./assinaturas";
 import { marcarVarios, vazio } from "./loja";
 import type { Backup } from "./loja";
 import { hojeISO } from "./format";
@@ -79,7 +80,7 @@ export function App() {
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} />
-        : tela === "metas" ? <Metas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
+        : tela === "metas" ? <Metas subs={assinaturas(c.estado.lancamentos)} b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : tela === "pessoas" ? <Pessoas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} />}
       <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>

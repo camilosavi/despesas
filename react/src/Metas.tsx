@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { caixaApagarMov, caixaCriar, caixaExcluir, caixaMover, caixas, caixaSaldo, dividaApagarMov, dividaCriar, dividaExcluir, dividaFalta, dividaMover, dividas } from "./loja";
 import type { Backup, Caixinha, Divida } from "./loja";
+import { assinaturas } from "./assinaturas";
 import { centsDe } from "./Lancar";
 import { R, dm } from "./format";
 import "./lancar.css";
 import "./pessoas.css";
 import "./metas.css";
 
-interface Props { b: Backup | null; hoje: string; onSalvar: (b: Backup) => void; onAviso: (t: string) => void }
+interface Props { subs?: ReturnType<typeof assinaturas>; b: Backup | null; hoje: string; onSalvar: (b: Backup) => void; onAviso: (t: string) => void }
 const id = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-export function Metas({ b, hoje, onSalvar, onAviso }: Props) {
+export function Metas({ subs = [], b, hoje, onSalvar, onAviso }: Props) {
   const [cx, setCx] = useState<string | null>(null), [dv, setDv] = useState<string | null>(null);
   const [nc, setNc] = useState(""), [meta, setMeta] = useState(""), [nd, setNd] = useState(""), [tot, setTot] = useState("");
   const cs = b ? caixas(b) : [], ds = b ? dividas(b) : [];
@@ -61,6 +62,12 @@ export function Metas({ b, hoje, onSalvar, onAviso }: Props) {
             <span className="ppnm">{d.name}<em>{f <= 0 ? "quitada ✓" : `${p}% pago`}</em><i className="mbar" style={{ ["--p" as string]: p + "%" }} /></span>
             <b className={f > 0 ? "neg" : ""}>{f > 0 ? R(f) : "—"}</b></button></li>;
         })}</ul> : <p className="vazio">Nenhuma dívida registrada. Serve para acompanhar o que falta; não entra em despesa nem em saldo.</p>}
+      </section>
+      <section aria-labelledby="ma">
+        <h2 id="ma">Assinaturas <span className="dim">{subs.length ? R(subs.reduce((t, x) => t + x.cents, 0)) + "/mês · " + R(subs.reduce((t, x) => t + x.cents, 0) * 12) + "/ano" : ""}</span></h2>
+        {subs.length ? <ul className="pplista">{subs.map(a => <li key={a.nome} className="pprow mrow"><span className="ppav" aria-hidden="true">{a.nome.slice(0, 1).toUpperCase()}</span>
+          <span className="ppnm">{a.nome}<em>{a.cartao ? a.cartao + " · " : ""}última cobrança {dm(a.ultima)}</em></span><b>{R(a.cents)}</b></li>)}</ul>
+          : <p className="vazio">Nenhuma assinatura encontrada. Lançamentos que se repetem todo mês aparecem aqui.</p>}
       </section>
       {ac && b && <FolhaCx b={b} c={ac} hoje={hoje} onSalvar={onSalvar} onFechar={() => setCx(null)} />}
       {ad && b && <FolhaDv b={b} d={ad} hoje={hoje} onSalvar={onSalvar} onFechar={() => setDv(null)} />}

@@ -1,3 +1,4 @@
+import { assinaturas } from "./assinaturas";
 import { caixaCriar, caixaMover, caixaSaldo, caixas, dividaCriar, dividaMover, dividaFalta, dividas, ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
 import type { Form } from "./loja";
 import { cargaDe } from "./dados";
@@ -80,5 +81,14 @@ describe("loja (gravação)", () => {
     d = dividaMover(d, "d1", { id: "p2", date: HOJE, cents: -1000 });
     expect(dividaFalta(dividas(d)[0])).toBe(71000);
     expect(dividaCriar(d, "x", "", 5)).toBe(d);
+  });
+  it("assinaturas: recorrente sem parcela, soma do mês mais recente", () => {
+    const b = base();
+    const r = assinaturas([
+      { id: "1", nome: "Netflix", tipo: "desp", cat: "assin", cents: 4000, data: "2026-10-05" },
+      { id: "2", nome: "Netflix", tipo: "desp", cat: "assin", cents: 4500, data: "2026-11-05" },
+      { id: "3", nome: "Tênis", tipo: "desp", cat: "compras", cents: 9000, data: "2026-11-05", parcela: "1/3" },
+    ] as any);
+    expect(r).toHaveLength(1); expect(r[0].cents).toBe(4500); expect(b).toBeTruthy();
   });
 });
