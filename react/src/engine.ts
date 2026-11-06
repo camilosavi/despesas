@@ -10,6 +10,7 @@ export interface Lancamento {
   id: string; nome: string; tipo: "desp" | "rec"; cat?: string; cents: number; data: string;
   pago?: boolean; cartao?: string; conta?: string; compra?: string; caiu?: string; pagoCom?: string;
   recorrente?: boolean; saldoAnterior?: boolean; parcela?: string; criadoEm?: number; pagoEm?: number;
+  tags?: string[]; parte?: { i: number; n: number; tot: number };
 }
 export interface Estado {
   hoje: string; inicio?: string;

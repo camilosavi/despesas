@@ -26,3 +26,6 @@
 @media (min-width: 700px) { .lfundo { align-items: center } .lfolha { border-radius: var(--r-3) } }
 .lista-ajuste li { display: flex; justify-content: space-between; gap: 1em; padding: .4em 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm) }
 .lfolha form .btn { min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--ink); font-size: var(--fs-sm); cursor: pointer }
+.lparte { align-items: end }
+.lparte .lrm { grid-column: 1 / -1 }
+.lpacoes { position: static }

@@ -52,6 +52,8 @@ export function deAppAtual(b, hoje) {
       ...(x.acct ? { conta: x.acct } : {}), ...(c && tipo === "desp" && !pagoCom ? { cartao: c } : {}), ...(pagoCom ? { pagoCom } : {}),
       ...(x.buy ? { compra: x.buy } : {}), ...(x.fell ? { caiu: x.fell } : {}),
       ...(x.parc && /^\d+\/\d+$/.test(x.parc) ? { parcela: x.parc } : {}),
+      ...(Array.isArray(x.tags) && x.tags.length ? { tags: x.tags.slice(0, 5).map(String) } : {}),
+      ...(x.pt && x.pt.n > 1 ? { parte: { i: x.pt.i, n: x.pt.n, tot: x.pt.tot } } : {}),
       ...(x.group && !x.parc && tipo === "desp" ? { recorrente: true } : {}),
       ...(/^Saldo da fatura anterior/i.test(semPrefixo(x.desc, c)) ? { saldoAnterior: true } : {}),
     };

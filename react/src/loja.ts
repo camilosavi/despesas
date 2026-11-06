@@ -11,7 +11,7 @@ export interface Backup { app: string; v: number; items: ItemBackup[]; fx: unkno
 export type Repete = { modo: "uma" } | { modo: "parcelas"; n: number } | { modo: "mensal"; n: number };
 export interface Form {
   tipo: "desp" | "rec"; desc: string; cents: number; cat: string; date: string; pay: string; paid: boolean;
-  card?: string; acct?: string; repete: Repete;
+  card?: string; acct?: string; repete: Repete; tags?: string[];
 }
 
 export const vazio = (): Backup => ({ app: "minhas-despesas", v: 1, items: [], fx: [], cfg: { accts: [], cards: {} } });
@@ -55,13 +55,13 @@ export function criar(b: Backup, f: Form, hoje: string, agora: number, novoId: (
     novos.push({
       id: novoId(), type: f.tipo, desc: f.desc.trim(), cat: f.cat, cents: parcela + (i === 0 ? resto : 0), date: sal.date, pay: f.pay, paid: pago, createdAt: agora,
       ...(pago && f.tipo === "desp" ? { paidAt: agora } : {}), ...(f.acct ? { acct: f.acct } : {}), ...(cartao ? { card: cartao, buy: compra } : {}),
-      ...(sal.fell ? { fell: sal.fell } : {}), ...(grupo ? { group: grupo } : {}), ...(grupo && f.repete.modo === "parcelas" ? { parc: `${i + 1}/${n}` } : {}),
+      ...(sal.fell ? { fell: sal.fell } : {}), ...(f.tags?.length ? { tags: f.tags } : {}), ...(grupo ? { group: grupo } : {}), ...(grupo && f.repete.modo === "parcelas" ? { parc: `${i + 1}/${n}` } : {}),
     });
   }
   return { ...b, items: [...b.items, ...novos] };
 }
 
-export interface Edicao { desc: string; cents: number; cat: string; date: string; pay: string; paid: boolean; card?: string; acct?: string }
+export interface Edicao { desc: string; cents: number; cat: string; date: string; pay: string; paid: boolean; card?: string; acct?: string; tags?: string[] }
 export function editar(b: Backup, id: string, e: Edicao, agora: number): Backup {
   return { ...b, items: b.items.map(x => {
     if (x.id !== id) return x;
@@ -70,10 +70,50 @@ export function editar(b: Backup, id: string, e: Edicao, agora: number): Backup 
     const compra = x.buy && !mudouData ? x.buy : e.date;
     const data = cartao ? (mudouData ? dataNaFatura(b, cartao, e.date) : x.date) : e.date;
     const pago = x.type === "rec" ? true : cartao ? x.paid : e.paid;
-    const { buy: _b, card: _c, acct: _a, paidAt: _p, ...resto } = x;
+    const { buy: _b, card: _c, acct: _a, paidAt: _p, tags: _t, ...resto } = x; void _t;
     return { ...resto, desc: e.desc.trim(), cents: e.cents, cat: e.cat, date: data, pay: e.pay, paid: pago,
-      ...(pago && x.type === "desp" ? { paidAt: x.paidAt || agora } : {}), ...(cartao ? { card: cartao, buy: compra } : {}), ...(e.acct ? { acct: e.acct } : {}) };
+      ...(pago && x.type === "desp" ? { paidAt: x.paidAt || agora } : {}), ...(cartao ? { card: cartao, buy: compra } : {}), ...(e.acct ? { acct: e.acct } : {}), ...(e.tags?.length ? { tags: e.tags } : {}) };
   }) };
+}
+
+/** tags: até 5, sem "#", minúsculas, sem repetir, até 20 letras cada (separadas por vírgula ou espaço) */
+export const tagsParse = (t: string): string[] => [...new Set(t.split(/[,\s]+/).map(x => x.replace(/^#+/, "").toLowerCase().slice(0, 20)).filter(Boolean))].slice(0, 5);
+
+/**
+ * "Receber/pagar em partes": `f.cents` é o TOTAL; cada parte extra tem valor e data e a 1ª (na data de `f`) fica com o que sobra.
+ * Uma linha por parte, todas com o mesmo `group` "s…" e `pt={i,n,tot}`. Cada parte acerta a própria data e situação:
+ * Crédito → vencimento da fatura e a pagar; à vista paga só se a data já chegou; salário passa pela regra do dia 25.
+ */
+export function criarEmPartes(b: Backup, f: Form, extras: { c: number; d: string }[], hoje: string, agora: number, novoId: () => string): { backup: Backup; erro?: string } {
+  if (extras.length < 1) return { backup: b, erro: "Adicione pelo menos uma parte." };
+  if (extras.length > 11) return { backup: b, erro: "No máximo 12 partes." };
+  if (extras.some(x => !(x.c > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(x.d))) return { backup: b, erro: "Cada parte precisa de valor e data." };
+  const primeira = f.cents - extras.reduce((s, x) => s + x.c, 0);
+  if (primeira <= 0) return { backup: b, erro: "As partes passam do total." };
+  const partes = [{ c: primeira, d: f.date }, ...extras], grupo = `s${novoId()}`;
+  let acc = b;
+  partes.forEach((p, i) => {
+    const antes = acc.items.length;
+    acc = criar(acc, { ...f, cents: p.c, date: p.d, paid: f.paid && p.d <= hoje, repete: { modo: "uma" } }, hoje, agora, novoId);
+    acc = { ...acc, items: acc.items.map((x, k) => (k >= antes ? { ...x, group: grupo, pt: { i: i + 1, n: partes.length, tot: f.cents } } : x)) };
+  });
+  return { backup: acc };
+}
+
+/** até 6 lançamentos parecidos (mesmo tipo; nome contém o digitado ou valor igual ±0,5%); sem nada digitado, os mais recentes */
+export function recentes(b: Backup, tipo: "desp" | "rec", desc: string, cents: number): ItemBackup[] {
+  const sem = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const d = sem(desc), vistos = new Set<string>(), r: ItemBackup[] = [];
+  for (const x of [...b.items].sort((a, z) => z.createdAt - a.createdAt)) {
+    if (x.type !== tipo || x.cat === "cartao" || /^(fatura|saldo da fatura)/i.test(sem(x.desc))) continue;
+    const nome = sem(x.desc);
+    const casa = d.length >= 2 ? nome.includes(d) || (d.includes(nome) && nome.length >= 3) : cents > 0 ? false : true;
+    const valor = cents > 0 && Math.abs(x.cents - cents) <= Math.max(1, Math.round(cents * 0.005));
+    if (!casa && !valor) continue;
+    const k = nome + "|" + x.cents; if (vistos.has(k)) continue;
+    vistos.add(k); r.push(x); if (r.length >= 6) break;
+  }
+  return r;
 }
 
 /** `seguintes`: apaga também as parcelas/repetições do mesmo grupo que vêm depois desta */

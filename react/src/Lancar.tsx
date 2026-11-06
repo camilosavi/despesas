@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { regraDe } from "./orcamento";
 import * as C from "./engine";
 import type { Pers } from "./engine";
-import { PAGAMENTOS, apagar, criar, dataNaFatura, editar } from "./loja";
+import { PAGAMENTOS, apagar, criar, criarEmPartes, dataNaFatura, editar, recentes, tagsParse } from "./loja";
 import type { Backup, Form, ItemBackup, Repete } from "./loja";
 import { R, dm } from "./format";
 import "./lancar.css";
@@ -32,6 +32,8 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
   const [n, setN] = useState("3");
   const [erro, setErro] = useState("");
   const [apagarArmado, setApagarArmado] = useState(false);
+  const [tags, setTags] = useState(Array.isArray(item?.tags) ? (item!.tags as string[]).join(", ") : "");
+  const [partes, setPartes] = useState<{ c: string; d: string }[] | null>(null);
   const campo = useRef<HTMLInputElement>(null);
   useEffect(() => { campo.current?.focus(); }, []);
   useEffect(() => { const f = (e: KeyboardEvent) => e.key === "Escape" && onFechar(); window.addEventListener("keydown", f); return () => window.removeEventListener("keydown", f); }, [onFechar]);
@@ -45,6 +47,12 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
   const dica = cartaoEf && data ? `Entra na fatura do ${cartaoEf} que vence ${dm(dataNaFatura(b, cartaoEf, data))}.` : "";
   const mudaTipo = (t: "desp" | "rec") => { setTipo(t); setCat(""); setTocou(false); setPay("Pix"); setPago(true); };
 
+  const rec = item ? [] : recentes(b, tipo, desc, centsDe(valor));
+  const usar = (x: ItemBackup) => {
+    setTocou(true); setDesc(x.desc); setCat(cats.some(c => c.k === x.cat) ? x.cat : ""); setPay(x.pay || "Pix"); setCartao(x.card || ""); setConta(x.acct || "");
+    if (centsDe(valor) <= 0) setValor(paraTexto(x.cents));
+  };
+  const somaPartes = (partes || []).reduce((t, x) => t + centsDe(x.c), 0), primeira = centsDe(valor) - somaPartes;
   const salvar = (ev: React.FormEvent) => {
     ev.preventDefault();
     const cents = centsDe(valor);
@@ -53,12 +61,18 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
     if (credito && !cartaoEf) return setErro("Cadastre um cartão antes de lançar no crédito.");
     const nome = desc.trim() || cats.find(c => c.k === (catAtual || C.SEM_CATEGORIA[tipo]))?.n || "Lançamento";
     const k = catAtual || C.SEM_CATEGORIA[tipo], agora = Date.now();
-    if (item) onSalvar(editar(b, item.id, { desc: nome, cents, cat: k, date: data, pay, paid: pago, card: cartaoEf, acct: conta }, agora));
+    if (item) onSalvar(editar(b, item.id, { desc: nome, cents, cat: k, date: data, pay, paid: pago, card: cartaoEf, acct: conta, tags: tagsParse(tags) }, agora));
     else {
       const f: Form = { tipo, desc: nome, cents, cat: k, date: data, pay, paid: pago, card: cartaoEf, acct: conta || undefined,
         repete: modo === "uma" ? { modo } : { modo, n: Math.max(2, parseInt(n, 10) || 2) } };
       let i = 0;
-      onSalvar(criar(b, f, hoje, agora, () => `${agora.toString(36)}${(i++).toString(36)}${Math.random().toString(36).slice(2, 5)}`));
+      const nid = () => `${agora.toString(36)}${(i++).toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+      f.tags = tagsParse(tags);
+      if (partes) {
+        const r = criarEmPartes(b, { ...f, repete: { modo: "uma" } }, partes.map(x => ({ c: centsDe(x.c), d: x.d })), hoje, agora, nid);
+        if (r.erro) return setErro(r.erro);
+        onSalvar(r.backup);
+      } else onSalvar(criar(b, f, hoje, agora, nid));
     }
     onFechar();
   };
@@ -84,10 +98,19 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
         <label>Descrição
           <input value={desc} autoComplete="off" placeholder={tipo === "rec" ? "Ex.: Salário" : "Ex.: Mercado"} onChange={ev => { setDesc(ev.target.value); if (!tocou) { const k = regraDe(b, ev.target.value, cats.map(c => c.k)); if (k) setCat(k); } }} />
         </label>
+        {rec.length > 0 && (
+          <div className="lgrupo" role="group" aria-label="Recentes">
+            <span className="lrot">Recentes</span>
+            <div className="chips">{rec.map(x => <button key={x.id} type="button" className="chip" onClick={() => usar(x)}>{x.desc} · {R(x.cents)}</button>)}</div>
+          </div>
+        )}
         <div className="lgrupo" role="group" aria-label="Categoria">
           <span className="lrot">Categoria</span>
           <div className="chips">{cats.map(c => <button key={c.k} type="button" className="chip" aria-pressed={catAtual === c.k} onClick={() => { setTocou(true); setCat(catAtual === c.k ? "" : c.k); }}><i style={{ background: c.c }} aria-hidden="true" />{c.n}</button>)}</div>
         </div>
+        <label>Tags (opcional)
+          <input value={tags} autoComplete="off" placeholder="ex.: viagem, trabalho" onChange={ev => setTags(ev.target.value)} />
+        </label>
         <div className="lduas">
           <label>{credito ? "Data da compra" : "Data"}<input type="date" value={data} onChange={ev => setData(ev.target.value)} /></label>
           <label>Pagamento
@@ -111,7 +134,28 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
         {tipo === "desp" && !credito && (
           <label className="lcheck"><input type="checkbox" checked={pago} onChange={ev => setPago(ev.target.checked)} />Já paguei</label>
         )}
-        {!item && (
+        {!item && modo === "uma" && (
+          <div className="lgrupo" role="group" aria-label="Em partes">
+            {!partes ? <button type="button" className="chip" onClick={() => setPartes([{ c: "", d: C.somaDias(data || hoje, 30) }])}>{tipo === "rec" ? "+ Receber em partes" : "+ Pagar em partes"}</button> : (
+              <>
+                <span className="lrot">{tipo === "rec" ? "Receber em partes" : "Pagar em partes"}: o valor de cima é o total</span>
+                <p className="lnota" role="status">Parte 1 · {data ? dm(data) : "—"} · <b>{centsDe(valor) > 0 ? R(Math.max(0, primeira)) : "—"}</b> (o que sobra)</p>
+                {partes.map((p, i) => (
+                  <div className="lduas lparte" key={i}>
+                    <label>Parte {i + 2} (R$)<input inputMode="decimal" value={p.c} placeholder="0,00" onChange={ev => setPartes(partes.map((x, k) => (k === i ? { ...x, c: ev.target.value } : x)))} /></label>
+                    <label>Data<input type="date" value={p.d} onChange={ev => setPartes(partes.map((x, k) => (k === i ? { ...x, d: ev.target.value } : x)))} /></label>
+                    <button type="button" className="perigo lrm" aria-label={`Tirar a parte ${i + 2}`} onClick={() => setPartes(partes.length > 1 ? partes.filter((_, k) => k !== i) : null)}>Tirar</button>
+                  </div>
+                ))}
+                <div className="lacoes lpacoes">
+                  {partes.length < 11 && <button type="button" className="btn" onClick={() => setPartes([...partes, { c: "", d: C.somaDias(partes[partes.length - 1].d, 30) }])}>+ Mais uma parte</button>}
+                  <button type="button" className="btn" onClick={() => setPartes(null)}>Sem partes</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {!item && !partes && (
           <div className="lgrupo" role="group" aria-label="Repetição">
             <span className="lrot">Quantas vezes</span>
             <div className="chips">

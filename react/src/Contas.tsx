@@ -21,7 +21,7 @@ function Item({ x, e, pers, onIr, onEdit, data }: { x: Linha; e: Estado; pers: P
     : catDe(x.cat || (C.SEM_CATEGORIA as Record<string, string>)[x.rec ? "rec" : "desp"], x.rec ? "rec" : "desp", pers);
   const quando = data ? dm(x.data) : "";
   const sit = x.atrasada ? "atrasado" : x.pago ? (x.rec ? "" : "pago ✓") : "";
-  const sub = [quando, x.tipo === "fatura" ? "cartão" : c.n, sit].filter(Boolean).join(" · ");
+  const sub = [quando, x.tipo === "fatura" ? "cartão" : c.n, sit, x.parte ? `parte ${x.parte.i} de ${x.parte.n} · total ${R(x.parte.tot)}` : "", ...(x.tags || []).map(t => "#" + t)].filter(Boolean).join(" · ");
   const corpo = (
     <>
       {x.tipo === "fatura" ? <Marca nome={x.cartao!} e={e} /> : <span className="ic" style={{ background: c.c }} aria-hidden="true">{x.nome[0]}</span>}

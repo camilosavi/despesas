@@ -207,3 +207,43 @@ describe("caixinha em €", () => {
     expect(C.saldoDaConta(cargaDe(b, "2026-11-06").estado, "Inter")).toBe(400000);
   });
 });
+
+import { criarEmPartes, recentes, tagsParse, criar as criarL, editar as editarL } from "./loja";
+describe("lançamento: tags, recentes e em partes", () => {
+  const f = (o: Partial<import("./loja").Form> = {}): import("./loja").Form => ({ tipo: "rec", desc: "Bônus", cents: 700000, cat: "extra", date: "2026-11-10", pay: "Pix", paid: true, repete: { modo: "uma" }, ...o });
+  let n = 0; const id = () => "i" + n++;
+  it("tags: tira #, minúsculas, sem repetir, até 5 e 20 letras", () => {
+    expect(tagsParse("#Viagem, trabalho  viagem  #a b c d e f")).toEqual(["viagem", "trabalho", "a", "b", "c"]);
+    expect(tagsParse("")).toEqual([]);
+    expect(tagsParse("x".repeat(30))[0]).toHaveLength(20);
+  });
+  it("tags entram no lançamento novo e na edição (vazio apaga)", () => {
+    let b = criarL(vazio(), f({ tags: ["viagem"] }), "2026-11-06", 1, id);
+    expect(b.items[0].tags).toEqual(["viagem"]);
+    b = editarL(b, b.items[0].id, { desc: "Bônus", cents: 700000, cat: "extra", date: "2026-11-10", pay: "Pix", paid: true, tags: [] }, 2);
+    expect("tags" in b.items[0]).toBe(false);
+  });
+  it("em partes: 1ª parte fica com o que sobra, mesmo grupo e pt; recusa soma maior que o total", () => {
+    const r = criarEmPartes(vazio(), f(), [{ c: 300000, d: "2026-12-10" }], "2026-11-06", 5, id);
+    expect(r.backup.items.map(x => [x.cents, x.date, (x.pt as { i: number; n: number; tot: number }).i, (x.pt as { tot: number }).tot])).toEqual([[400000, "2026-11-10", 1, 700000], [300000, "2026-12-10", 2, 700000]]);
+    expect(new Set(r.backup.items.map(x => x.group)).size).toBe(1); expect(String(r.backup.items[0].group).startsWith("s")).toBe(true);
+    expect(criarEmPartes(vazio(), f(), [{ c: 700000, d: "2026-12-10" }], "2026-11-06", 5, id).erro).toMatch(/passam/);
+    expect(criarEmPartes(vazio(), f(), [], "2026-11-06", 5, id).erro).toBeTruthy();
+    expect(criarEmPartes(vazio(), f(), [{ c: 0, d: "2026-12-10" }], "2026-11-06", 5, id).erro).toMatch(/valor e data/);
+  });
+  it("em partes no crédito: cada parte vai para a fatura do mês dela e nasce a pagar; à vista paga só a que já chegou", () => {
+    const b0: Backup = { ...vazio(), cfg: { accts: [], cards: { Inter: { due: 10 } } } };
+    const c = criarEmPartes(b0, f({ tipo: "desp", cat: "outros", pay: "Crédito", card: "Inter", cents: 200000, date: "2026-11-01", paid: false }), [{ c: 100000, d: "2026-12-01" }], "2026-11-06", 5, id).backup.items;
+    expect(c.every(x => !x.paid && x.card === "Inter")).toBe(true); expect(c[0].date < c[1].date).toBe(true);
+    const v = criarEmPartes(vazio(), f({ tipo: "desp", cat: "outros", cents: 200000, date: "2026-11-01", paid: true }), [{ c: 100000, d: "2026-12-01" }], "2026-11-06", 5, id).backup.items;
+    expect(v.map(x => x.paid)).toEqual([true, false]);
+  });
+  it("recentes: por nome ou valor, sem repetir, até 6, mais novo primeiro; sem nada digitado, os mais recentes", () => {
+    const it = (i: number, desc: string, cents: number, t = "desp", cat = "alim") => ({ id: "r" + i, type: t, desc, cat, cents, date: "2026-11-01", pay: "Pix", paid: true, createdAt: i }) as import("./loja").ItemBackup;
+    const b: Backup = { ...vazio(), items: [it(1, "Mercado Bom", 5000), it(2, "Mercado Bom", 5000), it(3, "Padaria", 1200), it(4, "Salário", 100, "rec"), it(5, "Fatura Inter", 9000, "desp", "cartao"), it(6, "Mercadinho", 3000)] };
+    expect(recentes(b, "desp", "merc", 0).map(x => x.id)).toEqual(["r6", "r2"]);
+    expect(recentes(b, "desp", "", 1200).map(x => x.id)).toEqual(["r3"]);
+    expect(recentes(b, "desp", "", 0).map(x => x.id)).toEqual(["r6", "r3", "r2"]);
+    expect(recentes(b, "rec", "", 0).map(x => x.id)).toEqual(["r4"]);
+  });
+});
