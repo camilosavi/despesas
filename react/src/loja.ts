@@ -247,13 +247,16 @@ export function catApagar(b: Backup, t: TipoCat, k: string): Backup {
   if (!catsSuas(b, t).some(c => c.k === k)) return b;
   const para = (SEM_CATEGORIA as Record<string, string>)[t] === "rout" ? "rout" : "outros";
   const orc = { ...((b.cfg.budgets || {}) as Record<string, number>) }; delete orc[k];
+  const roll = { ...((b.cfg.budRoll || {}) as Record<string, string>) }; delete roll[k];
+  const regs = ((b.cfg.catRules || []) as { cat: string }[]).filter(r => r.cat !== k);
   return { ...b, items: b.items.map(x => (x.cat === k ? { ...x, cat: para } : x)),
-    cfg: { ...b.cfg, [catChave(t)]: catsSuas(b, t).filter(c => c.k !== k), budgets: orc } };
+    cfg: { ...b.cfg, [catChave(t)]: catsSuas(b, t).filter(c => c.k !== k), budgets: orc, budRoll: roll, catRules: regs } };
 }
 export const limites = (b: Backup): Record<string, number> => (b.cfg.budgets || {}) as Record<string, number>;
 export function limiteSalvar(b: Backup, k: string, cents: number): Backup {
   const o = { ...limites(b) }; if (cents > 0) o[k] = cents; else delete o[k];
-  return { ...b, cfg: { ...b.cfg, budgets: o } };
+  const roll = { ...((b.cfg.budRoll || {}) as Record<string, string>) }; if (!(cents > 0)) delete roll[k];
+  return { ...b, cfg: { ...b.cfg, budgets: o, budRoll: roll } };
 }
 
 // ---------- Transferências entre contas (cfg.transf) ----------

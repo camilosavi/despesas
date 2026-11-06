@@ -4,3 +4,4 @@
 .cats .catcores button[aria-checked="true"] { border-color: var(--ink) }
 .cats .mbar.estourou { background: linear-gradient(90deg, var(--dcol) var(--p), var(--line) var(--p)) }
 .cats .catdel { margin: 0 0 var(--sp-2) calc(36px + var(--sp-2)) }
+.cats .regra { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); min-height: 48px; padding: .3em 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); overflow-wrap: anywhere }

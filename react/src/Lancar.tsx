@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { regraDe } from "./orcamento";
 import * as C from "./engine";
 import type { Pers } from "./engine";
 import { PAGAMENTOS, apagar, criar, dataNaFatura, editar } from "./loja";
@@ -21,7 +22,7 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
   const [tipo, setTipo] = useState<"desp" | "rec">(item?.type ?? pedido.tipo ?? "desp");
   const [valor, setValor] = useState(item ? paraTexto(item.cents) : "");
   const [desc, setDesc] = useState(item?.desc ?? "");
-  const [cat, setCat] = useState(item?.cat ?? "");
+  const [cat, setCat] = useState(item?.cat ?? ""), [tocou, setTocou] = useState(!!item);
   const [data, setData] = useState(item ? item.buy || item.date : hoje);
   const [pay, setPay] = useState(item?.pay ?? "Pix");
   const [cartao, setCartao] = useState(item?.card ?? "");
@@ -42,7 +43,7 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
   const credito = tipo === "desp" && pay === "Crédito";
   const cartaoEf = credito ? cartao || cartoes[0] || "" : "";
   const dica = cartaoEf && data ? `Entra na fatura do ${cartaoEf} que vence ${dm(dataNaFatura(b, cartaoEf, data))}.` : "";
-  const mudaTipo = (t: "desp" | "rec") => { setTipo(t); setCat(""); setPay("Pix"); setPago(true); };
+  const mudaTipo = (t: "desp" | "rec") => { setTipo(t); setCat(""); setTocou(false); setPay("Pix"); setPago(true); };
 
   const salvar = (ev: React.FormEvent) => {
     ev.preventDefault();
@@ -81,11 +82,11 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
           <input ref={campo} inputMode="decimal" autoComplete="off" placeholder="0,00" value={valor} aria-invalid={!!erro && centsDe(valor) <= 0} onChange={ev => { setValor(ev.target.value); setErro(""); }} />
         </label>
         <label>Descrição
-          <input value={desc} autoComplete="off" placeholder={tipo === "rec" ? "Ex.: Salário" : "Ex.: Mercado"} onChange={ev => setDesc(ev.target.value)} />
+          <input value={desc} autoComplete="off" placeholder={tipo === "rec" ? "Ex.: Salário" : "Ex.: Mercado"} onChange={ev => { setDesc(ev.target.value); if (!tocou) { const k = regraDe(b, ev.target.value, cats.map(c => c.k)); if (k) setCat(k); } }} />
         </label>
         <div className="lgrupo" role="group" aria-label="Categoria">
           <span className="lrot">Categoria</span>
-          <div className="chips">{cats.map(c => <button key={c.k} type="button" className="chip" aria-pressed={catAtual === c.k} onClick={() => setCat(catAtual === c.k ? "" : c.k)}><i style={{ background: c.c }} aria-hidden="true" />{c.n}</button>)}</div>
+          <div className="chips">{cats.map(c => <button key={c.k} type="button" className="chip" aria-pressed={catAtual === c.k} onClick={() => { setTocou(true); setCat(catAtual === c.k ? "" : c.k); }}><i style={{ background: c.c }} aria-hidden="true" />{c.n}</button>)}</div>
         </div>
         <div className="lduas">
           <label>{credito ? "Data da compra" : "Data"}<input type="date" value={data} onChange={ev => setData(ev.target.value)} /></label>
