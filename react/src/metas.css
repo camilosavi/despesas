@@ -11,3 +11,5 @@
 .metas .lduas > * { min-width: 0 }
 .metas .lacoes { position: static; flex-wrap: wrap }
 .mmoeda { max-width: 5.5em }
+.ppext li:has(.mbank) { display: flex; justify-content: space-between; gap: 1em; align-items: center; min-height: 44px; font-size: var(--fs-sm) }
+.ppext .mbank { min-width: 0; overflow-wrap: anywhere }

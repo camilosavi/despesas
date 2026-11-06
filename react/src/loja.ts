@@ -144,9 +144,9 @@ export function ppQuitar(b: Backup, pid: string, data: string, id: string): Back
 // ===== Caixinhas (cfg.save) e Dívidas (cfg.debts): mesmo modelo do app atual, só R$ =====
 // caixinha: {id,name,goal?,target?,moves:[{id,date,cents (+guardou, − tirou),acct?,ts?}]}
 // dívida:   {id,name,total,per?,day?,moves:[{id,date,cents (+ pagou, − acrescentou)}]}
-export interface CxMov { id: string; date: string; cents: number; acct?: string; ts?: number; cur?: "EUR" | "USD"; brl?: number; rate?: number }
+export interface CxMov { id: string; date: string; cents: number; acct?: string; ts?: number; cur?: "EUR" | "USD"; brl?: number; rate?: number; bank?: string }
 export type MoedaCx = "BRL" | "EUR" | "USD";
-export interface Caixinha { id: string; name: string; goal?: number; goalCur?: MoedaCx; target?: string; moves: CxMov[] }
+export interface Caixinha { id: string; name: string; kind?: string; goal?: number; goalCur?: MoedaCx; target?: string; moves: CxMov[] }
 export interface DvMov { id: string; date: string; cents: number }
 export interface Divida { id: string; name: string; total: number; per?: number; day?: number; moves: DvMov[] }
 export const caixas = (b: Backup): Caixinha[] => (Array.isArray(b.cfg.save) ? (b.cfg.save as Caixinha[]) : []);
@@ -174,8 +174,8 @@ export const caixaTem = (c: Caixinha) => caixaSaldos(c)[caixaMoeda(c)];
  * Caixinha em €/US$: valor em R$ + cotação vira € (cents = R$ ÷ cotação, com `brl` e `rate`);
  * valor em € + cotação guarda o R$ pago em `brl`; sem cotação, R$ fica em R$ e € fica sem `brl`.
  */
-export function cxMovDe(c: Caixinha, e: { id: string; date: string; valor: number; entrada: MoedaCx; rate?: number; acct?: string; ts?: number }): CxMov {
-  const base = { id: e.id, date: e.date, ...(e.acct ? { acct: e.acct, ts: e.ts } : {}) };
+export function cxMovDe(c: Caixinha, e: { id: string; date: string; valor: number; entrada: MoedaCx; rate?: number; acct?: string; ts?: number; bank?: string }): CxMov {
+  const base = { id: e.id, date: e.date, ...(e.acct ? { acct: e.acct, ts: e.ts } : {}), ...(e.bank?.trim() ? { bank: e.bank.trim() } : {}) };
   const g = caixaMoeda(c), r = e.rate && e.rate > 0 ? e.rate : 0;
   if (g === "BRL") return { ...base, cents: e.valor };
   if (e.entrada === "BRL") return r ? { ...base, cents: Math.round(e.valor / r), cur: g, brl: e.valor, rate: r } : { ...base, cents: e.valor };

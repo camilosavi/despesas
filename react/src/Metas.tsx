@@ -3,6 +3,8 @@ import { caixaApagarMov, caixaCriar, caixaMoeda, caixaSaldos, caixaTem, cxMovDe,
 import type { Backup, Caixinha, Divida, MoedaCx } from "./loja";
 import { buscarTaxas, lerCache } from "./Moedas";
 import { assinaturas, cobrancasFuturas, subCancelar, subDia, subDividir, subReativar, subSuaParte } from "./assinaturas";
+import { CX_TIPOS, bancosSugeridos, caixaBancos, caixaEditar, caixaEditarMov, caixaRitmo, cxIcone } from "./caixinhas";
+import type { Ritmo } from "./caixinhas";
 import { centsDe } from "./Lancar";
 import { R, RM, dm } from "./format";
 import "./lancar.css";
@@ -10,6 +12,8 @@ import "./pessoas.css";
 import "./metas.css";
 
 interface Props { onCats?: () => void; onFixos?: () => void; onMoedas?: () => void; onRel?: () => void; subs?: ReturnType<typeof assinaturas>; b: Backup | null; hoje: string; onSalvar: (b: Backup) => void; onAviso: (t: string) => void }
+const ritmoTxt = (r: Ritmo | null, g: MoedaCx): string => !r ? "" : r.estado === "batida" ? "meta batida ✓" : r.estado === "passou" ? `prazo passou · falta ${RM(r.falta, g)}`
+  : r.estado === "ritmo" ? "no ritmo ✓" : r.estado === "adiantada" ? `adiantada ${RM(r.diff, g)}` : r.estado === "atrasada" ? `atrasada ${RM(-r.diff, g)}` : `guarde ${RM(r.porMes, g)} por mês`;
 const id = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
 export function Metas({ onCats, onFixos, onMoedas, onRel, subs = [], b, hoje, onSalvar, onAviso }: Props) {
@@ -53,9 +57,10 @@ export function Metas({ onCats, onFixos, onMoedas, onRel, subs = [], b, hoje, on
         {cs.length ? <ul className="pplista">{cs.map(c => {
           const g = caixaMoeda(c), s = caixaTem(c), sb = caixaSaldos(c), p = c.goal ? Math.max(0, Math.min(100, Math.round((s / c.goal) * 100))) : 0;
           const outras = (["BRL", "EUR", "USD"] as const).filter(m => m !== g && sb[m] !== 0).map(m => RM(sb[m], m)).join(" + ");
+          const rt = ritmoTxt(caixaRitmo(c, hoje), g);
           return <li key={c.id}><button type="button" className="pprow mrow" onClick={() => setCx(c.id)}>
-            <span className="ppav" aria-hidden="true">{c.name.slice(0, 1).toUpperCase()}</span>
-            <span className="ppnm">{c.name}<em>{c.goal ? `${p}% de ${RM(c.goal, g)}` : "sem meta"}{outras ? " · + " + outras : ""}</em>{c.goal ? <i className="mbar" style={{ ["--p" as string]: p + "%" }} /> : null}</span>
+            <span className="ppav" aria-hidden="true">{cxIcone(c) || c.name.slice(0, 1).toUpperCase()}</span>
+            <span className="ppnm">{c.name}<em>{c.goal ? `${p}% de ${RM(c.goal, g)}` : "sem meta"}{rt ? " · " + rt : ""}{outras ? " · + " + outras : ""}</em>{c.goal ? <i className="mbar" style={{ ["--p" as string]: p + "%" }} /> : null}</span>
             <b>{RM(s, g)}</b></button></li>;
         })}</ul> : <p className="vazio">Nenhuma caixinha ainda.</p>}
       </section>
@@ -113,6 +118,7 @@ function FolhaCx({ b, c, hoje, onSalvar, onFechar }: { b: Backup; c: Caixinha; h
   const g = caixaMoeda(c), est = g !== "BRL";
   const [v, setV] = useState(""), [d, setD] = useState(hoje), [conta, setConta] = useState(""), [msg, setMsg] = useState(""), [ex, setEx] = useState(false);
   const [ent, setEnt] = useState<MoedaCx>(est ? g : "BRL"), [rt, setRt] = useState(""), [hojeCot, setHojeCot] = useState(0);
+  const [banco, setBanco] = useState(""), [edit, setEdit] = useState(false);
   const contas = ((b.cfg.accts || []) as { name: string; cur?: string }[]).filter(a => !a.cur || a.cur === "BRL").map(a => a.name);
   useEffect(() => {
     if (!est) return;
@@ -126,16 +132,19 @@ function FolhaCx({ b, c, hoje, onSalvar, onFechar }: { b: Backup; c: Caixinha; h
   const mover = (sinal: 1 | -1) => {
     if (!x0) return setMsg("Informe o valor.");
     if (est && rate && hojeCot && (rate < hojeCot * 0.6 || rate > hojeCot * 1.6)) return setMsg("A cotação está muito longe da de hoje. Confira se não está invertida.");
-    onSalvar(caixaMover(b, c.id, cxMovDe(c, { id: id(), date: d || hoje, valor: sinal * x0, entrada: ent, rate: est ? rate : undefined, ...(conta ? { acct: conta, ts: Date.now() } : {}) })));
+    onSalvar(caixaMover(b, c.id, cxMovDe(c, { id: id(), date: d || hoje, valor: sinal * x0, entrada: ent, rate: est ? rate : undefined, bank: banco, ...(conta ? { acct: conta, ts: Date.now() } : {}) })));
     setV(""); setMsg("");
   };
-  const sb = caixaSaldos(c), s = caixaTem(c);
+  const sb = caixaSaldos(c), s = caixaTem(c), ritmo = caixaRitmo(c, hoje), bancos = caixaBancos(c).filter(x => x.banco || c.moves.some(m => m.bank));
   const outras = (["BRL", "EUR", "USD"] as const).filter(m => m !== g && sb[m] !== 0).map(m => RM(sb[m], m)).join(" + ");
   return (
     <div className="lfundo" onMouseDown={e => e.target === e.currentTarget && onFechar()}>
       <div className="lfolha" role="dialog" aria-modal="true" aria-labelledby="cxt">
         <h2 id="cxt">{c.name}</h2>
         <div className="ppsaldo"><small>{c.goal ? `meta ${RM(c.goal, g)} · falta ${RM(Math.max(0, c.goal - s), g)}` : "guardado"}{outras ? ` · + ${outras} em outras moedas` : ""}</small><b>{RM(s, g)}</b></div>
+        {ritmo && <p className="lnota" role="status">{ritmoTxt(ritmo, g)}{ritmo.estado !== "batida" && ritmo.estado !== "semInicio" && ritmo.falta > 0 ? ` · para chegar em ${c.target!.slice(5)}/${c.target!.slice(2, 4)}, guarde ${RM(ritmo.porMes, g)} por mês` : ""}</p>}
+        {bancos.length > 0 && <div className="lgrupo"><h3 className="pph">Onde está o dinheiro</h3>
+          <ul className="ppext">{bancos.map(x => <li key={x.banco || "-"}><span className="mbank">{x.banco || "Sem banco definido"}</span><b>{(["BRL", "EUR", "USD"] as const).filter(m => x.saldo[m]).map(m => RM(x.saldo[m], m)).join(" + ")}</b></li>)}</ul></div>}
         <div className="lgrupo">
           {est && <div className="lseg" role="group" aria-label="Moeda do valor">
             {([["BRL", "R$"], [g, simbolo]] as [MoedaCx, string][]).map(([k, n]) => <button key={k} type="button" aria-pressed={ent === k} onClick={() => setEnt(k)}>{n}</button>)}
@@ -146,16 +155,70 @@ function FolhaCx({ b, c, hoje, onSalvar, onFechar }: { b: Backup; c: Caixinha; h
           </div>
           {est && <label>Cotação usada (R$ por {simbolo})<input inputMode="decimal" value={rt} onChange={e => setRt(e.target.value)} placeholder={hojeCot ? hojeCot.toFixed(4).replace(".", ",") : "ex.: 6,10"} /></label>}
           {dica && <p className="lnota" role="status">{dica}</p>}
+          <label>Em qual banco (opcional)<input value={banco} onChange={e => setBanco(e.target.value)} list="cx-bancos" placeholder="onde o dinheiro está" /></label>
+          <datalist id="cx-bancos">{bancosSugeridos(b).map(n => <option key={n} value={n} />)}</datalist>
           {contas.length > 0 && <label>Descontar da conta<select value={conta} onChange={e => setConta(e.target.value)}><option value="">Não mexer no saldo</option>{contas.map(n => <option key={n}>{n}</option>)}</select></label>}
           {msg && <p className="lerro" role="alert">{msg}</p>}
           <div className="lacoes"><button type="button" className="btn principal" onClick={() => mover(1)}>Guardar</button><button type="button" className="btn" onClick={() => mover(-1)}>Tirar</button></div>
         </div>
         <h3 className="pph">Movimentos</h3>
-        <Mov rows={c.moves.map(m => ({ id: m.id, date: m.date, cents: m.cents, cur: m.cur || "BRL", sub: m.brl && m.rate ? `${RM(Math.abs(m.brl))} a R$ ${m.rate.toLocaleString("pt-BR", { maximumFractionDigits: 4 })}` : "", rot: m.cents < 0 ? "Tirou" : "Guardou" }))} onDel={mid => onSalvar(caixaApagarMov(b, c.id, mid))} />
+        <MovCx b={b} c={c} onSalvar={onSalvar} />
+        <button type="button" className="btn ghost" aria-expanded={edit} onClick={() => setEdit(!edit)}>Editar caixinha (nome, tipo, meta, mês-alvo)</button>
+        {edit && <EditarCx b={b} c={c} onSalvar={onSalvar} onFim={() => setEdit(false)} />}
         <button type="button" className="perigo" onClick={() => { if (!ex) setEx(true); else { onSalvar(caixaExcluir(b, c.id)); onFechar(); } }}>{ex ? "Toque de novo para excluir a caixinha" : "Excluir caixinha"}</button>
         <div className="lacoes"><button type="button" className="btn" onClick={onFechar}>Fechar</button></div>
       </div>
     </div>
+  );
+}
+
+function MovCx({ b, c, onSalvar }: { b: Backup; c: Caixinha; onSalvar: (b: Backup) => void }) {
+  const [ab, setAb] = useState<string | null>(null), [sinal, setSinal] = useState<1 | -1>(1), [v, setV] = useState(""), [d, setD] = useState(""), [bk, setBk] = useState(""), [arm, setArm] = useState(false), [msg, setMsg] = useState("");
+  const abrir = (m: Caixinha["moves"][number]) => { if (ab === m.id) return setAb(null); setAb(m.id); setSinal(m.cents < 0 ? -1 : 1); setV((Math.abs(m.cents) / 100).toFixed(2).replace(".", ",")); setD(m.date); setBk(m.bank || ""); setArm(false); setMsg(""); };
+  if (!c.moves.length) return <p className="vazio">Sem movimentos ainda.</p>;
+  return (
+    <ul className="ppext">{[...c.moves].sort((a, z) => z.date.localeCompare(a.date)).map(m => {
+      const cur = m.cur || "BRL";
+      return <li key={m.id}>
+        <button type="button" aria-expanded={ab === m.id} onClick={() => abrir(m)}>
+          <span>{m.cents < 0 ? "Tirou" : "Guardou"}<em>{dm(m.date)}{m.bank ? " · " + m.bank : ""}{m.brl && m.rate ? ` · ${RM(Math.abs(m.brl))} a R$ ${m.rate.toLocaleString("pt-BR", { maximumFractionDigits: 4 })}` : ""}</em></span>
+          <b className={m.cents < 0 ? "neg" : ""}>{RM(Math.abs(m.cents), cur)}</b></button>
+        {ab === m.id && (
+          <div className="lgrupo">
+            <div className="lseg" role="group" aria-label="Tipo do movimento">
+              <button type="button" aria-pressed={sinal === 1} onClick={() => setSinal(1)}>Guardou</button>
+              <button type="button" aria-pressed={sinal === -1} onClick={() => setSinal(-1)}>Tirou</button>
+            </div>
+            <div className="lduas">
+              <label>Valor ({cur === "BRL" ? "R$" : cur === "EUR" ? "€" : "US$"})<input inputMode="decimal" value={v} onChange={e => setV(e.target.value)} aria-invalid={msg ? true : undefined} /></label>
+              <label>Data<input type="date" value={d} onChange={e => setD(e.target.value)} /></label>
+            </div>
+            <label>Banco<input value={bk} onChange={e => setBk(e.target.value)} list="cx-bancos" placeholder="onde o dinheiro está" /></label>
+            {msg && <p className="lerro" role="alert">{msg}</p>}
+            <div className="lacoes">
+              <button type="button" className="btn principal" onClick={() => { const x = centsDe(v); if (!x) return setMsg("Informe o valor."); onSalvar(caixaEditarMov(b, c.id, m.id, { date: d, cents: sinal * x, bank: bk })); setAb(null); }}>Salvar</button>
+              <button type="button" className="perigo" onClick={() => { if (!arm) setArm(true); else { onSalvar(caixaApagarMov(b, c.id, m.id)); setAb(null); } }}>{arm ? "Toque de novo para excluir" : "Excluir"}</button>
+            </div>
+          </div>)}
+      </li>;
+    })}</ul>
+  );
+}
+
+function EditarCx({ b, c, onSalvar, onFim }: { b: Backup; c: Caixinha; onSalvar: (b: Backup) => void; onFim: () => void }) {
+  const g = caixaMoeda(c);
+  const [nome, setNome] = useState(c.name), [tipo, setTipo] = useState(c.kind || ""), [meta, setMeta] = useState(c.goal ? (c.goal / 100).toFixed(2).replace(".", ",") : ""), [alvo, setAlvo] = useState(c.target || "");
+  return (
+    <form className="lgrupo" onSubmit={ev => { ev.preventDefault(); onSalvar(caixaEditar(b, c.id, { name: nome, kind: tipo, goal: centsDe(meta), target: alvo })); onFim(); }}>
+      <label>Nome<input value={nome} onChange={e => setNome(e.target.value)} /></label>
+      <label>Tipo<select value={tipo} onChange={e => setTipo(e.target.value)}><option value="">Sem tipo</option>{CX_TIPOS.map(t => <option key={t.id} value={t.id}>{t.ico} {t.nome}</option>)}</select></label>
+      <div className="lduas">
+        <label>Meta ({g === "BRL" ? "R$" : g === "EUR" ? "€" : "US$"})<input inputMode="decimal" value={meta} onChange={e => setMeta(e.target.value)} placeholder="sem meta" /></label>
+        <label>Mês-alvo<input type="month" value={alvo} onChange={e => setAlvo(e.target.value)} /></label>
+      </div>
+      <p className="lnota">O mês-alvo mostra se você está no ritmo e quanto guardar por mês. Moeda da meta não muda.</p>
+      <div className="lacoes"><button type="submit" className="btn principal">Salvar caixinha</button></div>
+    </form>
   );
 }
 
