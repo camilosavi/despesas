@@ -2110,6 +2110,25 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 .srlive{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .dlink,.h2act .lk{position:relative}
 .dlink::after,.h2act .lk::after{content:"";position:absolute;inset:-15px -6px}
+/* ===== Início mais enxuto (06/11/2026, revisão de design) =====
+   rótulos em frase normal (sem caixa alta), blocos secundários mais quietos, Despesa como ação principal, saldo em cor lisa */
+#pHome .db h3{text-transform:none;letter-spacing:0;font-size:.9rem!important;font-weight:650;color:var(--ink)}
+#pHome .db h3 small{text-transform:none;letter-spacing:0;font-weight:500}
+:is(#pHome,#pMes,#pAno,#pCards,#pFx,#pMe,#mBody) section>h2:not(.fold h2){font-size:.9rem!important;text-transform:none!important;letter-spacing:0!important;font-weight:650!important;color:var(--ink)!important}
+#pHome .dath{text-transform:none;letter-spacing:0;font-size:.8rem;font-weight:650}
+.sbgrp small,.dwbox .sbgrp small{text-transform:none;letter-spacing:0;font-size:.8rem;font-weight:600}
+#pHome .d-saldo h3{color:rgba(255,255,255,.85)!important}
+#pHome{--quiet:color-mix(in srgb,var(--ink) 3.5%,var(--bg))}
+#pHome :is(.d-saude,.d-fluxo,.d-gastos,.d-cartoes,.d-trans){border-color:transparent!important;background:var(--quiet)!important;border-radius:1.1em}
+#pHome :is(.d-trans,.d-cartoes) h3{background:var(--quiet)}
+#pHome .d-res{border-radius:1.5em}
+#pHome .d-saldo{background:var(--head)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+:root[data-theme="dark"] #pHome .d-saldo{background:color-mix(in srgb,var(--head) 60%,#5277c4)!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #pHome .d-saldo{background:color-mix(in srgb,var(--head) 60%,#5277c4)!important}}
+#pHome .dqa button[data-dqa="desp"]{background:#fff;border-color:#fff;color:var(--head);font-weight:700}
+#pHome .dqa button[data-dqa="desp"]:hover{background:rgba(255,255,255,.88)}
+#pHome .dqa button[data-dqa="rec"]{background:transparent}
+@container (min-width:900px){#pHome .dgrid.nosaude{grid-template-areas:"s r r r" "f f g c" "t t g c"}}
 </style>
 
 <div class="wrap">
@@ -3259,8 +3278,8 @@ async function installGo(){
   render();
 }
 function backupBanner(){
-  if(!PWA||!downloads||items.length<5) return "";
-  if(daysSince(cfg.lastBackup)<7||daysSince(cfg.backupSnooze)<2) return "";
+  if(!PWA||!downloads||items.length<15) return "";
+  if(daysSince(cfg.lastBackup)<7||daysSince(cfg.backupSnooze)<7) return "";
   const nd=daysSince(cfg.lastBackup);
   /* novo app (out/2026): no celular o lembrete é uma linha só */
   return `<section class="bline"><span class="bdot"></span><span class="bt">${nd===Infinity?"Sem backup":`Último backup há ${nd} dias`}</span><button class="lk" id="bkLater">Depois</button><button class="lk" id="bkExport">Fazer agora</button></section>`;
@@ -3822,12 +3841,13 @@ function dashHome(){
   const cardsH=cs.length?`<div class="dcar"><div class="dcards" id="dcar">${cs.map(c=>dashCard(c,true)).join("")}</div>${cs.length>1?`<button class="dside l" data-dcar="-1" aria-label="Cartão anterior" hidden>‹</button><button class="dside r" data-dcar="1" aria-label="Próximo cartão">›</button>`:""}</div>`:`<p class="dempty">Nenhum cartão ainda.</p>`;
   const last=items.filter(x=>!genFat(x)).slice().sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0)).slice(0,7);
   const tr=last.length?last.map(x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,t).n)} · ${esc(cardOf(x)||x.acct||(t==="rec"?"Conta":x.pay)||"")}</small></span><span class="dtv"><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b><small>${fmtDM(whenOf(x))}</small></span></div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
+  const noSaude=score>=100&&!attAll().length; /* 06/11/2026: nota 100 e nenhum aviso = bloco escondido */
   const td0=today(), recLeft=accFlow(ym).inn, desLeft=aPagar(ym);
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
-  <div class="dgrid">
+  <div class="dgrid${noSaude?" nosaude":""}">
    <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pMes">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
    <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Entrou</span><b>${R(rec)}</b><small>${recLeft?`a receber <span class="nw">${R(recLeft)}</span>`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Gastou</span><b>${R(des)}</b><small>${desLeft?`a pagar <span class="nw">${R(desLeft)}</span>`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobra":"Falta"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
-   <section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p>${attHtml("in-saude")}</section>
+   ${noSaude?"":`<section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p>${attHtml("in-saude")}</section>`}
    <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
    <section class="db d-gastos"><h3>Gastos</h3>${cats}</section>
    <section class="db d-cartoes"><h3>Cartões <button class="dlink" data-nav="pCards">Ver cartões</button></h3>${cardsH}</section>

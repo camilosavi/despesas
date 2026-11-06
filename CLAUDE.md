@@ -956,3 +956,10 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Cores** (tema Tostão): `--pos` no escuro `#34B07F` (era `#12805F`, 3,5:1); `--accent` no claro `#8C6A1F` (era `#A67C2E`, 3,8:1); `--warn` no claro `#9A5B08` (era `#B36E0C`, 4,1:1). Meta: texto ≥ 4,5:1.
 - **Área de toque**: `.dlink` e `.h2act .lk` (Ver contas/cartões/todas, Extrato, Transferências) ganharam `::after` com `inset:-15px -6px` (alvo ≥ 44 px sem mexer no layout).
 - **Ainda não feito** (da auditoria): zoom bloqueado (`maximum-scale=1,user-scalable=no` no `build_pwa.py` e `preventDefault` nos gestos), `inert` no app enquanto login/trava estão abertos, linhas de "Últimas transações" do Início como botões, texto abaixo de 11 px, `aria-pressed` no olho da senha.
+
+## Início mais enxuto (06/11/2026, revisão de design pedida por ele: "pode aplicar tudo")
+- Rótulos de bloco e títulos de seção em **frase normal** (sem caixa alta, sem espaçamento largo), também no menu lateral. CSS "Início mais enxuto" no fim do `<style>`. Rótulos pequenos do topo (Entrou, Fim do mês, Pago, A pagar) ainda estão em caixa alta; não foram mexidos.
+- **Hierarquia dos blocos do Início:** Saldo total (cor lisa + borda de luz, sem degradê, claro e escuro) e Resumo do mês (branco com borda) são os principais; Nota de saúde, Fluxo, Gastos, Cartões e Últimas transações são "quietos" (`--quiet`, sem borda, raio menor).
+- **Nota de saúde só aparece quando há o que dizer** (`noSaude`: nota 100 e nenhum aviso de "Merece atenção"); sem ela a grade do PC usa `.dgrid.nosaude` (Resumo ocupa a largura toda).
+- **Despesa é a ação principal** do cartão de Saldo (botão branco cheio); Receita fica só com contorno.
+- **Aviso de backup** só aparece com 15+ lançamentos (antes 5) e "Depois" adia 7 dias (antes 2).
