@@ -1,0 +1,11 @@
+.rel section { margin-bottom: var(--sp-4) } .rel h2 { font-size: var(--fs-md); margin: var(--sp-3) 0 var(--sp-2) } .rel .dim { color: var(--muted); font-weight: 400; font-size: var(--fs-sm) }
+.relnav { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2) }
+.rlista { list-style: none; margin: 0; padding: 0 } .rlista li { border-top: 1px solid var(--line) }
+.rrow { display: grid; grid-template-columns: 4.6em 1fr auto; gap: var(--sp-2); align-items: center; width: 100%; min-height: 56px; padding: var(--sp-2) 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer }
+.rrow.on { background: color-mix(in srgb, var(--accent) 10%, transparent) }
+.rmes { font-size: var(--fs-sm) } .rbars { display: grid; gap: 3px } .rbars i { display: block; height: 6px; border-radius: 3px; min-width: 2px }
+.rbars .e { background: var(--pos, #2a9d6f) } .rbars .g { background: var(--neg, #d4574f) }
+.rv { display: grid; text-align: right; font-variant-numeric: tabular-nums } .rv small { font-size: max(11px, .72rem); color: var(--muted) }
+.rcat { display: grid; grid-template-columns: auto 1fr auto; gap: var(--sp-2); align-items: center; min-height: 52px }
+.rcat .dtn { display: grid; gap: 4px } .rcat .ic { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: var(--fs-sm) }
+@container (max-width: 380px) { .rrow { grid-template-columns: 4em 1fr auto } .rv small { display: none } }

@@ -8,10 +8,10 @@ import "./lancar.css";
 import "./pessoas.css";
 import "./metas.css";
 
-interface Props { subs?: ReturnType<typeof assinaturas>; b: Backup | null; hoje: string; onSalvar: (b: Backup) => void; onAviso: (t: string) => void }
+interface Props { onRel?: () => void; subs?: ReturnType<typeof assinaturas>; b: Backup | null; hoje: string; onSalvar: (b: Backup) => void; onAviso: (t: string) => void }
 const id = () => "m" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-export function Metas({ subs = [], b, hoje, onSalvar, onAviso }: Props) {
+export function Metas({ onRel, subs = [], b, hoje, onSalvar, onAviso }: Props) {
   const [cx, setCx] = useState<string | null>(null), [dv, setDv] = useState<string | null>(null);
   const [nc, setNc] = useState(""), [meta, setMeta] = useState(""), [nd, setNd] = useState(""), [tot, setTot] = useState("");
   const cs = b ? caixas(b) : [], ds = b ? dividas(b) : [];
@@ -33,6 +33,7 @@ export function Metas({ subs = [], b, hoje, onSalvar, onAviso }: Props) {
   return (
     <main className="pg metas">
       <h1>Metas</h1>
+      {onRel && <button type="button" className="btn" onClick={onRel}>Relatórios: mês a mês e por categoria ›</button>}
       <section aria-labelledby="mc">
         <h2 id="mc">Dinheiro guardado <span className="dim">{R(guardado)}</span></h2>
         <form className="ppnova" onSubmit={novaC}>
