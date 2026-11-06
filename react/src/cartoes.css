@@ -6,7 +6,7 @@
 .kc[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
 .kc .v { font-weight: 700; font-variant-numeric: tabular-nums }
 .kc .dtn small { color: var(--muted); font-size: var(--fs-xs) }
-.kc .fi { width: 2.3rem; height: 2.3rem; font-size: calc(.8rem * var(--k, 1)) }
+.kc .fi { width: 2.3rem; height: 2.3rem; font-size: max(11px, calc(.8rem * var(--k, 1))) }
 .kbar { position: absolute; left: var(--g-pad); right: var(--g-pad); bottom: .4em; height: .3em }
 .khead { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2) }
 .khead h3 { margin: 0 }

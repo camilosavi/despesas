@@ -3,6 +3,7 @@ import * as C from "./engine";
 import type { Estado, Pers } from "./engine";
 import { Marca, catDe } from "./blocos";
 import type { Destino } from "./blocos";
+import { movimentos } from "./movimentos";
 import { FILTRO0, contasEmReal, fluxoDoMes } from "./contas";
 import type { Filtro, Linha, Tipo } from "./contas";
 import { dataLonga, dm, mLab, pct1, R } from "./format";
@@ -35,11 +36,29 @@ function Item({ x, e, pers, onIr, data }: { x: Linha; e: Estado; pers: Pers; onI
     : <div className="crow">{corpo}</div>}</li>;
 }
 
+function MovConta({ e, nome, onFechar }: { e: Estado; nome: string; onFechar: () => void }) {
+  const m = movimentos(e, nome);
+  return (
+    <section className="cb cb-mov" aria-label={`Movimentos de ${nome}`}>
+      <h3>{nome} <button type="button" className="dlink" onClick={onFechar}>Fechar</button></h3>
+      <ul>
+        {m.linhas.map(x => (
+          <li key={x.id} className="crow"><span className="dtn"><b>{x.nome}</b><small>{dm(x.data)}{x.extra ? " · " + x.extra : ""}</small></span>
+            <span className="cv2"><span className={"v " + (x.cents > 0 ? "rec" : "")}>{x.cents > 0 ? "+" : "−"}{R(Math.abs(x.cents))}</span><small className={x.saldoApos < 0 ? "neg" : ""}>saldo {R(x.saldoApos)}</small></span></li>
+        ))}
+        <li className="crow"><span className="dtn"><b>Saldo informado</b><small>ponto de partida</small></span><span className="cv2"><span className="v">{R(m.informado)}</span></span></li>
+      </ul>
+      {m.linhas.length === 0 && <p className="vazio">Nada mexeu nesta conta depois do saldo informado.</p>}
+    </section>
+  );
+}
+
 export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Destino) => void }) {
   const hoje = C.mesDe(e.hoje), min = C.mesDe(e.inicio || e.hoje);
   const [ym, setYm] = useState(hoje);
   const [f, setF] = useState<Filtro>(FILTRO0);
   const [painel, setPainel] = useState<"" | "busca" | "filtro">("");
+  const [conta, setConta] = useState("");
   const [vista, setVista] = useState<"lista" | "cat">("lista");
   const contas = contasEmReal(e), r = C.resumoMes(e, ym), fx = fluxoDoMes(e, ym, f);
   const gc = C.gastosPorCategoria(e, ym) as { k: string; cents: number }[];
@@ -62,10 +81,11 @@ export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Des
         <section className="cb cb-saldo" aria-label="Saldos">
           <h3>Na conta hoje</h3>
           <b className="dbig">{R(C.naConta(e))}</b>
-          {contas.length > 0 && <ul className="clist">{contas.map(a => <li key={a.nome}><Marca nome={a.nome} e={e} /><span>{a.nome}</span><b>{R(C.saldoDaConta(e, a.nome))}</b></li>)}</ul>}
+          {contas.length > 0 && <ul className="clist">{contas.map(a => <li key={a.nome}><button type="button" className="cabtn" aria-expanded={conta === a.nome} onClick={() => setConta(conta === a.nome ? "" : a.nome)}><Marca nome={a.nome} e={e} /><span>{a.nome}</span><b>{R(C.saldoDaConta(e, a.nome))}</b></button></li>)}</ul>}
           {r.fimDoMes != null && <p className="cfim">Fim de {mLab(ym).split(" de ")[0]}: <b>{R(r.fimDoMes)}</b></p>}
           {fx.vermelho && <p className="cred" role="status">Fica no vermelho em {dm(fx.vermelho.data)}, depois de “{fx.vermelho.nome}”.</p>}
         </section>
+        {conta && <MovConta e={e} nome={conta} onFechar={() => setConta("")} />}
         <section className="cb cb-res" aria-label="Resumo do mês">
           <p className="cres"><b>Entrou {R(r.entrou)}</b> · Pago {R(r.pago)} · Falta pagar {R(r.aPagar)}</p>
           <span className="cbar" role="img" aria-label={`Pago ${R(r.pago)} de ${R(sai)} que sai no mês`}><i style={{ width: pPago + "%" }} /></span>
