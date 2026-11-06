@@ -207,3 +207,29 @@ export function fxCriar(b: Backup, id: string, m: Moeda, valor: number, brl: num
   return { ...b, fx: [...fxDe(b), x] };
 }
 export const fxApagar = (b: Backup, id: string): Backup => ({ ...b, fx: fxDe(b).filter(x => x.id !== id) });
+
+// ---- Categorias suas e limites por categoria ----
+import { criarCategoria, SEM_CATEGORIA } from "./engine";
+export type TipoCat = "desp" | "rec";
+export interface CatSua { k: string; n: string; c: string }
+const catChave = (t: TipoCat) => (t === "desp" ? "cats" : "catsRec");
+export const catsSuas = (b: Backup, t: TipoCat): CatSua[] => (Array.isArray(b.cfg[catChave(t)]) ? (b.cfg[catChave(t)] as CatSua[]) : []);
+export function catCriar(b: Backup, t: TipoCat, nome: string, cor?: string): { backup: Backup; erro?: string } {
+  const pers = { desp: catsSuas(b, "desp"), rec: catsSuas(b, "rec") };
+  const r = criarCategoria(pers, t, nome, cor) as { ok: boolean; erro?: string; pers?: typeof pers };
+  if (!r.ok || !r.pers) return { backup: b, erro: r.erro };
+  return { backup: { ...b, cfg: { ...b.cfg, [catChave(t)]: r.pers[t] } } };
+}
+// apaga uma categoria sua; os lançamentos dela passam para Outros / Outras
+export function catApagar(b: Backup, t: TipoCat, k: string): Backup {
+  if (!catsSuas(b, t).some(c => c.k === k)) return b;
+  const para = (SEM_CATEGORIA as Record<string, string>)[t] === "rout" ? "rout" : "outros";
+  const orc = { ...((b.cfg.budgets || {}) as Record<string, number>) }; delete orc[k];
+  return { ...b, items: b.items.map(x => (x.cat === k ? { ...x, cat: para } : x)),
+    cfg: { ...b.cfg, [catChave(t)]: catsSuas(b, t).filter(c => c.k !== k), budgets: orc } };
+}
+export const limites = (b: Backup): Record<string, number> => (b.cfg.budgets || {}) as Record<string, number>;
+export function limiteSalvar(b: Backup, k: string, cents: number): Backup {
+  const o = { ...limites(b) }; if (cents > 0) o[k] = cents; else delete o[k];
+  return { ...b, cfg: { ...b.cfg, budgets: o } };
+}

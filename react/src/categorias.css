@@ -1,0 +1,6 @@
+.cats .catdot { width: 36px; height: 36px; border-radius: 50%; flex: none }
+.cats .catcores { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2) }
+.cats .catcores button { width: 44px; height: 44px; border-radius: 50%; border: 3px solid transparent; cursor: pointer }
+.cats .catcores button[aria-checked="true"] { border-color: var(--ink) }
+.cats .mbar.estourou { background: linear-gradient(90deg, var(--dcol) var(--p), var(--line) var(--p)) }
+.cats .catdel { margin: 0 0 var(--sp-2) calc(36px + var(--sp-2)) }

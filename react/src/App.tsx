@@ -12,6 +12,7 @@ import { Pessoas } from "./Pessoas";
 import { Metas } from "./Metas";
 import { Moedas } from "./Moedas";
 import { Fixos } from "./Fixos";
+import { Categorias } from "./Categorias";
 import { Relatorios } from "./Relatorios";
 import { assinaturas } from "./assinaturas";
 import { marcarVarios, vazio } from "./loja";
@@ -34,7 +35,7 @@ export function App() {
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
-  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos">("inicio");
+  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias">("inicio");
   const arq = useRef<HTMLInputElement>(null);
   const hoje = hojeISO();
   const c: Carga = useMemo(() => (b ? cargaDe(b, hoje) : erro ? { ...exemplo(), erro } : exemplo()), [b, hoje, erro]);
@@ -84,9 +85,10 @@ export function App() {
       {tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} />
         : tela === "relatorios" ? <Relatorios e={c.estado} pers={c.pers} onVoltar={() => setTela("metas")} />
+        : tela === "categorias" ? <Categorias b={b} e={c.estado} pers={c.pers} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
         : tela === "fixos" ? <Fixos b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
         : tela === "moedas" ? <Moedas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
-        : tela === "metas" ? <Metas onFixos={() => setTela("fixos")} onMoedas={() => setTela("moedas")} onRel={() => setTela("relatorios")} subs={assinaturas(c.estado.lancamentos)} b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
+        : tela === "metas" ? <Metas onCats={() => setTela("categorias")} onFixos={() => setTela("fixos")} onMoedas={() => setTela("moedas")} onRel={() => setTela("relatorios")} subs={assinaturas(c.estado.lancamentos)} b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : tela === "pessoas" ? <Pessoas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} />}
       <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>
@@ -95,7 +97,7 @@ export function App() {
         <button type="button" aria-current={tela === "contas" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
         <button type="button" aria-current={tela === "cartoes" ? "page" : undefined} onClick={() => { setTela("cartoes"); setAviso(""); }}>Cartões</button>
         <button type="button" aria-current={tela === "pessoas" ? "page" : undefined} onClick={() => { setTela("pessoas"); setAviso(""); }}>Pessoas</button>
-        <button type="button" aria-current={tela === "metas" || tela === "relatorios" || tela === "moedas" || tela === "fixos" ? "page" : undefined} onClick={() => { setTela("metas"); setAviso(""); }}>Metas</button>
+        <button type="button" aria-current={tela === "metas" || tela === "relatorios" || tela === "moedas" || tela === "fixos" || tela === "categorias" ? "page" : undefined} onClick={() => { setTela("metas"); setAviso(""); }}>Metas</button>
       </nav>
       {pedido && b && <Lancar key={pedido.id ?? pedido.tipo} b={b} pers={c.pers} hoje={hoje} pedido={pedido} onSalvar={salvar} onFechar={() => setPedido(null)} />}
       {ajustes && b && <Ajustes b={b} hoje={hoje} onSalvar={salvar} onBaixar={baixar} onFechar={() => setAjustes(false)} />}

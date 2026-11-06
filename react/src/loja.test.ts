@@ -116,3 +116,20 @@ describe("moedas", () => {
     expect(fxAviso(60, 6)).toBe("fora");
   });
 });
+
+import { catApagar, catCriar, catsSuas, limiteSalvar, limites } from "./loja";
+describe("categorias e limites", () => {
+  it("cria, recusa repetida, apaga movendo lançamentos e limpa o limite", () => {
+    let b = vazio();
+    const r = catCriar(b, "desp", "Pets", "#112233"); b = r.backup;
+    expect(catsSuas(b, "desp")).toEqual([{ k: "u_pets", n: "Pets", c: "#112233" }]);
+    expect(catCriar(b, "desp", "pets").erro).toMatch(/Já existe/);
+    expect(catCriar(b, "desp", "Mercado").erro).toMatch(/Já existe/);
+    b = { ...b, items: [{ type: "desp", cat: "u_pets", desc: "x", cents: 100, date: "2026-11-01" } as any] };
+    b = limiteSalvar(b, "u_pets", 5000); expect(limites(b)).toEqual({ u_pets: 5000 });
+    b = catApagar(b, "desp", "u_pets");
+    expect(b.items[0].cat).toBe("outros"); expect(catsSuas(b, "desp")).toEqual([]); expect(limites(b)).toEqual({});
+    expect(catApagar(b, "desp", "alim")).toBe(b);
+    expect(limiteSalvar(limiteSalvar(b, "alim", 100), "alim", 0).cfg.budgets).toEqual({});
+  });
+});
