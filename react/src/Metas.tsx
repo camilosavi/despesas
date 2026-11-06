@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { caixaApagarMov, caixaCriar, caixaExcluir, caixaMover, caixas, caixaSaldo, dividaApagarMov, dividaCriar, dividaExcluir, dividaFalta, dividaMover, dividas } from "./loja";
 import type { Backup, Caixinha, Divida } from "./loja";
-import { assinaturas } from "./assinaturas";
+import { assinaturas, cobrancasFuturas, subCancelar, subDia, subDividir, subReativar, subSuaParte } from "./assinaturas";
 import { centsDe } from "./Lancar";
 import { R, dm } from "./format";
 import "./lancar.css";
@@ -14,6 +14,9 @@ const id = () => "m" + Date.now().toString(36) + Math.random().toString(36).slic
 export function Metas({ onCats, onFixos, onMoedas, onRel, subs = [], b, hoje, onSalvar, onAviso }: Props) {
   const [cx, setCx] = useState<string | null>(null), [dv, setDv] = useState<string | null>(null);
   const [nc, setNc] = useState(""), [meta, setMeta] = useState(""), [nd, setNd] = useState(""), [tot, setTot] = useState("");
+  const [sb, setSb] = useState<string | null>(null), [arm, setArm] = useState<string | null>(null), [dia, setDia] = useState(""), [pes, setPes] = useState("");
+  const ativas = subs.filter(x => !x.off), totS = ativas.reduce((t, x) => t + x.cents, 0);
+  const abrirSub = (a: (typeof subs)[number]) => { setArm(null); if (sb === a.nome) return setSb(null); setSb(a.nome); setDia(a.dia ? String(a.dia) : ""); setPes(a.pessoas ? String(a.pessoas) : ""); };
   const cs = b ? caixas(b) : [], ds = b ? dividas(b) : [];
   const guardado = cs.reduce((s, c) => s + caixaSaldo(c), 0), falta = ds.reduce((s, d) => s + Math.max(0, dividaFalta(d)), 0);
   const precisa = () => { if (!b) onAviso("Escolha “Começar do zero” ou “Usar meus dados” para criar caixinhas e dívidas."); return !!b; };
@@ -68,9 +71,23 @@ export function Metas({ onCats, onFixos, onMoedas, onRel, subs = [], b, hoje, on
         })}</ul> : <p className="vazio">Nenhuma dívida registrada. Serve para acompanhar o que falta; não entra em despesa nem em saldo.</p>}
       </section>
       <section aria-labelledby="ma">
-        <h2 id="ma">Assinaturas <span className="dim">{subs.length ? R(subs.reduce((t, x) => t + x.cents, 0)) + "/mês · " + R(subs.reduce((t, x) => t + x.cents, 0) * 12) + "/ano" : ""}</span></h2>
-        {subs.length ? <ul className="pplista">{subs.map(a => <li key={a.nome} className="pprow mrow"><span className="ppav" aria-hidden="true">{a.nome.slice(0, 1).toUpperCase()}</span>
-          <span className="ppnm">{a.nome}<em>{a.cartao ? a.cartao + " · " : ""}última cobrança {dm(a.ultima)}</em></span><b>{R(a.cents)}</b></li>)}</ul>
+        <h2 id="ma">Assinaturas <span className="dim">{ativas.length ? R(totS) + "/mês · " + R(totS * 12) + "/ano" : ""}</span></h2>
+        {subs.length ? <ul className="pplista">{subs.map(a => <li key={a.nome}>
+          <button type="button" className="pprow mrow" aria-expanded={sb === a.nome} onClick={() => abrirSub(a)}>
+            <span className="ppav" aria-hidden="true">{a.nome.slice(0, 1).toUpperCase()}</span>
+            <span className="ppnm">{a.nome}<em>{a.off ? "cancelada · última cobrança em " + a.ultima.slice(5, 7) + "/" + a.ultima.slice(2, 4) : (a.cartao ? a.cartao + " · " : "") + (a.dia ? "cobra dia " + a.dia : "última cobrança " + dm(a.ultima)) + (a.pessoas ? ` · ÷${a.pessoas}` : "")}</em></span>
+            <b className={a.off ? "dim" : ""}>{R(a.off ? a.cents : subSuaParte(a.cents, a.pessoas))}</b></button>
+          {sb === a.nome && b && (
+            <div className="lgrupo">
+              {a.pessoas ? <p className="lnota">Total {R(a.cents)} dividido entre {a.pessoas} pessoas: sua parte é {R(subSuaParte(a.cents, a.pessoas))}.</p> : null}
+              <label>Dia da cobrança (1 a 31)<input inputMode="numeric" value={dia} onChange={x => setDia(x.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="usa o dia do último lançamento" /></label>
+              <label>Dividido entre quantas pessoas (contando você)<input inputMode="numeric" value={pes} onChange={x => setPes(x.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="1 = sem divisão" /></label>
+              <div className="lacoes"><button type="button" className="btn principal" onClick={() => { onSalvar(subDividir(subDia(b, a.nome, +dia || 0), a.nome, +pes || 1, a.cents)); setSb(null); onAviso("Assinatura salva."); }}>Salvar</button>
+                {a.off ? <button type="button" className="btn" onClick={() => { onSalvar(subReativar(b, a.nome)); setSb(null); }}>Reativar</button>
+                  : <button type="button" className="perigo" onClick={() => { if (arm !== a.nome) setArm(a.nome); else { onSalvar(subCancelar(b, a.nome, hoje)); setArm(null); setSb(null); onAviso("Assinatura cancelada."); } }}>
+                    {arm === a.nome ? `Apagar ${cobrancasFuturas(b, a.nome, hoje)} cobranças futuras? Toque de novo` : "Cancelada"}</button>}</div>
+            </div>
+          )}</li>)}</ul>
           : <p className="vazio">Nenhuma assinatura encontrada. Lançamentos que se repetem todo mês aparecem aqui.</p>}
       </section>
       {ac && b && <FolhaCx b={b} c={ac} hoje={hoje} onSalvar={onSalvar} onFechar={() => setCx(null)} />}

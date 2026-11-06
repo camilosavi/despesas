@@ -1,4 +1,4 @@
-import { assinaturas } from "./assinaturas";
+import { assinaturas, cobrancasFuturas, subCancelar, subDia, subDividir, subReativar } from "./assinaturas";
 import { caixaCriar, caixaMover, caixaSaldo, caixas, dividaCriar, dividaMover, dividaFalta, dividas, ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, transfExcluir, transfSalvar, transfs, vazio } from "./loja";
 import type { Backup, Form } from "./loja";
 import { cargaDe } from "./dados";
@@ -163,5 +163,26 @@ describe("transferências", () => {
     expect(m.linhas[0].saldoApos).toBe(30000);
     const c2 = cargaDe(b, "2026-11-21");
     expect(C.saldoDaConta(c2.estado, "Inter")).toBe(60000);
+  });
+});
+
+describe("assinaturas editáveis", () => {
+  const mk = (): Backup => ({ ...vazio(), items: ["2026-10-10", "2026-11-10", "2026-12-10", "2027-01-10"].map((d, i) => ({ id: "n" + i, type: "desp" as const, desc: "Netflix", cat: "assin", cents: 4590, date: d, pay: "Pix", paid: i < 2, createdAt: 1, group: "g1" })) });
+  it("cancela: apaga não pagas do mês seguinte em diante e marca subOff", () => {
+    const b = mk();
+    expect(cobrancasFuturas(b, "Netflix", "2026-11-06")).toBe(2);
+    const c = subCancelar(b, "Netflix", "2026-11-06");
+    expect(c.items.map(i => i.date)).toEqual(["2026-10-10", "2026-11-10"]);
+    expect(c.cfg.subOff.Netflix).toBe("2026-12");
+    expect(assinaturas(cargaDe(c, "2026-11-06").estado.lancamentos, c)[0].off).toBe("2026-12");
+    expect(subReativar(c, "Netflix").cfg.subOff.Netflix).toBeUndefined();
+  });
+  it("dia e divisão", () => {
+    let b = subDia(mk(), "Netflix", 12); b = subDividir(b, "Netflix", 3, 4590);
+    expect(b.cfg.subDay.Netflix).toBe(12); expect(b.cfg.subShare.Netflix).toEqual({ n: 2, c: 1530 });
+    const a = assinaturas(cargaDe(b, "2026-11-06").estado.lancamentos, b)[0];
+    expect(a).toMatchObject({ dia: 12, pessoas: 3 });
+    b = subDividir(subDia(b, "Netflix", 0), "Netflix", 1, 4590);
+    expect(b.cfg.subShare.Netflix).toBeUndefined(); expect(b.cfg.subDay.Netflix).toBeUndefined();
   });
 });
