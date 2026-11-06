@@ -233,3 +233,31 @@ export function limiteSalvar(b: Backup, k: string, cents: number): Backup {
   const o = { ...limites(b) }; if (cents > 0) o[k] = cents; else delete o[k];
   return { ...b, cfg: { ...b.cfg, budgets: o } };
 }
+
+// ---------- Transferências entre contas (cfg.transf) ----------
+// Não é lançamento: não entra em despesa, receita, categoria nem orçamento. Só move saldo entre duas contas em R$.
+export interface Transf { id: string; ts: number; date: string; from: string; to: string; cents: number; desc?: string; imp?: string }
+export const transfs = (b: Backup): Transf[] => ((b.cfg.transf || []) as Transf[]).slice();
+export function transfErro(b: Backup, t: { from: string; to: string; cents: number; date: string }): string {
+  const nomes = ((b.cfg.accts || []) as { name: string; cur?: string }[]).filter(a => !a.cur || a.cur === "BRL").map(a => a.name);
+  if (!nomes.includes(t.from) || !nomes.includes(t.to)) return "Escolha duas contas.";
+  if (t.from === t.to) return "Escolha contas diferentes.";
+  if (!(t.cents > 0)) return "Informe o valor.";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t.date)) return "Informe a data.";
+  return "";
+}
+export function transfSalvar(b: Backup, t: { id?: string; from: string; to: string; cents: number; date: string; desc?: string }, agora: number): { backup: Backup; erro?: string } {
+  const erro = transfErro(b, t); if (erro) return { backup: b, erro };
+  const lista = transfs(b), i = t.id ? lista.findIndex(x => x.id === t.id) : -1;
+  const desc = (t.desc || "").trim();
+  if (i < 0 && lista.length >= 500) return { backup: b, erro: "Limite de 500 transferências." };
+  const velha = i >= 0 ? lista[i] : null;
+  // transferência já contada no saldo informado: mudar só o histórico (o ts antigo fica)
+  const nova: Transf = { ...(velha || {}), id: velha?.id || `t${agora}`, ts: velha?.ts ?? agora, date: t.date, from: t.from, to: t.to, cents: Math.round(t.cents), ...(desc ? { desc } : {}) };
+  if (!desc) delete nova.desc;
+  const out = i >= 0 ? lista.map((x, k) => (k === i ? nova : x)) : [...lista, nova];
+  return { backup: { ...b, cfg: { ...b.cfg, transf: out } } };
+}
+export function transfExcluir(b: Backup, id: string): Backup {
+  return { ...b, cfg: { ...b.cfg, transf: transfs(b).filter(x => x.id !== id) } };
+}

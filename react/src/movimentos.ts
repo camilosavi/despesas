@@ -2,13 +2,14 @@
 // O saldo final é sempre `saldoDaConta` do motor: o que o motor soma e esta lista não mostra vira a linha "Outros ajustes".
 import * as C from "./engine";
 import type { Estado, Lancamento } from "./engine";
+import type { Transf } from "./loja";
 
 export interface Mov { id: string; data: string; ts: number; nome: string; cents: number; saldoApos: number; extra?: string; lanc?: string }
 export interface Movs { conta: string; informado: number; informadoEm: number; atual: number; linhas: Mov[] }
 
 const dia = (ms: number) => { const d = new Date(ms); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
 
-export function movimentos(e: Estado, nome: string): Movs {
+export function movimentos(e: Estado, nome: string, transf: Transf[] = []): Movs {
   const a = e.contas.find(x => x.nome === nome && (x.moeda || "BRL") === "BRL");
   if (!a) return { conta: nome, informado: 0, informadoEm: 0, atual: 0, linhas: [] };
   const t0 = a.em || 0, atual = C.saldoDaConta(e, nome);
@@ -24,6 +25,11 @@ export function movimentos(e: Estado, nome: string): Movs {
         if (g) { g.cents -= l.cents; g.n++; } else cartao.set(k, { id: "fat|" + k, data: dia(l.pagoEm!), ts: l.pagoEm!, nome: `Fatura ${l.cartao}`, cents: -l.cents, n: 1 });
       } else L.push({ id: l.id, data: dia(l.pagoEm!), ts: l.pagoEm!, nome: l.nome, cents: -l.cents, lanc: l.id });
     }
+  }
+  for (const t of transf) {
+    if (t.ts <= t0 || t.date > e.hoje || (t.from !== nome && t.to !== nome)) continue;
+    const sai = t.from === nome;
+    L.push({ id: "tr|" + t.id, data: t.date, ts: t.ts, nome: sai ? `Transferência para ${t.to}` : `Transferência de ${t.from}`, cents: sai ? -t.cents : t.cents, extra: t.desc || "entre contas" });
   }
   cartao.forEach(g => L.push({ ...g, extra: `${g.n} ${g.n === 1 ? "item" : "itens"}` }));
   L.sort((x, y) => x.ts - y.ts || x.id.localeCompare(y.id));

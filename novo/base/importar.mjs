@@ -80,7 +80,7 @@ export function deAppAtual(b, hoje) {
     if (v == null) continue;
     ajustes.push({ em: m.ts, conta: m.acct, cents: -v });
   }
-  for (const t of cfg.transf || []) { ajustes.push({ em: t.ts, conta: t.from, cents: -t.cents }); ajustes.push({ em: t.ts, conta: t.to, cents: t.cents }); }
+  for (const t of cfg.transf || []) { if (t.date && t.date > hoje) continue; ajustes.push({ em: t.ts, conta: t.from, cents: -t.cents }); ajustes.push({ em: t.ts, conta: t.to, cents: t.cents }); }
   r.ajustes = ajustes.length;
 
   const cartoesNomes = Object.fromEntries(Object.entries(cartoes).map(([n, k]) => [n, k]));

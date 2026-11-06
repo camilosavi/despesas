@@ -1,8 +1,9 @@
 import { assinaturas } from "./assinaturas";
-import { caixaCriar, caixaMover, caixaSaldo, caixas, dividaCriar, dividaMover, dividaFalta, dividas, ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
-import type { Form } from "./loja";
+import { caixaCriar, caixaMover, caixaSaldo, caixas, dividaCriar, dividaMover, dividaFalta, dividas, ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, transfExcluir, transfSalvar, transfs, vazio } from "./loja";
+import type { Backup, Form } from "./loja";
 import { cargaDe } from "./dados";
 import * as C from "./engine";
+import { movimentos } from "./movimentos";
 
 let n = 0; const id = () => "i" + ++n;
 const HOJE = "2026-11-06", AGORA = Date.parse("2026-11-06T12:00:00");
@@ -131,5 +132,36 @@ describe("categorias e limites", () => {
     expect(b.items[0].cat).toBe("outros"); expect(catsSuas(b, "desp")).toEqual([]); expect(limites(b)).toEqual({});
     expect(catApagar(b, "desp", "alim")).toBe(b);
     expect(limiteSalvar(limiteSalvar(b, "alim", 100), "alim", 0).cfg.budgets).toEqual({});
+  });
+});
+
+describe("transferências", () => {
+  const base = (): Backup => ({ ...vazio(), cfg: { accts: [{ id: "a", name: "Inter", cents: 100000, at: "2026-11-01", atTs: 1 }, { id: "b", name: "Nubank", cents: 0, at: "2026-11-01", atTs: 1 }, { id: "c", name: "Wise", cents: 0, cur: "EUR", at: "2026-11-01", atTs: 1 }] } });
+  it("valida contas, valor e data", () => {
+    const b = base();
+    expect(transfSalvar(b, { from: "Inter", to: "Inter", cents: 100, date: "2026-11-06" }, 5).erro).toBeTruthy();
+    expect(transfSalvar(b, { from: "Inter", to: "Wise", cents: 100, date: "2026-11-06" }, 5).erro).toBeTruthy();
+    expect(transfSalvar(b, { from: "Inter", to: "Nubank", cents: 0, date: "2026-11-06" }, 5).erro).toBeTruthy();
+    expect(transfSalvar(b, { from: "Inter", to: "Nubank", cents: 100, date: "" }, 5).erro).toBeTruthy();
+  });
+  it("cria, edita mantendo ts e exclui", () => {
+    let b = transfSalvar(base(), { from: "Inter", to: "Nubank", cents: 5000, date: "2026-11-06", desc: " reserva " }, 10).backup;
+    expect(transfs(b)).toEqual([{ id: "t10", ts: 10, date: "2026-11-06", from: "Inter", to: "Nubank", cents: 5000, desc: "reserva" }]);
+    b = transfSalvar(b, { id: "t10", from: "Inter", to: "Nubank", cents: 7000, date: "2026-11-07" }, 99).backup;
+    expect(transfs(b)[0]).toMatchObject({ id: "t10", ts: 10, cents: 7000 });
+    expect(transfs(b)[0].desc).toBeUndefined();
+    expect(transfs(transfExcluir(b, "t10"))).toEqual([]);
+  });
+  it("move o saldo e aparece nos movimentos; data futura só quando chegar", () => {
+    let b = transfSalvar(base(), { from: "Inter", to: "Nubank", cents: 30000, date: "2026-11-05" }, Date.parse("2026-11-05T12:00:00Z")).backup;
+    b = transfSalvar(b, { from: "Inter", to: "Nubank", cents: 10000, date: "2026-11-20" }, Date.parse("2026-11-05T12:01:00Z")).backup;
+    const c = cargaDe(b, "2026-11-06");
+    expect(C.saldoDaConta(c.estado, "Inter")).toBe(70000);
+    expect(C.saldoDaConta(c.estado, "Nubank")).toBe(30000);
+    const m = movimentos(c.estado, "Nubank", transfs(b));
+    expect(m.linhas.map(x => x.nome)).toEqual(["Transferência de Inter"]);
+    expect(m.linhas[0].saldoApos).toBe(30000);
+    const c2 = cargaDe(b, "2026-11-21");
+    expect(C.saldoDaConta(c2.estado, "Inter")).toBe(60000);
   });
 });

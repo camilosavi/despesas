@@ -79,3 +79,4 @@ li:last-child > .crow { border-bottom: 0 }
 @container phome (min-width: 900px) { .cb-mov { grid-area: auto } .cgrid:has(.cb-mov) { grid-template-areas: "l s" "l m" "l r" "l c" "l ." } .cb-mov { grid-area: m } }
 
 .pg { padding-bottom: 6rem }
+.cb-saldo .ctransf { display: inline-flex; align-items: center; min-height: 44px }

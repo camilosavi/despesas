@@ -14,8 +14,9 @@ import { Moedas } from "./Moedas";
 import { Fixos } from "./Fixos";
 import { Categorias } from "./Categorias";
 import { Relatorios } from "./Relatorios";
+import { Transferencias } from "./Transferencias";
 import { assinaturas } from "./assinaturas";
-import { marcarVarios, vazio } from "./loja";
+import { marcarVarios, transfs, vazio } from "./loja";
 import type { Backup } from "./loja";
 import { hojeISO } from "./format";
 
@@ -35,7 +36,7 @@ export function App() {
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
-  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias">("inicio");
+  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf">("inicio");
   const arq = useRef<HTMLInputElement>(null);
   const hoje = hojeISO();
   const c: Carga = useMemo(() => (b ? cargaDe(b, hoje) : erro ? { ...exemplo(), erro } : exemplo()), [b, hoje, erro]);
@@ -83,7 +84,8 @@ export function App() {
       </div>
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
-        : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} />
+        : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} />
+        : tela === "transf" ? <Transferencias b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("contas")} />
         : tela === "relatorios" ? <Relatorios e={c.estado} pers={c.pers} onVoltar={() => setTela("metas")} />
         : tela === "categorias" ? <Categorias b={b} e={c.estado} pers={c.pers} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
         : tela === "fixos" ? <Fixos b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
@@ -94,7 +96,7 @@ export function App() {
       <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>
       <nav className="bar" aria-label="Telas">
         <button type="button" aria-current={tela === "inicio" ? "page" : undefined} onClick={() => { setTela("inicio"); setAviso(""); }}>Início</button>
-        <button type="button" aria-current={tela === "contas" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
+        <button type="button" aria-current={tela === "contas" || tela === "transf" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
         <button type="button" aria-current={tela === "cartoes" ? "page" : undefined} onClick={() => { setTela("cartoes"); setAviso(""); }}>Cartões</button>
         <button type="button" aria-current={tela === "pessoas" ? "page" : undefined} onClick={() => { setTela("pessoas"); setAviso(""); }}>Pessoas</button>
         <button type="button" aria-current={tela === "metas" || tela === "relatorios" || tela === "moedas" || tela === "fixos" || tela === "categorias" ? "page" : undefined} onClick={() => { setTela("metas"); setAviso(""); }}>Metas</button>

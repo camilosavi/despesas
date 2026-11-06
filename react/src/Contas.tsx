@@ -4,6 +4,7 @@ import type { Estado, Pers } from "./engine";
 import { Marca, catDe } from "./blocos";
 import type { Destino } from "./blocos";
 import { movimentos } from "./movimentos";
+import type { Transf } from "./loja";
 import { FILTRO0, contasEmReal, fluxoDoMes } from "./contas";
 import type { Filtro, Linha, Tipo } from "./contas";
 import { dataLonga, dm, mLab, pct1, R } from "./format";
@@ -37,8 +38,8 @@ function Item({ x, e, pers, onIr, onEdit, data }: { x: Linha; e: Estado; pers: P
     : <div className="crow">{corpo}</div>}</li>;
 }
 
-function MovConta({ e, nome, onFechar }: { e: Estado; nome: string; onFechar: () => void }) {
-  const m = movimentos(e, nome);
+function MovConta({ e, nome, transf, onFechar }: { e: Estado; nome: string; transf: Transf[]; onFechar: () => void }) {
+  const m = movimentos(e, nome, transf);
   return (
     <section className="cb cb-mov" aria-label={`Movimentos de ${nome}`}>
       <h3>{nome} <button type="button" className="dlink" onClick={onFechar}>Fechar</button></h3>
@@ -54,7 +55,7 @@ function MovConta({ e, nome, onFechar }: { e: Estado; nome: string; onFechar: ()
   );
 }
 
-export function Contas({ e, pers, onIr, onEdit }: { e: Estado; pers: Pers; onIr: (d: Destino) => void; onEdit?: (id: string) => void }) {
+export function Contas({ e, pers, onIr, onEdit, transf = [], onTransf }: { e: Estado; pers: Pers; onIr: (d: Destino) => void; onEdit?: (id: string) => void; transf?: Transf[]; onTransf?: () => void }) {
   const hoje = C.mesDe(e.hoje), min = C.mesDe(e.inicio || e.hoje);
   const [ym, setYm] = useState(hoje);
   const [f, setF] = useState<Filtro>(FILTRO0);
@@ -83,10 +84,11 @@ export function Contas({ e, pers, onIr, onEdit }: { e: Estado; pers: Pers; onIr:
           <h3>Na conta hoje</h3>
           <b className="dbig">{R(C.naConta(e))}</b>
           {contas.length > 0 && <ul className="clist">{contas.map(a => <li key={a.nome}><button type="button" className="cabtn" aria-expanded={conta === a.nome} onClick={() => setConta(conta === a.nome ? "" : a.nome)}><Marca nome={a.nome} e={e} /><span>{a.nome}</span><b>{R(C.saldoDaConta(e, a.nome))}</b></button></li>)}</ul>}
+          {onTransf && contas.length >= 2 && <button type="button" className="dlink ctransf" onClick={onTransf}>Transferências entre contas ›</button>}
           {r.fimDoMes != null && <p className="cfim">Fim de {mLab(ym).split(" de ")[0]}: <b>{R(r.fimDoMes)}</b></p>}
           {fx.vermelho && <p className="cred" role="status">Fica no vermelho em {dm(fx.vermelho.data)}, depois de “{fx.vermelho.nome}”.</p>}
         </section>
-        {conta && <MovConta e={e} nome={conta} onFechar={() => setConta("")} />}
+        {conta && <MovConta e={e} nome={conta} transf={transf} onFechar={() => setConta("")} />}
         <section className="cb cb-res" aria-label="Resumo do mês">
           <p className="cres"><b>Entrou {R(r.entrou)}</b> · Pago {R(r.pago)} · Falta pagar {R(r.aPagar)}</p>
           <span className="cbar" role="img" aria-label={`Pago ${R(r.pago)} de ${R(sai)} que sai no mês`}><i style={{ width: pPago + "%" }} /></span>
