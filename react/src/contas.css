@@ -77,3 +77,5 @@ li:last-child > .crow { border-bottom: 0 }
 .clist li { padding: 0 }
 .cb-mov h3 .dlink { background: none; border: 0; min-height: 44px; padding: 0 .5em; cursor: pointer }
 @container phome (min-width: 900px) { .cb-mov { grid-area: auto } .cgrid:has(.cb-mov) { grid-template-areas: "l s" "l m" "l r" "l c" "l ." } .cb-mov { grid-area: m } }
+
+.pg { padding-bottom: 6rem }

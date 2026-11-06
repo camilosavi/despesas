@@ -3,7 +3,7 @@
 export * from "../../novo/base/calculo.mjs";
 export * from "../../novo/base/datas.mjs";
 export * from "../../novo/base/pessoas.mjs";
-export { categoria, SEM_CATEGORIA } from "../../novo/base/categorias.mjs";
+export { categoria, lista, criar as criarCategoria, SEM_CATEGORIA } from "../../novo/base/categorias.mjs";
 export { deAppAtual, normalizarBackup } from "../../novo/base/importar.mjs";
 
 export interface Lancamento {

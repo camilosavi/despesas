@@ -14,7 +14,7 @@ const ICO_BUSCA = "M11 5a6 6 0 100 12 6 6 0 000-12zM20 20l-4-4";
 const ICO_FILTRO = "M4 6h16M7 12h10M10 18h4";
 const Ico = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={d} /></svg>;
 
-function Item({ x, e, pers, onIr, data }: { x: Linha; e: Estado; pers: Pers; onIr: (d: Destino) => void; data?: boolean }) {
+function Item({ x, e, pers, onIr, onEdit, data }: { x: Linha; e: Estado; pers: Pers; onIr: (d: Destino) => void; onEdit?: (id: string) => void; data?: boolean }) {
   const c = x.tipo === "fatura" ? { n: "Cartão", c: "#5b6b9a" }
     : x.tipo === "previsto" ? { n: "Previsto", c: "#8A8F98" }
     : catDe(x.cat || (C.SEM_CATEGORIA as Record<string, string>)[x.rec ? "rec" : "desp"], x.rec ? "rec" : "desp", pers);
@@ -33,6 +33,7 @@ function Item({ x, e, pers, onIr, data }: { x: Linha; e: Estado; pers: Pers; onI
   );
   return <li>{x.tipo === "fatura"
     ? <button type="button" className="crow" onClick={() => onIr("cartoes")}>{corpo}</button>
+    : x.tipo === "lanc" && onEdit ? <button type="button" className="crow" aria-label={`Editar ${x.nome}`} onClick={() => onEdit(x.id)}>{corpo}</button>
     : <div className="crow">{corpo}</div>}</li>;
 }
 
@@ -53,7 +54,7 @@ function MovConta({ e, nome, onFechar }: { e: Estado; nome: string; onFechar: ()
   );
 }
 
-export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Destino) => void }) {
+export function Contas({ e, pers, onIr, onEdit }: { e: Estado; pers: Pers; onIr: (d: Destino) => void; onEdit?: (id: string) => void }) {
   const hoje = C.mesDe(e.hoje), min = C.mesDe(e.inicio || e.hoje);
   const [ym, setYm] = useState(hoje);
   const [f, setF] = useState<Filtro>(FILTRO0);
@@ -115,7 +116,7 @@ export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Des
           {fx.futuro.length > 0 && (
             <>
               <h4 className="csec">Ainda vai acontecer <em>{fx.futuro.length}</em></h4>
-              <ul>{fx.futuro.map(x => <Item key={x.id} x={x} e={e} pers={pers} onIr={onIr} data />)}</ul>
+              <ul>{fx.futuro.map(x => <Item key={x.id} x={x} e={e} pers={pers} onIr={onIr} onEdit={onEdit} data />)}</ul>
             </>
           )}
           {ym === hoje && <div className="chj" role="separator" aria-label={"Hoje, " + dataLonga(e.hoje)}><span>hoje · {dm(e.hoje)}</span></div>}
@@ -125,7 +126,7 @@ export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Des
               {fx.passado.map(d => (
                 <div key={d.data} className="cdia">
                   <h5><span>{dataLonga(d.data)}</span><em className={d.total < 0 ? "" : "pos"}>{d.total < 0 ? "−" : "+"}{R(Math.abs(d.total))}</em></h5>
-                  <ul>{d.linhas.map(x => <Item key={x.id} x={x} e={e} pers={pers} onIr={onIr} />)}</ul>
+                  <ul>{d.linhas.map(x => <Item key={x.id} x={x} e={e} pers={pers} onIr={onIr} onEdit={onEdit} />)}</ul>
                 </div>
               ))}
             </>

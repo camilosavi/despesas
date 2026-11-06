@@ -10,10 +10,12 @@ import "./cartoes.css";
 
 const mCurto = (m: string) => mLab(m).split(" de ")[0];
 
-function Linha({ x }: { x: Item }) {
+function Linha({ x, onEdit }: { x: Item; onEdit?: (id: string) => void }) {
   const sub = [dm(x.compra || x.data), x.parcela ? `parcela ${x.parcela.replace("/", " de ")}` : "", x.taxa ? "taxa" : "", x.pago ? "pago ✓" : ""].filter(Boolean).join(" · ");
   return (
-    <li className="crow"><span className="dtn"><b>{x.nome}</b><small>{sub}</small></span><span className="v">−{R(x.cents)}</span></li>
+    <li>{onEdit
+      ? <button type="button" className="crow" aria-label={`Editar ${x.nome}`} onClick={() => onEdit(x.id)}><span className="dtn"><b>{x.nome}</b><small>{sub}</small></span><span className="v">−{R(x.cents)}</span></button>
+      : <div className="crow"><span className="dtn"><b>{x.nome}</b><small>{sub}</small></span><span className="v">−{R(x.cents)}</span></div>}</li>
   );
 }
 
@@ -38,7 +40,7 @@ function Posso({ e, cartao }: { e: Estado; cartao: string }) {
   );
 }
 
-export function Cartoes({ e, onVoltar }: { e: Estado; onVoltar: () => void }) {
+export function Cartoes({ e, onVoltar, onEdit }: { e: Estado; onVoltar: () => void; onEdit?: (id: string) => void }) {
   const lista = cartoes(e), res = resumoCartoes(e);
   const [sel, setSel] = useState<string>(lista[0]?.cartao || "");
   const [ym, setYm] = useState<string>(lista[0]?.ym || C.mesDe(e.hoje));
@@ -97,7 +99,7 @@ export function Cartoes({ e, onVoltar }: { e: Estado; onVoltar: () => void }) {
               </section>
               <section className="cb" aria-label="Itens da fatura">
                 <h3>Itens <em>{d.itens.length}</em></h3>
-                {d.itens.length ? <ul>{d.itens.map(x => <Linha key={x.id} x={x} />)}</ul> : <p className="kconf">Nenhum item lançado nesta fatura.</p>}
+                {d.itens.length ? <ul>{d.itens.map(x => <Linha key={x.id} x={x} onEdit={onEdit} />)}</ul> : <p className="kconf">Nenhum item lançado nesta fatura.</p>}
               </section>
               <section className="cb" aria-label="Próximas faturas">
                 <h3>Próximas faturas</h3>
