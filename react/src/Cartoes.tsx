@@ -40,7 +40,7 @@ function Posso({ e, cartao }: { e: Estado; cartao: string }) {
   );
 }
 
-export function Cartoes({ e, onVoltar, onEdit }: { e: Estado; onVoltar: () => void; onEdit?: (id: string) => void }) {
+export function Cartoes({ e, onVoltar, onEdit, onPagar }: { e: Estado; onVoltar: () => void; onEdit?: (id: string) => void; onPagar?: (ids: string[], pago: boolean) => void }) {
   const lista = cartoes(e), res = resumoCartoes(e);
   const [sel, setSel] = useState<string>(lista[0]?.cartao || "");
   const [ym, setYm] = useState<string>(lista[0]?.ym || C.mesDe(e.hoje));
@@ -89,6 +89,9 @@ export function Cartoes({ e, onVoltar, onEdit }: { e: Estado; onVoltar: () => vo
                 </div>
                 <b className="dbig">{R(d.total)}</b>
                 <p className={"kst " + (d.paga ? "ok" : d.vencida ? "neg" : "")}>{d.paga ? "Paga ✓" : d.vencida ? `Venceu em ${dm(d.vence)}` : `Vence em ${dm(d.vence)}`}</p>
+                {onPagar && d.itens.length > 0 && (
+                  <button type="button" className="kpagar" onClick={() => onPagar(d.itens.map(x => x.id), !d.paga)}>{d.paga ? "Desfazer pagamento" : `Marcar fatura de ${mCurto(d.ym)} como paga`}</button>
+                )}
                 {d.banco != null && (
                   <p className="kconf">{d.faltaLancar > 0
                     ? <>Banco diz <b>{R(d.banco)}</b>. <span className="neg">Falta lançar {R(d.faltaLancar)}.</span></>

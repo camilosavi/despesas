@@ -102,3 +102,8 @@ export function salvarCartao(b: Backup, nome: string, dados: { due?: number; lim
   cards[nome] = { ...atual, ...Object.fromEntries(Object.entries(dados).filter(([, v]) => v)) };
   return { ...b, cfg: { ...b.cfg, cards } };
 }
+
+/** marca (ou desmarca) vários lançamentos de uma vez: usado para "fatura paga" */
+export function marcarVarios(b: Backup, ids: string[], pago: boolean, agora: number): Backup {
+  return ids.reduce((acc, id) => marcarPago(acc, id, pago, agora), b);
+}

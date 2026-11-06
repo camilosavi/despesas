@@ -8,7 +8,7 @@ import type { Carga } from "./dados";
 import { Lancar } from "./Lancar";
 import type { Pedido } from "./Lancar";
 import { Ajustes } from "./Ajustes";
-import { vazio } from "./loja";
+import { marcarVarios, vazio } from "./loja";
 import type { Backup } from "./loja";
 import { hojeISO } from "./format";
 
@@ -76,7 +76,7 @@ export function App() {
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} />
-        : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} />}
+        : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} />}
       <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>
       <nav className="bar" aria-label="Telas">
         <button type="button" aria-current={tela === "inicio" ? "page" : undefined} onClick={() => { setTela("inicio"); setAviso(""); }}>Início</button>

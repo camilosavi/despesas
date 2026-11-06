@@ -1,4 +1,4 @@
-import { apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
+import { marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
 import type { Form } from "./loja";
 import { cargaDe } from "./dados";
 import * as C from "./engine";
@@ -46,6 +46,12 @@ describe("loja (gravação)", () => {
     expect(apagar(b, a.id).items).toHaveLength(2);
     expect(apagar(b, a.id, true).items).toHaveLength(0);
     expect(apagar(b, c.id, true).items).toHaveLength(2);
+  });
+  it("fatura paga: marca todos os itens e o saldo da conta não muda (crédito não mexia nele)", () => {
+    const b = criar(base(), f({ pay: "Crédito", card: "Inter", date: "2026-10-20", repete: { modo: "mensal", n: 2 } }), HOJE, AGORA, id);
+    const ids = b.items.slice(0, 1).map(x => x.id), pago = marcarVarios(b, ids, true, AGORA + 9);
+    expect(pago.items[0]).toMatchObject({ paid: true, paidAt: AGORA + 9 }); expect(pago.items[1].paid).toBe(false);
+    expect(C.naConta(cargaDe(b, HOJE).estado) - C.naConta(cargaDe(pago, HOJE).estado)).toBe(5000);  // pagar a fatura tira da conta
   });
   it("conta e cartão: salvar de novo atualiza em vez de duplicar", () => {
     const b = salvarConta(base(), "Nubank", 5, AGORA + 9, HOJE);

@@ -25,3 +25,4 @@
 
 .kbar { background: var(--line) } .kbar i { background: var(--accent) }
 .kback { min-height: 44px; padding: 0 1em; border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--ink); font-size: var(--fs-sm); cursor: pointer; white-space: nowrap }
+.kpagar { margin-top: var(--sp-3); min-height: 44px; padding: 0 1.2em; border: 1px solid var(--accent); border-radius: var(--r-pill); background: none; color: var(--link, var(--accent)); font-size: var(--fs-sm); font-weight: 650; cursor: pointer }
