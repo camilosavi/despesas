@@ -10,3 +10,4 @@
 .metas .lgrupo input:not([type=checkbox]), .metas .lgrupo select { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-2); padding: 0 1em; font: inherit; font-size: var(--fs-sm); background: var(--bg); color: var(--ink) }
 .metas .lduas > * { min-width: 0 }
 .metas .lacoes { position: static; flex-wrap: wrap }
+.mmoeda { max-width: 5.5em }

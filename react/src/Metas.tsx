@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { caixaApagarMov, caixaCriar, caixaExcluir, caixaMover, caixas, caixaSaldo, dividaApagarMov, dividaCriar, dividaExcluir, dividaFalta, dividaMover, dividas } from "./loja";
-import type { Backup, Caixinha, Divida } from "./loja";
+import { useEffect, useState } from "react";
+import { caixaApagarMov, caixaCriar, caixaMoeda, caixaSaldos, caixaTem, cxMovDe, caixaExcluir, caixaMover, caixas, dividaApagarMov, dividaCriar, dividaExcluir, dividaFalta, dividaMover, dividas } from "./loja";
+import type { Backup, Caixinha, Divida, MoedaCx } from "./loja";
+import { buscarTaxas, lerCache } from "./Moedas";
 import { assinaturas, cobrancasFuturas, subCancelar, subDia, subDividir, subReativar, subSuaParte } from "./assinaturas";
 import { centsDe } from "./Lancar";
-import { R, dm } from "./format";
+import { R, RM, dm } from "./format";
 import "./lancar.css";
 import "./pessoas.css";
 import "./metas.css";
@@ -13,16 +14,17 @@ const id = () => "m" + Date.now().toString(36) + Math.random().toString(36).slic
 
 export function Metas({ onCats, onFixos, onMoedas, onRel, subs = [], b, hoje, onSalvar, onAviso }: Props) {
   const [cx, setCx] = useState<string | null>(null), [dv, setDv] = useState<string | null>(null);
-  const [nc, setNc] = useState(""), [meta, setMeta] = useState(""), [nd, setNd] = useState(""), [tot, setTot] = useState("");
+  const [nc, setNc] = useState(""), [meta, setMeta] = useState(""), [mo, setMo] = useState<MoedaCx>("BRL"), [nd, setNd] = useState(""), [tot, setTot] = useState("");
   const [sb, setSb] = useState<string | null>(null), [arm, setArm] = useState<string | null>(null), [dia, setDia] = useState(""), [pes, setPes] = useState("");
   const ativas = subs.filter(x => !x.off), totS = ativas.reduce((t, x) => t + x.cents, 0);
   const abrirSub = (a: (typeof subs)[number]) => { setArm(null); if (sb === a.nome) return setSb(null); setSb(a.nome); setDia(a.dia ? String(a.dia) : ""); setPes(a.pessoas ? String(a.pessoas) : ""); };
   const cs = b ? caixas(b) : [], ds = b ? dividas(b) : [];
-  const guardado = cs.reduce((s, c) => s + caixaSaldo(c), 0), falta = ds.reduce((s, d) => s + Math.max(0, dividaFalta(d)), 0);
+  const tot3 = cs.reduce((t, c) => { const x = caixaSaldos(c); return { BRL: t.BRL + x.BRL, EUR: t.EUR + x.EUR, USD: t.USD + x.USD }; }, { BRL: 0, EUR: 0, USD: 0 });
+  const guardado = (["BRL", "EUR", "USD"] as const).filter(m => tot3[m] !== 0 || m === "BRL").map(m => RM(tot3[m], m)).join(" · "), falta = ds.reduce((s, d) => s + Math.max(0, dividaFalta(d)), 0);
   const precisa = () => { if (!b) onAviso("Escolha “Começar do zero” ou “Usar meus dados” para criar caixinhas e dívidas."); return !!b; };
   const novaC = (ev: React.FormEvent) => {
     ev.preventDefault(); if (!precisa() || !b) return;
-    const i = id(), nb = caixaCriar(b, i, nc, centsDe(meta) || undefined);
+    const i = id(), nb = caixaCriar(b, i, nc, centsDe(meta) || undefined, undefined, mo);
     if (nb === b) return onAviso("Dê um nome para a caixinha.");
     onSalvar(nb); setNc(""); setMeta(""); setCx(i);
   };
@@ -41,18 +43,20 @@ export function Metas({ onCats, onFixos, onMoedas, onRel, subs = [], b, hoje, on
       {onMoedas && <button type="button" className="btn" onClick={onMoedas}>Moedas: euro e dólar ›</button>}
       {onRel && <button type="button" className="btn" onClick={onRel}>Relatórios: mês a mês e por categoria ›</button>}
       <section aria-labelledby="mc">
-        <h2 id="mc">Dinheiro guardado <span className="dim">{R(guardado)}</span></h2>
+        <h2 id="mc">Dinheiro guardado <span className="dim">{guardado}</span></h2>
         <form className="ppnova" onSubmit={novaC}>
           <input value={nc} onChange={e => setNc(e.target.value)} placeholder="Nome (ex.: Viagem)" aria-label="Nome da caixinha" />
-          <input value={meta} onChange={e => setMeta(e.target.value)} inputMode="decimal" placeholder="Meta (R$)" aria-label="Meta da caixinha" className="mmeta" />
+          <select value={mo} onChange={e => setMo(e.target.value as MoedaCx)} aria-label="Moeda da caixinha" className="mmoeda"><option value="BRL">R$</option><option value="EUR">€</option><option value="USD">US$</option></select>
+          <input value={meta} onChange={e => setMeta(e.target.value)} inputMode="decimal" placeholder={`Meta (${mo === "BRL" ? "R$" : mo === "EUR" ? "€" : "US$"})`} aria-label="Meta da caixinha" className="mmeta" />
           <button type="submit" className="btn">+ Caixinha</button>
         </form>
         {cs.length ? <ul className="pplista">{cs.map(c => {
-          const s = caixaSaldo(c), p = c.goal ? Math.min(100, Math.round((s / c.goal) * 100)) : 0;
+          const g = caixaMoeda(c), s = caixaTem(c), sb = caixaSaldos(c), p = c.goal ? Math.max(0, Math.min(100, Math.round((s / c.goal) * 100))) : 0;
+          const outras = (["BRL", "EUR", "USD"] as const).filter(m => m !== g && sb[m] !== 0).map(m => RM(sb[m], m)).join(" + ");
           return <li key={c.id}><button type="button" className="pprow mrow" onClick={() => setCx(c.id)}>
             <span className="ppav" aria-hidden="true">{c.name.slice(0, 1).toUpperCase()}</span>
-            <span className="ppnm">{c.name}<em>{c.goal ? `${p}% de ${R(c.goal)}` : "sem meta"}</em>{c.goal ? <i className="mbar" style={{ ["--p" as string]: p + "%" }} /> : null}</span>
-            <b>{R(s)}</b></button></li>;
+            <span className="ppnm">{c.name}<em>{c.goal ? `${p}% de ${RM(c.goal, g)}` : "sem meta"}{outras ? " · + " + outras : ""}</em>{c.goal ? <i className="mbar" style={{ ["--p" as string]: p + "%" }} /> : null}</span>
+            <b>{RM(s, g)}</b></button></li>;
         })}</ul> : <p className="vazio">Nenhuma caixinha ainda.</p>}
       </section>
       <section aria-labelledby="md">
@@ -96,40 +100,58 @@ export function Metas({ onCats, onFixos, onMoedas, onRel, subs = [], b, hoje, on
   );
 }
 
-function Mov({ rows, onDel }: { rows: { id: string; date: string; cents: number; rot: string }[]; onDel: (id: string) => void }) {
+function Mov({ rows, onDel }: { rows: { id: string; date: string; cents: number; rot: string; cur?: MoedaCx; sub?: string }[]; onDel: (id: string) => void }) {
   const [arm, setArm] = useState<string | null>(null);
   return rows.length ? (
     <ul className="ppext">{[...rows].sort((a, c) => c.date.localeCompare(a.date)).map(m => (
-      <li key={m.id}><button type="button" onClick={() => setArm(arm === m.id ? null : m.id)}><span>{m.rot}<em>{dm(m.date)}</em></span><b className={m.cents < 0 ? "neg" : ""}>{R(Math.abs(m.cents))}</b></button>
+      <li key={m.id}><button type="button" onClick={() => setArm(arm === m.id ? null : m.id)}><span>{m.rot}<em>{dm(m.date)}{m.sub ? " · " + m.sub : ""}</em></span><b className={m.cents < 0 ? "neg" : ""}>{RM(Math.abs(m.cents), m.cur)}</b></button>
         {arm === m.id && <button type="button" className="perigo" onClick={() => onDel(m.id)}>Excluir movimento</button>}</li>))}</ul>
   ) : <p className="vazio">Sem movimentos ainda.</p>;
 }
 
 function FolhaCx({ b, c, hoje, onSalvar, onFechar }: { b: Backup; c: Caixinha; hoje: string; onSalvar: (b: Backup) => void; onFechar: () => void }) {
+  const g = caixaMoeda(c), est = g !== "BRL";
   const [v, setV] = useState(""), [d, setD] = useState(hoje), [conta, setConta] = useState(""), [msg, setMsg] = useState(""), [ex, setEx] = useState(false);
-  const contas = ((b.cfg.accts || []) as { name: string }[]).map(a => a.name);
+  const [ent, setEnt] = useState<MoedaCx>(est ? g : "BRL"), [rt, setRt] = useState(""), [hojeCot, setHojeCot] = useState(0);
+  const contas = ((b.cfg.accts || []) as { name: string; cur?: string }[]).filter(a => !a.cur || a.cur === "BRL").map(a => a.name);
+  useEffect(() => {
+    if (!est) return;
+    const usa = (t: { EUR: number; USD: number }) => { const x = g === "USD" ? t.USD : t.EUR; if (x > 0) { setHojeCot(x); setRt(r => r || x.toFixed(4).replace(".", ",")); } };
+    const k = lerCache(); if (k) usa(k);
+    if (!k || Date.now() - k.at > 5 * 60_000) buscarTaxas().then(t => { usa(t); try { localStorage.setItem("despesas.rates2", JSON.stringify(t)); } catch { /* sem armazenamento */ } }).catch(() => undefined);
+  }, [est, g]);
+  const rate = parseFloat(rt.replace(/\./g, "").replace(",", ".")) || 0, x0 = centsDe(v);
+  const simbolo = g === "EUR" ? "€" : "US$";
+  const dica = est && x0 && rate ? (ent === "BRL" ? `${RM(x0, "BRL")} a R$ ${rt} = ${RM(Math.round(x0 / rate), g)}` : `${RM(x0, g)} a R$ ${rt} = ${RM(Math.round(x0 * rate), "BRL")} pagos`) : "";
   const mover = (sinal: 1 | -1) => {
-    const x = centsDe(v); if (!x) return setMsg("Informe o valor.");
-    onSalvar(caixaMover(b, c.id, { id: id(), date: d || hoje, cents: sinal * x, ...(conta ? { acct: conta, ts: Date.now() } : {}) }));
+    if (!x0) return setMsg("Informe o valor.");
+    if (est && rate && hojeCot && (rate < hojeCot * 0.6 || rate > hojeCot * 1.6)) return setMsg("A cotação está muito longe da de hoje. Confira se não está invertida.");
+    onSalvar(caixaMover(b, c.id, cxMovDe(c, { id: id(), date: d || hoje, valor: sinal * x0, entrada: ent, rate: est ? rate : undefined, ...(conta ? { acct: conta, ts: Date.now() } : {}) })));
     setV(""); setMsg("");
   };
-  const s = caixaSaldo(c);
+  const sb = caixaSaldos(c), s = caixaTem(c);
+  const outras = (["BRL", "EUR", "USD"] as const).filter(m => m !== g && sb[m] !== 0).map(m => RM(sb[m], m)).join(" + ");
   return (
     <div className="lfundo" onMouseDown={e => e.target === e.currentTarget && onFechar()}>
       <div className="lfolha" role="dialog" aria-modal="true" aria-labelledby="cxt">
         <h2 id="cxt">{c.name}</h2>
-        <div className="ppsaldo"><small>{c.goal ? `meta ${R(c.goal)} · falta ${R(Math.max(0, c.goal - s))}` : "guardado"}</small><b>{R(s)}</b></div>
+        <div className="ppsaldo"><small>{c.goal ? `meta ${RM(c.goal, g)} · falta ${RM(Math.max(0, c.goal - s), g)}` : "guardado"}{outras ? ` · + ${outras} em outras moedas` : ""}</small><b>{RM(s, g)}</b></div>
         <div className="lgrupo">
+          {est && <div className="lseg" role="group" aria-label="Moeda do valor">
+            {([["BRL", "R$"], [g, simbolo]] as [MoedaCx, string][]).map(([k, n]) => <button key={k} type="button" aria-pressed={ent === k} onClick={() => setEnt(k)}>{n}</button>)}
+          </div>}
           <div className="lduas">
-            <label>Valor (R$)<input inputMode="decimal" value={v} onChange={e => setV(e.target.value)} placeholder="0,00" aria-invalid={msg ? true : undefined} /></label>
+            <label>Valor ({ent === "BRL" ? "R$" : simbolo})<input inputMode="decimal" value={v} onChange={e => setV(e.target.value)} placeholder="0,00" aria-invalid={msg ? true : undefined} /></label>
             <label>Data<input type="date" value={d} onChange={e => setD(e.target.value)} /></label>
           </div>
+          {est && <label>Cotação usada (R$ por {simbolo})<input inputMode="decimal" value={rt} onChange={e => setRt(e.target.value)} placeholder={hojeCot ? hojeCot.toFixed(4).replace(".", ",") : "ex.: 6,10"} /></label>}
+          {dica && <p className="lnota" role="status">{dica}</p>}
           {contas.length > 0 && <label>Descontar da conta<select value={conta} onChange={e => setConta(e.target.value)}><option value="">Não mexer no saldo</option>{contas.map(n => <option key={n}>{n}</option>)}</select></label>}
           {msg && <p className="lerro" role="alert">{msg}</p>}
           <div className="lacoes"><button type="button" className="btn principal" onClick={() => mover(1)}>Guardar</button><button type="button" className="btn" onClick={() => mover(-1)}>Tirar</button></div>
         </div>
         <h3 className="pph">Movimentos</h3>
-        <Mov rows={c.moves.map(m => ({ id: m.id, date: m.date, cents: m.cents, rot: m.cents < 0 ? "Tirou" : "Guardou" }))} onDel={mid => onSalvar(caixaApagarMov(b, c.id, mid))} />
+        <Mov rows={c.moves.map(m => ({ id: m.id, date: m.date, cents: m.cents, cur: m.cur || "BRL", sub: m.brl && m.rate ? `${RM(Math.abs(m.brl))} a R$ ${m.rate.toLocaleString("pt-BR", { maximumFractionDigits: 4 })}` : "", rot: m.cents < 0 ? "Tirou" : "Guardou" }))} onDel={mid => onSalvar(caixaApagarMov(b, c.id, mid))} />
         <button type="button" className="perigo" onClick={() => { if (!ex) setEx(true); else { onSalvar(caixaExcluir(b, c.id)); onFechar(); } }}>{ex ? "Toque de novo para excluir a caixinha" : "Excluir caixinha"}</button>
         <div className="lacoes"><button type="button" className="btn" onClick={onFechar}>Fechar</button></div>
       </div>

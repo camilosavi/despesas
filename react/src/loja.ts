@@ -144,8 +144,9 @@ export function ppQuitar(b: Backup, pid: string, data: string, id: string): Back
 // ===== Caixinhas (cfg.save) e Dívidas (cfg.debts): mesmo modelo do app atual, só R$ =====
 // caixinha: {id,name,goal?,target?,moves:[{id,date,cents (+guardou, − tirou),acct?,ts?}]}
 // dívida:   {id,name,total,per?,day?,moves:[{id,date,cents (+ pagou, − acrescentou)}]}
-export interface CxMov { id: string; date: string; cents: number; acct?: string; ts?: number }
-export interface Caixinha { id: string; name: string; goal?: number; target?: string; moves: CxMov[] }
+export interface CxMov { id: string; date: string; cents: number; acct?: string; ts?: number; cur?: "EUR" | "USD"; brl?: number; rate?: number }
+export type MoedaCx = "BRL" | "EUR" | "USD";
+export interface Caixinha { id: string; name: string; goal?: number; goalCur?: MoedaCx; target?: string; moves: CxMov[] }
 export interface DvMov { id: string; date: string; cents: number }
 export interface Divida { id: string; name: string; total: number; per?: number; day?: number; moves: DvMov[] }
 export const caixas = (b: Backup): Caixinha[] => (Array.isArray(b.cfg.save) ? (b.cfg.save as Caixinha[]) : []);
@@ -155,9 +156,30 @@ export const caixaSaldo = (c: Caixinha) => c.moves.filter(m => !(m as any).cur |
 export const dividaFalta = (d: Divida) => d.total - d.moves.reduce((s, m) => s + m.cents, 0);
 const setCfg = (b: Backup, k: "save" | "debts", v: unknown[]): Backup => ({ ...b, cfg: { ...b.cfg, [k]: v } });
 
-export function caixaCriar(b: Backup, id: string, name: string, goal?: number, target?: string): Backup {
+export function caixaCriar(b: Backup, id: string, name: string, goal?: number, target?: string, goalCur?: MoedaCx): Backup {
   const n = name.trim();
-  return n ? setCfg(b, "save", [...caixas(b), { id, name: n, ...(goal ? { goal } : {}), ...(target ? { target } : {}), moves: [] }]) : b;
+  return n ? setCfg(b, "save", [...caixas(b), { id, name: n, ...(goal ? { goal } : {}), ...(goalCur && goalCur !== "BRL" ? { goalCur } : {}), ...(target ? { target } : {}), moves: [] }]) : b;
+}
+// saldo por moeda (R$, € e US$ nunca se somam)
+export const caixaSaldos = (c: Caixinha): Record<MoedaCx, number> => {
+  const r = { BRL: 0, EUR: 0, USD: 0 };
+  for (const m of c.moves) r[m.cur || "BRL"] += m.cents;
+  return r;
+};
+export const caixaMoeda = (c: Caixinha): MoedaCx => c.goalCur || "BRL";
+/** quanto conta para a meta: só a moeda da meta (R$ guardado não vira € pela cotação do dia) */
+export const caixaTem = (c: Caixinha) => caixaSaldos(c)[caixaMoeda(c)];
+/**
+ * Monta o movimento. `valor` vem com sinal, na moeda de `entrada`.
+ * Caixinha em €/US$: valor em R$ + cotação vira € (cents = R$ ÷ cotação, com `brl` e `rate`);
+ * valor em € + cotação guarda o R$ pago em `brl`; sem cotação, R$ fica em R$ e € fica sem `brl`.
+ */
+export function cxMovDe(c: Caixinha, e: { id: string; date: string; valor: number; entrada: MoedaCx; rate?: number; acct?: string; ts?: number }): CxMov {
+  const base = { id: e.id, date: e.date, ...(e.acct ? { acct: e.acct, ts: e.ts } : {}) };
+  const g = caixaMoeda(c), r = e.rate && e.rate > 0 ? e.rate : 0;
+  if (g === "BRL") return { ...base, cents: e.valor };
+  if (e.entrada === "BRL") return r ? { ...base, cents: Math.round(e.valor / r), cur: g, brl: e.valor, rate: r } : { ...base, cents: e.valor };
+  return { ...base, cents: e.valor, cur: g, ...(r ? { brl: Math.round(e.valor * r), rate: r } : {}) };
 }
 export const caixaExcluir = (b: Backup, id: string) => setCfg(b, "save", caixas(b).filter(c => c.id !== id));
 // guardar/tirar; com `acct`, desconta/devolve na conta (o motor lê acct+ts)

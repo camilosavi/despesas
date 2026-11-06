@@ -15,7 +15,7 @@ const num = (s: string) => { const n = parseFloat(s.trim().replace(/\./g, "").re
 const M = (c: number, m: Moeda) => SIM[m] + " " + (c / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const cot4 = (n: number) => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const CH = "despesas.rates2";
-type Taxas = { EUR: number; USD: number; at: number };
+export type Taxas = { EUR: number; USD: number; at: number };
 
 // cotação do dia: AwesomeAPI, com frankfurter.dev de reserva; guarda a última no aparelho
 export async function buscarTaxas(): Promise<Taxas> {
@@ -28,7 +28,7 @@ export async function buscarTaxas(): Promise<Taxas> {
   const [e, u] = await Promise.all([t("https://api.frankfurter.dev/v1/latest?base=EUR&symbols=BRL"), t("https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL")]);
   return { EUR: +e.rates.BRL, USD: +u.rates.BRL, at: Date.now() };
 }
-const lerCache = (): Taxas | null => { try { const j = JSON.parse(localStorage.getItem(CH) || "null"); return j && j.EUR > 0 ? j : null; } catch { return null; } };
+export const lerCache = (): Taxas | null => { try { const j = JSON.parse(localStorage.getItem(CH) || "null"); return j && j.EUR > 0 ? j : null; } catch { return null; } };
 
 interface Props { b: Backup | null; hoje: string; onSalvar: (b: Backup) => void; onAviso: (t: string) => void; onVoltar: () => void }
 export function Moedas({ b, hoje, onSalvar, onAviso, onVoltar }: Props) {

@@ -13,3 +13,6 @@ export const dataLonga = (d: string) => {
 export const pct1 = (n: number) => n.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 export const hojeISO = (d = new Date()) =>
   d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+
+/** valor em centavos na moeda: R$, € ou US$ */
+export const RM = (c: number, m: "BRL" | "EUR" | "USD" = "BRL") => (m === "BRL" ? R(c) : (m === "EUR" ? "€ " : "US$ ") + (c / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));

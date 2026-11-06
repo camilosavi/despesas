@@ -1,5 +1,5 @@
 import { assinaturas, cobrancasFuturas, subCancelar, subDia, subDividir, subReativar } from "./assinaturas";
-import { caixaCriar, caixaMover, caixaSaldo, caixas, dividaCriar, dividaMover, dividaFalta, dividas, ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, transfExcluir, transfSalvar, transfs, vazio } from "./loja";
+import { caixaCriar, caixaMover, caixaSaldos, caixaTem, cxMovDe, caixaSaldo, caixas, dividaCriar, dividaMover, dividaFalta, dividas, ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, transfExcluir, transfSalvar, transfs, vazio } from "./loja";
 import type { Backup, Form } from "./loja";
 import { cargaDe } from "./dados";
 import * as C from "./engine";
@@ -184,5 +184,26 @@ describe("assinaturas editáveis", () => {
     expect(a).toMatchObject({ dia: 12, pessoas: 3 });
     b = subDividir(subDia(b, "Netflix", 0), "Netflix", 1, 4590);
     expect(b.cfg.subShare.Netflix).toBeUndefined(); expect(b.cfg.subDay.Netflix).toBeUndefined();
+  });
+});
+
+describe("caixinha em €", () => {
+  const mk = () => caixas(caixaCriar({ ...vazio(), cfg: { accts: [{ id: "a", name: "Inter", cents: 500000, at: "2026-11-01", atTs: 1 }] } }, "c1", "Dublin", 200000, undefined, "EUR"))[0];
+  it("R$ + cotação vira €; € + cotação guarda o R$; sem cotação R$ fica em R$", () => {
+    const c = mk();
+    expect(cxMovDe(c, { id: "1", date: "2026-11-06", valor: 100000, entrada: "BRL", rate: 6.25 })).toEqual({ id: "1", date: "2026-11-06", cents: 16000, cur: "EUR", brl: 100000, rate: 6.25 });
+    expect(cxMovDe(c, { id: "2", date: "2026-11-06", valor: 10000, entrada: "EUR", rate: 6 })).toMatchObject({ cents: 10000, cur: "EUR", brl: 60000 });
+    expect(cxMovDe(c, { id: "3", date: "2026-11-06", valor: 5000, entrada: "BRL" })).toEqual({ id: "3", date: "2026-11-06", cents: 5000 });
+    expect(cxMovDe({ ...c, goalCur: undefined }, { id: "4", date: "d", valor: 700, entrada: "BRL", rate: 6 })).toEqual({ id: "4", date: "d", cents: 700 });
+  });
+  it("meta conta só €; o R$ vai à parte; desconto da conta usa o R$ pago", () => {
+    let b: Backup = { ...vazio(), cfg: { accts: [{ id: "a", name: "Inter", cents: 500000, at: "2026-11-01", atTs: 1 }] } };
+    b = caixaCriar(b, "c1", "Dublin", 200000, undefined, "EUR");
+    const c0 = caixas(b)[0];
+    b = caixaMover(b, "c1", cxMovDe(c0, { id: "1", date: "2026-11-06", valor: 100000, entrada: "BRL", rate: 6.25, acct: "Inter", ts: 50 }));
+    b = caixaMover(b, "c1", cxMovDe(c0, { id: "2", date: "2026-11-06", valor: 3000, entrada: "BRL" }));
+    const c = caixas(b)[0];
+    expect(caixaTem(c)).toBe(16000); expect(caixaSaldos(c)).toEqual({ BRL: 3000, EUR: 16000, USD: 0 });
+    expect(C.saldoDaConta(cargaDe(b, "2026-11-06").estado, "Inter")).toBe(400000);
   });
 });
