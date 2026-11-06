@@ -4,36 +4,61 @@
 .mnav span { min-width: 9.5em; text-align: center }
 .mnav button { width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--line); color: var(--ink); font-size: 1.3rem; cursor: pointer }
 .mnav button:disabled { opacity: .35; cursor: default }
-.cgrid { --c: 1; display: grid; gap: 1em; grid-template-columns: minmax(0, 1fr); align-items: start }
-@container phome (min-width: 900px) {
-  .cgrid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); grid-template-areas: "l s" "l r" "l ."; }
-  .cb-lista { grid-area: l } .cb-saldo { grid-area: s } .cb-res { grid-area: r }
-}
-.cb { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3); padding: var(--g-pad); min-width: 0; container-type: inline-size }
+.cgrid { display: grid; gap: 1em; grid-template-columns: minmax(0, 1fr); align-items: start }
+.cb { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3); padding: var(--g-pad); min-width: 0 }
 .cb h3 { margin: 0 0 var(--sp-3); font-size: var(--fs-sm); font-weight: 650 }
+/* saldo (uma previsão só: o fim do mês) */
 .cb-saldo { background: var(--head); border-color: transparent; color: #fff }
 .cb-saldo h3 { color: rgba(255, 255, 255, .88) } .cb-saldo .dbig { color: #fff }
 .clist { margin-top: var(--sp-3) } .clist li { display: flex; justify-content: space-between; gap: 1em; padding: .45em 0; border-top: 1px solid rgba(255, 255, 255, .18); font-size: var(--fs-sm) }
 .clist b { font-variant-numeric: tabular-nums }
-.cbusca input { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-2); padding: 0 1em; font: inherit; font-size: var(--fs-sm); background: var(--bg); color: var(--ink) }
-.chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-3) 0 }
+.cfim { margin: var(--sp-3) 0 0; font-size: var(--fs-sm); color: rgba(255, 255, 255, .9) } .cfim b { color: #fff; font-variant-numeric: tabular-nums }
+.cred { margin: var(--sp-2) 0 0; padding: .5em .8em; border-radius: var(--r-2); background: rgba(236, 122, 139, .22); color: #fff; font-size: var(--fs-xs); font-weight: 600 }
+/* resumo: uma frase e uma barra */
+.cb-res { padding: var(--sp-3) var(--g-pad) }
+.cres { margin: 0 0 var(--sp-2); font-size: var(--fs-sm); color: var(--muted) } .cres b { color: var(--ink) }
+.cbar { display: block; height: .55em; border-radius: var(--r-pill); background: color-mix(in srgb, var(--dcol) 45%, var(--line)); overflow: hidden }
+.cbar i { display: block; height: 100%; background: var(--accent); border-radius: var(--r-pill) }
+/* barra de ferramentas e painéis */
+.ctool { display: flex; gap: var(--sp-2); flex-wrap: wrap }
+.ctool button { display: inline-flex; align-items: center; gap: .45em; min-height: 44px; padding: 0 1em; border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--ink); font-size: var(--fs-sm); cursor: pointer }
+.ctool button[aria-expanded="true"], .ctool button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700 }
+.ctool svg { width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round }
+.cpainel { display: grid; gap: var(--sp-2); margin-top: var(--sp-3) }
+.cpainel input, .cpainel select { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: var(--r-2); padding: 0 1em; font: inherit; font-size: var(--fs-sm); background: var(--bg); color: var(--ink) }
+.chips { display: flex; flex-wrap: wrap; gap: var(--sp-2) }
 .chip { min-height: 44px; padding: 0 1em; border: 1px solid var(--line); border-radius: var(--r-pill); background: none; color: var(--ink); font-size: var(--fs-sm); cursor: pointer }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 700 }
-.mseg { display: flex; border-bottom: 1px solid var(--line); margin-bottom: var(--sp-3) }
-.mseg button { flex: 1; min-height: 44px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; cursor: pointer }
-.mseg button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent) }
-.cdia h4 { display: flex; justify-content: space-between; gap: 1em; margin: var(--sp-3) 0 .2em; font-size: var(--fs-xs); font-weight: 600; color: var(--muted) }
-.cdia h4 span::first-letter { text-transform: uppercase }
-.cdia h4 em { font-style: normal; font-variant-numeric: tabular-nums } .cdia h4 em.pos { color: var(--pos) }
+.climpa { margin-top: var(--sp-3) }
+/* seções da lista */
+.csec { display: flex; align-items: center; gap: .5em; margin: var(--sp-4) 0 .2em; font-size: var(--fs-sm); font-weight: 650 }
+.csec em { font-style: normal; font-size: var(--fs-xs); color: var(--muted); font-weight: 500 }
+.chj { display: flex; align-items: center; gap: .8em; margin: var(--sp-4) 0 0; color: var(--accent); font-size: var(--fs-xs); font-weight: 700 }
+.chj::before, .chj::after { content: ""; flex: 1; border-top: 2px solid var(--accent) }
+.cdia h5 { display: flex; justify-content: space-between; gap: 1em; margin: var(--sp-3) 0 .2em; font-size: var(--fs-xs); font-weight: 600; color: var(--muted) }
+.cdia h5 span::first-letter { text-transform: uppercase }
+.cdia h5 em { font-style: normal; font-variant-numeric: tabular-nums } .cdia h5 em.pos { color: var(--pos) }
 .crow { display: flex; align-items: center; gap: .7em; width: 100%; min-height: 44px; padding: .5em 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; font-size: var(--fs-sm); text-align: left }
 button.crow { cursor: pointer }
-.cdia li:last-child .crow { border-bottom: 0 }
+li:last-child > .crow { border-bottom: 0 }
+.cv2 { display: grid; text-align: right; flex: none }
 .crow .v { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap } .crow .v.rec { color: var(--pos) }
+.cv2 small { color: var(--muted); font-size: var(--fs-xs); white-space: nowrap }
+.cts .dtn small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+/* categorias */
+.cb h3 { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2) }
 .ccat li { display: flex; align-items: center; gap: .7em; padding: .5em 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm) }
 .ccat .cn { flex: 1; min-width: 0; display: grid; gap: .4em } .ccat .cn .mini { margin: 0; max-width: none }
 .ccat .cv { display: grid; text-align: right; font-variant-numeric: tabular-nums } .ccat small { color: var(--muted); font-size: var(--fs-xs) }
-.cfoot { display: block; margin-top: var(--sp-3) }
-.cts .dtn small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+/* celular: categorias é uma vista à parte */
+.cgrid[data-v="lista"] .cb-cat, .cgrid[data-v="cat"] .cb-lista { display: none }
+/* computador: lista à esquerda; saldo, resumo e categorias à direita; sem botão Categorias */
+@container phome (min-width: 900px) {
+  .cgrid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); grid-template-areas: "l s" "l r" "l c" "l ." }
+  .cb-lista { grid-area: l } .cb-saldo { grid-area: s } .cb-res { grid-area: r } .cb-cat { grid-area: c }
+  .cgrid[data-v] .cb-cat, .cgrid[data-v] .cb-lista { display: block }
+  .ccatbtn, .cvolta { display: none !important }
+}
 /* barra de baixo */
 .bar { position: sticky; bottom: 0; display: flex; justify-content: center; gap: var(--sp-2); padding: var(--sp-2) var(--g-side) max(var(--sp-2), env(safe-area-inset-bottom, 0px)); background: var(--surface); border-top: 1px solid var(--line) }
 .bar button { flex: 1; max-width: 12em; min-height: 44px; border: 0; border-radius: var(--r-pill); background: none; color: var(--muted); font-size: var(--fs-sm); font-weight: 600; cursor: pointer }
