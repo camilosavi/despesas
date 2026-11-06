@@ -1,0 +1,13 @@
+/* ===== CONFERÊNCIA DO EXTRATO ===== */
+.extsheet { gap: var(--sp-2) }
+.extl { list-style: none; margin: 0; padding: 0 }
+.extl li { border-bottom: 1px solid var(--line); padding: .3em 0 }
+.extl li.off .extl-d { color: var(--muted) }
+.extl-l { display: flex !important; align-items: center; gap: .7em; min-height: 44px; font-size: var(--fs-sm) !important; color: var(--ink) !important }
+.extl-l input { width: 1.4rem; height: 1.4rem; flex: none }
+.extl-d { flex: 1; min-width: 0; overflow-wrap: anywhere }
+.extl-l b { font-variant-numeric: tabular-nums; white-space: nowrap }
+.extl-l b.pos { color: var(--pos) }
+.extl-m { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); padding-left: calc(1.4rem + .7em); font-size: var(--fs-xs); color: var(--muted) }
+.extl-m > span { flex: 1 1 10em; min-width: 0; overflow-wrap: anywhere }
+.extsheet .extl-m select { width: auto; max-width: 100%; flex: 0 1 12em }

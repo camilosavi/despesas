@@ -7,10 +7,10 @@ import "./voce.css";
 interface Props {
   b: Backup | null; hoje: string; visual: Visual; desfazer: number;
   onVisual: (v: Visual) => void; onSalvar: (b: Backup) => void; onBaixar: () => void; onAbrir: (f?: File) => void;
-  onZerar: () => void; onDesfazer: () => void; onContas: () => void; onVoltar: () => void; onAviso: (m: string) => void;
+  onZerar: () => void; onDesfazer: () => void; onContas: () => void; onExtrato: () => void; onVoltar: () => void; onAviso: (m: string) => void;
 }
 
-export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onVoltar, onAviso }: Props) {
+export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onVoltar, onAviso }: Props) {
   const [nome, setNome] = useState(b ? nomeDe(b) : "");
   const [certo, setCerto] = useState(false);
   const arq = useRef<HTMLInputElement>(null);
@@ -63,7 +63,7 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
 
           <section aria-labelledby="v-ct">
             <h2 id="v-ct">Contas e cartões</h2>
-            <button type="button" className="btn ghost vwide" onClick={onContas}>Editar contas, saldos e cartões</button>
+            <div className="vacoes"><button type="button" className="btn ghost" onClick={onContas}>Editar contas, saldos e cartões</button><button type="button" className="btn ghost" onClick={onExtrato}>Importar extrato (OFX ou CSV)</button></div>
           </section>
 
           <section aria-labelledby="v-bk">
