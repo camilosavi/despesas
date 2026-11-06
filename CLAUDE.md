@@ -963,3 +963,11 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **Nota de saúde só aparece quando há o que dizer** (`noSaude`: nota 100 e nenhum aviso de "Merece atenção"); sem ela a grade do PC usa `.dgrid.nosaude` (Resumo ocupa a largura toda).
 - **Despesa é a ação principal** do cartão de Saldo (botão branco cheio); Receita fica só com contorno.
 - **Aviso de backup** só aparece com 15+ lançamentos (antes 5) e "Depois" adia 7 dias (antes 2).
+
+## React (06/11/2026, pedido dele: "pode fazer o que você sugeriu, e passando pra react") — branch `react-tostao`, pasta `react/`
+- **Não está no ar** (Pages só publica a `main`; o app de `src/app.html` segue intacto). Detalhes e comandos em `react/README.md`.
+- Vite + React 18 + TypeScript. **Um motor só**: `react/src/engine.ts` reexporta `novo/base/*.mjs` (sem copiar); o React não calcula nada.
+- Feito: Início (Visão geral) com os mesmos blocos e a mesma grade do protótipo `novo/visao-geral`, lendo o backup JSON por `deAppAtual`. 13 testes (vitest) + 44 do motor.
+- Tokens (espaço, raio, fonte ≥ `.8rem`, cor, foco) no topo de `react/src/estilo.css`; botões ≥ 44 px, foco visível, zoom liberado, rosca com legenda de valor e tabela escondida para o Fluxo. Hierarquia de 06/11 mantida (Saldo e Resumo principais, resto "quieto"; Nota de saúde só com o que dizer; Despesa é o botão principal).
+- Faltam (seguem no app atual): Contas, Cartões, lançar/editar, leitores, Open Finance, login/sync, avisos, temas, arrastar/redimensionar widgets, logos dos bancos. Cada tela entra só com desenho aprovado por ele; nada vai para o ar sem ele mandar.
+- Cuidado aprendido: regra de celular no meio do CSS perde para regras de mesma especificidade mais abaixo; fica no fim do arquivo.

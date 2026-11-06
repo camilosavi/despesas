@@ -1,0 +1,169 @@
+/* ===== TOKENS (definidos uma vez; o resto só usa var(--…)) ===== */
+:root {
+  /* espaço */
+  --g-side: 16px; --g-top: 12px; --g-gap: 12px; --g-pad: 1.1em;
+  --sp-1: .25em; --sp-2: .5em; --sp-3: .8em; --sp-4: 1.2em;
+  /* raio */
+  --r-1: .3em; --r-2: .8em; --r-3: 1.25rem; --r-pill: 99px;
+  /* tipo: nada abaixo de .8rem (≈ 11 px com a base de 14 px) */
+  --fs-xs: .8rem; --fs-sm: .86rem; --fs-md: .95rem; --fs-lg: 1.15rem;
+  --fs-num: clamp(.85rem, 4cqi, 1.15rem);
+  /* cor (tema Tostão, claro) */
+  --bg: #f6f7f9; --surface: #fff; --quiet: color-mix(in srgb, var(--ink) 3.5%, var(--bg));
+  --line: #e4e7ec; --ink: #14203a; --muted: #5d6578;
+  --head: #14203a; --accent: #c9a25a; --on-accent: #14203a; --focus: #14203a;
+  --pos: #25794c; --neg: #b83a4d; --warn: #9a5b08;
+  --rcol: #3d9a6b; --dcol: #e08a96;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0d1119; --surface: #161c28; --line: #252d3d; --ink: #eef1f6; --muted: #a2abbd;
+    --accent: #d9b66f; --focus: #d9b66f; --pos: #4fbf86; --neg: #ec7a8b; --warn: #e3a64a; --rcol: #4fbf86; color-scheme: dark; }
+}
+:root[data-theme="dark"] { --bg: #0d1119; --surface: #161c28; --line: #252d3d; --ink: #eef1f6; --muted: #a2abbd;
+  --accent: #d9b66f; --focus: #d9b66f; --pos: #4fbf86; --neg: #ec7a8b; --warn: #e3a64a; --rcol: #4fbf86; color-scheme: dark; }
+
+/* ===== BASE ===== */
+* { box-sizing: border-box }
+html { font-size: clamp(14px, min(.42vw + 8.4px, 2.1vh), 26px) }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased }
+h1, h3, h4 { margin: 0 }
+ul { margin: 0; padding: 0; list-style: none }
+button { font: inherit }
+.neg { color: var(--neg) }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap }
+/* foco visível em tudo que se toca (WCAG 2.4.7); no bloco azul o anel é branco */
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px }
+.d-saldo :focus-visible { outline-color: #fff }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+
+/* ===== PÁGINA ===== */
+.carga { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); margin: var(--g-top) var(--g-side) 0; padding: var(--sp-3) 1em; border: 1px dashed var(--line); border-radius: var(--r-2); font-size: var(--fs-xs) }
+.st2 { flex: 1 1 16em; min-width: 0; color: var(--muted) }
+.aviso { margin: var(--sp-2) var(--g-side) 0; font-size: var(--fs-xs); color: var(--muted) }
+.btn { border: 0; border-radius: var(--r-2); min-height: 44px; padding: 0 1em; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; background: var(--accent); color: var(--on-accent) }
+.btn.ghost { background: var(--line); color: var(--ink) }
+.pg { container-type: inline-size; container-name: phome; padding: var(--g-top) max(var(--g-side), env(safe-area-inset-right, 0px)) 40px max(var(--g-side), env(safe-area-inset-left, 0px)); max-width: 1920px; margin: 0 auto }
+.dtop { display: flex; align-items: center; gap: var(--sp-3); margin: 0 0 var(--g-gap) }
+.dtop .ola { flex: 1; min-width: 0 }
+.dtop h1 { font-size: var(--fs-lg); font-weight: 700 }
+.dtop .ola small { display: block; color: var(--muted); font-size: var(--fs-xs) }
+.dtop button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; cursor: pointer }
+.dtop svg { width: 1.4em; height: 1.4em; fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round }
+
+/* ===== GRADE (4 colunas no PC, 2 no meio, 1 no celular; blocos encaixam como no protótipo) ===== */
+.dgrid { --cols: 1; --u: 4.8em; display: grid; gap: 1em; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); grid-auto-rows: var(--u); grid-auto-flow: dense }
+@container phome (min-width: 560px) { .dgrid { --cols: 2 } }
+@container phome (min-width: 900px) { .dgrid { --cols: 4 } }
+.db { grid-column: span min(var(--w), var(--cols)); grid-row: span var(--h); overflow: hidden; min-height: 0; min-width: 0; container-type: inline-size;
+  display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-3); padding: var(--g-pad) }
+/* hierarquia: Saldo e Resumo são os principais; os outros são quietos */
+.db.quieto { background: var(--quiet); border-color: transparent; border-radius: 1.1em }
+.db h3 { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); margin: 0 0 var(--sp-3); font-size: var(--fs-sm); font-weight: 650; color: var(--ink) }
+.db h3 small, .dim { font-size: var(--fs-xs); font-weight: 500; color: var(--muted) }
+.db b, .db small { white-space: nowrap }
+.vazio { color: var(--muted); font-size: var(--fs-xs); white-space: normal !important }
+.dlink { position: relative; border: 0; background: none; padding: 0; cursor: pointer; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; font-size: var(--fs-xs); font-weight: 500 }
+.dlink::after { content: ""; position: absolute; inset: -14px -6px } /* alvo de toque ≥ 44 px sem mexer no layout */
+.dbig { display: block; font-weight: 700; font-size: clamp(1.3rem, 10cqi, 2.2rem); letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.05 }
+
+/* Saldo: cor lisa (sem degradê), borda de luz fina */
+.d-saldo { background: var(--head); border-color: transparent; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); color: #fff }
+:root[data-theme="dark"] .d-saldo { background: color-mix(in srgb, var(--head) 60%, #5277c4) }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .d-saldo { background: color-mix(in srgb, var(--head) 60%, #5277c4) } }
+.d-saldo h3, .d-saldo .dlink, .d-saldo .dbig { color: #fff }
+.d-saldo h3 { color: rgba(255, 255, 255, .88) }
+.dsub { display: block; margin-top: .35em; font-size: var(--fs-xs); color: rgba(255, 255, 255, .85); white-space: normal !important }
+.dqa { display: flex; gap: var(--sp-2); margin-top: auto; padding-top: var(--sp-3) }
+.dqa button { flex: 1; min-height: 44px; border-radius: var(--r-2); padding: 0 .6em; font-size: var(--fs-sm); font-weight: 700; cursor: pointer }
+.dqa .prim { border: 1px solid #fff; background: #fff; color: var(--head) }
+.dqa .sec { border: 1px solid rgba(255, 255, 255, .5); background: transparent; color: #fff }
+
+/* Resumo */
+.drs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2) }
+.drc { display: grid; gap: .2em; padding: .7em .8em; border-radius: var(--r-2); min-width: 0; background: color-mix(in srgb, var(--pos) 13%, transparent) }
+.drc.out { background: color-mix(in srgb, var(--neg) 12%, transparent) }
+.drc.sob { background: color-mix(in srgb, var(--accent) 16%, transparent) }
+.drc > span { font-size: var(--fs-xs); font-weight: 600 }
+.drc > b { font-size: var(--fs-num); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis }
+.drc > small { font-size: var(--fs-xs); color: var(--muted); white-space: normal !important; line-height: 1.25 }
+@container (max-width: 340px) { .drs { grid-template-columns: 1fr } .drc { grid-template-columns: auto 1fr; align-items: center } .drc > small { display: none } .drc > b { text-align: right } }
+
+/* Nota de saúde */
+.dsc2 { display: flex; align-items: baseline; gap: .35em; margin-bottom: var(--sp-2) }
+.dsc2 > b { font-size: clamp(1.5rem, 10cqi, 2.2rem); line-height: 1 }
+.dsc2 > span { color: var(--muted); font-size: var(--fs-md) }
+.dbadge { font-style: normal; margin-left: var(--sp-2); font-size: var(--fs-xs); font-weight: 600; padding: .2em .7em; border-radius: var(--r-pill); align-self: center }
+.t-pos { --tc: var(--pos) } .t-accent { --tc: var(--accent) } .t-warn { --tc: var(--warn) } .t-neg { --tc: var(--neg) }
+.dbadge { color: var(--tc); background: color-mix(in srgb, var(--tc) 14%, transparent) }
+.dbar { display: block; height: .5em; border-radius: var(--r-pill); background: var(--line); overflow: hidden }
+.dbar i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--tc) }
+.dwhy { margin-top: var(--sp-3); font-size: var(--fs-xs); color: var(--muted) }
+.dwhy li { white-space: normal; padding: .15em 0 }
+.dwhy li::before { content: "• " }
+
+/* Fluxo de caixa */
+.leg { display: flex; gap: .9em; font-size: var(--fs-xs); font-weight: 500; color: var(--muted) }
+.leg i { display: inline-block; width: .6em; height: .6em; border-radius: 50%; margin-right: .35em }
+.leg .rcol { background: var(--rcol) } .leg .dcol { background: var(--dcol) }
+.fl { display: flex; gap: .7em; align-items: flex-end; flex: 1; min-height: 0; padding-top: .2em;
+  background: repeating-linear-gradient(to top, transparent 0, transparent calc(25% - 1px), var(--line) calc(25% - 1px), var(--line) 25%); background-position: 0 -1.4em }
+.flc { flex: 1; display: grid; gap: .5em; text-align: center; height: 100%; grid-template-rows: 1fr auto }
+.flb { display: flex; align-items: flex-end; justify-content: center; gap: .2em; min-height: 0 }
+.flb i { display: block; width: 34%; max-width: 1.6em; border-radius: var(--r-1) var(--r-1) 0 0; min-height: 2px }
+.flb .r { background: var(--rcol) } .flb .d { background: var(--dcol) }
+.flc small { font-size: var(--fs-xs); color: var(--muted) } .flc.now small { color: var(--ink); font-weight: 700 }
+
+/* Gastos: rosca + legenda com valor (cor nunca é a única informação) */
+.dnw { display: grid; gap: 1.1em; align-items: center; flex: 1; min-height: 0; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto }
+.dnb { position: relative; height: 100%; max-width: 100%; aspect-ratio: 1; justify-self: center; min-height: 0; container-type: inline-size }
+.dnb svg { position: absolute; inset: 0; width: 100%; height: 100% }
+.dnc { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: .1em }
+.dnc small { color: var(--muted); font-size: var(--fs-xs); max-width: 7em; overflow: hidden; text-overflow: ellipsis; margin: 0 auto }
+.dnc b { font-size: clamp(.95rem, 8cqi, 1.4rem) }
+.dleg { display: grid; gap: .45em }
+.dleg li { display: flex; align-items: center; gap: .55em; font-size: var(--fs-sm) }
+.dleg i { width: .7em; height: .7em; border-radius: 50%; flex: none }
+.dleg span { flex: 1; overflow: hidden; text-overflow: ellipsis }
+.dleg em { font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums }
+
+/* Cartões */
+.d-cartoes { overflow-y: auto }
+.dcard { border-radius: 1em; padding: 1em; color: #fff; background: var(--cc); display: grid; gap: .35em; aspect-ratio: 1.9; align-content: space-between; max-width: 21em; width: 100%; margin-inline: auto; flex: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14) }
+.dcard .nm { font-weight: 700; font-size: var(--fs-md) }
+.dcard .vl { font-size: clamp(1.1rem, 7cqi, 1.6rem); font-weight: 700; font-variant-numeric: tabular-nums }
+.dcard small { color: rgba(255, 255, 255, .9); font-size: var(--fs-xs) }
+.mini { display: block; height: .5em; border-radius: var(--r-pill); background: var(--line); overflow: hidden; max-width: 21em; width: 100%; margin: .7em auto 0; flex: none }
+.mini i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--accent) }
+.dsub2 { font-size: var(--fs-xs); color: var(--muted); font-weight: 600; margin: 1em 0 .3em }
+
+/* Listas (faturas, compras, vencimentos, transações, pessoas) */
+.lista, .lista1 { overflow-y: auto; scrollbar-width: thin; min-height: 0; flex: 1 }
+.dfr, .dcr, .dtr { break-inside: avoid; display: flex; align-items: center; gap: .7em; padding: .5em 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm) }
+.dfr:last-child, .dcr:last-child, .dtr:last-child { border-bottom: 0 }
+.dfr > span, .dcr > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.dfr em, .dcr em { font-style: normal; color: var(--muted); font-size: var(--fs-xs) }
+.st { font-size: var(--fs-xs); font-weight: 600; padding: .15em .6em; border-radius: var(--r-pill); background: var(--line); color: var(--muted); font-style: normal }
+.st.paga { color: var(--pos); background: color-mix(in srgb, var(--pos) 14%, transparent) }
+.st.venc { color: var(--neg); background: color-mix(in srgb, var(--neg) 14%, transparent) }
+.st.abre { color: var(--warn); background: color-mix(in srgb, var(--warn) 16%, transparent) }
+.ic { width: 2.1em; height: 2.1em; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: var(--fs-xs); font-weight: 700; color: #fff }
+.dtn { display: grid; min-width: 0; margin-right: auto }
+.dtn b { overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-md) }
+.dtn small { color: var(--muted); font-size: var(--fs-xs); overflow: hidden; text-overflow: ellipsis }
+.dtr > div:last-child { text-align: right; display: grid }
+.dtr .v { font-weight: 700; font-variant-numeric: tabular-nums } .dtr .v.rec { color: var(--pos) }
+.dtr small { color: var(--muted); font-size: var(--fs-xs) }
+.d-trans .lista { columns: 2; column-gap: 1.4em }
+.db[style*="--w: 1"] .lista { columns: 1 }
+
+/* ===== CELULAR (fica por último de propósito: as regras acima têm a mesma especificidade e esta precisa vencer) =====
+   uma coluna, cada bloco com a altura do próprio conteúdo (sem vão) */
+@container phome (max-width: 559px) {
+  .dgrid { grid-auto-rows: auto }
+  .db { grid-row: auto; overflow: visible }
+  .d-gastos .dnb { height: auto; width: min(100%, 13em) }
+  .lista, .lista1 { overflow: visible }
+  .fl { flex: none; height: 11em }
+  .d-trans .lista { columns: 1 }
+}
