@@ -1,7 +1,7 @@
 import { useState } from "react";
 import * as C from "./engine";
 import type { Estado, Pers } from "./engine";
-import { catDe } from "./blocos";
+import { Marca, catDe } from "./blocos";
 import type { Destino } from "./blocos";
 import { FILTRO0, contasEmReal, fluxoDoMes } from "./contas";
 import type { Filtro, Linha, Tipo } from "./contas";
@@ -13,7 +13,7 @@ const ICO_BUSCA = "M11 5a6 6 0 100 12 6 6 0 000-12zM20 20l-4-4";
 const ICO_FILTRO = "M4 6h16M7 12h10M10 18h4";
 const Ico = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={d} /></svg>;
 
-function Item({ x, pers, onIr, data }: { x: Linha; pers: Pers; onIr: (d: Destino) => void; data?: boolean }) {
+function Item({ x, e, pers, onIr, data }: { x: Linha; e: Estado; pers: Pers; onIr: (d: Destino) => void; data?: boolean }) {
   const c = x.tipo === "fatura" ? { n: "Cartão", c: "#5b6b9a" }
     : x.tipo === "previsto" ? { n: "Previsto", c: "#8A8F98" }
     : catDe(x.cat || (C.SEM_CATEGORIA as Record<string, string>)[x.rec ? "rec" : "desp"], x.rec ? "rec" : "desp", pers);
@@ -22,7 +22,7 @@ function Item({ x, pers, onIr, data }: { x: Linha; pers: Pers; onIr: (d: Destino
   const sub = [quando, x.tipo === "fatura" ? "cartão" : c.n, sit].filter(Boolean).join(" · ");
   const corpo = (
     <>
-      <span className="ic" style={{ background: c.c }} aria-hidden="true">{x.nome[0]}</span>
+      {x.tipo === "fatura" ? <Marca nome={x.cartao!} e={e} /> : <span className="ic" style={{ background: c.c }} aria-hidden="true">{x.nome[0]}</span>}
       <span className="dtn"><b>{x.nome}</b><small className={x.atrasada ? "neg" : ""}>{sub}</small></span>
       <span className="cv2">
         <span className={"v " + (x.rec ? "rec" : "")}>{x.rec ? "+" : "−"}{R(x.cents)}</span>
@@ -62,7 +62,7 @@ export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Des
         <section className="cb cb-saldo" aria-label="Saldos">
           <h3>Na conta hoje</h3>
           <b className="dbig">{R(C.naConta(e))}</b>
-          {contas.length > 0 && <ul className="clist">{contas.map(a => <li key={a.nome}><span>{a.nome}</span><b>{R(C.saldoDaConta(e, a.nome))}</b></li>)}</ul>}
+          {contas.length > 0 && <ul className="clist">{contas.map(a => <li key={a.nome}><Marca nome={a.nome} e={e} /><span>{a.nome}</span><b>{R(C.saldoDaConta(e, a.nome))}</b></li>)}</ul>}
           {r.fimDoMes != null && <p className="cfim">Fim de {mLab(ym).split(" de ")[0]}: <b>{R(r.fimDoMes)}</b></p>}
           {fx.vermelho && <p className="cred" role="status">Fica no vermelho em {dm(fx.vermelho.data)}, depois de “{fx.vermelho.nome}”.</p>}
         </section>
@@ -95,7 +95,7 @@ export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Des
           {fx.futuro.length > 0 && (
             <>
               <h4 className="csec">Ainda vai acontecer <em>{fx.futuro.length}</em></h4>
-              <ul>{fx.futuro.map(x => <Item key={x.id} x={x} pers={pers} onIr={onIr} data />)}</ul>
+              <ul>{fx.futuro.map(x => <Item key={x.id} x={x} e={e} pers={pers} onIr={onIr} data />)}</ul>
             </>
           )}
           {ym === hoje && <div className="chj" role="separator" aria-label={"Hoje, " + dataLonga(e.hoje)}><span>hoje · {dm(e.hoje)}</span></div>}
@@ -105,7 +105,7 @@ export function Contas({ e, pers, onIr }: { e: Estado; pers: Pers; onIr: (d: Des
               {fx.passado.map(d => (
                 <div key={d.data} className="cdia">
                   <h5><span>{dataLonga(d.data)}</span><em className={d.total < 0 ? "" : "pos"}>{d.total < 0 ? "−" : "+"}{R(Math.abs(d.total))}</em></h5>
-                  <ul>{d.linhas.map(x => <Item key={x.id} x={x} pers={pers} onIr={onIr} />)}</ul>
+                  <ul>{d.linhas.map(x => <Item key={x.id} x={x} e={e} pers={pers} onIr={onIr} />)}</ul>
                 </div>
               ))}
             </>

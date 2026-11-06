@@ -2,6 +2,8 @@ import * as C from "./engine";
 import type { Estado, Pers } from "./engine";
 import { MES, R, dm, mLab, pct1 } from "./format";
 import { notaDeSaude } from "./saude";
+import { marcaDe } from "./marcas";
+import type { CSSProperties } from "react";
 
 export type Destino = "contas" | "cartoes" | "transacoes" | "lancar-rec" | "lancar-desp" | "menu" | "busca" | "avisos";
 export interface BlocoProps { e: Estado; pers: Pers; onIr: (d: Destino) => void }
@@ -198,4 +200,12 @@ export function Pessoas({ e }: BlocoProps) {
       </div>
     </>
   );
+}
+
+// Ícone do banco/conta/cartão: quadrado na cor da marca com o logo (ou a sigla). Decorativo: o nome vem ao lado.
+export function Marca({ nome, e }: { nome: string; e?: Estado }) {
+  const m = marcaDe(nome, e), st = { background: m.cor, color: m.escuro ? "#1A1A1A" : "#fff", "--k": m.k } as CSSProperties;
+  return m.logo
+    ? <span className="fi" style={st} aria-hidden="true" dangerouslySetInnerHTML={{ __html: m.logo }} />
+    : <span className="fi" style={st} aria-hidden="true">{m.rotulo}</span>;
 }
