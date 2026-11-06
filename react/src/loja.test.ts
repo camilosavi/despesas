@@ -1,4 +1,4 @@
-import { ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
+import { caixaCriar, caixaMover, caixaSaldo, caixas, dividaCriar, dividaMover, dividaFalta, dividas, ppCriar, ppLancar, ppSaldo, ppSinal, ppQuitar, ppDe, ppExcluir, marcarVarios, apagar, criar, dataNaFatura, editar, marcarPago, salvarCartao, salvarConta, vazio } from "./loja";
 import type { Form } from "./loja";
 import { cargaDe } from "./dados";
 import * as C from "./engine";
@@ -67,5 +67,18 @@ describe("loja (gravação)", () => {
     expect(C.saldosPorPessoa(cargaDe(b, HOJE).estado)).toEqual([{ pessoa: "Ana", cents: 7500 }]);
     expect(ppSaldo(ppDe(ppQuitar(b, "a1", HOJE, "e3"))[0])).toBe(0);
     expect(ppDe(ppExcluir(b, "a1"))).toHaveLength(0);
+  });
+  it("caixinha desconta da conta; dívida acompanha o que falta", () => {
+    let b = caixaCriar(base(), "c1", "Viagem", 100000);
+    const antes = C.naConta(cargaDe(b, HOJE).estado);
+    b = caixaMover(b, "c1", { id: "m1", date: HOJE, cents: 30000, acct: "Nubank", ts: AGORA + 10 });
+    b = caixaMover(b, "c1", { id: "m2", date: HOJE, cents: -5000 });
+    expect(caixaSaldo(caixas(b)[0])).toBe(25000);
+    expect(antes - C.naConta(cargaDe(b, HOJE).estado)).toBe(30000);
+    let d = dividaCriar(b, "d1", "Empréstimo", 90000);
+    d = dividaMover(d, "d1", { id: "p1", date: HOJE, cents: 20000 });
+    d = dividaMover(d, "d1", { id: "p2", date: HOJE, cents: -1000 });
+    expect(dividaFalta(dividas(d)[0])).toBe(71000);
+    expect(dividaCriar(d, "x", "", 5)).toBe(d);
   });
 });

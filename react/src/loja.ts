@@ -140,3 +140,40 @@ export function ppQuitar(b: Backup, pid: string, data: string, id: string): Back
   const p = ppDe(b).find(x => x.id === pid), s = p ? ppSaldo(p) : 0;
   return s ? ppLancar(b, pid, { id, d: data, c: -s, k: "p", t: s > 0 ? "Pagou tudo" : "Paguei tudo" }) : b;
 }
+
+// ===== Caixinhas (cfg.save) e Dívidas (cfg.debts): mesmo modelo do app atual, só R$ =====
+// caixinha: {id,name,goal?,target?,moves:[{id,date,cents (+guardou, − tirou),acct?,ts?}]}
+// dívida:   {id,name,total,per?,day?,moves:[{id,date,cents (+ pagou, − acrescentou)}]}
+export interface CxMov { id: string; date: string; cents: number; acct?: string; ts?: number }
+export interface Caixinha { id: string; name: string; goal?: number; target?: string; moves: CxMov[] }
+export interface DvMov { id: string; date: string; cents: number }
+export interface Divida { id: string; name: string; total: number; per?: number; day?: number; moves: DvMov[] }
+export const caixas = (b: Backup): Caixinha[] => (Array.isArray(b.cfg.save) ? (b.cfg.save as Caixinha[]) : []);
+export const dividas = (b: Backup): Divida[] => (Array.isArray(b.cfg.debts) ? (b.cfg.debts as Divida[]) : []);
+// só movimentos em R$ (os em €/US$ seguem no app atual)
+export const caixaSaldo = (c: Caixinha) => c.moves.filter(m => !(m as any).cur || (m as any).cur === "BRL").reduce((s, m) => s + m.cents, 0);
+export const dividaFalta = (d: Divida) => d.total - d.moves.reduce((s, m) => s + m.cents, 0);
+const setCfg = (b: Backup, k: "save" | "debts", v: unknown[]): Backup => ({ ...b, cfg: { ...b.cfg, [k]: v } });
+
+export function caixaCriar(b: Backup, id: string, name: string, goal?: number, target?: string): Backup {
+  const n = name.trim();
+  return n ? setCfg(b, "save", [...caixas(b), { id, name: n, ...(goal ? { goal } : {}), ...(target ? { target } : {}), moves: [] }]) : b;
+}
+export const caixaExcluir = (b: Backup, id: string) => setCfg(b, "save", caixas(b).filter(c => c.id !== id));
+// guardar/tirar; com `acct`, desconta/devolve na conta (o motor lê acct+ts)
+export function caixaMover(b: Backup, cid: string, m: CxMov): Backup {
+  if (!m.cents) return b;
+  return setCfg(b, "save", caixas(b).map(c => (c.id === cid ? { ...c, moves: [...c.moves, m] } : c)));
+}
+export const caixaApagarMov = (b: Backup, cid: string, mid: string) =>
+  setCfg(b, "save", caixas(b).map(c => (c.id === cid ? { ...c, moves: c.moves.filter(m => m.id !== mid) } : c)));
+
+export function dividaCriar(b: Backup, id: string, name: string, total: number, per?: number): Backup {
+  const n = name.trim();
+  return n && total > 0 ? setCfg(b, "debts", [...dividas(b), { id, name: n, total, ...(per ? { per } : {}), moves: [] }]) : b;
+}
+export const dividaExcluir = (b: Backup, id: string) => setCfg(b, "debts", dividas(b).filter(d => d.id !== id));
+export const dividaMover = (b: Backup, did: string, m: DvMov): Backup =>
+  m.cents ? setCfg(b, "debts", dividas(b).map(d => (d.id === did ? { ...d, moves: [...d.moves, m] } : d))) : b;
+export const dividaApagarMov = (b: Backup, did: string, mid: string) =>
+  setCfg(b, "debts", dividas(b).map(d => (d.id === did ? { ...d, moves: d.moves.filter(m => m.id !== mid) } : d)));
