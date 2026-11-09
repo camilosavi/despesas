@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Inicio } from "./Inicio";
+import { Barra, Gaveta } from "./Casca";
+import { fotoLer } from "./voce";
 import { Contas } from "./Contas";
 import { Cartoes } from "./Cartoes";
 import type { Destino } from "./blocos";
@@ -58,6 +60,8 @@ export function App() {
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
+  const [gaveta, setGaveta] = useState(false);
+  const [bkTick, setBkTick] = useState(0);
   const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf" | "voce" | "busca" | "avisos" | "patrimonio" | "of">("inicio");
   const [visual, setVisual] = useState<Visual>(lerVisual);
   const [antes, setAntes] = useState<Backup | null>(() => { try { const t = localStorage.getItem(CH_ANTES); return t ? (JSON.parse(t) as Backup) : null; } catch { return null; } });
@@ -116,6 +120,8 @@ export function App() {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([JSON.stringify(b)], { type: "application/json" }));
     a.download = `um-tostao-backup-${hoje}.json`; a.click(); URL.revokeObjectURL(a.href);
+    try { localStorage.setItem("despesas.react.bkEm", String(Date.now())); } catch { /* sem armazenamento */ }
+    setBkTick(x => x + 1);
   };
   const mudarVisual = (v: Visual) => { setVisual(v); guardarVisual(v); aplicarVisual(v); };
   const zerar = () => {
@@ -166,20 +172,25 @@ export function App() {
   if (LOGIN && !nv.ses) return <Login onEntrou={() => nv.setSes(sessao())} />;
   if (travado) return <Trava modo="entrar" onOk={() => { setTravado(false); setTela("inicio"); }} />;
   const r = c.resumo;
+  const dias = (k: string) => { try { const v = +(localStorage.getItem(k) || 0); return v ? Math.floor((Date.now() - v) / 864e5) : Infinity; } catch { return Infinity; } };
+  void bkTick;
+  const diasBk = dias("despesas.react.bkEm");
+  const faixaBk = b && b.items.length >= 15 && diasBk >= 7 && dias("despesas.react.bkDepois") >= 7 ? (
+    <section className="bline"><span className="bdot" /><span className="bt">{diasBk === Infinity ? "Sem backup" : `Último backup há ${diasBk} dias`}</span>
+      <button className="lk" onClick={() => { try { localStorage.setItem("despesas.react.bkDepois", String(Date.now())); } catch { /* */ } setBkTick(x => x + 1); }}>Depois</button>
+      <button className="lk" onClick={baixar}>Fazer agora</button></section>
+  ) : null;
+  const irTela = (t: string) => { setAviso(""); setTela(t as typeof tela); window.scrollTo(0, 0); };
   return (
-    <>
-      <div className="carga">
-        <button type="button" className="btn" onClick={() => arq.current?.click()}>Usar meus dados</button>
-        {!b && <button type="button" className="btn" onClick={() => salvar(vazio())}>Começar do zero</button>}
-        <input ref={arq} type="file" accept=".json,application/json" hidden onChange={ev => abrir(ev.target.files?.[0])} />
-        {b && <button type="button" className="btn ghost" onClick={baixar}>Baixar backup</button>}
-        {b && <button type="button" className="btn ghost" onClick={() => { if (confirm("Voltar ao exemplo? Os dados guardados neste navegador serão apagados (baixe o backup antes).")) { setB(null); guardar(null); } }}>Voltar ao exemplo</button>}
-        <span className="st2" role="status">
-          {c.erro ? <b className="neg">{c.erro}</b>
-            : r ? `Seus dados: ${r.lancamentos} lançamentos · ${r.faturas} faturas · ${r.contas} ${r.contas === 1 ? "conta" : "contas"} · ${r.cartoes} ${r.cartoes === 1 ? "cartão" : "cartões"}${r.semData ? " · " + r.semData + " sem data/valor (ignorados)" : ""}. Ficam só neste navegador; baixe o backup de vez em quando.`
-            : "Exemplo com dados inventados. “Começar do zero” cria o seu; “Usar meus dados” lê o backup JSON da tela Você. Nada sai deste navegador."}
-        </span>
-      </div>
+    <div className="wrap">
+      {!b && (
+        <div className="carga">
+          <button type="button" className="btn" onClick={() => arq.current?.click()}>Usar meus dados</button>
+          <button type="button" className="btn" onClick={() => salvar(vazio())}>Começar do zero</button>
+          <input ref={arq} type="file" accept=".json,application/json" hidden onChange={ev => abrir(ev.target.files?.[0])} />
+          <span className="st2" role="status">{c.erro ? <b className="neg">{c.erro}</b> : "Exemplo com dados inventados. “Começar do zero” cria o seu; “Usar meus dados” lê o backup JSON da tela Você. Nada sai deste navegador."}</span>
+        </div>
+      )}
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "inicio" && ofNovo && b && (
         <section className="ofbanner" aria-label="Novidades do banco">
@@ -194,7 +205,7 @@ export function App() {
       )}
       {tela === "voce" ? <Voce b={b} hoje={hoje} visual={visual} desfazer={antes ? antes.items.length : 0} onVisual={mudarVisual} onSalvar={salvar} onBaixar={baixar} onAbrir={abrir}
           onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onBloquear={() => setTravado(true)} conta={nv.ses ? { email: nv.ses.email, st: nv.st, onAgora: () => void nv.agora(true), onSync: () => nv.agora(), onSair: async () => { const m = await nv.sairConta(); if (!m) location.reload(); return m; } } : undefined} onContas={() => b ? setAjustes(true) : undefined} onOpenFin={() => setTela("of")} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
-        : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} nAvisos={nAvisos} />
+        : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={d => d === "menu" ? setGaveta(true) : ir(d)} nAvisos={nAvisos} onAbrir={id => lancar({ id })} faixa={faixaBk} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onPatri={() => setTela("patrimonio")} onExtrato={pedirExtrato} />
         : tela === "busca" ? <Busca e={c.estado} pers={c.pers} onEdit={b ? id => lancar({ id }) : undefined} onVoltar={() => setTela("inicio")} />
         : tela === "avisos" ? <Avisos e={c.estado} b={b} pers={c.pers} onSalvar={salvar} onVoltar={() => setTela("inicio")}
@@ -209,20 +220,15 @@ export function App() {
         : tela === "metas" ? <Metas onCats={() => setTela("categorias")} onFixos={() => setTela("fixos")} onMoedas={() => setTela("moedas")} onRel={() => setTela("relatorios")} subs={assinaturas(c.estado.lancamentos, b)} b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : tela === "pessoas" ? <Pessoas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} onPdf={b ? pedirExtrato : undefined} />}
-      <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>
-      <nav className="bar" aria-label="Telas">
-        <button type="button" aria-current={tela === "inicio" ? "page" : undefined} onClick={() => { setTela("inicio"); setAviso(""); }}>Início</button>
-        <button type="button" aria-current={tela === "contas" || tela === "transf" || tela === "patrimonio" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
-        <button type="button" aria-current={tela === "cartoes" ? "page" : undefined} onClick={() => { setTela("cartoes"); setAviso(""); }}>Cartões</button>
-        <button type="button" aria-current={tela === "pessoas" ? "page" : undefined} onClick={() => { setTela("pessoas"); setAviso(""); }}>Pessoas</button>
-        <button type="button" aria-current={tela === "metas" || tela === "relatorios" || tela === "moedas" || tela === "fixos" || tela === "categorias" ? "page" : undefined} onClick={() => { setTela("metas"); setAviso(""); }}>Metas</button>
-      </nav>
+      <button type="button" className="fab" id="addBtn" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}><b aria-hidden="true">+</b><span id="addLbl">Lançamento</span></button>
+      <Barra tela={tela} onIr={irTela} foto={fotoLer()} nome={c.nome} />
+      <Gaveta aberta={gaveta} tela={tela} onFechar={() => setGaveta(false)} onIr={irTela} />
       {pedido && b && <Lancar key={pedido.id ?? pedido.tipo} b={b} pers={c.pers} hoje={hoje} pedido={pedido} onSalvar={salvar} onFechar={() => setPedido(null)} />}
       <input ref={arqExt} type="file" accept=".pdf,application/pdf,.ofx,.qfx,.csv,text/csv" hidden onChange={ev => abrirExtrato(ev.target.files?.[0])} />
       {ext && b && <Extrato key={ext.e.at + ext.e.linhas.length} b={b} e={ext.e} plano={ext.plano} cats={{ desp: C.lista("desp", c.pers) as { k: string; n: string }[], rec: C.lista("rec", c.pers) as { k: string; n: string }[] }} onSalvar={salvar} onAviso={setAviso} onFechar={() => setExt(null)} />}
       {fatPdf && b && <FaturaPdf b={b} r={fatPdf} hoje={hoje} cartoes={Object.entries((b.cfg.cards || {}) as Record<string, { kind?: string }>).filter(([, k]) => k.kind !== "ben").map(([n]) => n)} cats={C.lista("desp", c.pers) as { k: string; n: string }[]} onSalvar={salvar} onAviso={setAviso} onFechar={() => setFatPdf(null)} />}
       {holPdf && b && <HoleritePdf b={b} h={holPdf} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onFechar={() => setHolPdf(null)} />}
       {ajustes && b && <Ajustes b={b} hoje={hoje} onSalvar={salvar} onBaixar={baixar} onFechar={() => setAjustes(false)} />}
-    </>
+    </div>
   );
 }

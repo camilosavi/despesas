@@ -28,7 +28,7 @@ export function lerVisual(): Visual {
 export function guardarVisual(v: Visual) { try { localStorage.setItem(CHAVE, JSON.stringify(v)); } catch { /* sem armazenamento */ } }
 export function aplicarVisual(v: Visual, el: HTMLElement = document.documentElement) {
   if (v.modo === "auto") el.removeAttribute("data-theme"); else el.setAttribute("data-theme", v.modo);
-  if (v.cor === "tostao") el.removeAttribute("data-accent"); else el.setAttribute("data-accent", v.cor);
+  el.setAttribute("data-accent", v.cor);
   const st = el.ownerDocument.getElementById("thLivre");
   if (v.cor === "livre" && v.livre) {
     const t = st || el.ownerDocument.head.appendChild(Object.assign(el.ownerDocument.createElement("style"), { id: "thLivre" }));

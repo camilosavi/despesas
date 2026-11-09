@@ -1,0 +1,7 @@
+/* Ponte: telas ainda no desenho do React convivem com o CSS do app antigo (antigo.css). Sai tela por tela conforme forem portadas. */
+.wrap .pg{padding-inline:0}
+.pg{padding:var(--g-top) 0 40px;max-width:1920px;margin:0 auto}
+.carga{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0;padding:12px 14px;border:1px dashed var(--line);border-radius:14px;font-size:.86rem}
+.st2{flex:1 1 16em;min-width:0;color:var(--muted)}
+.dbn{position:absolute;top:2px;right:0;min-width:18px;height:18px;border-radius:9px;background:var(--neg);color:#fff;font-size:.7rem;display:grid;place-items:center;padding:0 4px}
+.dbell{position:relative}
