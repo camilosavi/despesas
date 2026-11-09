@@ -1,0 +1,2 @@
+{"name":"Um Tostão (novo)","short_name":"Tostão novo","start_url":"./","scope":"./","display":"standalone","background_color":"#14203A","theme_color":"#14203A","lang":"pt-BR",
+"icons":[{"src":"tostao-192.png","sizes":"192x192","type":"image/png"},{"src":"tostao-512.png","sizes":"512x512","type":"image/png"},{"src":"tostao-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}]}
