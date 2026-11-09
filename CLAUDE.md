@@ -1,5 +1,6 @@
 # Um Tostão (antes "Minhas Despesas") — contexto para o Claude
 
+> **09/11/2026: versão React em teste, lado a lado, em https://camilosavi.github.io/despesas/app/** (pasta `app/` = build de `react/` da branch `react-tostao`; o app de `src/app.html` segue sendo o principal e não foi mexido). Para atualizar: na branch `react-tostao`, `cd react && npx vite build --outDir ../app --emptyOutDir` e copiar `app/` para a `main`. Nunca editar `app/` à mão.
 > **27/10/2026: o `main` ganhou login + banco no Supabase** (seção "Conta e sincronização no Supabase" abaixo; no lugar do Drive).
 > **21/10/2026 (noite): o app antigo voltou ao `main`** (árvore idêntica ao commit `68e3b9b`), por pedido dele.
 > A versão nova (Tostão, React + TypeScript, login Supabase, contas, faturas, Open Finance) ficou guardada na branch
