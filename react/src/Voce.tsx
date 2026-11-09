@@ -1,3 +1,5 @@
+import { ContaNuvem } from "./ContaNuvem";
+import type { EstadoNuvem } from "./useNuvem";
 import { useEffect, useRef, useState } from "react";
 import { CORES, MODOS, csvLancamentos, estatisticas, fotoGuardar, fotoLer, fotoPreparar, hexOk, nomeDe, salvarNome } from "./voce";
 import type { Visual } from "./voce";
@@ -11,9 +13,10 @@ interface Props {
   b: Backup | null; hoje: string; visual: Visual; desfazer: number;
   onVisual: (v: Visual) => void; onSalvar: (b: Backup) => void; onBaixar: () => void; onAbrir: (f?: File) => void;
   onZerar: () => void; onDesfazer: () => void; onContas: () => void; onBloquear: () => void; onExtrato: () => void; onVoltar: () => void; onAviso: (m: string) => void;
+  conta?: { email: string; st: EstadoNuvem; onAgora: () => void; onSair: () => Promise<string> };
 }
 
-export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onBloquear, onVoltar, onAviso }: Props) {
+export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onBloquear, onVoltar, onAviso, conta }: Props) {
   const [nome, setNome] = useState(b ? nomeDe(b) : "");
   const [certo, setCerto] = useState(false);
   const arq = useRef<HTMLInputElement>(null), arqFoto = useRef<HTMLInputElement>(null);
@@ -77,6 +80,8 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
         </div>
         <p className="lnota">Cor e foto ficam só neste aparelho.</p>
       </section>
+
+      {conta && <ContaNuvem conta={conta} onAviso={onAviso} />}
 
       <section aria-labelledby="v-sn">
         <h2 id="v-sn">Senha{bioOk ? " e " + bioNome() : ""}</h2>
