@@ -34,7 +34,7 @@ import type { Backup } from "./loja";
 import { hojeISO } from "./format";
 import { Login } from "./Login";
 import { useNuvem, LOGIN } from "./useNuvem";
-import { lapideAdd, sessao, sumiram } from "./nuvem";
+import { concluirVolta, lapideAdd, lerVolta, sessao, sumiram } from "./nuvem";
 
 const CHAVE = "despesas.react.backup";
 const CH_ANTES = "despesas.react.antesZerar";
@@ -68,6 +68,12 @@ export function App() {
   const salvar = (nb: Backup) => { lapideAdd(sumiram(b, nb)); setB(nb); guardar(nb); setErro(""); };
   const daNuvem = (nb: Backup, av: string) => { setB(nb); guardar(nb); if (av) setAviso(av); };
   const nv = useNuvem(b, daNuvem);
+  useEffect(() => { // volta de "Vincular Google" com a sessão aberta: guarda a sessão nova e limpa o endereço
+    const v = lerVolta(location.hash); if (!v || !sessao()) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    if (v.at) concluirVolta(v).then(s => nv.setSes(s)).catch(() => setAviso("Não deu para concluir. Tente de novo."));
+    else if (v.err) setAviso("Não deu para vincular: " + v.err);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const abrir = async (f?: File) => {
     if (!f) return;
     const r = abrirBackup(await lerArquivo(f).catch(() => "")); 
@@ -134,7 +140,7 @@ export function App() {
       </div>
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "voce" ? <Voce b={b} hoje={hoje} visual={visual} desfazer={antes ? antes.items.length : 0} onVisual={mudarVisual} onSalvar={salvar} onBaixar={baixar} onAbrir={abrir}
-          onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onBloquear={() => setTravado(true)} conta={nv.ses ? { email: nv.ses.email, st: nv.st, onAgora: () => void nv.agora(true), onSair: async () => { const m = await nv.sairConta(); if (!m) location.reload(); return m; } } : undefined} onContas={() => b ? setAjustes(true) : undefined} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
+          onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onBloquear={() => setTravado(true)} conta={nv.ses ? { email: nv.ses.email, st: nv.st, onAgora: () => void nv.agora(true), onSync: () => nv.agora(), onSair: async () => { const m = await nv.sairConta(); if (!m) location.reload(); return m; } } : undefined} onContas={() => b ? setAjustes(true) : undefined} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
         : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} nAvisos={nAvisos} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onPatri={() => setTela("patrimonio")} onExtrato={pedirExtrato} />
         : tela === "busca" ? <Busca e={c.estado} pers={c.pers} onEdit={b ? id => lancar({ id }) : undefined} onVoltar={() => setTela("inicio")} />

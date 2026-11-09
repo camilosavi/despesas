@@ -42,3 +42,8 @@
 .vfoto img, .vfv { width: 64px; height: 64px; border-radius: 50%; object-fit: cover }
 .vfv { display: grid; place-items: center; background: var(--accent); color: var(--on-accent); font-size: 1.6rem; font-weight: 700 }
 .vfoto .btn { min-height: 44px }
+.vsub { margin: var(--sp-3) 0 var(--sp-1); font-size: var(--fs-base, 1rem) }
+.vfe { list-style: none; margin: 0; padding: 0; display: grid }
+.vfe li { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); min-height: 52px; border-top: 1px solid var(--line, rgba(128,128,128,.25)) }
+.vfe li:first-child { border-top: 0 } .vok { font-style: normal; color: var(--pos) }
+.vsenhanova { display: grid; gap: var(--sp-2); margin-top: var(--sp-2) } .vsenhanova input { min-height: 48px; padding: 0 12px; font: inherit; border-radius: 12px; border: 1.5px solid var(--line, rgba(128,128,128,.4)); background: transparent; color: inherit }

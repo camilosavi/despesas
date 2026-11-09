@@ -1,7 +1,7 @@
 import { ContaNuvem } from "./ContaNuvem";
 import type { EstadoNuvem } from "./useNuvem";
 import { useEffect, useRef, useState } from "react";
-import { CORES, MODOS, csvLancamentos, estatisticas, fotoGuardar, fotoLer, fotoPreparar, hexOk, nomeDe, salvarNome } from "./voce";
+import { CORES, MODOS, csvLancamentos, estatisticas, fotoDe, fotoDeGuardar, fotoDeUrl, fotoGuardar, fotoLer, fotoPreparar, hexOk, nomeDe, salvarNome } from "./voce";
 import type { Visual } from "./voce";
 import type { Backup } from "./loja";
 import { Trava } from "./Trava";
@@ -13,7 +13,7 @@ interface Props {
   b: Backup | null; hoje: string; visual: Visual; desfazer: number;
   onVisual: (v: Visual) => void; onSalvar: (b: Backup) => void; onBaixar: () => void; onAbrir: (f?: File) => void;
   onZerar: () => void; onDesfazer: () => void; onContas: () => void; onBloquear: () => void; onExtrato: () => void; onVoltar: () => void; onAviso: (m: string) => void;
-  conta?: { email: string; st: EstadoNuvem; onAgora: () => void; onSair: () => Promise<string> };
+  conta?: { email: string; st: EstadoNuvem; onAgora: () => void; onSair: () => Promise<string>; onSync: () => Promise<void> };
 }
 
 export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onBloquear, onVoltar, onAviso, conta }: Props) {
@@ -21,13 +21,20 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
   const [certo, setCerto] = useState(false);
   const arq = useRef<HTMLInputElement>(null), arqFoto = useRef<HTMLInputElement>(null);
   const [foto, setFoto] = useState(fotoLer), [corFoto, setCorFoto] = useState("");
+  const [gFoto, setGFoto] = useState(""), [origem, setOrigem] = useState(fotoDe);
+  const usarGoogle = async (u: string, quieto = false) => {
+    const r = await fotoDeUrl(u);
+    if (!r) { if (!quieto) onAviso("Não consegui baixar a foto do Google."); return; }
+    fotoGuardar(r.url); fotoDeGuardar("google"); setFoto(r.url); setOrigem("google"); setCorFoto(r.cor); if (!quieto) onAviso("Foto do Google em uso.");
+  };
+  const veioPerfil = (p: { avatar: string }) => { setGFoto(p.avatar); if (p.avatar && !fotoLer() && fotoDe() !== "manual") void usarGoogle(p.avatar, true); };
   const [senha, setSenha] = useState(temSenha()), [bio, setBio] = useState(temBio()), [bioOk, setBioOk] = useState(false);
   const [trava, setTrava] = useState<null | "criar" | "trocar" | "remover" | "bio">(null);
   useEffect(() => { bioDisponivel().then(setBioOk); }, []);
   const livre = hexOk(visual.livre) ? visual.livre! : "#2f7d5e";
   const escolherFoto = async (f?: File) => {
     if (!f) return;
-    try { const r = await fotoPreparar(f); fotoGuardar(r.url); setFoto(r.url); setCorFoto(r.cor); onAviso(r.cor ? "Foto salva. Quer combinar o app com a cor dela?" : "Foto salva."); } catch { onAviso("Não consegui abrir essa imagem."); }
+    try { const r = await fotoPreparar(f); fotoGuardar(r.url); fotoDeGuardar("manual"); setOrigem("manual"); setFoto(r.url); setCorFoto(r.cor); onAviso(r.cor ? "Foto salva. Quer combinar o app com a cor dela?" : "Foto salva."); } catch { onAviso("Não consegui abrir essa imagem."); }
     if (arqFoto.current) arqFoto.current.value = "";
   };
   const csv = () => {
@@ -74,14 +81,15 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
           <div className="vfoto">
             {foto ? <img src={foto} alt="Sua foto" width={64} height={64} /> : <span className="vfv" aria-hidden="true">{(nome || "?").slice(0, 1).toUpperCase()}</span>}
             <button type="button" className="btn ghost" onClick={() => arqFoto.current?.click()}>{foto ? "Trocar foto" : "Escolher foto"}</button>
-            {foto && <button type="button" className="btn ghost" onClick={() => { fotoGuardar(""); setFoto(""); setCorFoto(""); }}>Tirar foto</button>}
+            {foto && <button type="button" className="btn ghost" onClick={() => { fotoGuardar(""); fotoDeGuardar("manual"); setOrigem("manual"); setFoto(""); setCorFoto(""); }}>Tirar foto</button>}
+            {gFoto && origem !== "google" && <button type="button" className="btn ghost" onClick={() => void usarGoogle(gFoto)}>Usar a do Google</button>}
             <input ref={arqFoto} type="file" accept="image/*" hidden onChange={ev => escolherFoto(ev.target.files?.[0])} />
           </div>
         </div>
-        <p className="lnota">Cor e foto ficam só neste aparelho.</p>
+        <p className="lnota">Cor e foto ficam só neste aparelho.{origem === "google" ? " A foto veio da sua conta do Google; escolha outra quando quiser." : ""}</p>
       </section>
 
-      {conta && <ContaNuvem conta={conta} onAviso={onAviso} />}
+      {conta && <ContaNuvem conta={conta} onAviso={onAviso} onPerfil={veioPerfil} />}
 
       <section aria-labelledby="v-sn">
         <h2 id="v-sn">Senha{bioOk ? " e " + bioNome() : ""}</h2>

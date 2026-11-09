@@ -75,6 +75,14 @@ export function corDominante(px: ArrayLike<number>): string {
 const CH_FOTO = "despesas.react.foto";
 export const fotoLer = (): string => { try { return localStorage.getItem(CH_FOTO) || ""; } catch { return ""; } };
 export const fotoGuardar = (d: string) => { try { if (d) localStorage.setItem(CH_FOTO, d); else localStorage.removeItem(CH_FOTO); } catch { /* sem armazenamento */ } };
+const CH_FOTO_DE = "despesas.react.fotoDe";
+/** de onde veio a foto: "google" (veio da conta) ou "manual" (ele escolheu ou tirou); manual nunca é trocada sozinha */
+export const fotoDe = (): string => { try { return localStorage.getItem(CH_FOTO_DE) || ""; } catch { return ""; } };
+export const fotoDeGuardar = (d: "google" | "manual" | "") => { try { if (d) localStorage.setItem(CH_FOTO_DE, d); else localStorage.removeItem(CH_FOTO_DE); } catch { /* ok */ } };
+/** baixa a foto do Google e recorta como as outras; falha em silêncio (sem CORS/rede) */
+export async function fotoDeUrl(u: string): Promise<{ url: string; cor: string } | null> {
+  try { const r = await fetch(u); if (!r.ok) return null; const b = await r.blob(); return await fotoPreparar(new File([b], "g.jpg", { type: b.type || "image/jpeg" })); } catch { return null; }
+}
 /** recorta em quadrado 320 px (JPEG) */
 export async function fotoPreparar(f: File): Promise<{ url: string; cor: string }> {
   const bmp = await createImageBitmap(f), lado = Math.min(bmp.width, bmp.height);

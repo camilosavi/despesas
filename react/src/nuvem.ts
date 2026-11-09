@@ -247,3 +247,30 @@ export async function sair() {
   try { await fetch(`${SB_URL}/auth/v1/logout`, { method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + (s?.at || "") } }); } catch { /* sem rede: sai assim mesmo */ }
   try { const ks: string[] = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("despesas.")) ks.push(k); } ks.forEach(k => localStorage.removeItem(k)); sessionStorage.clear(); } catch { /* ok */ }
 }
+
+/* ---------- formas de entrar e perfil (Google) ---------- */
+export interface Perfil { prov: string[]; avatar: string; nome: string }
+export async function perfil(): Promise<Perfil> {
+  const t = await token();
+  const r = await fetch(`${SB_URL}/auth/v1/user`, { headers: { apikey: SB_KEY, Authorization: "Bearer " + t } });
+  if (!r.ok) throw new NuvemErro("http " + r.status, r.status);
+  const u: any = await r.json(), am = u.app_metadata || {}, um = u.user_metadata || {};
+  const L = new Set([...(am.providers || []), am.provider, ...(u.identities || []).map((i: any) => i.provider)].filter(Boolean));
+  const g = (u.identities || []).find((i: any) => i.provider === "google")?.identity_data || {};
+  const avatar = String(um.avatar_url || um.picture || g.avatar_url || g.picture || "");
+  return { prov: [...L] as string[], avatar: /^https:\/\//.test(avatar) ? avatar : "", nome: String(um.full_name || um.name || g.full_name || g.name || "") };
+}
+/* "Vincular" usa o manual linking do Supabase; devolve o endereço do Google para abrir */
+export async function urlVincular(provider: string, volta: string): Promise<string> {
+  const t = await token();
+  const r = await fetch(`${SB_URL}/auth/v1/user/identities/authorize?provider=${provider}&redirect_to=${encodeURIComponent(volta)}`, { headers: { apikey: SB_KEY, Authorization: "Bearer " + t } });
+  const j: any = await r.json().catch(() => ({}));
+  if (!r.ok || !j.url) throw new NuvemErro(j.msg || j.message || "http " + r.status, r.status, j.error_code || j.code);
+  return j.url;
+}
+export function mensagemVincular(e: unknown): string {
+  const x = e as NuvemErro, m = String(x?.message || e);
+  if (/manual.?link/i.test(m) || /identity_not_found|manual_linking_disabled/.test(x?.code || "")) return "Vincular ainda não está liberado no servidor (Supabase: Authentication, Sign In / Providers, Allow manual linking).";
+  if (/provider.*(not enabled|disabled)|validation_failed/i.test(m)) return "O Google não está ligado no Supabase.";
+  return mensagemAuth(e);
+}

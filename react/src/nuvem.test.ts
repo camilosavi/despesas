@@ -15,7 +15,8 @@ function servidor() {
       sv.refresh++; return body.refresh_token === "R" ? resp(200, { access_token: "N" + sv.refresh, refresh_token: "R", expires_in: 3600 }) : resp(400, { msg: "bad refresh" });
     }
     if (p.endsWith("/auth/v1/signup")) return body.email === "existe@x.com" ? resp(200, { id: "u9", identities: [] }) : resp(200, { id: "u2", identities: [{}] });
-    if (p.endsWith("/auth/v1/user")) return resp(200, { id: "u1", email: "a@b.com" });
+    if (p.endsWith("/auth/v1/user/identities/authorize")) return u.searchParams.get("provider") === "google" ? resp(200, { url: "https://accounts.google.com/x" }) : resp(422, { error_code: "manual_linking_disabled", msg: "Manual linking is disabled" });
+    if (p.endsWith("/auth/v1/user")) return resp(200, { id: "u1", email: "a@b.com", app_metadata: { provider: "email", providers: ["email", "google"] }, user_metadata: { picture: "https://lh3.googleusercontent.com/a", full_name: "Ana" } });
     if (p.includes("/rest/v1/sync_rows")) {
       if (!sv.tabela) return resp(404, { code: "PGRST205", message: "no table" });
       if (init.method === "GET") { const o = +(u.searchParams.get("offset") || 0), l = +(u.searchParams.get("limit") || 1000); return resp(200, [...rows.values()].sort((a, b) => (a.kind + a.id).localeCompare(b.kind + b.id)).slice(o, o + l)); }
@@ -67,6 +68,19 @@ describe("login", () => {
     aparelho().usar(); await N.entrar("a@b.com", "certa1");
     N.sessaoGravar({ ...N.sessao()!, exp: 0 }); sv.fail = 503;
     await expect(N.token()).rejects.toThrow(); expect(N.sessao()).not.toBeNull();
+  });
+});
+
+describe("formas de entrar", () => {
+  it("lê provedores, foto e nome do Google", async () => {
+    aparelho().usar(); await N.entrar("a@b.com", "certa1");
+    const p = await N.perfil();
+    expect(p.prov.sort()).toEqual(["email", "google"]); expect(p.avatar).toBe("https://lh3.googleusercontent.com/a"); expect(p.nome).toBe("Ana");
+  });
+  it("vincular devolve o endereço e erro de manual linking vira mensagem clara", async () => {
+    aparelho().usar(); await N.entrar("a@b.com", "certa1");
+    expect(await N.urlVincular("google", "http://x/")).toMatch(/^https:\/\/accounts\.google/);
+    try { await N.urlVincular("github", "http://x/"); } catch (e) { expect(N.mensagemVincular(e)).toMatch(/Allow manual linking/); }
   });
 });
 
