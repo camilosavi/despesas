@@ -1,0 +1,14 @@
+/* Tela da senha: sempre marinho + dourado (não segue o tema escolhido, como o logo) */
+.trava { position: fixed; inset: 0; z-index: 100; display: grid; align-content: center; justify-items: center; gap: var(--sp-3); padding: 24px; background: radial-gradient(circle at 50% 0, #1f3358, #14203a 70%); color: #fff; text-align: center }
+.tvmarca { color: #d9b66f; font-size: 1.1rem; letter-spacing: .02em }
+.trava h1 { margin: 0; font-size: var(--fs-lg); font-weight: 600 }
+.tvpontos { display: flex; gap: 14px; margin: var(--sp-2) 0 }
+.tvpontos i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #d9b66f } .tvpontos i.on { background: #d9b66f }
+.tvmsg { min-height: 1.4em; margin: 0; font-size: var(--fs-sm); color: #f2b8c0 }
+.tvteclado { display: grid; grid-template-columns: repeat(3, 76px); gap: 14px; justify-content: center }
+.tvteclado button, .tvteclado span { height: 64px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .1); color: #fff; font-size: 1.5rem; font-weight: 500; cursor: pointer }
+.tvteclado button:active { background: rgba(217, 182, 111, .35) }
+.tvteclado .tvaux { background: none; font-size: var(--fs-sm) }
+.tvteclado span { background: none }
+.trava button:focus-visible { outline: 3px solid #d9b66f; outline-offset: 2px }
+@media (max-height: 640px) { .tvteclado { grid-template-columns: repeat(3, 64px); gap: 10px } .tvteclado button, .tvteclado span { height: 52px; font-size: 1.3rem } .trava { gap: var(--sp-2) } }

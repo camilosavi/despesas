@@ -1,20 +1,32 @@
-import { useRef, useState } from "react";
-import { CORES, MODOS, csvLancamentos, estatisticas, nomeDe, salvarNome } from "./voce";
+import { useEffect, useRef, useState } from "react";
+import { CORES, MODOS, csvLancamentos, estatisticas, fotoGuardar, fotoLer, fotoPreparar, hexOk, nomeDe, salvarNome } from "./voce";
 import type { Visual } from "./voce";
 import type { Backup } from "./loja";
+import { Trava } from "./Trava";
+import { bioAtivar, bioDesligar, bioDisponivel, bioNome, removerSenha, temBio, temSenha } from "./senha";
 import { R, dm } from "./format";
 import "./voce.css";
 
 interface Props {
   b: Backup | null; hoje: string; visual: Visual; desfazer: number;
   onVisual: (v: Visual) => void; onSalvar: (b: Backup) => void; onBaixar: () => void; onAbrir: (f?: File) => void;
-  onZerar: () => void; onDesfazer: () => void; onContas: () => void; onExtrato: () => void; onVoltar: () => void; onAviso: (m: string) => void;
+  onZerar: () => void; onDesfazer: () => void; onContas: () => void; onBloquear: () => void; onExtrato: () => void; onVoltar: () => void; onAviso: (m: string) => void;
 }
 
-export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onVoltar, onAviso }: Props) {
+export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onBloquear, onVoltar, onAviso }: Props) {
   const [nome, setNome] = useState(b ? nomeDe(b) : "");
   const [certo, setCerto] = useState(false);
-  const arq = useRef<HTMLInputElement>(null);
+  const arq = useRef<HTMLInputElement>(null), arqFoto = useRef<HTMLInputElement>(null);
+  const [foto, setFoto] = useState(fotoLer), [corFoto, setCorFoto] = useState("");
+  const [senha, setSenha] = useState(temSenha()), [bio, setBio] = useState(temBio()), [bioOk, setBioOk] = useState(false);
+  const [trava, setTrava] = useState<null | "criar" | "trocar" | "remover" | "bio">(null);
+  useEffect(() => { bioDisponivel().then(setBioOk); }, []);
+  const livre = hexOk(visual.livre) ? visual.livre! : "#2f7d5e";
+  const escolherFoto = async (f?: File) => {
+    if (!f) return;
+    try { const r = await fotoPreparar(f); fotoGuardar(r.url); setFoto(r.url); setCorFoto(r.cor); onAviso(r.cor ? "Foto salva. Quer combinar o app com a cor dela?" : "Foto salva."); } catch { onAviso("Não consegui abrir essa imagem."); }
+    if (arqFoto.current) arqFoto.current.value = "";
+  };
   const csv = () => {
     if (!b) return;
     const a = document.createElement("a");
@@ -48,8 +60,43 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
             ))}
           </div>
         </div>
-        <p className="lnota">Fica só neste aparelho.</p>
+        <div className="lgrupo"><span className="lrot" id="v-cl">Cor livre</span>
+          <div className="vlivre">
+            <input type="color" aria-label="Escolher uma cor" value={livre} onChange={x => onVisual({ ...visual, cor: "livre", livre: x.target.value })} />
+            <button type="button" className="vcor" aria-pressed={visual.cor === "livre"} onClick={() => onVisual({ ...visual, cor: "livre", livre })}><i style={{ background: livre }} aria-hidden="true" />Usar {livre}</button>
+            {corFoto && <button type="button" className="vcor" onClick={() => { onVisual({ ...visual, cor: "livre", livre: corFoto }); setCorFoto(""); }}><i style={{ background: corFoto }} aria-hidden="true" />Combinar com a foto</button>}
+          </div>
+        </div>
+        <div className="lgrupo"><span className="lrot" id="v-ft">Foto</span>
+          <div className="vfoto">
+            {foto ? <img src={foto} alt="Sua foto" width={64} height={64} /> : <span className="vfv" aria-hidden="true">{(nome || "?").slice(0, 1).toUpperCase()}</span>}
+            <button type="button" className="btn ghost" onClick={() => arqFoto.current?.click()}>{foto ? "Trocar foto" : "Escolher foto"}</button>
+            {foto && <button type="button" className="btn ghost" onClick={() => { fotoGuardar(""); setFoto(""); setCorFoto(""); }}>Tirar foto</button>}
+            <input ref={arqFoto} type="file" accept="image/*" hidden onChange={ev => escolherFoto(ev.target.files?.[0])} />
+          </div>
+        </div>
+        <p className="lnota">Cor e foto ficam só neste aparelho.</p>
       </section>
+
+      <section aria-labelledby="v-sn">
+        <h2 id="v-sn">Senha{bioOk ? " e " + bioNome() : ""}</h2>
+        {!senha ? (
+          <div className="vacoes"><button type="button" className="btn" onClick={() => setTrava("criar")}>Criar senha de 6 dígitos</button></div>
+        ) : (
+          <div className="vacoes">
+            <button type="button" className="btn ghost" onClick={onBloquear}>Bloquear agora</button>
+            <button type="button" className="btn ghost" onClick={() => setTrava("trocar")}>Trocar senha</button>
+            {bioOk && (bio
+              ? <button type="button" className="btn ghost" onClick={() => { bioDesligar(); setBio(false); onAviso(bioNome() + " desligado."); }}>Desligar {bioNome()}</button>
+              : <button type="button" className="btn ghost" onClick={async () => { if (await bioAtivar(nome)) { setBio(true); onAviso(bioNome() + " ligado."); } else onAviso("Não consegui ligar " + bioNome() + "."); }}>Ligar {bioNome()}</button>)}
+            <button type="button" className="perigo" onClick={() => setTrava("remover")}>Tirar a senha</button>
+          </div>
+        )}
+        <p className="lnota">A senha só trava este aparelho e fica só aqui. Não dá para recuperar: se esquecer, é preciso apagar os dados do navegador.</p>
+      </section>
+      {trava === "criar" && <Trava modo="criar" onOk={() => { setTrava(null); setSenha(true); onAviso("Senha criada."); }} onCancelar={() => setTrava(null)} />}
+      {trava === "trocar" && <Trava modo="conferir" onOk={() => setTrava("criar")} onCancelar={() => setTrava(null)} />}
+      {trava === "remover" && <Trava modo="conferir" onOk={() => { removerSenha(); setSenha(false); setBio(false); setTrava(null); onAviso("Senha removida."); }} onCancelar={() => setTrava(null)} />}
 
       {b ? (
         <>

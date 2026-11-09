@@ -37,3 +37,8 @@
 :root[data-theme="dark"][data-accent="grafite"] { --head: #232733; --accent: #aeb7cc; --on-accent: #0d1119; --focus: #aeb7cc }
 .vest { margin: 0; display: grid } .vest div { display: flex; justify-content: space-between; gap: 1em; padding: .55em 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm) }
 .vest dt { color: var(--muted) } .vest dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0 }
+.vlivre, .vfoto { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) }
+.vlivre input[type=color] { width: 56px; height: 44px; padding: 2px; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface); cursor: pointer }
+.vfoto img, .vfv { width: 64px; height: 64px; border-radius: 50%; object-fit: cover }
+.vfv { display: grid; place-items: center; background: var(--accent); color: var(--on-accent); font-size: 1.6rem; font-weight: 700 }
+.vfoto .btn { min-height: 44px }

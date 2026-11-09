@@ -2,7 +2,7 @@
 import type { Backup } from "./loja";
 
 export type Modo = "auto" | "light" | "dark";
-export interface Visual { modo: Modo; cor: string }
+export interface Visual { modo: Modo; cor: string; livre?: string }
 export const CORES = [
   { id: "tostao", nome: "Tostão", cor: "#c9a25a" },
   { id: "verde", nome: "Verde", cor: "#2f7d5e" },
@@ -20,7 +20,8 @@ export function lerVisual(): Visual {
     const v = JSON.parse(localStorage.getItem(CHAVE) || "null") as Partial<Visual> | null;
     return {
       modo: v && MODOS.some(m => m.id === v.modo) ? (v.modo as Modo) : "auto",
-      cor: v && CORES.some(c => c.id === v.cor) ? (v.cor as string) : "tostao",
+      cor: v && (v.cor === "livre" ? hexOk(v.livre) : CORES.some(c => c.id === v.cor)) ? (v.cor as string) : "tostao",
+      ...(v && v.cor === "livre" && hexOk(v.livre) ? { livre: v.livre!.toLowerCase() } : {}),
     };
   } catch { return visualPadrao; }
 }
@@ -28,6 +29,58 @@ export function guardarVisual(v: Visual) { try { localStorage.setItem(CHAVE, JSO
 export function aplicarVisual(v: Visual, el: HTMLElement = document.documentElement) {
   if (v.modo === "auto") el.removeAttribute("data-theme"); else el.setAttribute("data-theme", v.modo);
   if (v.cor === "tostao") el.removeAttribute("data-accent"); else el.setAttribute("data-accent", v.cor);
+  const st = el.ownerDocument.getElementById("thLivre");
+  if (v.cor === "livre" && v.livre) {
+    const t = st || el.ownerDocument.head.appendChild(Object.assign(el.ownerDocument.createElement("style"), { id: "thLivre" }));
+    t.textContent = livreCss(v.livre);
+  } else st?.remove();
+}
+
+// ---------- cor livre (hex) e cor da foto ----------
+export const hexOk = (h?: string): boolean => typeof h === "string" && /^#[0-9a-f]{6}$/i.test(h);
+const rgb = (h: string): [number, number, number] => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) as [number, number, number];
+const hex = (c: number[]) => "#" + c.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, "0")).join("");
+const mist = (h: string, alvo: number, t: number) => hex(rgb(h).map(x => x + (alvo - x) * t));
+export const lum = (h: string) => { const [r, g, b] = rgb(h).map(x => { const v = x / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+export const contraste = (a: string, b: string) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+/** escurece/clareia até o texto (branco ou quase preto) ter contraste ≥ 4,5:1 sobre o destaque */
+function destaque(h: string, claro: boolean): { accent: string; on: string } {
+  let a = h;
+  for (let i = 0; i < 40; i++) {
+    const on = claro ? "#ffffff" : "#0d1119";
+    if (contraste(a, on) >= 4.5) return { accent: a, on };
+    a = claro ? mist(a, 0, 0.08) : mist(a, 255, 0.08);
+  }
+  return claro ? { accent: "#000000", on: "#ffffff" } : { accent: "#ffffff", on: "#0d1119" };
+}
+export function livreCss(h: string): string {
+  const L = destaque(h, true), D = destaque(h, false);
+  const claro = `--head:${mist(h, 0, 0.45)};--accent:${L.accent};--on-accent:${L.on};--focus:${L.accent}`;
+  const escuro = `--head:${mist(h, 0, 0.7)};--accent:${D.accent};--on-accent:${D.on};--focus:${D.accent}`;
+  return `:root[data-accent="livre"]{${claro}}\n:root:not([data-theme="light"])[data-accent="livre"]{${escuro}}\n:root[data-theme="dark"][data-accent="livre"]{${escuro}}`;
+}
+/** cor dominante (média das cores vivas) de uma lista de pixels RGBA */
+export function corDominante(px: ArrayLike<number>): string {
+  let r = 0, g = 0, b = 0, n = 0;
+  for (let i = 0; i + 3 < px.length; i += 4) {
+    if (px[i + 3] < 200) continue;
+    const mx = Math.max(px[i], px[i + 1], px[i + 2]), mn = Math.min(px[i], px[i + 1], px[i + 2]);
+    if (mx < 40 || mn > 225 || mx - mn < 25) continue; // ignora preto, branco e cinza
+    r += px[i]; g += px[i + 1]; b += px[i + 2]; n++;
+  }
+  return n ? hex([r / n, g / n, b / n]) : "";
+}
+
+// ---------- foto (só neste aparelho, fora do backup) ----------
+const CH_FOTO = "despesas.react.foto";
+export const fotoLer = (): string => { try { return localStorage.getItem(CH_FOTO) || ""; } catch { return ""; } };
+export const fotoGuardar = (d: string) => { try { if (d) localStorage.setItem(CH_FOTO, d); else localStorage.removeItem(CH_FOTO); } catch { /* sem armazenamento */ } };
+/** recorta em quadrado 320 px (JPEG) */
+export async function fotoPreparar(f: File): Promise<{ url: string; cor: string }> {
+  const bmp = await createImageBitmap(f), lado = Math.min(bmp.width, bmp.height);
+  const c = document.createElement("canvas"); c.width = c.height = 320;
+  const g = c.getContext("2d")!; g.drawImage(bmp, (bmp.width - lado) / 2, (bmp.height - lado) / 2, lado, lado, 0, 0, 320, 320);
+  return { url: c.toDataURL("image/jpeg", 0.82), cor: corDominante(g.getImageData(0, 0, 320, 320).data) };
 }
 
 export const nomeDe = (b: Backup): string => String(b.cfg.name || b.cfg.userName || "");

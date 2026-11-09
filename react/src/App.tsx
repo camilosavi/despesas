@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Inicio } from "./Inicio";
 import { Contas } from "./Contas";
 import { Cartoes } from "./Cartoes";
@@ -18,6 +18,8 @@ import { Transferencias } from "./Transferencias";
 import { Voce } from "./Voce";
 import { Extrato } from "./Extrato";
 import { Busca } from "./Busca";
+import { Trava } from "./Trava";
+import { FUNDO_MS, temSenha } from "./senha";
 import { Avisos } from "./Avisos";
 import { Patrimonio } from "./Patrimonio";
 import { avisos as listaAvisos } from "./avisos";
@@ -51,6 +53,12 @@ export function App() {
   const [visual, setVisual] = useState<Visual>(lerVisual);
   const [antes, setAntes] = useState<Backup | null>(() => { try { const t = localStorage.getItem(CH_ANTES); return t ? (JSON.parse(t) as Backup) : null; } catch { return null; } });
   const [ext, setExt] = useState<{ e: Ext; plano: ItemExt[] } | null>(null);
+  const [travado, setTravado] = useState(temSenha);
+  const fundo = useRef(0);
+  useEffect(() => {
+    const f = () => { if (document.hidden) fundo.current = Date.now(); else if (fundo.current && Date.now() - fundo.current > FUNDO_MS && temSenha()) setTravado(true); };
+    document.addEventListener("visibilitychange", f); return () => document.removeEventListener("visibilitychange", f);
+  }, []);
   const arq = useRef<HTMLInputElement>(null), arqExt = useRef<HTMLInputElement>(null);
   const hoje = hojeISO();
   const c: Carga = useMemo(() => (b ? cargaDe(b, hoje) : erro ? { ...exemplo(), erro } : exemplo()), [b, hoje, erro]);
@@ -102,6 +110,7 @@ export function App() {
     else if (d === "avisos") setTela("avisos");
   };
   const nAvisos = useMemo(() => listaAvisos(c.estado, b, c.pers).length, [c, b]);
+  if (travado) return <Trava modo="entrar" onOk={() => { setTravado(false); setTela("inicio"); }} />;
   const r = c.resumo;
   return (
     <>
@@ -119,7 +128,7 @@ export function App() {
       </div>
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "voce" ? <Voce b={b} hoje={hoje} visual={visual} desfazer={antes ? antes.items.length : 0} onVisual={mudarVisual} onSalvar={salvar} onBaixar={baixar} onAbrir={abrir}
-          onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onContas={() => b ? setAjustes(true) : undefined} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
+          onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onBloquear={() => setTravado(true)} onContas={() => b ? setAjustes(true) : undefined} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
         : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} nAvisos={nAvisos} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onPatri={() => setTela("patrimonio")} onExtrato={pedirExtrato} />
         : tela === "busca" ? <Busca e={c.estado} pers={c.pers} onEdit={b ? id => lancar({ id }) : undefined} onVoltar={() => setTela("inicio")} />

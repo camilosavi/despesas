@@ -78,3 +78,29 @@ describe("estatísticas", () => {
     expect(s.maior?.desc).toBe("Tênis");
   });
 });
+
+import { contraste, corDominante, hexOk, livreCss, aplicarVisual, lerVisual } from "./voce";
+describe("cor livre", () => {
+  it("valida hex", () => { expect(hexOk("#a1b2c3")).toBe(true); expect(hexOk("a1b2c3")).toBe(false); expect(hexOk(undefined)).toBe(false); });
+  it("sempre gera destaque legível (≥ 4,5:1) em claro e escuro, mesmo com amarelo e branco", () => {
+    for (const h of ["#ffff00", "#ffffff", "#000000", "#2f7d5e", "#ff00aa", "#101010"]) {
+      const css = livreCss(h), m = [...css.matchAll(/--accent:(#[0-9a-f]{6});--on-accent:(#[0-9a-f]{6})/g)];
+      expect(m).toHaveLength(3);
+      for (const x of m) expect(contraste(x[1], x[2])).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+  it("cor dominante ignora cinza/branco/preto", () => {
+    const px = [255, 255, 255, 255, 0, 0, 0, 255, 120, 120, 120, 255, 200, 40, 40, 255, 200, 40, 40, 255];
+    expect(corDominante(px)).toBe("#c82828");
+    expect(corDominante([255, 255, 255, 255])).toBe("");
+  });
+  it("aplica e remove o estilo", () => {
+    aplicarVisual({ modo: "auto", cor: "livre", livre: "#2f7d5e" });
+    expect(document.documentElement.dataset.accent).toBe("livre"); expect(document.getElementById("thLivre")).not.toBeNull();
+    aplicarVisual({ modo: "auto", cor: "tostao" });
+    expect(document.getElementById("thLivre")).toBeNull();
+    localStorage.setItem("despesas.react.visual", JSON.stringify({ modo: "dark", cor: "livre", livre: "#AABBCC" }));
+    expect(lerVisual()).toEqual({ modo: "dark", cor: "livre", livre: "#aabbcc" });
+    localStorage.clear();
+  });
+});
