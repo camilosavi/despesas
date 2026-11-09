@@ -12,11 +12,11 @@ import "./voce.css";
 interface Props {
   b: Backup | null; hoje: string; visual: Visual; desfazer: number;
   onVisual: (v: Visual) => void; onSalvar: (b: Backup) => void; onBaixar: () => void; onAbrir: (f?: File) => void;
-  onZerar: () => void; onDesfazer: () => void; onContas: () => void; onBloquear: () => void; onExtrato: () => void; onVoltar: () => void; onAviso: (m: string) => void;
+  onZerar: () => void; onDesfazer: () => void; onContas: () => void; onBloquear: () => void; onExtrato: () => void; onOpenFin: () => void; onVoltar: () => void; onAviso: (m: string) => void;
   conta?: { email: string; st: EstadoNuvem; onAgora: () => void; onSair: () => Promise<string>; onSync: () => Promise<void> };
 }
 
-export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onBloquear, onVoltar, onAviso, conta }: Props) {
+export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, onAbrir, onZerar, onDesfazer, onContas, onExtrato, onOpenFin, onBloquear, onVoltar, onAviso, conta }: Props) {
   const [nome, setNome] = useState(b ? nomeDe(b) : "");
   const [certo, setCerto] = useState(false);
   const arq = useRef<HTMLInputElement>(null), arqFoto = useRef<HTMLInputElement>(null);
@@ -124,7 +124,7 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
 
           <section aria-labelledby="v-ct">
             <h2 id="v-ct">Contas e cartões</h2>
-            <div className="vacoes"><button type="button" className="btn ghost" onClick={onContas}>Editar contas, saldos e cartões</button><button type="button" className="btn ghost" onClick={onExtrato}>Importar PDF, extrato ou fatura</button></div>
+            <div className="vacoes"><button type="button" className="btn ghost" onClick={onContas}>Editar contas, saldos e cartões</button><button type="button" className="btn ghost" onClick={onExtrato}>Importar PDF, extrato ou fatura</button><button type="button" className="btn ghost" onClick={onOpenFin}>Open Finance (banco direto)</button></div>
           </section>
 
           <section aria-labelledby="v-bk">

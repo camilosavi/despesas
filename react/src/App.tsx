@@ -24,7 +24,7 @@ import { Avisos } from "./Avisos";
 import { Patrimonio } from "./Patrimonio";
 import { avisos as listaAvisos } from "./avisos";
 import { lerExtrato, planoExtrato } from "./extrato";
-import { extratoDoPdf, lerPdf, ligarRegras, rascunhoDaConta, rascunhoDaPassagem } from "./fatura";
+import { cartaoDoBanco, extratoDoPdf, lerPdf, ligarRegras, rascunhoDaConta, rascunhoDaPassagem } from "./fatura";
 import { FaturaPdf, HoleritePdf } from "./Fatura";
 import type { Fatura as FaturaLida, Holerite as HoleriteLido } from "./leitores/pdf.js";
 import type { Extrato as Ext, Item as ItemExt } from "./extrato";
@@ -32,9 +32,12 @@ import * as C from "./engine";
 import { aplicarVisual, guardarVisual, lerVisual, zerarLancamentos } from "./voce";
 import type { Visual } from "./voce";
 import { assinaturas } from "./assinaturas";
-import { marcarVarios, transfs, vazio } from "./loja";
+import { marcarVarios, salvarCartao, transfs, vazio } from "./loja";
 import type { Backup } from "./loja";
 import { hojeISO } from "./format";
+import { OpenFinance } from "./OpenFinance";
+import { ofAuto, ofExtrato, ofFatura, ofSync, ofVisto } from "./openfinance";
+import type { OfNovidade } from "./openfinance";
 import { Login } from "./Login";
 import { useNuvem, LOGIN } from "./useNuvem";
 import { concluirVolta, lapideAdd, lerVolta, sessao, sumiram } from "./nuvem";
@@ -55,7 +58,7 @@ export function App() {
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
-  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf" | "voce" | "busca" | "avisos" | "patrimonio">("inicio");
+  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf" | "voce" | "busca" | "avisos" | "patrimonio" | "of">("inicio");
   const [visual, setVisual] = useState<Visual>(lerVisual);
   const [antes, setAntes] = useState<Backup | null>(() => { try { const t = localStorage.getItem(CH_ANTES); return t ? (JSON.parse(t) as Backup) : null; } catch { return null; } });
   const [ext, setExt] = useState<{ e: Ext; plano: ItemExt[] } | null>(null);
@@ -73,6 +76,29 @@ export function App() {
   const salvar = (nb: Backup) => { lapideAdd(sumiram(b, nb)); setB(nb); guardar(nb); setErro(""); };
   const daNuvem = (nb: Backup, av: string) => { setB(nb); guardar(nb); if (av) setAviso(av); };
   const nv = useNuvem(b, daNuvem);
+  const [ofNovo, setOfNovo] = useState<OfNovidade | null>(null);
+  const vivo = useRef({ b, salvar }); vivo.current = { b, salvar };
+  const temB = !!b;
+  useEffect(() => { // Open Finance: ao abrir/voltar ao app vê se o banco atualizou (no máximo a cada 30 min)
+    if (!temB || travado) return;
+    const rodar = () => {
+      const atual = vivo.current.b; if (!atual) return;
+      ofAuto(atual, String(atual.cfg.name || atual.cfg.userName || "")).then(r => {
+        if (!r) return;
+        if (r.b !== vivo.current.b && vivo.current.b) vivo.current.salvar(r.b);
+        if (r.novo) setOfNovo(r.novo);
+      }).catch(() => { /* sem rede */ });
+    };
+    rodar();
+    const f = () => { if (!document.hidden) rodar(); };
+    document.addEventListener("visibilitychange", f); return () => document.removeEventListener("visibilitychange", f);
+  }, [temB, travado]);
+  const abrirFatura = (f: import("./leitores/pdf.js").Fatura) => {
+    if (!b) return;
+    const banco = String(f.bank || "");
+    if (banco && banco !== "Conta" && !cartaoDoBanco(b, banco)) salvar(salvarCartao(b, banco, {}));
+    setFatPdf(f);
+  };
   useEffect(() => { // volta de "Vincular Google" com a sessão aberta: guarda a sessão nova e limpa o endereço
     const v = lerVolta(location.hash); if (!v || !sessao()) return;
     history.replaceState(null, "", location.pathname + location.search);
@@ -155,13 +181,25 @@ export function App() {
         </span>
       </div>
       {aviso && <p className="aviso" role="status">{aviso}</p>}
+      {tela === "inicio" && ofNovo && b && (
+        <section className="ofbanner" aria-label="Novidades do banco">
+          <b>{ofNovo.banco}: {[ofNovo.ext ? `${ofNovo.ext} ${ofNovo.ext === 1 ? "movimento novo" : "movimentos novos"} na conta` : "", ofNovo.fat ? `${ofNovo.fat} ${ofNovo.fat === 1 ? "compra nova" : "compras novas"} na fatura` : ""].filter(Boolean).join(" e ")}</b>
+          <p>Veio do banco pelo Open Finance. Saldo na conta e limite do cartão já foram atualizados.</p>
+          <div className="vacoes">
+            <button type="button" className="btn ghost" onClick={() => { ofVisto(ofNovo.v); setOfNovo(null); }}>Agora não</button>
+            {ofNovo.ext > 0 && <button type="button" className="btn" onClick={() => { const a = ofNovo.v.acc.find(x => x.type === "BANK"); if (!a) return; ofVisto(ofNovo.v); const e = ofExtrato(ofNovo.v, a); setOfNovo(null); setExt({ e, plano: planoExtrato(b, e, String(b.cfg.name || b.cfg.userName || "")) }); }}>Importar conta</button>}
+            {ofNovo.fat > 0 && <button type="button" className="btn" onClick={() => { const a = ofNovo.v.acc.find(x => x.type === "CREDIT"); if (!a) return; ofVisto(ofNovo.v); const f = ofFatura(ofNovo.v, a); setOfNovo(null); abrirFatura(f); }}>Importar fatura</button>}
+          </div>
+        </section>
+      )}
       {tela === "voce" ? <Voce b={b} hoje={hoje} visual={visual} desfazer={antes ? antes.items.length : 0} onVisual={mudarVisual} onSalvar={salvar} onBaixar={baixar} onAbrir={abrir}
-          onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onBloquear={() => setTravado(true)} conta={nv.ses ? { email: nv.ses.email, st: nv.st, onAgora: () => void nv.agora(true), onSync: () => nv.agora(), onSair: async () => { const m = await nv.sairConta(); if (!m) location.reload(); return m; } } : undefined} onContas={() => b ? setAjustes(true) : undefined} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
+          onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onBloquear={() => setTravado(true)} conta={nv.ses ? { email: nv.ses.email, st: nv.st, onAgora: () => void nv.agora(true), onSync: () => nv.agora(), onSair: async () => { const m = await nv.sairConta(); if (!m) location.reload(); return m; } } : undefined} onContas={() => b ? setAjustes(true) : undefined} onOpenFin={() => setTela("of")} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
         : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} nAvisos={nAvisos} />
         : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onPatri={() => setTela("patrimonio")} onExtrato={pedirExtrato} />
         : tela === "busca" ? <Busca e={c.estado} pers={c.pers} onEdit={b ? id => lancar({ id }) : undefined} onVoltar={() => setTela("inicio")} />
         : tela === "avisos" ? <Avisos e={c.estado} b={b} pers={c.pers} onSalvar={salvar} onVoltar={() => setTela("inicio")}
             onIr={(d, a) => { if (a.id && b) lancar({ id: a.id }); else setTela(d === "categorias" ? "categorias" : d); }} />
+        : tela === "of" ? <OpenFinance b={b} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("voce")} onExtrato={e => b && setExt({ e, plano: planoExtrato(b, e, String(b.cfg.name || b.cfg.userName || "")) })} onFatura={abrirFatura} />
         : tela === "patrimonio" ? <Patrimonio e={c.estado} b={b} onSalvar={salvar} onVoltar={() => setTela("contas")} />
         : tela === "transf" ? <Transferencias b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("contas")} />
         : tela === "relatorios" ? <Relatorios e={c.estado} pers={c.pers} onVoltar={() => setTela("metas")} />
