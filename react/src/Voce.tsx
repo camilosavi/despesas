@@ -124,7 +124,7 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
 
           <section aria-labelledby="v-ct">
             <h2 id="v-ct">Contas e cartões</h2>
-            <div className="vacoes"><button type="button" className="btn ghost" onClick={onContas}>Editar contas, saldos e cartões</button><button type="button" className="btn ghost" onClick={onExtrato}>Importar extrato (OFX ou CSV)</button></div>
+            <div className="vacoes"><button type="button" className="btn ghost" onClick={onContas}>Editar contas, saldos e cartões</button><button type="button" className="btn ghost" onClick={onExtrato}>Importar PDF, extrato ou fatura</button></div>
           </section>
 
           <section aria-labelledby="v-bk">

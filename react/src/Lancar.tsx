@@ -14,20 +14,21 @@ export const centsDe = (s: string): number => {
 };
 const paraTexto = (c: number) => (c ? (c / 100).toFixed(2).replace(".", ",") : "");
 
-export interface Pedido { tipo?: "desp" | "rec"; id?: string }
+export interface Pedido { tipo?: "desp" | "rec"; id?: string; pre?: { desc: string; cents: number; cat: string; date: string; pay: string; paid: boolean; nota?: string } }
 interface Props { b: Backup; pers: Pers; hoje: string; pedido: Pedido; onSalvar: (b: Backup) => void; onFechar: () => void }
 
 export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
   const item: ItemBackup | undefined = pedido.id ? b.items.find(x => x.id === pedido.id) : undefined;
   const [tipo, setTipo] = useState<"desp" | "rec">(item?.type ?? pedido.tipo ?? "desp");
-  const [valor, setValor] = useState(item ? paraTexto(item.cents) : "");
-  const [desc, setDesc] = useState(item?.desc ?? "");
-  const [cat, setCat] = useState(item?.cat ?? ""), [tocou, setTocou] = useState(!!item);
-  const [data, setData] = useState(item ? item.buy || item.date : hoje);
-  const [pay, setPay] = useState(item?.pay ?? "Pix");
+  const pre = pedido.pre;
+  const [valor, setValor] = useState(item ? paraTexto(item.cents) : pre ? paraTexto(pre.cents) : "");
+  const [desc, setDesc] = useState(item?.desc ?? pre?.desc ?? "");
+  const [cat, setCat] = useState(item?.cat ?? pre?.cat ?? ""), [tocou, setTocou] = useState(!!item || !!pre);
+  const [data, setData] = useState(item ? item.buy || item.date : pre?.date ?? hoje);
+  const [pay, setPay] = useState(item?.pay ?? pre?.pay ?? "Pix");
   const [cartao, setCartao] = useState(item?.card ?? "");
   const [conta, setConta] = useState(item?.acct ?? "");
-  const [pago, setPago] = useState(item ? item.paid : true);
+  const [pago, setPago] = useState(item ? item.paid : pre ? pre.paid : true);
   const [modo, setModo] = useState<Repete["modo"]>("uma");
   const [n, setN] = useState("3");
   const [erro, setErro] = useState("");
@@ -86,6 +87,7 @@ export function Lancar({ b, pers, hoje, pedido, onSalvar, onFechar }: Props) {
     <div className="lfundo" onMouseDown={ev => ev.target === ev.currentTarget && onFechar()}>
       <form className="lfolha" role="dialog" aria-modal="true" aria-labelledby="lt" onSubmit={salvar} noValidate>
         <h2 id="lt">{item ? "Editar lançamento" : tipo === "rec" ? "Nova receita" : "Nova despesa"}</h2>
+        {pre?.nota && <p className="lnota" role="status">{pre.nota}</p>}
         {!item && (
           <div className="lseg" role="group" aria-label="Tipo">
             <button type="button" aria-pressed={tipo === "desp"} onClick={() => mudaTipo("desp")}>Despesa</button>

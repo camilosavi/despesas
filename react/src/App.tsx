@@ -24,6 +24,9 @@ import { Avisos } from "./Avisos";
 import { Patrimonio } from "./Patrimonio";
 import { avisos as listaAvisos } from "./avisos";
 import { lerExtrato, planoExtrato } from "./extrato";
+import { extratoDoPdf, lerPdf, ligarRegras, rascunhoDaConta, rascunhoDaPassagem } from "./fatura";
+import { FaturaPdf, HoleritePdf } from "./Fatura";
+import type { Fatura as FaturaLida, Holerite as HoleriteLido } from "./leitores/pdf.js";
 import type { Extrato as Ext, Item as ItemExt } from "./extrato";
 import * as C from "./engine";
 import { aplicarVisual, guardarVisual, lerVisual, zerarLancamentos } from "./voce";
@@ -56,6 +59,8 @@ export function App() {
   const [visual, setVisual] = useState<Visual>(lerVisual);
   const [antes, setAntes] = useState<Backup | null>(() => { try { const t = localStorage.getItem(CH_ANTES); return t ? (JSON.parse(t) as Backup) : null; } catch { return null; } });
   const [ext, setExt] = useState<{ e: Ext; plano: ItemExt[] } | null>(null);
+  const [fatPdf, setFatPdf] = useState<FaturaLida | null>(null);
+  const [holPdf, setHolPdf] = useState<HoleriteLido | null>(null);
   const [travado, setTravado] = useState(temSenha);
   const fundo = useRef(0);
   useEffect(() => {
@@ -100,6 +105,17 @@ export function App() {
   const pedirExtrato = () => { if (!b) setAviso("Escolha “Começar do zero” ou “Usar meus dados” para importar um extrato."); else arqExt.current?.click(); };
   const abrirExtrato = async (f?: File) => {
     if (!f || !b) return;
+    if (/\.pdf$/i.test(f.name) || f.type === "application/pdf") {
+      if (arqExt.current) arqExt.current.value = "";
+      setAviso("Lendo o PDF…"); ligarRegras(b);
+      const l = await lerPdf(f); setAviso("");
+      if (l.tipo === "erro") return setAviso(l.erro);
+      if (l.tipo === "fatura") return setFatPdf(l.r);
+      if (l.tipo === "holerite") return setHolPdf(l.h);
+      if (l.tipo === "extrato") { const e = extratoDoPdf(l.e); return setExt({ e, plano: planoExtrato(b, e, String(b.cfg.name || b.cfg.userName || "")) }); }
+      const pre = l.tipo === "conta" ? rascunhoDaConta(l.c) : rascunhoDaPassagem(l.p);
+      return setPedido({ tipo: "desp", pre });
+    }
     const r = await lerExtrato(f, hoje);
     if (arqExt.current) arqExt.current.value = "";
     if (!r.ok) return setAviso(r.erro);
@@ -154,7 +170,7 @@ export function App() {
         : tela === "moedas" ? <Moedas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
         : tela === "metas" ? <Metas onCats={() => setTela("categorias")} onFixos={() => setTela("fixos")} onMoedas={() => setTela("moedas")} onRel={() => setTela("relatorios")} subs={assinaturas(c.estado.lancamentos, b)} b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : tela === "pessoas" ? <Pessoas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
-        : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} />}
+        : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} onPdf={b ? pedirExtrato : undefined} />}
       <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>
       <nav className="bar" aria-label="Telas">
         <button type="button" aria-current={tela === "inicio" ? "page" : undefined} onClick={() => { setTela("inicio"); setAviso(""); }}>Início</button>
@@ -164,8 +180,10 @@ export function App() {
         <button type="button" aria-current={tela === "metas" || tela === "relatorios" || tela === "moedas" || tela === "fixos" || tela === "categorias" ? "page" : undefined} onClick={() => { setTela("metas"); setAviso(""); }}>Metas</button>
       </nav>
       {pedido && b && <Lancar key={pedido.id ?? pedido.tipo} b={b} pers={c.pers} hoje={hoje} pedido={pedido} onSalvar={salvar} onFechar={() => setPedido(null)} />}
-      <input ref={arqExt} type="file" accept=".ofx,.qfx,.csv,text/csv" hidden onChange={ev => abrirExtrato(ev.target.files?.[0])} />
+      <input ref={arqExt} type="file" accept=".pdf,application/pdf,.ofx,.qfx,.csv,text/csv" hidden onChange={ev => abrirExtrato(ev.target.files?.[0])} />
       {ext && b && <Extrato key={ext.e.at + ext.e.linhas.length} b={b} e={ext.e} plano={ext.plano} cats={{ desp: C.lista("desp", c.pers) as { k: string; n: string }[], rec: C.lista("rec", c.pers) as { k: string; n: string }[] }} onSalvar={salvar} onAviso={setAviso} onFechar={() => setExt(null)} />}
+      {fatPdf && b && <FaturaPdf b={b} r={fatPdf} hoje={hoje} cartoes={Object.entries((b.cfg.cards || {}) as Record<string, { kind?: string }>).filter(([, k]) => k.kind !== "ben").map(([n]) => n)} cats={C.lista("desp", c.pers) as { k: string; n: string }[]} onSalvar={salvar} onAviso={setAviso} onFechar={() => setFatPdf(null)} />}
+      {holPdf && b && <HoleritePdf b={b} h={holPdf} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onFechar={() => setHolPdf(null)} />}
       {ajustes && b && <Ajustes b={b} hoje={hoje} onSalvar={salvar} onBaixar={baixar} onFechar={() => setAjustes(false)} />}
     </>
   );

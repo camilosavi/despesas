@@ -40,7 +40,7 @@ function Posso({ e, cartao }: { e: Estado; cartao: string }) {
   );
 }
 
-export function Cartoes({ e, onVoltar, onEdit, onPagar }: { e: Estado; onVoltar: () => void; onEdit?: (id: string) => void; onPagar?: (ids: string[], pago: boolean) => void }) {
+export function Cartoes({ e, onVoltar, onEdit, onPagar, onPdf }: { e: Estado; onVoltar: () => void; onPdf?: () => void; onEdit?: (id: string) => void; onPagar?: (ids: string[], pago: boolean) => void }) {
   const lista = cartoes(e), res = resumoCartoes(e);
   const [sel, setSel] = useState<string>(lista[0]?.cartao || "");
   const [ym, setYm] = useState<string>(lista[0]?.ym || C.mesDe(e.hoje));
@@ -53,6 +53,7 @@ export function Cartoes({ e, onVoltar, onEdit, onPagar }: { e: Estado; onVoltar:
         <h1 className="ctit">Cartões</h1>
         <button type="button" className="kback" onClick={onVoltar}>‹ Início</button>
       </header>
+      {onPdf && <button type="button" className="dlink" onClick={onPdf}>Importar fatura (PDF) ›</button>}
       {lista.length === 0 ? <p className="aviso">Nenhum cartão de crédito ainda. Cadastre um no app atual ou use um backup que tenha cartões.</p> : (
         <div className="kgrid">
           <section className="cb cb-saldo" aria-label="Faturas em aberto">

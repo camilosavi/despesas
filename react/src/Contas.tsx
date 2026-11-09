@@ -85,7 +85,7 @@ export function Contas({ e, pers, onIr, onEdit, transf = [], onTransf, onExtrato
           <b className="dbig">{R(C.naConta(e))}</b>
           {contas.length > 0 && <ul className="clist">{contas.map(a => <li key={a.nome}><button type="button" className="cabtn" aria-expanded={conta === a.nome} onClick={() => setConta(conta === a.nome ? "" : a.nome)}><Marca nome={a.nome} e={e} /><span>{a.nome}</span><b>{R(C.saldoDaConta(e, a.nome))}</b></button></li>)}</ul>}
           {onTransf && contas.length >= 2 && <button type="button" className="dlink ctransf" onClick={onTransf}>Transferências entre contas ›</button>}
-          {onExtrato && <button type="button" className="dlink ctransf" onClick={onExtrato}>Importar extrato (OFX ou CSV) ›</button>}
+          {onExtrato && <button type="button" className="dlink ctransf" onClick={onExtrato}>Importar PDF, extrato ou fatura ›</button>}
           {onPatri && <button type="button" className="dlink ctransf" onClick={onPatri}>Patrimônio ›</button>}
           {r.fimDoMes != null && <p className="cfim">Fim de {mLab(ym).split(" de ")[0]}: <b>{R(r.fimDoMes)}</b></p>}
           {fx.vermelho && <p className="cred" role="status">Fica no vermelho em {dm(fx.vermelho.data)}, depois de “{fx.vermelho.nome}”.</p>}
