@@ -11,7 +11,7 @@ const montar = (onIr = vi.fn()) => { render(<Inicio e={estado} pers={{}} nome="C
 describe("Início", () => {
   it("mostra os blocos principais com títulos em frase normal", () => {
     montar();
-    for (const t of ["Na conta hoje", "Resumo do mês", "Fluxo de caixa", "Gastos", "Cartões", "Últimas transações", "Pessoas"])
+    for (const t of ["Saldo total", "Resumo do mês", "Fluxo de caixa", "Gastos", "Cartões", "Últimas transações"])
       expect(screen.getByRole("region", { name: new RegExp(t) })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: /Olá, Camilo/ })).toBeInTheDocument();
   });
@@ -22,7 +22,7 @@ describe("Início", () => {
     // novembro do exemplo: Salário 5.600,00 + Freela 450,00 = 6.050,00 (conta feita à mão)
     expect(within(resumo).getByText("R$ 6.050,00")).toBeInTheDocument();
     expect(C.entrou(estado, ym)).toBe(605000);
-    expect(within(screen.getByRole("region", { name: /Na conta hoje/ })).getByText(R(C.naConta(estado)))).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: /Saldo total/ })).getByText(R(C.naConta(estado)))).toBeInTheDocument();
   });
   it("a legenda dos gastos traz valor (cor nunca é a única informação) e a rosca tem texto", () => {
     montar();
@@ -39,7 +39,7 @@ describe("Início", () => {
   it("todo botão tem nome e chama o destino certo", async () => {
     const onIr = montar();
     for (const b of screen.getAllByRole("button")) expect(b).toHaveAccessibleName();
-    await userEvent.click(screen.getByRole("button", { name: "− Despesa" }));
+    await userEvent.click(screen.getByRole("button", { name: "Despesa" }));
     await userEvent.click(screen.getByRole("button", { name: "Ver cartões" }));
     expect(onIr).toHaveBeenNthCalledWith(1, "lancar-desp");
     expect(onIr).toHaveBeenNthCalledWith(2, "cartoes");

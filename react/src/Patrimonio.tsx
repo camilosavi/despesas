@@ -19,7 +19,7 @@ export function Patrimonio({ e, b, onSalvar, onVoltar }: { e: Estado; b: Backup 
     <main className="pg tela patri">
       <button type="button" className="btn ghost" onClick={onVoltar}>‹ Contas</button>
       <h1>Patrimônio</h1>
-      <section className="tcard" aria-label="Patrimônio hoje">
+      <section className="rcard" aria-label="Patrimônio hoje">
         <small>Hoje, em reais</small>
         <b className={p.total < 0 ? "neg" : ""}>{R(p.total)}</b>
         <ul>{L.map(([n, v]) => <li key={n}><span>{n}</span><b className={v < 0 ? "neg" : ""}>{R(v)}</b></li>)}</ul>

@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import * as C from "./engine";
 import type { Estado, Pers } from "./engine";
-import { MES, MESL, R, dm } from "./format";
+import { MES, MESL, R, dm, mLab } from "./format";
 import { notaDeSaude, saudeVisivel } from "./saude";
 import { marcaDe } from "./marcas";
 import { CatIco } from "./icones";
@@ -24,7 +24,7 @@ function Rosca({ parts, tot }: { parts: { c: string; v: number }[]; tot: number 
   const r = 42, perim = 2 * Math.PI * r;
   let off = 0;
   return (
-    <svg className="dn" viewBox="0 0 120 120" aria-hidden="true">
+    <svg className="dn" viewBox="0 0 120 120" role="img" aria-label="Gastos por categoria">
       <circle r={r} cx="60" cy="60" fill="none" stroke="var(--line)" strokeWidth="16" />
       {parts.map((p, i) => { const l = (p.v / tot) * perim, o = off; off += l;
         return <circle key={i} r={r} cx="60" cy="60" fill="none" stroke={p.c} strokeWidth="16" strokeDasharray={`${Math.max(0, l - 1.5)} ${perim}`} strokeDashoffset={-o} transform="rotate(-90 60 60)" />; })}
@@ -86,7 +86,7 @@ export function Inicio({ e, pers, nome, onIr, nAvisos = 0, onAbrir, faixa }: {
       {faixa}
       <div className="dtop">
         <button className="dlogo" id="dMenu" aria-label="Abrir o menu" onClick={() => onIr("menu")}><img src="tostao-logo.png" alt="" /><svg className="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
-        <div><b className="dgr">Olá{nome ? ", " + nome : ""}</b><small>{cap(new Date(e.hoje + "T12:00:00Z").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }))}</small></div>
+        <div><b className="dgr" role="heading" aria-level={1}>Olá{nome ? ", " + nome : ""}</b><small>{cap(new Date(e.hoje + "T12:00:00Z").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }))}</small></div>
         <label className="dsearch" onClick={() => { if (window.matchMedia("(max-width:979px)").matches) onIr("busca"); }}>
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
           <input id="dashQ" placeholder="Buscar lançamentos…" autoComplete="off" value={q} onChange={ev => setQ(ev.target.value)} onKeyDown={ev => { if (ev.key === "Enter") onIr("busca"); }} />
@@ -94,7 +94,7 @@ export function Inicio({ e, pers, nome, onIr, nAvisos = 0, onAbrir, faixa }: {
         <button className="dbell" id="hBell2" aria-label={nAvisos ? `Avisos (${nAvisos})` : "Avisos"} onClick={() => onIr("avisos")}><Sv d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4" />{nAvisos > 0 && <b className="dbn" aria-hidden="true">{nAvisos > 9 ? "9+" : nAvisos}</b>}</button>
       </div>
       <div className={"dgrid" + (mostraSaude ? "" : " nosaude")}>
-        <section className="db d-saldo">
+        <section className="db d-saldo" aria-label="Saldo total">
           <h3>Saldo total <button className="dlink" onClick={() => onIr("contas")}>Ver contas</button></h3>
           <b className="dbig">{R(C.naConta(e))}</b>
           <small className="dsub">{n ? `${n} ${n === 1 ? "conta ativa" : "contas ativas"}` : "sem conta cadastrada"}</small>
@@ -103,7 +103,7 @@ export function Inicio({ e, pers, nome, onIr, nAvisos = 0, onAbrir, faixa }: {
             <button type="button" data-dqa="desp" onClick={() => onIr("lancar-desp")}><Sv d={SETA_OUT} />Despesa</button>
           </span>
         </section>
-        <section className="db d-res">
+        <section className="db d-res" aria-label="Resumo do mês">
           <h3>Resumo do mês <small>{monthLabel(ym)}</small></h3>
           <div className="drs">
             <div className="drc in"><span><Sv d={SETA_IN} />Entrou</span><b>{R(r.entrou)}</b><small>{recebe ? <>a receber <span className="nw">{R(recebe)}</span></> : "tudo recebido"}</small></div>
@@ -112,20 +112,21 @@ export function Inicio({ e, pers, nome, onIr, nAvisos = 0, onAbrir, faixa }: {
           </div>
         </section>
         {mostraSaude && (
-          <section className="db d-saude">
+          <section className="db d-saude" aria-label="Nota de saúde">
             <h3>Nota de saúde</h3>
             <div className="dsc2"><b>{nota.score}</b><span>/100</span><em className="dbadge" style={{ "--bc": sc } as CSSProperties}>{nota.rotulo}</em></div>
             <span className="dbar"><i style={{ width: nota.score + "%", background: sc }} /></span>
             <p className="dwhy">{nota.motivos.length ? <><b>Por onde começar:</b> {nota.motivos.join(". ")}.</> : "Tudo em dia. Continue assim."}</p>
           </section>
         )}
-        <section className="db d-fluxo">
+        <section className="db d-fluxo" aria-label="Fluxo de caixa">
           <h3>Fluxo de caixa <span className="flleg"><span><i className="r" />Entrou</span><span><i className="d" />Gastou</span></span></h3>
-          <div className="fl">{ms.map(x => (
+          <table className="sr"><caption>Entrou e gastou por mês</caption><thead><tr><th>Mês</th><th>Entrou</th><th>Gastou</th></tr></thead><tbody>{ms.map(x => <tr key={x.m}><td>{mLab(x.m)}</td><td>{R(x.r)}</td><td>{R(x.d)}</td></tr>)}</tbody></table>
+          <div className="fl" aria-hidden="true">{ms.map(x => (
             <div key={x.m} className={"flc" + (x.m === ym ? " now" : "")}><div className="flb"><i className="r" style={{ height: (x.r / mx) * 100 + "%" }} /><i className="d" style={{ height: (x.d / mx) * 100 + "%" }} /></div><small>{cap(mCurto(x.m))}</small></div>
           ))}</div>
         </section>
-        <section className="db d-gastos">
+        <section className="db d-gastos" aria-label="Gastos">
           <h3>Gastos</h3>
           {tot ? (
             <div className="dnw">
@@ -135,13 +136,13 @@ export function Inicio({ e, pers, nome, onIr, nAvisos = 0, onAbrir, faixa }: {
             </div>
           ) : <p className="dempty">Nenhum gasto neste mês ainda.</p>}
         </section>
-        <section className="db d-cartoes">
+        <section className="db d-cartoes" aria-label="Cartões">
           <h3>Cartões <button className="dlink" onClick={() => onIr("cartoes")}>Ver cartões</button></h3>
           {cartoes.length ? (
             <div className="dcar"><div className="dcards" id="dcar" ref={car}>{cartoes.map(c => <CartaoDash key={c} e={e} c={c} />)}</div></div>
           ) : <p className="dempty">Nenhum cartão ainda.</p>}
         </section>
-        <section className="db d-trans">
+        <section className="db d-trans" aria-label="Últimas transações">
           <h3>Últimas transações <button className="dlink" onClick={() => onIr("transacoes")}>Ver todas</button></h3>
           {ult.length ? ult.map(l => (
             <div key={l.id} className="item dtr" role="button" tabIndex={0} onClick={() => onAbrir?.(l.id)}>

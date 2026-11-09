@@ -19,7 +19,7 @@ describe("Você", () => {
     expect(document.documentElement.dataset.accent).toBe("verde");
     aplicarVisual({ modo: "auto", cor: "tostao" });
     expect(document.documentElement.hasAttribute("data-theme")).toBe(false);
-    expect(document.documentElement.hasAttribute("data-accent")).toBe(false);
+    expect(document.documentElement.getAttribute("data-accent")).toBe("tostao");
     localStorage.setItem("despesas.react.visual", JSON.stringify({ modo: "x", cor: "y" }));
     expect(lerVisual()).toEqual({ modo: "auto", cor: "tostao" });
   });

@@ -206,7 +206,7 @@ export function App() {
       {tela === "voce" ? <Voce b={b} hoje={hoje} visual={visual} desfazer={antes ? antes.items.length : 0} onVisual={mudarVisual} onSalvar={salvar} onBaixar={baixar} onAbrir={abrir}
           onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onBloquear={() => setTravado(true)} conta={nv.ses ? { email: nv.ses.email, st: nv.st, onAgora: () => void nv.agora(true), onSync: () => nv.agora(), onSair: async () => { const m = await nv.sairConta(); if (!m) location.reload(); return m; } } : undefined} onContas={() => b ? setAjustes(true) : undefined} onOpenFin={() => setTela("of")} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
         : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={d => d === "menu" ? setGaveta(true) : ir(d)} nAvisos={nAvisos} onAbrir={id => lancar({ id })} faixa={faixaBk} />
-        : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onPatri={() => setTela("patrimonio")} onExtrato={pedirExtrato} />
+        : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onMenu={() => setGaveta(true)} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onPatri={() => setTela("patrimonio")} onExtrato={pedirExtrato} />
         : tela === "busca" ? <Busca e={c.estado} pers={c.pers} onEdit={b ? id => lancar({ id }) : undefined} onVoltar={() => setTela("inicio")} />
         : tela === "avisos" ? <Avisos e={c.estado} b={b} pers={c.pers} onSalvar={salvar} onVoltar={() => setTela("inicio")}
             onIr={(d, a) => { if (a.id && b) lancar({ id: a.id }); else setTela(d === "categorias" ? "categorias" : d); }} />
@@ -219,7 +219,7 @@ export function App() {
         : tela === "moedas" ? <Moedas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
         : tela === "metas" ? <Metas onCats={() => setTela("categorias")} onFixos={() => setTela("fixos")} onMoedas={() => setTela("moedas")} onRel={() => setTela("relatorios")} subs={assinaturas(c.estado.lancamentos, b)} b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
         : tela === "pessoas" ? <Pessoas b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} />
-        : <Cartoes e={c.estado} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} onPdf={b ? pedirExtrato : undefined} />}
+        : <Cartoes e={c.estado} onMenu={() => setGaveta(true)} onVoltar={() => setTela("inicio")} onEdit={id => lancar({ id })} onPagar={b ? (ids, pago) => salvar(marcarVarios(b, ids, pago, Date.now())) : undefined} onPdf={b ? pedirExtrato : undefined} />}
       <button type="button" className="fab" id="addBtn" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}><b aria-hidden="true">+</b><span id="addLbl">Lançamento</span></button>
       <Barra tela={tela} onIr={irTela} foto={fotoLer()} nome={c.nome} />
       <Gaveta aberta={gaveta} tela={tela} onFechar={() => setGaveta(false)} onIr={irTela} />
