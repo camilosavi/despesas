@@ -35,3 +35,5 @@
 :root[data-theme="dark"][data-accent="azul"] { --head: #1b2c5c; --accent: #7fa2f0; --on-accent: #0d1119; --focus: #7fa2f0 }
 :root[data-theme="dark"][data-accent="bordo"] { --head: #4a1a29; --accent: #e07a93; --on-accent: #0d1119; --focus: #e07a93 }
 :root[data-theme="dark"][data-accent="grafite"] { --head: #232733; --accent: #aeb7cc; --on-accent: #0d1119; --focus: #aeb7cc }
+.vest { margin: 0; display: grid } .vest div { display: flex; justify-content: space-between; gap: 1em; padding: .55em 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm) }
+.vest dt { color: var(--muted) } .vest dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; min-width: 0 }

@@ -49,3 +49,25 @@ export function csvLancamentos(b: Backup): string {
   ].map(celula).join(";"));
   return "﻿" + ["Data;Tipo;Descrição;Categoria;Valor;Pagamento;Cartão;Parcela;Situação", ...linhas].join("\r\n");
 }
+
+// ---------- Estatísticas (só contagens do que está guardado; nenhum valor é somado) ----------
+export interface Stats {
+  lancamentos: number; despesas: number; receitas: number; desde: string; meses: number;
+  maior: { desc: string; cents: number; date: string } | null;
+  contas: number; cartoes: number; caixinhas: number; dividas: number; pessoas: number; kb: number;
+}
+export function estatisticas(b: Backup): Stats {
+  const it = (b.items || []) as { type?: string; desc?: string; cents?: number; date?: string; cat?: string }[];
+  const L = it.filter(x => x && typeof x.date === "string" && typeof x.cents === "number");
+  const arr = (k: string) => (Array.isArray(b.cfg[k]) ? (b.cfg[k] as unknown[]).length : 0);
+  const datas = L.map(x => x.date as string).sort();
+  let maior: Stats["maior"] = null;
+  for (const x of L) if (x.type === "desp" && x.cat !== "cartao" && (!maior || (x.cents as number) > maior.cents)) maior = { desc: x.desc || "Sem nome", cents: x.cents as number, date: x.date as string };
+  let kb = 0; try { kb = Math.ceil(JSON.stringify(b).length / 1024); } catch { /* ok */ }
+  return {
+    lancamentos: L.length, despesas: L.filter(x => x.type !== "rec").length, receitas: L.filter(x => x.type === "rec").length,
+    desde: datas[0] || "", meses: new Set(datas.map(d => d.slice(0, 7))).size, maior,
+    contas: arr("accts"), cartoes: b.cfg.cards && typeof b.cfg.cards === "object" ? Object.keys(b.cfg.cards as object).length : 0,
+    caixinhas: arr("save"), dividas: arr("debts"), pessoas: arr("pp"), kb,
+  };
+}

@@ -17,6 +17,10 @@ import { Relatorios } from "./Relatorios";
 import { Transferencias } from "./Transferencias";
 import { Voce } from "./Voce";
 import { Extrato } from "./Extrato";
+import { Busca } from "./Busca";
+import { Avisos } from "./Avisos";
+import { Patrimonio } from "./Patrimonio";
+import { avisos as listaAvisos } from "./avisos";
 import { lerExtrato, planoExtrato } from "./extrato";
 import type { Extrato as Ext, Item as ItemExt } from "./extrato";
 import * as C from "./engine";
@@ -36,7 +40,6 @@ function guardar(b: Backup | null) {
   try { if (b) localStorage.setItem(CHAVE, JSON.stringify(b)); else localStorage.removeItem(CHAVE); } catch { /* sem armazenamento: segue na memória */ }
 }
 
-const AINDA: Partial<Record<Destino, string>> = { busca: "Busca", avisos: "Avisos" };
 
 export function App() {
   const [b, setB] = useState<Backup | null>(guardado);
@@ -44,7 +47,7 @@ export function App() {
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [ajustes, setAjustes] = useState(false);
   const [aviso, setAviso] = useState("");
-  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf" | "voce">("inicio");
+  const [tela, setTela] = useState<"inicio" | "contas" | "cartoes" | "pessoas" | "metas" | "relatorios" | "moedas" | "fixos" | "categorias" | "transf" | "voce" | "busca" | "avisos" | "patrimonio">("inicio");
   const [visual, setVisual] = useState<Visual>(lerVisual);
   const [antes, setAntes] = useState<Backup | null>(() => { try { const t = localStorage.getItem(CH_ANTES); return t ? (JSON.parse(t) as Backup) : null; } catch { return null; } });
   const [ext, setExt] = useState<{ e: Ext; plano: ItemExt[] } | null>(null);
@@ -95,8 +98,10 @@ export function App() {
     else if (d === "lancar-rec") lancar({ tipo: "rec" });
     else if (d === "lancar-desp") lancar({ tipo: "desp" });
     else if (d === "menu") setTela("voce");
-    else setAviso(`${AINDA[d]} ainda está só no app atual; entra no React na próxima etapa.`);
+    else if (d === "busca") setTela("busca");
+    else if (d === "avisos") setTela("avisos");
   };
+  const nAvisos = useMemo(() => listaAvisos(c.estado, b, c.pers).length, [c, b]);
   const r = c.resumo;
   return (
     <>
@@ -115,8 +120,12 @@ export function App() {
       {aviso && <p className="aviso" role="status">{aviso}</p>}
       {tela === "voce" ? <Voce b={b} hoje={hoje} visual={visual} desfazer={antes ? antes.items.length : 0} onVisual={mudarVisual} onSalvar={salvar} onBaixar={baixar} onAbrir={abrir}
           onZerar={zerar} onDesfazer={desfazer} onExtrato={pedirExtrato} onContas={() => b ? setAjustes(true) : undefined} onVoltar={() => setTela("inicio")} onAviso={setAviso} />
-        : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} />
-        : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onExtrato={pedirExtrato} />
+        : tela === "inicio" ? <Inicio e={c.estado} pers={c.pers} nome={c.nome} onIr={ir} nAvisos={nAvisos} />
+        : tela === "contas" ? <Contas e={c.estado} pers={c.pers} onIr={ir} onEdit={id => lancar({ id })} transf={b ? transfs(b) : []} onTransf={() => setTela("transf")} onPatri={() => setTela("patrimonio")} onExtrato={pedirExtrato} />
+        : tela === "busca" ? <Busca e={c.estado} pers={c.pers} onEdit={b ? id => lancar({ id }) : undefined} onVoltar={() => setTela("inicio")} />
+        : tela === "avisos" ? <Avisos e={c.estado} b={b} pers={c.pers} onSalvar={salvar} onVoltar={() => setTela("inicio")}
+            onIr={(d, a) => { if (a.id && b) lancar({ id: a.id }); else setTela(d === "categorias" ? "categorias" : d); }} />
+        : tela === "patrimonio" ? <Patrimonio e={c.estado} b={b} onSalvar={salvar} onVoltar={() => setTela("contas")} />
         : tela === "transf" ? <Transferencias b={b} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("contas")} />
         : tela === "relatorios" ? <Relatorios e={c.estado} pers={c.pers} onVoltar={() => setTela("metas")} />
         : tela === "categorias" ? <Categorias b={b} e={c.estado} pers={c.pers} hoje={hoje} onSalvar={salvar} onAviso={setAviso} onVoltar={() => setTela("metas")} />
@@ -128,7 +137,7 @@ export function App() {
       <button type="button" className="fab" aria-label="Novo lançamento" onClick={() => lancar({ tipo: "desp" })}>+</button>
       <nav className="bar" aria-label="Telas">
         <button type="button" aria-current={tela === "inicio" ? "page" : undefined} onClick={() => { setTela("inicio"); setAviso(""); }}>Início</button>
-        <button type="button" aria-current={tela === "contas" || tela === "transf" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
+        <button type="button" aria-current={tela === "contas" || tela === "transf" || tela === "patrimonio" ? "page" : undefined} onClick={() => { setTela("contas"); setAviso(""); }}>Contas</button>
         <button type="button" aria-current={tela === "cartoes" ? "page" : undefined} onClick={() => { setTela("cartoes"); setAviso(""); }}>Cartões</button>
         <button type="button" aria-current={tela === "pessoas" ? "page" : undefined} onClick={() => { setTela("pessoas"); setAviso(""); }}>Pessoas</button>
         <button type="button" aria-current={tela === "metas" || tela === "relatorios" || tela === "moedas" || tela === "fixos" || tela === "categorias" ? "page" : undefined} onClick={() => { setTela("metas"); setAviso(""); }}>Metas</button>

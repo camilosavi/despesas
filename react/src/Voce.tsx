@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
-import { CORES, MODOS, csvLancamentos, nomeDe, salvarNome } from "./voce";
+import { CORES, MODOS, csvLancamentos, estatisticas, nomeDe, salvarNome } from "./voce";
 import type { Visual } from "./voce";
 import type { Backup } from "./loja";
+import { R, dm } from "./format";
 import "./voce.css";
 
 interface Props {
@@ -77,6 +78,8 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
             <p className="lnota">Restaurar troca os dados deste navegador pelos do arquivo.</p>
           </section>
 
+          <Estat b={b} />
+
           <section aria-labelledby="v-zr">
             <h2 id="v-zr">Zerar</h2>
             <p className="lnota">Apaga todos os lançamentos, saldos das contas e transferências. Cartões, euro, caixinhas, dívidas, pessoas e categorias ficam.</p>
@@ -88,5 +91,23 @@ export function Voce({ b, hoje, visual, desfazer, onVisual, onSalvar, onBaixar, 
         </>
       ) : <p className="lnota">Escolha “Começar do zero” ou “Usar meus dados” para ver nome, backup e zerar.</p>}
     </main>
+  );
+}
+
+function Estat({ b }: { b: Backup }) {
+  const s = estatisticas(b), y = (d: string) => d.slice(8) + "/" + d.slice(5, 7) + "/" + d.slice(0, 4);
+  const L: [string, string][] = [
+    ["Lançamentos", `${s.lancamentos} (${s.despesas} despesas · ${s.receitas} receitas)`],
+    ["Primeiro lançamento", s.desde ? `${y(s.desde)} · ${s.meses} ${s.meses === 1 ? "mês" : "meses"} com movimento` : "ainda não há"],
+    ["Maior despesa", s.maior ? `${s.maior.desc} · ${R(s.maior.cents)} (${dm(s.maior.date)})` : "—"],
+    ["Contas · cartões", `${s.contas} · ${s.cartoes}`],
+    ["Caixinhas · dívidas · pessoas", `${s.caixinhas} · ${s.dividas} · ${s.pessoas}`],
+    ["Tamanho dos dados", `${s.kb} KB neste navegador`],
+  ];
+  return (
+    <section aria-labelledby="v-es">
+      <h2 id="v-es">Estatísticas</h2>
+      <dl className="vest">{L.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+    </section>
   );
 }

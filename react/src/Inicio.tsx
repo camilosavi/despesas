@@ -20,7 +20,7 @@ const BLOCOS: { id: string; nome: string; tam: [number, number]; quieto?: boolea
 
 const Icone = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" aria-hidden="true"><path d={d} /></svg>;
 
-export function Inicio({ e, pers, nome, onIr }: { e: Estado; pers: Pers; nome: string; onIr: (d: Destino) => void }) {
+export function Inicio({ e, pers, nome, onIr, nAvisos = 0 }: { e: Estado; pers: Pers; nome: string; onIr: (d: Destino) => void; nAvisos?: number }) {
   const p: BlocoProps = { e, pers, onIr };
   const mostraSaude = saudeVisivel(notaDeSaude(e));
   return (
@@ -29,7 +29,7 @@ export function Inicio({ e, pers, nome, onIr }: { e: Estado; pers: Pers; nome: s
         <button type="button" aria-label="Menu" onClick={() => onIr("menu")}><Icone d="M4 7h16M4 12h16M4 17h16" /></button>
         <div className="ola"><h1>Olá{nome ? ", " + nome : ""}</h1><small>{dataLonga(e.hoje)}</small></div>
         <button type="button" aria-label="Buscar" onClick={() => onIr("busca")}><Icone d="M11 5a6 6 0 100 12 6 6 0 000-12zM20 20l-4-4" /></button>
-        <button type="button" aria-label="Avisos" onClick={() => onIr("avisos")}><Icone d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15zM10 21h4" /></button>
+        <button type="button" className="sino" aria-label={nAvisos ? `Avisos (${nAvisos})` : "Avisos"} onClick={() => onIr("avisos")}><Icone d="M6 17V11a6 6 0 0112 0v6l1.5 2h-15zM10 21h4" />{nAvisos > 0 && <b aria-hidden="true">{nAvisos > 9 ? "9+" : nAvisos}</b>}</button>
       </header>
       <main className="dgrid">
         {BLOCOS.filter(b => b.id !== "saude" || mostraSaude).map(b => (

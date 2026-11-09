@@ -167,3 +167,4 @@ button { font: inherit }
   .fl { flex: none; height: 11em }
   .d-trans .lista { columns: 1 }
 }
+.dtop .sino { position: relative } .dtop .sino b { position: absolute; top: 3px; right: 1px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--dcol); color: #fff; font-size: 11px; line-height: 18px; text-align: center }
