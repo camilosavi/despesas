@@ -485,6 +485,13 @@ button.lk-big:active{background:rgba(255,255,255,.2)}
 /* tchan: ícones por categoria */
 .ico.cat{background:color-mix(in srgb,var(--cc) 15%,transparent);color:var(--cc);display:flex;align-items:center;justify-content:center;padding:0;align-self:center}
 .ico.cat svg{display:block;margin:0;flex:none}
+.ico.cat .emo{font-size:1.3rem;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.catpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:8px}
+.catpick button{height:44px;border:2px solid transparent;border-radius:12px;background:var(--chip);color:var(--ink);display:grid;place-items:center;padding:0;font-size:1.35rem;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.catpick button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.catpick button[aria-pressed=true]{border-color:var(--ink)}
+.catedit .catlbl{font-size:.8rem;color:var(--muted);margin:4px 0 -2px}
+.catprev{display:flex;align-items:center;gap:10px}
 .ico svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .item .m b{font-weight:600;color:var(--ink);opacity:.75}
 .item .a{font-family:var(--display);font-weight:600;letter-spacing:-.01em}
@@ -2341,9 +2348,31 @@ const ICO={
  rend:'<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
  divid:'<circle cx="8" cy="8.5" r="2.8"/><circle cx="16.5" cy="8.5" r="2.8"/><path d="M3 19.5c0-3 2.3-5 5-5s5 2 5 5M11.5 19.5c0-3 2.3-5 5-5s5 2 5 5"/>',
  rout:'<path d="M12 5v14M5 12h14"/>',
+ tag:'<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3-8.7 8.7z"/><circle cx="8" cy="8" r="1.4"/>',
+ cafe:'<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3"/>',
+ lanche:'<path d="M4 11h16a8 8 0 0 0-16 0z"/><path d="M4 15h16M5 19h14a1 1 0 0 0 1-1v-1H4v1a1 1 0 0 0 1 1z"/>',
+ bar:'<path d="M5 4h14l-7 8zM12 12v8M8 20h8"/>',
+ carro:'<path d="M5 16v-4l1.8-4.5h10.4L19 12v4zM5 13h14"/><circle cx="8" cy="16.5" r="1.5"/><circle cx="16" cy="16.5" r="1.5"/>',
+ aviao:'<path d="M21 4 3 11l7 2.5L12.5 21z"/><path d="M10 13.5 21 4"/>',
+ luz:'<path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/>',
+ agua:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+ filme:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v14M16 5v14M3 10h5M3 14h5M16 10h5M16 14h5"/>',
+ musica:'<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+ roupa:'<path d="M8 4 3 7.5l2.5 3L8 9v11h8V9l2.5 1.5 2.5-3L16 4c-.5 1.5-2 2.5-4 2.5S8.5 5.5 8 4z"/>',
+ beleza:'<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M18 16l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>',
+ trabalho:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/>',
+ celular:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+ pc:'<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8 20h8M12 16.5V20"/>',
+ pet:'<circle cx="7" cy="10" r="1.6"/><circle cx="11" cy="6.5" r="1.6"/><circle cx="15.5" cy="7" r="1.6"/><circle cx="18.5" cy="11" r="1.6"/><path d="M12 12c3 0 5 3 5 5.2 0 1.5-1.3 2-2.6 1.6-1-.3-1.6-.6-2.4-.6s-1.4.3-2.4.6C8.3 19.2 7 18.7 7 17.2 7 15 9 12 12 12z"/>',
+ familia:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9.5" r="2.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M15 14.5c3 0 6 1.5 6 5"/>',
+ ferramenta:'<path d="M14.5 6a4 4 0 0 0 4.5 5l-8.5 8.5a2 2 0 0 1-3-3L16 8a4 4 0 0 0-1.5-2z"/>',
+ estrela:'<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8z"/>',
  d13:'<rect x="4" y="9" width="16" height="11" rx="2"/><path d="M3 9h18M12 9v11M12 9c-1.5-3.5-5.5-3.5-5.5-1.5S10 9 12 9zM12 9c1.5-3.5 5.5-3.5 5.5-1.5S14 9 12 9z"/>'
 };
-const catIco=(k,t)=>{const c=catOf(k,t);return `<span class="ico cat" style="--cc:${c.c}" aria-hidden="true"><svg viewBox="0 0 24 24">${ICO[c.k]||(c.k.startsWith("u_")?'<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3-8.7 8.7z"/><circle cx="8" cy="8" r="1.4"/>':ICO[t==="rec"?"rout":"outros"])}</svg></span>`};
+/* ícone da categoria: c.i = chave de ICO (desenho) ou um emoji (texto); sem c.i vale o da chave da categoria. Emoji usa a fonte do aparelho (Apple no iPhone/Mac). */
+const EMO_RE=/\p{Extended_Pictographic}|\p{Regional_Indicator}|[0-9#*]\uFE0F?\u20E3/u;
+const catGl=(c,t)=>{const k=ICO[c.i]?c.i:ICO[c.k]?c.k:c.k.startsWith("u_")?"tag":(t==="rec"?"rout":"outros");return c.i&&!ICO[c.i]?`<span class="emo">${esc(c.i)}</span>`:`<svg viewBox="0 0 24 24">${ICO[k]}</svg>`};
+const catIco=(k,t)=>{const c=catOf(k,t);return `<span class="ico cat" style="--cc:${c.c}" aria-hidden="true">${catGl(c,t)}</span>`};
 const PAYS=["Pix","Débito","Crédito","Dinheiro","Boleto"];
 const MES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const typeOf=x=>x.type==="rec"?"rec":"desp";
@@ -2493,19 +2522,26 @@ async function delCat(k){
 }
 /* editar nome e cor de qualquer categoria (despesa ou receita, padrão ou criada): cfg.catEdit[k]={n?,c?} (28/10/2026, pedido dele) */
 let catEd=null, subKillArm=null;
+const ICO_PICK=["alim","lanche","cafe","bar","merc","transp","carro","aviao","casa","luz","agua","lazer","filme","musica","esporte","saude","compras","roupa","beleza","educ","trabalho","celular","pc","pet","familia","ferramenta","assin","cartao","euro","rend","sal","extra","d13","estrela","tag","outros"];
+const CAT_EMO=["🍔","🍕","☕","🍺","🛒","🚗","⛽","🚌","✈️","🏠","💡","💧","📱","💻","🎮","🎬","🎵","🏋️","💊","🩺","🛍️","👕","💇","📚","🎓","💼","🐶","🐱","👶","🎁","🎉","🧾","🔧","🧹","🌴","🏖️","💰","📈","🏦","❤️"];
 const CAT_PICK=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)","var(--c8)"];
 function catHex(v){if(/^#[0-9a-f]{6}$/i.test(v))return v;try{const m=/^var\((--[\w-]+)\)$/.exec(v),r=m?getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim():v,g=document.createElement("canvas").getContext("2d");g.fillStyle="#2E4A8B";g.fillStyle=r;return /^#[0-9a-f]{6}$/i.test(g.fillStyle)?g.fillStyle:"#2E4A8B"}catch(e){return "#2E4A8B"}}
 function catEditor(t){
   if(!catEd||catEd.t!==t) return "";
   const c=catOf(catEd.k,t), lock=t==="rec"?CAT_LOCK_REC.includes(catEd.k):CAT_LOCK.includes(catEd.k), col=catEd.col||c.c;
-  return `<div class="catedit"><input type="text" id="catEdName" maxlength="24" value="${esc(catEd.n??c.n)}" autocomplete="off" enterkeyhint="done" aria-label="Nome da categoria">
+  const ic=catEd.i!==undefined?catEd.i:(c.i||""), pv={...c,c:col,i:ic||undefined};
+  return `<div class="catedit"><div class="catprev"><span id="catEdPrev" class="ico cat" style="--cc:${col}">${catGl(pv,t)}</span><input type="text" id="catEdName" maxlength="24" value="${esc(catEd.n??c.n)}" autocomplete="off" enterkeyhint="done" aria-label="Nome da categoria"></div>
     <div class="catcols" role="group" aria-label="Cor">${CAT_PICK.map(v=>`<button type="button" class="catcol" data-catcol="${v}" aria-pressed="${v===col}" style="background:${v}" aria-label="Cor"></button>`).join("")}<label class="catcol free" aria-label="Escolher qualquer cor" style="${CAT_PICK.includes(col)?"":`background:${col};border-color:var(--ink)`}"><input type="color" id="catEdFree" value="${catHex(col)}"></label></div>
+    <div class="catlbl">Ícone</div><div class="catpick" role="group" aria-label="Ícone">${ICO_PICK.map(v=>`<button type="button" data-cati="${v}" aria-pressed="${ic===v||(!ic&&v===(ICO[c.k]?c.k:""))}" aria-label="${v}"><svg viewBox="0 0 24 24">${ICO[v]}</svg></button>`).join("")}</div>
+    <div class="catlbl">Emoji (qualquer um do teclado${IS_PC?": Win + . ou Ctrl+Cmd+Espaço":""})</div>
+    <input type="text" id="catEdEmo" inputmode="text" autocomplete="off" placeholder="Toque e escolha um emoji" value="${ic&&!ICO[ic]?esc(ic):""}" aria-label="Emoji da categoria">
+    <div class="catpick" role="group" aria-label="Emojis comuns">${CAT_EMO.map(v=>`<button type="button" data-cate="${v}" aria-pressed="${ic===v}">${v}</button>`).join("")}</div>
     <div class="svbtns">${lock?"":`<button type="button" class="btn soft" data-catdel="${esc(catEd.k)}">Apagar</button>`}<button type="button" class="btn soft" id="catEdCancel">Cancelar</button><button type="button" class="btn primary" id="catEdSave">Salvar</button></div></div>`}
 async function catEdSave(){
-  const t=catEd.t, k=catEd.k, c0=catOf(k,t), n=($("catEdName")?.value??catEd.n??c0.n).trim().replace(/\s+/g," ").slice(0,24), col=catEd.col||c0.c;
+  const t=catEd.t, k=catEd.k, c0=catOf(k,t), n=[...($("catEdName")?.value??catEd.n??c0.n).trim().replace(/\s+/g," ")].slice(0,24).join(""), col=catEd.col||c0.c, ic=catEd.i!==undefined?catEd.i:(c0.i||"");
   if(!n){toast("Digite o nome da categoria.");return}
   const dup=(t==="rec"?CATS.rec:CATS.desp).find(c=>c.k!==k&&fold(c.n)===fold(n));if(dup){toast("Já existe uma categoria com esse nome.");return}
-  await saveCfg({catEdit:{...(cfg.catEdit||{}),[k]:{n,c:col}}});catEd=null;applyCats();toast("Categoria salva",true);render()}
+  await saveCfg({catEdit:{...(cfg.catEdit||{}),[k]:{n,c:col,...(ic?{i:ic}:{})}}});catEd=null;applyCats();toast("Categoria salva",true);render()}
 /* categorias antigas: só para mostrar o nome de quem ainda tem uma (ex.: depois de desfazer a migração); não aparecem para escolher */
 const LEGACY_CATS=[{k:"interc",n:"Intercâmbio",c:"var(--c3)"},{k:"cidad",n:"Cidadania",c:"var(--c6)"},{k:"esporte",n:"Esporte",c:"var(--c1)"}];
 const catOf=(k,t)=>(CATS[t]||CATS.desp).find(c=>c.k===k)||CATS.desp.find(c=>c.k===k)||CATS.rec.find(c=>c.k===k)||(k&&k.startsWith("u_")?{k:"outros",n:"Outros",c:"var(--c8)"}:BASE_DESP.find(c=>c.k===k))||LEGACY_CATS.find(c=>c.k===k)||{k,n:"Outros",c:"var(--c8)"};
@@ -6681,6 +6717,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="acSave"){saveAccts();return}
   const cd=t.closest("[data-catdel]"); if(cd){delCat(cd.dataset.catdel);return}
   {const ce=t.closest("[data-catedit]");if(ce){const same=catEd&&catEd.k===ce.dataset.catedit;catEd=same?null:{k:ce.dataset.catedit,t:ce.dataset.catt};render();if(catEd)setTimeout(()=>$("catEdName")?.focus(),30);return}}
+  {const ci=t.closest("[data-cati],[data-cate]");if(ci&&catEd){catEd.n=$("catEdName")?.value??catEd.n;const v=ci.dataset.cati||ci.dataset.cate,c0=catOf(catEd.k,catEd.t);catEd.i=(!ci.dataset.cate&&v===c0.k)?"":v;render();return}}
   {const cc=t.closest("[data-catcol]");if(cc&&catEd){catEd.n=$("catEdName")?.value??catEd.n;catEd.col=cc.dataset.catcol;render();return}}
   if(t.id==="catEdCancel"){catEd=null;render();return}
   if(t.id==="catEdSave"){await catEdSave();return}
@@ -6955,6 +6992,7 @@ async function pessCreate(raw){
   const id=ppNewId();try{await saveCfg({pp:[...ppList(),{id,name:n,e:[]}]})}catch(er){toast("Não deu para salvar. Tente de novo.");return}
   pessNew=false;pessNewVal="";const L=pessSel();pessSet(form.type==="rec"?[id]:[...L,id]);pessDraw()}
 document.addEventListener("input",e=>{
+  if(e.target.id==="catEdEmo"&&catEd){const g=[...(window.Intl&&Intl.Segmenter?new Intl.Segmenter(undefined,{granularity:"grapheme"}).segment(e.target.value):[])].map(x=>x.segment).filter(x=>EMO_RE.test(x));const v=g[g.length-1]||"";if(v){catEd.i=v;const pv=$("catEdPrev");if(pv)pv.innerHTML=`<span class="emo">${esc(v)}</span>`;document.querySelectorAll(".catpick [aria-pressed]").forEach(b=>b.setAttribute("aria-pressed","false"))}return}
   if(e.target.id==="catEdFree"&&catEd){const v=e.target.value,l=e.target.parentNode;catEd.col=v;l.style.background=v;l.style.borderColor="var(--ink)";document.querySelectorAll(".catcols [data-catcol]").forEach(b=>b.setAttribute("aria-pressed","false"));return}
   if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
   if(e.target.id==="pessNewName")pessNewVal=e.target.value;
