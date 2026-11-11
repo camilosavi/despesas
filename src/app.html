@@ -228,6 +228,8 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surfa
 .catedit input{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink)}
 .catcols{display:flex;gap:10px;flex-wrap:wrap}
 .catcol{width:32px;height:32px;border-radius:50%;border:2px solid transparent;padding:0}
+.catcol.free{position:relative;overflow:hidden;background:conic-gradient(#f59e0b,#ec4899,#6366f1,#10b981,#f59e0b);display:block}
+.catcol.free input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
 .catcol[aria-pressed=true]{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg) inset}
 .catpill button{width:24px;height:24px;border:0;border-radius:50%;background:none;color:var(--muted);font-size:1.05rem;line-height:1}
 .catadd{display:grid;grid-template-columns:1fr auto;gap:8px}
@@ -2443,7 +2445,7 @@ const CAT_SYS=["cartao","euro","caixa","divid"], catsPick=t=>CATS[t].filter(c=>!
 const BASE_REC=CATS.rec.slice(), BASE_DESP=CATS.desp.slice(), CAT_LOCK=["cartao","euro","outros"], CAT_LOCK_REC=["sal","d13","divid","rout"], CAT_COLS=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)"];
 function applyCats(){
   const mine=Array.isArray(cfg.cats)?cfg.cats:[];
-  const ed=cfg.catEdit&&typeof cfg.catEdit==="object"?cfg.catEdit:{}, ap=c=>/^ur?_/.test(c.k)&&ed[c.k]?{...c,...ed[c.k]}:c;
+  const ed=cfg.catEdit&&typeof cfg.catEdit==="object"?cfg.catEdit:{}, ap=c=>ed[c.k]?{...c,...ed[c.k]}:c;
   CATS.desp=[...BASE_DESP.filter(c=>c.k!=="outros"),...mine,BASE_DESP.find(c=>c.k==="outros")].map(ap);
   /* receitas: as padrão ficam; as criadas (cfg.catsRec, chave "ur_…") entram antes de "Outras receitas" */
   const mr=Array.isArray(cfg.catsRec)?cfg.catsRec:[];
@@ -2481,11 +2483,12 @@ async function delCat(k){
 /* editar nome e cor de qualquer categoria (despesa ou receita, padrão ou criada): cfg.catEdit[k]={n?,c?} (28/10/2026, pedido dele) */
 let catEd=null, subKillArm=null;
 const CAT_PICK=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)","var(--c8)"];
+function catHex(v){if(/^#[0-9a-f]{6}$/i.test(v))return v;try{const m=/^var\((--[\w-]+)\)$/.exec(v),r=m?getComputedStyle(document.documentElement).getPropertyValue(m[1]).trim():v,g=document.createElement("canvas").getContext("2d");g.fillStyle="#2E4A8B";g.fillStyle=r;return /^#[0-9a-f]{6}$/i.test(g.fillStyle)?g.fillStyle:"#2E4A8B"}catch(e){return "#2E4A8B"}}
 function catEditor(t){
   if(!catEd||catEd.t!==t) return "";
   const c=catOf(catEd.k,t), lock=t==="rec"?CAT_LOCK_REC.includes(catEd.k):CAT_LOCK.includes(catEd.k), col=catEd.col||c.c;
   return `<div class="catedit"><input type="text" id="catEdName" maxlength="24" value="${esc(catEd.n??c.n)}" autocomplete="off" enterkeyhint="done" aria-label="Nome da categoria">
-    <div class="catcols" role="group" aria-label="Cor">${CAT_PICK.map(v=>`<button type="button" class="catcol" data-catcol="${v}" aria-pressed="${v===col}" style="background:${v}" aria-label="Cor"></button>`).join("")}</div>
+    <div class="catcols" role="group" aria-label="Cor">${CAT_PICK.map(v=>`<button type="button" class="catcol" data-catcol="${v}" aria-pressed="${v===col}" style="background:${v}" aria-label="Cor"></button>`).join("")}<label class="catcol free" aria-label="Escolher qualquer cor" style="${CAT_PICK.includes(col)?"":`background:${col};border-color:var(--ink)`}"><input type="color" id="catEdFree" value="${catHex(col)}"></label></div>
     <div class="svbtns">${lock?"":`<button type="button" class="btn soft" data-catdel="${esc(catEd.k)}">Apagar</button>`}<button type="button" class="btn soft" id="catEdCancel">Cancelar</button><button type="button" class="btn primary" id="catEdSave">Salvar</button></div></div>`}
 async function catEdSave(){
   const t=catEd.t, k=catEd.k, c0=catOf(k,t), n=($("catEdName")?.value??catEd.n??c0.n).trim().replace(/\s+/g," ").slice(0,24), col=catEd.col||c0.c;
@@ -5956,10 +5959,10 @@ function goMe(v){meView=v||"app";go("pMe")}
 function renderMe(){
   let h=meView==="mine"?"":lookSection()+secSection()+pushSection()+syncSection()+calibSection(), m="";
   if(meView==="mine") m=salSection()+holSection()+ppSection()+ofSection();
-  m+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${catsPick("desp").map(c=>/^u_/.test(c.k)?`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="desp" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`:`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</span>`).join("")}</div>${catEditor("desp")}
+  m+=`<section id="catSec"><h2>Categorias de despesa</h2><div class="card rate"><div class="catlist">${catsPick("desp").map(c=>`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="desp" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")}</div>${catEditor("desp")}
     <div class="catadd"><input type="text" id="catAddIn" maxlength="24" placeholder="Nova categoria (ex.: Celular)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtn">Criar</button></div>
     <div class="hint expl">As categorias básicas são fixas e iguais em todas as telas. As que você cria aparecem aqui: toque para mudar o nome e a cor, ou apagar (os lançamentos vão para Outros).</div></div></section>`;
-  m+=`<section id="catRecSec"><h2>Categorias de receita</h2><div class="card rate"><div class="catlist">${catsPick("rec").map(c=>/^ur_/.test(c.k)?`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="rec" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`:`<span class="catpill"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</span>`).join("")}</div>${catEditor("rec")}
+  m+=`<section id="catRecSec"><h2>Categorias de receita</h2><div class="card rate"><div class="catlist">${catsPick("rec").map(c=>`<button type="button" class="catpill" data-catedit="${esc(c.k)}" data-catt="rec" aria-label="Editar ${esc(c.n)}"><i class="dot" style="background:${c.c}"></i>${esc(c.n)}</button>`).join("")}</div>${catEditor("rec")}
     <div class="catadd"><input type="text" id="catAddInR" maxlength="24" placeholder="Nova categoria (ex.: Freelance)" autocomplete="off" enterkeyhint="done"><button class="btn primary" id="catAddBtnR">Criar</button></div></div></section>`;
   m+=catUndoHtml();
   h+=`<section><h2>Backup e exportação</h2><div class="card rate"><div class="${daysSince(cfg.lastBackup)>=7?"warn":"pos"}" style="font-size:.88rem;font-weight:600">${cfg.lastBackup?(daysSince(cfg.lastBackup)===0?"Último backup: hoje ✓":`Último backup: há ${daysSince(cfg.lastBackup)} ${daysSince(cfg.lastBackup)===1?"dia":"dias"}`):"Você ainda não fez nenhum backup"}</div><div class="hint">Backup: arquivo com todos os lançamentos, compras de euro, limites e previstos; guarde no iCloud Drive. Excel: lançamentos de ${shortMonth(curYM())} até ${shortMonth(shiftYM(curYM(),11))}, para abrir numa planilha.</div>
@@ -6941,6 +6944,7 @@ async function pessCreate(raw){
   const id=ppNewId();try{await saveCfg({pp:[...ppList(),{id,name:n,e:[]}]})}catch(er){toast("Não deu para salvar. Tente de novo.");return}
   pessNew=false;pessNewVal="";const L=pessSel();pessSet(form.type==="rec"?[id]:[...L,id]);pessDraw()}
 document.addEventListener("input",e=>{
+  if(e.target.id==="catEdFree"&&catEd){const v=e.target.value,l=e.target.parentNode;catEd.col=v;l.style.background=v;l.style.borderColor="var(--ink)";document.querySelectorAll(".catcols [data-catcol]").forEach(b=>b.setAttribute("aria-pressed","false"));return}
   if(e.target.id==="divN"||e.target.id==="amt"){setTimeout(divHint,0)}
   if(e.target.id==="pessNewName")pessNewVal=e.target.value;
   if(e.target.id==="desc")pessDraw();
