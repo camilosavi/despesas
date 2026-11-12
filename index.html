@@ -2154,6 +2154,68 @@ details.ppmore .svdel{display:block;margin-top:var(--g-gap);padding:0}
 #pHome .dqa button[data-dqa="desp"]:hover{background:rgba(255,255,255,.88)}
 #pHome .dqa button[data-dqa="rec"]{background:transparent}
 @container (min-width:900px){#pHome .dgrid.nosaude{grid-template-areas:"s r r r" "f f g c" "t t g c"}}
+/* ===== Redesenho "kit" (12/11/2026, branch redesenho-kit; pedido dele: redesenhar o app inspirado no Fintech App UI Kit) =====
+   Só referência de desenho: ações em blocos, gasto em barra segmentada, listas em cartões brancos arredondados com total do dia.
+   Cor lisa + borda de luz, sem degradê (ele não gosta); mesmos tokens do tema. Espaçamentos pela base única. */
+:root{--k-r:20px;--k-r2:14px;--k-surf:var(--surface);--k-bd:color-mix(in srgb,var(--ink) 7%,transparent)}
+/* ícone de categoria = quadrado arredondado */
+.ico.cat{border-radius:13px!important}
+:is(#pHome,#pMes,#pCards) .item .ico.cat{width:40px;height:40px;flex:0 0 40px}
+/* ações em blocos (Início) */
+#pHome .kact{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:1em}
+#pHome .kact button{all:unset;box-sizing:border-box;display:grid;justify-items:start;align-content:space-between;gap:.9em;min-height:4.6em;padding:.7em .7em .6em;border-radius:var(--k-r2);background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);color:#fff;font-size:.72rem;font-weight:650;line-height:1.15;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#pHome .kact button:hover{background:rgba(255,255,255,.2)}
+#pHome .kact button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+#pHome .kact i{display:grid;place-items:center;width:1.9em;height:1.9em;border-radius:.6em;background:#000;color:#fff}
+#pHome .kact svg{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#pHome .kact button[data-dqa="desp"]{background:#fff;box-shadow:none;color:var(--head)}
+#pHome .kact button[data-dqa="desp"]:hover{background:rgba(255,255,255,.9)}
+/* gasto no mês: barra segmentada */
+.kseg{display:grid;gap:.55em}
+.kseg>small{color:var(--muted);font-size:.8rem}
+.kseg .kbig{font-family:var(--display);font-weight:700;font-size:clamp(1.4rem,9cqi,2rem);letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.kbar{display:flex;gap:3px;height:9px;margin:.15em 0 .35em}
+.kbar i{display:block;min-width:4px;border-radius:99px}
+.kleg{list-style:none;margin:0;padding:0;display:grid;gap:.1em}
+.kleg li{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:.6em;padding:.32em 0;font-size:.84rem;min-width:0}
+.kleg li i{width:.6em;height:.6em;border-radius:50%}
+.kleg li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.kleg li b{font-variant-numeric:tabular-nums;font-weight:650}
+.kleg li em{font-style:normal;color:var(--muted);font-size:.76rem;min-width:2.4em;text-align:right;font-variant-numeric:tabular-nums}
+/* lista por dia com total do dia (Início e Contas) */
+.kday,.mgh{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:.9em .2em .4em;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.kday b,.mgh b{font-weight:700;color:var(--ink);text-transform:capitalize;font-size:.86rem}
+.kday .pos,.mgh .pos{color:var(--pos);font-weight:650}
+.kday>span:not(.pos),.mgh>span:not(.pos){font-weight:600}
+.klist,.mgrp>.card.list{background:var(--k-surf)!important;border:0!important;box-shadow:inset 0 0 0 1px var(--k-bd)!important;border-radius:var(--k-r)!important;padding:.1em .9em!important;margin:0!important}
+.klist .dtr:last-child,.mgrp>.card.list>.item:last-child{border-bottom:0}
+#pHome .dtr{padding:.7em 0!important;gap:.8em}
+#pHome .dtn b{font-weight:650}
+#pHome .dtv{display:grid;justify-items:end;text-align:right}
+#pHome .dtv small{color:var(--muted)}
+/* blocos do Início: cartões arredondados brancos em vez de cinza chapado */
+#pHome{--quiet:var(--k-surf)}
+#pHome :is(.d-saude,.d-fluxo,.d-gastos,.d-cartoes,.d-trans){border-radius:var(--k-r)!important;box-shadow:inset 0 0 0 1px var(--k-bd)}
+#pHome .d-trans{background:none!important;box-shadow:none;padding-inline:0}
+#pHome .d-trans>h3{padding-inline:.2em;background:none!important}
+#pHome .d-trans{padding-inline:0!important}
+#pHome .d-trans .kday:first-of-type{padding-top:.2em}
+#pHome .d-res{border-radius:var(--k-r)!important}
+#pHome .d-saldo{border-radius:calc(var(--k-r) + 4px)!important}
+/* Contas: lista em cartões brancos com avatar quadrado */
+#pMes .mgrp{margin-bottom:var(--g-gap)}
+#pMes .mgrp>.card.list .item{border-bottom:1px solid var(--k-bd);background:none}
+#pMes .mgrp>.card.list .item:last-child{border-bottom:0}
+@media (max-width:979px){
+  #pHome .kact{gap:6px}
+  #pHome .kact button{min-height:4.3em;font-size:.7rem}
+}
+@media (min-width:980px){
+  #pHome .kact{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #pHome .kact button{display:flex;align-items:center;gap:.55em;min-height:0;padding:.5em .6em;font-size:.76rem;white-space:nowrap}
+}
+@media (max-width:340px){#pHome .kact button{font-size:.64rem;padding:.55em .5em}}
+@media (prefers-reduced-motion:no-preference){#pHome .kact button{transition:background .15s}}
 </style>
 
 <div class="wrap">
@@ -3895,16 +3957,19 @@ function dashHome(){
   /* categorias */
   const bc=byCat(mi,"desp");const arr=Object.entries(bc).filter(([k,v])=>v>0).sort((a,b)=>b[1]-a[1]);const tot=arr.reduce((s,x)=>s+x[1],0);
   const top=arr.slice(0,5).map(([k,v])=>({k,v,c:catOf(k,"desp").c,n:catOf(k,"desp").n}));const rest=tot-top.reduce((s,x)=>s+x.v,0);if(rest>0)top.push({k:"_",v:rest,c:"var(--muted)",n:"Outras categorias"});
-  const cats=tot?`<div class="dnw"><div class="dnb">${donutHtml(top,tot)}<div class="dnc"><small>Maior gasto</small><b>${(top[0].v/tot*100).toLocaleString("pt-BR",{maximumFractionDigits:1})}%</b><small class="dnn">${esc(top[0].n)}</small></div></div><ul class="dleg">${top.map(x=>`<li title="${Math.round(x.v/tot*100)}%"><i style="background:${x.c}"></i><span>${esc(x.n)}</span><b>${R(x.v)}</b><em>${Math.round(x.v/tot*100)}%</em></li>`).join("")}</ul></div>`:`<p class="dempty">Nenhum gasto neste mês ainda.</p>`;
+  const cats=tot?`<div class="kseg"><small>Gasto em ${esc(monthLabel(ym))}</small><b class="kbig">${R(tot)}</b><div class="kbar" role="img" aria-label="Gastos por categoria">${top.map(x=>`<i style="flex:${x.v};background:${x.c}" title="${esc(x.n)}"></i>`).join("")}</div><ul class="kleg">${top.map(x=>`<li><i style="background:${x.c}"></i><span>${esc(x.n)}</span><b>${R(x.v)}</b><em>${Math.round(x.v/tot*100)}%</em></li>`).join("")}</ul></div>`:`<p class="dempty">Nenhum gasto neste mês ainda.</p>`;
   const cs=credCards().filter(c=>billTot(c,ym)||cardCfg(c).limit||billShown(c,ym).from);
   const cardsH=cs.length?`<div class="dcar"><div class="dcards" id="dcar">${cs.map(c=>dashCard(c,true)).join("")}</div>${cs.length>1?`<button class="dside l" data-dcar="-1" aria-label="Cartão anterior" hidden>‹</button><button class="dside r" data-dcar="1" aria-label="Próximo cartão">›</button>`:""}</div>`:`<p class="dempty">Nenhum cartão ainda.</p>`;
-  const last=items.filter(x=>!genFat(x)).slice().sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0)).slice(0,7);
-  const tr=last.length?last.map(x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,t).n)} · ${esc(cardOf(x)||x.acct||(t==="rec"?"Conta":x.pay)||"")}</small></span><span class="dtv"><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b><small>${fmtDM(whenOf(x))}</small></span></div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
+  const last=items.filter(x=>!genFat(x)).slice().sort((a,b)=>(whenOf(b)||"").localeCompare(whenOf(a)||"")||(b.createdAt||0)-(a.createdAt||0)).slice(0,8);
+  const kRow=x=>{const t=typeOf(x);return `<div class="item dtr" data-id="${x.id}">${catIco(x.cat,t)}<span class="dtn"><b>${esc(cleanDesc(x))}</b><small>${esc(catOf(x.cat,t).n)}</small></span><span class="dtv"><b class="${t==="rec"?"pos":""}">${t==="rec"?"+":"−"}${R(amt(x))}</b><small>${esc(cardOf(x)||x.acct||(t==="rec"?"Conta":x.pay)||"")}</small></span></div>`};
+  const kg={};last.forEach(x=>{const d=whenOf(x)||"";(kg[d]=kg[d]||[]).push(x)});
+  const tr=last.length?Object.keys(kg).sort().reverse().map(d=>{const L=kg[d],o=L.filter(x=>typeOf(x)==="desp").reduce((s,x)=>s+amt(x),0),i=L.filter(x=>typeOf(x)==="rec").reduce((s,x)=>s+x.cents,0);
+    return `<div class="kday"><b>${esc(mesDayLabel(d))}</b>${o||i?`<span class="${o?"":"pos"}">${o?"− "+R(o):"+ "+R(i)}</span>`:""}</div><div class="klist">${L.map(kRow).join("")}</div>`}).join(""):`<p class="dempty">Sem lançamentos.</p>`;
   const noSaude=score>=100&&!attAll().length; /* 06/11/2026: nota 100 e nenhum aviso = bloco escondido */
   const td0=today(), recLeft=accFlow(ym).inn, desLeft=aPagar(ym);
   return `<div class="dtop"><button class="dlogo" id="dMenu" aria-label="Abrir o menu"><img src="tostao-logo.png" alt=""><svg class="dham" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><div><b class="dgr">Olá${nm?", "+esc(nm):""}</b><small>${dt[0].toUpperCase()+dt.slice(1)}</small></div><label class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="dashQ" placeholder="Buscar lançamentos…" autocomplete="off"></label><button class="dbell" id="hBell2" aria-label="Avisos"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 21h4"/></svg></button></div>
   <div class="dgrid${noSaude?" nosaude":""}">
-   <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pMes">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="dqa"><button type="button" data-dqa="rec"><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Receita</button><button type="button" data-dqa="desp"><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Despesa</button></span></section>
+   <section class="db d-saldo"><h3>Saldo total <button class="dlink" data-nav="pMes">Ver contas</button></h3><b class="dbig">${hasAcc?R(bal+guard):R(guard)}</b><small class="dsub">${hasAcc?`${acctsR().length} ${acctsR().length===1?"conta ativa":"contas ativas"}`:"sem conta cadastrada"}${guard?` · guardado ${R(guard)}`:""}</small><span class="kact"><button type="button" data-dqa="desp"><i><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></i>Despesa</button><button type="button" data-dqa="rec"><i><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg></i>Receita</button><button type="button" data-nav="pCards"><i><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M3 10.5h18"/></svg></i>Cartões</button><button type="button" data-kcb="1"><i><svg viewBox="0 0 24 24"><path d="M9 9.5a3 3 0 1 1 4.2 2.7c-.8.4-1.2 1-1.2 1.8M12 18h.01"/></svg></i>Posso comprar?</button></span></section>
    <section class="db d-res"><h3>Resumo do mês <small>${monthLabel(ym)}</small></h3><div class="drs"><div class="drc in"><span><svg viewBox="0 0 24 24"><path d="M17 7L7 17M7 9v8h8"/></svg>Entrou</span><b>${R(rec)}</b><small>${recLeft?`a receber <span class="nw">${R(recLeft)}</span>`:"tudo recebido"}</small></div><div class="drc out"><span><svg viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg>Gastou</span><b>${R(des)}</b><small>${desLeft?`a pagar <span class="nw">${R(desLeft)}</span>`:"tudo pago"}</small></div><div class="drc ${sob>=0?"in":"out"}"><span><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8h14M7 8l-3 7h6zM17 8l-3 7h6z"/></svg>${sob>=0?"Sobra":"Falta"}</span><b>${R(Math.abs(sob))}</b><small>${rec>0?`${Math.round(Math.abs(sob)/rec*100)}% da receita`:"sem receita no mês"}</small></div></div>${attHtml("in-res")}</section>
    ${noSaude?"":`<section class="db d-saude"><h3>Nota de saúde</h3><div class="dsc2"><b>${score}</b><span>/100</span><em class="dbadge" style="--bc:${sc}">${sl}</em></div><span class="dbar"><i style="width:${score}%;background:${sc}"></i></span><p class="dwhy">${why.length?`<b>Por onde começar:</b> ${why.join(". ")}.`:"Tudo em dia. Continue assim."}</p>${attHtml("in-saude")}</section>`}
    <section class="db d-fluxo"><h3>Fluxo de caixa ${fleg}</h3>${flux}</section>
@@ -3913,7 +3978,7 @@ function dashHome(){
    <section class="db d-trans"><h3>Últimas transações <button class="dlink" data-nav="pMes">Ver todas</button></h3>${tr}</section>
   </div>`;
 }
-document.addEventListener("click",e=>{const q=e.target.closest("[data-dqa]");if(!q)return;openSheet();const b=document.querySelector(`#typeSeg [data-type="${q.dataset.dqa}"]`);if(b&&!b.classList.contains("on"))b.click()});
+document.addEventListener("click",e=>{if(e.target.closest("[data-kcb]")){canBuySheet();return}const q=e.target.closest("[data-dqa]");if(!q)return;openSheet();const b=document.querySelector(`#typeSeg [data-type="${q.dataset.dqa}"]`);if(b&&!b.classList.contains("on"))b.click()});
 document.addEventListener("click",e=>{if(!IS_WIDE.matches&&e.target.closest(".dtop .dsearch")){e.preventDefault();go("pMes");setTimeout(()=>$("mSearch")?.focus(),80)}});
 document.addEventListener("keydown",e=>{if(e.target&&e.target.id==="dashQ"&&e.key==="Enter"){const q=e.target.value;go("pMes");mq=q;render()}});
 document.addEventListener("scroll",e=>{const c=e.target;if(!c||c.id!=="dcar")return;const i=Math.round(c.scrollLeft/Math.max(1,c.clientWidth)),n=c.children.length;const l=document.querySelector(".dside.l"),r=document.querySelector(".dside.r");if(l)l.hidden=i<=0;if(r)r.hidden=i>=n-1},true);
