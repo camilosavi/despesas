@@ -18,6 +18,8 @@ doc=f'''<!doctype html>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Um Tostão">
 <meta name="theme-color" content="#14203A">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="{ICON180}">
 <link rel="icon" href="tostao-192.png">

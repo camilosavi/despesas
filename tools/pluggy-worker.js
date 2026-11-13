@@ -17,8 +17,10 @@
 // Meu Pluggy: a conexão só atualiza 1x por dia (a Pluggy decide a hora; /item mostra lastUpdatedAt e nextAutoSyncAt).
 
 const API = 'https://api.pluggy.ai';
+// só o app (GitHub Pages) pode chamar pelo navegador; a APP_KEY continua obrigatória
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://camilosavi.github.io',
+  'Vary': 'Origin',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'content-type, x-app-key',
 };
