@@ -18,9 +18,9 @@
 > **`novo-tostao-21-10`** (último commit `1f22325`). Aqui valem as regras do app antigo abaixo (`src/app.html` + `build_pwa.py`).
 
 
-App pessoal de controle de gastos do Camilo, usado no iPhone 16 Pro Max (440 pt de largura).
+App pessoal de controle de gastos, usado no iPhone (440 pt de largura).
 Publicado como PWA em **https://camilosavi.github.io/despesas/** (GitHub Pages, branch `main`, pasta raiz).
-O Camilo adiciona pelo Safari → Adicionar à Tela de Início. Fala português; respostas curtas e diretas.
+O dono adiciona pelo Safari → Adicionar à Tela de Início. Fala português; respostas curtas e diretas.
 
 ## Como editar (sempre assim)
 
@@ -28,10 +28,10 @@ O Camilo adiciona pelo Safari → Adicionar à Tela de Início. Fala português;
 2. Rode `python3 build_pwa.py` → gera `index.html` e `sw.js` (versão do cache muda sozinha).
 3. Teste em 440 px de largura (claro e escuro) e confira que não há erro de console.
 4. Antes de começar, `git pull` (outras conversas podem ter publicado).
-5. Commit e push direto na `main` (o Camilo liberou em out/2026: "pode mudar tudo e comitar direto"); depois mostre o
+5. Commit e push direto na `main` (liberado em out/2026: pode mudar tudo e comitar direto); depois mostre o
    que mudou. O Pages publica em ~1 min; o app atualiza ao fechar/abrir.
 
-**Várias conversas ao mesmo tempo** (o Camilo edita coisas diferentes em chats paralelos):
+**Várias conversas ao mesmo tempo** (o dono edita coisas diferentes em chats paralelos):
 - Antes do push: `git fetch origin main && git rebase origin/main`. Nunca `push --force`.
 - Conflito em `src/app.html`: juntar as duas versões à mão (não descartar a do outro chat).
 - Conflito em `index.html`/`sw.js`: não resolver à mão; aceitar qualquer lado, rodar `python3 build_pwa.py` de novo
@@ -53,7 +53,7 @@ Para trabalhar no repo numa sessão nova: anexe `camilosavi/despesas` com acesso
   exportado/importado na tela **Você** (foto na barra de baixo) (`{app:"minhas-despesas", v:1, items, fx, cfg}`).
 - **Versão antiga dentro do Claude** (artifact https://claude.ai/artifact/CueA1bQ9JMYxYHgMBjeHFm):
   mesmo código com `const PWA=false;`, dados no banco do artifact. Foi substituída pelo PWA;
-  só republicar lá se o Camilo pedir.
+  só republicar lá se o dono pedir.
 - `src/app.html` tem `const PWA=false;` e o build troca para `true`.
 
 ## Modelo de dados (lançamento)
@@ -73,7 +73,7 @@ card?, parc?:"i/n", group?, createdAt}`
 - Repetir: "Parcelar ou repetir" tem fixo mensal por 3/6/12 meses e **"Até um mês que eu escolher…"** (`rep="u"` + campo
   `until` tipo mês; vira `m<n>` com `monthsSpan`, máximo 120).
 
-## Regras de negócio que o Camilo pediu
+## Regras de negócio pedidas pelo dono
 
 - **Valores pessoais (limites, metas, faturas) não entram neste repositório — ele é público.** Esse contexto fica
   no Projeto "App Despesas" do claude.ai (doc `claude/contexto-pessoal.md`). Quem abre o app pela primeira vez
@@ -93,7 +93,7 @@ card?, parc?:"i/n", group?, createdAt}`
   Inter: quando a fatura anterior foi paga em parte, a linha "Valor pendente do mês anterior" vira o item
   **"Saldo da fatura anterior"** (cat `cartao`, `r.prev`), senão a soma fica só nas despesas do mês; "Fatura atual" vira
   `r.total` e a importação mostra "bate com o total do banco ✓" ou "banco diz R$ X".
-  PicPay (`parsePicPay`, out/2026, calibrado com a fatura de uma amiga dele): "Vencimento: … | Fechamento: …" (ano das
+  PicPay (`parsePicPay`, out/2026, calibrado com uma fatura de exemplo): "Vencimento: … | Fechamento: …" (ano das
   datas DD/MM pelo fechamento), duas colunas por página (a da direita continua a lista e pode vir acima do título; só
   páginas com "Transações Nacionais"/"Estabelecimento"), valores sem R$, parcela grudada no nome ("…PARC03/05"),
   "PAGAMENTO DE FATURA" ignorado, crédito/estorno cancela a compra de mesmo valor; "Total da fatura" vira `r.total` e
@@ -178,7 +178,7 @@ card?, parc?:"i/n", group?, createdAt}`
   Parcelas sempre normalizadas ("02/04" = "2/4", `normParc`/`sameParc`). "Fatura já paga" (vem marcada se o vencimento
   passou) marca como pagos os meses já vencidos. Aviso se a mesma fatura (`imp` = "fatura-<vencimento>") já foi importada.
   Se o PDF falha, folha "Diagnóstico" copia a estrutura com nomes mascarados; bytes antes do `%PDF-` são ignorados.
-- **Passagem aérea em PDF** (22/10/2026, `parsePassagem`/`openPassagem`): no `readInvoice`, PDF sem banco e sem lançamentos de cartão tenta a passagem antes da conta. Exige 2+ datas "dd Mês aaaa hh:mm", a palavra "Tarifa" e uma linha com 4+ valores R$ (o último é o total; confere com a soma dos três anteriores). Calibrado com o PDF real ("Reserva Aérea - Plano de Viagem", agência de turismo/Iberia): `reserva` (ainda não emitida), `until`/`untilHm` (Prazo, sem ano no PDF) e `maxP` (maior "Nx" da "Condição de Pagamento"; as bandeiras são imagens, não dá para ler). Ignora códigos ADT/CHD/INF (tipo de passageiro, não aeroporto). Reserva nasce "A pagar". Não escolhe cartão nem parcelas (o PDF só traz a tabela de opções): abre o lançamento novo já com valor, "Passagem aérea ORI–DES" e categoria Transporte; ele escolhe pagamento e parcelas no formulário normal.
+- **Passagem aérea em PDF** (22/10/2026, `parsePassagem`/`openPassagem`): no `readInvoice`, PDF sem banco e sem lançamentos de cartão tenta a passagem antes da conta. Exige 2+ datas "dd Mês aaaa hh:mm", a palavra "Tarifa" e uma linha com 4+ valores R$ (o último é o total; confere com a soma dos três anteriores). Calibrado com um PDF de exemplo: `reserva` (ainda não emitida), `until`/`untilHm` (Prazo, sem ano no PDF) e `maxP` (maior "Nx" da "Condição de Pagamento"; as bandeiras são imagens, não dá para ler). Ignora códigos ADT/CHD/INF (tipo de passageiro, não aeroporto). Reserva nasce "A pagar". Não escolhe cartão nem parcelas (o PDF só traz a tabela de opções): abre o lançamento novo já com valor, "Passagem aérea ORI–DES" e categoria Transporte; ele escolhe pagamento e parcelas no formulário normal.
 - **Séries na importação de fatura** (27/10/2026, `impRecur`, pedido dele: reconhecer no importar da fatura, não só na planilha): compra sem parcela que já veio em outro mês do mesmo cartão com mesmo valor (`closeC`) e nome parecido, ou nome de assinatura conhecido (`SUBN`), vira `r.rec`; a conferência lista "Parecem assinaturas" com caixa por item (`data-impser`, `r.ser`, marcada por padrão). Ao lançar, o item e os dos outros meses entram no mesmo `group` (repetição mensal, sem `parc`) e a categoria vira Assinaturas se estava em Outros. Parcela nova (`parc` i/n) entra no `group` da parcela anterior já lançada (mesmo nome, mesmo n, valor ±0,5%). Valor que varia fica solto. Nome comparado por `fold` igual **ou** `nameSim` ≥ 0,5 (`nameSim` ignora nomes de 1 letra).
 - **Importar PDF único** ("Importar fatura ou conta (PDF)" no topo do novo lançamento e na lista de cartões): `readInvoice(f,true)`
   reconhece o banco e manda para o cartão de mesmo nome (`bankCard` cria o cartão se faltar); sem banco conhecido pergunta
@@ -385,7 +385,7 @@ A aba Planilha foi removida a pedido (out/2026). Botão + flutuante muda conform
 Início/Mês → lançamento; Cartões → novo cartão (ou compra, dentro de um cartão); Moedas → compra de € ou US$; Ano → previsto.
 Cartões criados ficam em `cfg.cards[nome] = {color, limit?, due?}` (além dos que vêm dos lançamentos). Duplo toque não dá zoom: `touch-action:manipulation` + viewport `maximum-scale=1,user-scalable=no` (no `build_pwa.py`)
 + guarda em JS que transforma o 2º toque rápido em clique normal e bloqueia a pinça (o iOS no app da tela de início ignora o CSS às vezes).
-Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explicitamente).
+Botão "‹ Voltar" fica separado do seletor de mês (pedido explícito).
 
 ## Cuidados
 
@@ -419,7 +419,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   "Cotação usada (R$ por €/US$)" (`#fxRt`) ligado a "recebido" e "R$ pago" (`fxCalc`): os 2 últimos campos mexidos mandam e o 3º sai
   sozinho (campo apagado deixa de mandar; editar abre com eur+brl mandando). Mostra "hoje R$ X (±%)" e o botão "Usar a cotação de hoje"
   (`rateNum`). Nada muda no que é salvo (`eur`/`usd` + `brl`); a cotação é sempre brl ÷ valor.
-- **Cotação no "Guardar" da caixinha** (20/10/2026, pedido dele: "cadê os campos que eu pedi?", print da caixinha Dublin): em caixinha com meta em €/US$ o
+- **Cotação no "Guardar" da caixinha** (20/10/2026, pedido dele: "cadê os campos que eu pedi?", print da caixinha): em caixinha com meta em €/US$ o
   formulário de movimento tem "Cotação usada (R$ por €)" (`#svRt`, já vem com a de hoje) e a conta ao vivo (`svEqHint`, `#svEq`).
   Guardar R$ → vira € pela cotação digitada (`svMove`); guardar € → calcula o R$ pago. O movimento fica na moeda da caixinha com
   `brl` (R$) e `rate`, então o valor em € **não oscila** com a cotação do dia; a lista mostra "R$ 1.000,00 a R$ 5,6387". Editar o valor
@@ -741,7 +741,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - Parágrafos só explicativos (`.hint`) ganharam a classe `expl` (some com `!important`): não escrever texto de apoio novo; só aviso que muda o que fazer (atraso, falta de saldo, conferência).
 - Listas: sem categoria/forma de pagamento sob o nome (o ícone já mostra); fica só status (atrasado, vence hoje, pago ✓, parcela). "sobra/fica R$" por linha só aparece quando **falta** (vermelho). Sem a frase no topo do Hoje/Planejar/Você (`hFoot` vazio).
 - `+` fica redondo ao lado da barra em qualquer celular (≤ 979 px), não só nas telas pequenas. Vidro da barra com mais tinta e desfoque 20px.
-- PC: "Vence em 10 dias" em 2 colunas só fora do painel (no quadro de 1/3 do `.htop` é 1 coluna, 28/10/2026); caixinha vazia vira "Criar uma caixinha"; pedido de nome de usuário com 1 linha de aviso (mantida de propósito: é o aviso do que o Camilo vê).
+- PC: "Vence em 10 dias" em 2 colunas só fora do painel (no quadro de 1/3 do `.htop` é 1 coluna, 28/10/2026); caixinha vazia vira "Criar uma caixinha"; pedido de nome de usuário com 1 linha de aviso (mantida de propósito: é o aviso do que o dono vê).
 
 ## Redesenho visual (19/10/2026, pedido dele: "não to feliz com o visual")
 - **Híbrido Papel + Blocos**: Fraunces (`--serif`) só em números grandes, títulos de seção e dia; topo vira bloco flutuante arredondado com névoa (degradê vertical do `--head`); seções em blocos arredondados sem borda e sem linhas entre elas. Cards dos cartões (`.htile`) mantêm o degradê/brilho na cor do cartão.
@@ -816,7 +816,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
   e a linha do Salvar fica grudada embaixo (sticky).
 
 ## Pessoas antiga (27–29/10/2026) — a tela foi removida em 03/11/2026; ficam só os itens que continuam valendo
-- **Editar parcela/repetição pergunta** (29/10/2026, pedido dele: lançamento que era da mãe e não conseguia corrigir): `editSeries(x)` = mesmo
+- **Editar parcela/repetição pergunta** (29/10/2026, pedido dele: lançamento de outra pessoa que não dava para corrigir): `editSeries(x)` = mesmo
   `group` (fora "s…") ou `buySeries`. Ao salvar, se mudou nome, categoria, conta, pessoas, pagamento, cartão, valor ou divisão (`serChg`),
   aparece "Alterar só a parcela i/n ou todas?" (`serAck`: "one" = só esta, nada passa para as outras; "all" = tudo isso vai para a série).
   Situação e data continuam por mês. Trocar cartão/forma numa série mantém cada parcela no mês dela (com cartão: dia do vencimento dele,
@@ -894,7 +894,7 @@ Botão "‹ Voltar" fica separado do seletor de mês (o Camilo pediu isso explic
 - **PC encolhe pela altura da janela** (30/10/2026, ele: "pra encaixar tudo eu teria que estar com zoom em 50%"): `html{font-size:clamp(11px,min(.42vw+8.4px,2.1vh),26px)}`
   (antes só pela largura), então em janela baixa tudo diminui junto em vez de passar da tela. Visão geral: `min-height:28em`, linhas `minmax(8.5em,1fr)`,
   Fluxo sem altura mínima própria. Medido sem rolar em 1366×560, 1280×600, 1280×800, 1440×900, 1536×650, 1920×950 e 1920×1080.
-- **Revisão de alinhamento das telas** (30/10/2026, ele: "várias telas todas desalinhadas", print da faixa "Pode avisar o Camilo…"):
+- **Revisão de alinhamento das telas** (30/10/2026, ele: "várias telas todas desalinhadas", print da faixa "Pode avisar o dono…"):
   faixa de nome de usuário (`.ushare`) em pilha: título, texto, campo e botões do mesmo tamanho lado a lado (no celular dividem a largura);
   estilos das Faturas/Últimas compras do cartão (`.dsub2/.dfat/.dfr/.dst/.dcr/.dcmp`) valem em todo `.dcard` (na lista "Seus cartões" o texto
   saía embolado porque o CSS era só do Início); "Adicionar cartão" alinhado em cima; tela **Você**: no PC sumiam o seletor de ano e "Na conta em…"

@@ -1963,7 +1963,7 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
 #pHome .d-cartoes .dcards{touch-action:pan-x pan-y;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;align-items:flex-start}
 #pHome .dcard{align-content:start;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 #pHome .dcard:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:1em}
-/* faixa "Pode avisar o Camilo…" alinhada (30/10/2026): título, texto, campo e botões um embaixo do outro, botões do mesmo tamanho */
+/* faixa "Pode avisar o dono…" alinhada (30/10/2026): título, texto, campo e botões um embaixo do outro, botões do mesmo tamanho */
 .card.banner.ushare{display:block!important;padding:16px 18px!important}
 .ushare>strong{display:block;margin-bottom:4px}.ushare>p{margin:0 0 12px}
 .ushare .field{max-width:24em;margin:0!important}
@@ -2390,12 +2390,12 @@ let _dm1=false,_itemsIn=false;
 let _cp1=false, _d13=false;
 /* 13º separado do salário (30/10/2026, pedido dele: "holerite de 13 não entre como salário fixo, pq desbalanceia"):
    receitas de 13º lançadas como Salário viram a categoria própria d13; holerite de 13º guardado como folha (k "sal") vira d131/d132 */
-/* Categorias básicas (05/11/2026): Esporte → Lazer; Intercâmbio e Cidadania → Outros (o nome vira tag). Uma vez só (cfg.catB), com cópia
+/* Categorias básicas (05/11/2026): categorias antigas → Lazer / Outros (o nome vira tag). Uma vez só (cfg.catB), com cópia
    do que mudou em despesas.antesCat1 para desfazer na tela Você → Categorias. */
 let _catB=false;
 async function migrateCat1(){
   if(_catB||!cfgLoaded||!_itemsIn||cfg.catB) return;_catB=true;
-  const MP={esporte:["lazer","esporte"],interc:["outros","intercâmbio"],cidad:["outros","cidadania"]};
+  const MP={esporte:["lazer","esporte"]};
   try{
     const undo={};
     for(const x of items){const m=MP[x.cat];if(!m)continue;undo[x.id]={cat:x.cat,tags:x.tags||null};
@@ -2414,7 +2414,7 @@ async function migrateCat1(){
 }
 function catUndoHtml(){
   let n=0;try{n=Object.keys(JSON.parse(lsGet("despesas.antesCat1")||"{}")).length}catch(e){}
-  return n?`<section><div class="card rate"><div class="hint">${n} ${n===1?"lançamento mudou":"lançamentos mudaram"} de categoria (Esporte → Lazer, Intercâmbio e Cidadania → Outros).</div><button class="btn soft" id="catUndo">Desfazer essa mudança</button></div></section>`:"";
+  return n?`<section><div class="card rate"><div class="hint">${n} ${n===1?"lançamento mudou":"lançamentos mudaram"} de categoria (categorias antigas → Lazer / Outros).</div><button class="btn soft" id="catUndo">Desfazer essa mudança</button></div></section>`:"";
 }
 async function undoCat1(){
   let U={};try{U=JSON.parse(lsGet("despesas.antesCat1")||"{}")}catch(e){}
@@ -2545,7 +2545,7 @@ async function catEdSave(){
   const dup=(t==="rec"?CATS.rec:CATS.desp).find(c=>c.k!==k&&fold(c.n)===fold(n));if(dup){toast("Já existe uma categoria com esse nome.");return}
   await saveCfg({catEdit:{...(cfg.catEdit||{}),[k]:{n,c:col,...(ic?{i:ic}:{})}}});catEd=null;applyCats();toast("Categoria salva",true);render()}
 /* categorias antigas: só para mostrar o nome de quem ainda tem uma (ex.: depois de desfazer a migração); não aparecem para escolher */
-const LEGACY_CATS=[{k:"interc",n:"Intercâmbio",c:"var(--c3)"},{k:"cidad",n:"Cidadania",c:"var(--c6)"},{k:"esporte",n:"Esporte",c:"var(--c1)"}];
+const LEGACY_CATS=[{k:"interc",n:"Antiga A",c:"var(--c3)"},{k:"cidad",n:"Antiga B",c:"var(--c6)"},{k:"esporte",n:"Esporte",c:"var(--c1)"}];
 const catOf=(k,t)=>(CATS[t]||CATS.desp).find(c=>c.k===k)||CATS.desp.find(c=>c.k===k)||CATS.rec.find(c=>c.k===k)||(k&&k.startsWith("u_")?{k:"outros",n:"Outros",c:"var(--c8)"}:BASE_DESP.find(c=>c.k===k))||LEGACY_CATS.find(c=>c.k===k)||{k,n:"Outros",c:"var(--c8)"};
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -3359,15 +3359,15 @@ function userForm(title,lead){
 }
 function shareBanner(){
   if(!PWA||!GC_CODE||!authData()) return "";
-  if(userEditing) return userForm("Mudar nome de usuário","O Camilo vai ver este nome no lugar do anterior.");
+  if(userEditing) return userForm("Mudar nome de usuário","O dono do app vai ver este nome no lugar do anterior.");
   if(shareName()!==null) return "";
-  return userForm("Pode avisar o Camilo que você usa o app?","Ele vê só seu nome de usuário e os dias em que você abriu o app. Nunca vê gastos, valores ou cartões.");
+  return userForm("Pode avisar o dono do app que você usa?","Ele vê só seu nome de usuário e os dias em que você abriu o app. Nunca vê gastos, valores ou cartões.");
 }
 function saveUser(){
   const u=userSlug($("userIn").value);
   if(u.length<3){toast("Escolha um nome de usuário com pelo menos 3 letras.");return}
   lsSet("despesas.user",u);lsSet("despesas.shareName","1");userEditing=false;
-  metric("pessoa-nova",true);metric(personPath());toast(`Pronto! O Camilo vai ver você como @${u}.`);render();
+  metric("pessoa-nova",true);metric(personPath());toast(`Pronto! O dono do app vai ver você como @${u}.`);render();
 }
 function setShare(v){if(v){userEditing=true;go("pHome");return}lsSet("despesas.shareName","0");userEditing=false;toast("Tudo bem, ninguém vai saber que é você.");render()}
 
@@ -4859,7 +4859,7 @@ function authErr(e){const m=String(e&&e.message||""), c=e&&e.code||"";
     /user_already_exists/.test(c)||/already registered/i.test(m)?"Esse e-mail já tem conta. Toque em Entrar.":
     /email_not_confirmed/.test(c)?"Confirme o e-mail primeiro (veja a caixa de entrada).":
     /weak_password/.test(c)?"Senha fraca. Use uma maior, com letras e números.":
-    /over_email_send_rate_limit/.test(c)?"Limite de e-mails do servidor atingido. Tente daqui a uma hora ou avise o Camilo.":
+    /over_email_send_rate_limit/.test(c)?"Limite de e-mails do servidor atingido. Tente daqui a uma hora ou avise o dono do app.":
     /rate_limit/.test(c)||e&&e.status===429?"Muitas tentativas. Espere alguns minutos.":
     /signup_disabled/.test(c)?"O cadastro está desativado no Supabase.":
     /signup.*(disabled|not allowed)/i.test(m)?"O cadastro está desativado no Supabase.":
@@ -5354,7 +5354,7 @@ const fxBoxFor=cur=>saves().find(b=>b.fxAll&&boxFx(b)===cur);
 const svMoney=(c,cur)=>M(c,cur);
 const boxAvatar=n=>{
   const s=(n||"").toLowerCase();
-  if(/viag|euro|dolar|paris|ferias|voo|trip|intercambio|europa|eua|miami|orlando/i.test(s)) return "✈️";
+  if(/viag|euro|dolar|paris|ferias|voo|trip/i.test(s)) return "✈️";
   if(/reserva|emerg|seguran|colchao/i.test(s)) return "🛡️";
   if(/carro|moto|veic|ipva|auto|cnh/i.test(s)) return "🚗";
   if(/casa|ape|apart|reforma|moveis|imovel|aluguel/i.test(s)) return "🏠";
@@ -5590,7 +5590,7 @@ function dbNext(d){
 }
 const dbAvatar=n=>{
   const s=(n||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
-  if(/interc|viag|voo|travel/.test(s)) return "✈️";
+  if(/viag|voo|travel/.test(s)) return "✈️";
   if(/cartao|fatura|renner|\binter\b|\bpan\b|nubank|credito/.test(s)) return "💳";
   if(/celular|iphone|aparelho|claro|vivo|\btim\b/.test(s)) return "📱";
   if(/carro|moto|veic|financ/.test(s)) return "🚗";
@@ -6019,7 +6019,7 @@ function renderMe(){
   m+=`<section><h2>Importar planilha</h2><div class="card rate"><div class="hint expl">Traga os gastos de uma planilha (Excel, CSV, Google Planilhas baixada, Numbers exportada). Serve lista com data e valor ou planilha com os meses nas colunas; você confere antes de lançar.</div>
     <div class="row" style="margin:0;flex-wrap:wrap"><label class="btn soft" style="text-align:center;cursor:pointer">Escolher planilha<input type="file" class="xlsany" accept=".xlsx,.xls,.xlsm,.ods,.csv,.tsv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden></label>${cfg.xlsLast?`<button class="btn soft" id="xlsUndo">Desfazer importação (${cfg.xlsLast.n})</button>`:""}</div>${readsBox()}</div></section>`;
   if(PWA&&GC_CODE) h+=`<section><h2>Estatísticas</h2><div class="card rate"><div class="hint expl">O app conta, de forma anônima, quantas pessoas abrem e instalam. Não envia nome, valores nem lançamentos.</div>
-    <div class="row" style="margin:0;flex-wrap:wrap">${authData()?(shareName()==="1"&&userName()?`<button class="btn soft" id="userEdit">Mudar usuário (@${esc(userName())})</button><button class="btn soft" id="shareFlip">Parar de mostrar meu nome</button>`:`<button class="btn soft" id="shareFlip">Mostrar meu nome ao Camilo</button>`):""}<button class="btn soft" id="statsToggle">${localStorage.getItem("despesas.noStats")==="1"?"Ativar estatísticas":"Desativar estatísticas"}</button></div></div></section>`;
+    <div class="row" style="margin:0;flex-wrap:wrap">${authData()?(shareName()==="1"&&userName()?`<button class="btn soft" id="userEdit">Mudar usuário (@${esc(userName())})</button><button class="btn soft" id="shareFlip">Parar de mostrar meu nome</button>`:`<button class="btn soft" id="shareFlip">Mostrar meu nome ao dono do app</button>`):""}<button class="btn soft" id="statsToggle">${localStorage.getItem("despesas.noStats")==="1"?"Ativar estatísticas":"Desativar estatísticas"}</button></div></div></section>`;
   {const u=lancSnap();
   h+=`<section><h2>Zerar lançamentos</h2><div class="card rate"><div class="hint expl">Apaga todas as despesas e receitas e o saldo na conta, para relançar do zero. Cartões, compras de euro, caixinhas e categorias continuam.${u?"":" Fica uma cópia aqui no aparelho para desfazer."}</div>
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn danger" id="wipeLanc">Zerar lançamentos e saldo</button>${u?`<button class="btn soft" id="undoLanc">Desfazer (${u.items.length})</button>`:""}</div></div></section>`}
@@ -7779,7 +7779,7 @@ const READS=[["Faturas de cartão","Inter, Nubank, Santander, Pan, PicPay e Renn
   ["Holerite","demonstrativo de pagamento (salário, adiantamento, 13º, férias) com o extrato do convênio"],
   ["Contas","Claro, Vivo, TIM, Oi, Enel, CPFL, Elektro, Sabesp e Comgás"],["Passagem aérea","total e datas; você escolhe cartão e parcelas"],["Print de comprovante","Pix, transferência ou boleto (imagem, um ou vários): valor, data e nome; você escolhe Despesa ou Receita"],["Print da fatura no app do banco","lista de compras (nome, valor e data), um ou vários prints rolando a tela; calibrado com o app da Renner"],["Planilhas","Excel, CSV, Google Planilhas baixada e Numbers exportada"],["Extrato OFX","qualquer banco que exporte OFX (Nubank, Itaú, Bradesco, Caixa, BB, Santander, C6…): conta e cartão"],["Open Finance","Meu Pluggy: conta e fatura em aberto do Inter (tela Você)"]];
 const readsBox=()=>`<details class="hldet reads"><summary>O que o app já lê</summary>${READS.map(([a,b])=>`<div class="hlrow"><span><b>${a}</b><small>${b}</small></span></div>`).join("")}<p class="hint expl" style="margin:8px 0 0">Use sempre o PDF original do banco, sem converter, comprimir ou escanear. Banco que não está aqui: o app mostra um diagnóstico para copiar e mandar, sem nomes nem números.</p></details>`;
-/* PicPay (out/2026, fatura de uma amiga do Camilo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
+/* PicPay (out/2026, fatura de exemplo): "Vencimento: dd/mm/aaaa | Fechamento: dd/mm/aaaa"; lançamentos em duas
    colunas, "DD/MM  ESTABELECIMENTO  valor" (sem R$; negativo = pagamento/crédito), um bloco por cartão (titular e "final XXXX");
    parcela grudada no nome ("AMAZON MARKETPPARC03/05"). Estorno ("CREDITO …") com o mesmo valor de uma compra cancela a compra;
    "Resumo": Fatura anterior, Pagamento recebido, Créditos, Despesas do mês, Total da fatura. */
@@ -8936,7 +8936,7 @@ function xlCat(label,type){
     /caixa|saldo|sobrou|anterior/.test(t)?"caixa":/rend|juros|dividend|cdb|poupanc|tesouro/.test(t)?"rend":"rout";
   const own=CATS.desp.find(c=>fold(c.n)===t.trim());if(own) return own.k;
   if(xlCard(label)) return "cartao";
-  const k=/intercamb/.test(t)?"outros":/cidadan/.test(t)?"outros":/\beuro|dolar|cambio|moeda/.test(t)?"euro":
+  const k=/\beuro|dolar|cambio|moeda/.test(t)?"euro":
     /aluguel|condomin|\bluz\b|energia|\bagua\b|internet|\bgas\b|claro|vivo|\btim\b|telefon|iptu|conta de/.test(t)?"casa":
     /supermerc|mercado|atacad|hortifr|feira|acougue/.test(t)?"merc":
     /restaur|lanch|pizza|ifood|padaria|cafe|almoco|jantar|comida|alimenta/.test(t)?"alim":
