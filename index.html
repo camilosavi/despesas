@@ -1843,9 +1843,11 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
   #pAno[data-f="C"] .ano-col-main,#pAno[data-f="C"] .ano-col-side{display:flex!important;flex-direction:column!important;gap:var(--g-gap,1em)!important;min-width:0!important}
   #pAno[data-f="C"] .ano-grid>*>div{display:flex!important;flex-direction:column!important;gap:var(--g-gap,1em)!important}
   /* Você, Câmbio e Limites: grades com rolagem vertical dentro do painel (sem multi-column horizontal) */
-  #pMe:not([hidden]){column-count:auto!important;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--g-gap) var(--g-col);align-items:start;align-content:start}
-  #pMe>section{margin:0!important;min-width:0}
-  #pMe>.helpbar{grid-column:1/-1}
+  /* Você no PC (23/11/2026, pedido dele: "que não seja dependente da abertura de outras colunas"): colunas independentes (`meCols`), cada uma empilha as suas seções; abrir uma não mexe nas outras */
+  #pMe:not([hidden]){column-count:auto!important;display:flex;flex-wrap:wrap;gap:var(--g-gap) var(--g-col);align-items:flex-start;align-content:flex-start}
+  #pMe>.mecol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:var(--g-gap)}
+  #pMe section{margin:0!important;min-width:0}
+  #pMe>.helpbar{flex:0 0 100%}
   #pFx:not([hidden]){column-count:auto!important;display:grid;grid-template-columns:minmax(18em,1fr) minmax(0,1.4fr);gap:var(--g-gap) var(--g-col);align-items:start;align-content:start}
   #pFx>section{margin:0!important;min-width:0;border-top:0;padding-top:var(--g-pad)!important}
   #pFx>.helpbar{grid-column:1/-1}
@@ -1854,7 +1856,6 @@ i.r{background:var(--pos)}i.d{background:var(--c5)}
   #pOrc .brow:nth-child(2){border-top:0}
 }
 @media (min-width:1200px){
-  #pMe:not([hidden]){grid-template-columns:repeat(3,minmax(0,1fr))}
   #pOrc .bud{grid-template-columns:repeat(3,minmax(0,1fr))}
   #pOrc .brow:nth-child(3){border-top:0}
 }
@@ -3626,8 +3627,9 @@ document.addEventListener("click",e=>{const q=e.target.closest("[data-dqa]");if(
 document.addEventListener("click",e=>{if(!IS_WIDE.matches&&e.target.closest(".dtop .dsearch")){e.preventDefault();go("pMes");setTimeout(()=>$("mSearch")?.focus(),80)}});
 document.addEventListener("keydown",e=>{if(e.target&&e.target.id==="dashQ"&&e.key==="Enter"){const q=e.target.value;go("pMes");mq=q;render()}});
 document.addEventListener("scroll",e=>{const c=e.target;if(!c||c.id!=="dcar")return;const i=Math.round(c.scrollLeft/Math.max(1,c.clientWidth)),n=c.children.length;const l=document.querySelector(".dside.l"),r=document.querySelector(".dside.r");if(l)l.hidden=i<=0;if(r)r.hidden=i>=n-1},true);
-const IS_WIDE=matchMedia("(min-width:980px)");
-try{IS_WIDE.addEventListener("change",()=>{if(typeof tab!=="undefined"){if(tab==="pHome")renderHome();if(tab==="pMes")renderMes();if(tab==="pAno")renderAno();if(tab==="pCards"&&typeof renderCards==="function")renderCards()}})}catch(e){}
+const IS_WIDE=matchMedia("(min-width:980px)"), ME3=matchMedia("(min-width:1200px)");
+try{IS_WIDE.addEventListener("change",()=>{if(typeof tab!=="undefined"){if(tab==="pHome")renderHome();if(tab==="pMes")renderMes();if(tab==="pAno")renderAno();if(tab==="pCards"&&typeof renderCards==="function")renderCards();if(tab==="pMe")renderMe()}})}catch(e){}
+try{ME3.addEventListener("change",()=>{if(typeof tab!=="undefined"&&tab==="pMe"&&IS_WIDE.matches)renderMe()})}catch(e){}
 function renderHome(){
   if(document.activeElement&&(document.activeElement.id==="userIn"||/^ac[nv]_\d/.test(document.activeElement.id))) return;
   const o=homeOrder();
@@ -3823,14 +3825,23 @@ const foldOpenSet=k=>{try{return new Set(JSON.parse(lsGet(k)||"[]"))}catch(e){re
 /* Você (out/2026, visual simples): igual ao Ano, tudo recolhido (Aparência também) */
 function anoFold(pid="pAno"){
   const P=$(pid), F=FOLD[pid];if(!P||!F) return;const O=foldOpenSet(F.key);
-  [...P.querySelectorAll(":scope > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<F.keep||!h)return;
+  [...P.querySelectorAll(":scope > section, :scope > .mecol > section")].forEach((sec,i)=>{const h=sec.querySelector(":scope > h2");if(i<F.keep||!h)return;
     const tn=[...h.childNodes].find(n=>n.nodeType===3&&n.textContent.trim()), k=(tn?tn.textContent:h.textContent.replace(/^›/,"")).trim().slice(0,30);
     const force=(sec.id==="salSec"&&salXOpen)||((sec.id==="catSec"||sec.id==="catRecSec")&&catEd)||(sec.id==="subSec"&&subEdit)||(sec.id==="syncSec"&&!!(SY.err||syncMeta().errMsg))||(sec.id==="ofSec"&&!!drvTok()&&!ofReady());
     sec.classList.add("fold");sec.dataset.fold=k;sec.classList.toggle("open",force||O.has(k));
     if(!h.querySelector(".foldcar"))h.insertAdjacentHTML("afterbegin",'<i class="foldcar" aria-hidden="true">›</i>');
     h.setAttribute("role","button");h.setAttribute("tabindex","0");h.setAttribute("aria-expanded",sec.classList.contains("open"))});
 }
-function anoToggle(sec){const k=sec.dataset.fold, pid=sec.parentElement?.id, F=FOLD[pid]||FOLD.pAno, O=foldOpenSet(F.key), on=!sec.classList.contains("open");
+/* Você no PC: reparte as seções em colunas independentes (2; 3 a partir de 1200 px), na ordem, uma de cada vez por coluna.
+   A atribuição é fixa pelo índice (não pela altura), então abrir/fechar uma seção só mexe na própria coluna. Celular: coluna única, sem mudar. */
+function meCols(){
+  const P=$("pMe");if(!P||!IS_WIDE.matches)return;
+  const S=[...P.querySelectorAll(":scope > section")];if(!S.length)return;
+  const n=ME3.matches?3:2, cols=Array.from({length:n},()=>{const d=document.createElement("div");d.className="mecol";return d});
+  S.forEach((sec,i)=>cols[i%n].appendChild(sec));
+  P.prepend(...cols);
+}
+function anoToggle(sec){const k=sec.dataset.fold, pid=sec.closest("#pMe")?"pMe":sec.parentElement?.id, F=FOLD[pid]||FOLD.pAno, O=foldOpenSet(F.key), on=!sec.classList.contains("open");
   sec.classList.toggle("open",on);sec.querySelector(":scope > h2")?.setAttribute("aria-expanded",on);
   on?O.add(k):O.delete(k);lsSet(F.key,JSON.stringify([...O]))}
 /* Início mostra no máximo UMA faixa por vez (out/2026, ele achou que tinha coisa demais): a mais importante primeiro;
@@ -5618,7 +5629,7 @@ function renderMe(){
     <div class="row" style="margin:0;flex-wrap:wrap"><button class="btn danger" id="wipeLanc">Zerar lançamentos e saldo</button>${u?`<button class="btn soft" id="undoLanc">Desfazer (${u.items.length})</button>`:""}</div></div></section>`}
   h+=`<section><h2>Zerar tudo</h2><div class="card rate"><div class="hint expl">Apaga lançamentos, cartões, compras de euro, caixinhas e configurações deste aparelho e volta à tela de boas-vindas. A senha e ${BIO.f?"a":"o"} ${esc(bioN())} continuam. Fica uma cópia de segurança aqui no aparelho: na tela de boas-vindas dá para desfazer.</div>
     <div class="row" style="margin:0"><button class="btn danger" id="wipeAll">Zerar tudo</button></div></div></section>`;
-  $("pMe").innerHTML=h;anoFold("pMe");idLoad();if(CAL.admin===null)calibLoad(true);
+  $("pMe").innerHTML=h;anoFold("pMe");meCols();idLoad();if(CAL.admin===null)calibLoad(true);
 }
 /* zerar um mês do cartão: apaga os lançamentos do cartão nesse mês e as parcelas seguintes das mesmas compras; dá para desfazer */
 const ZM_KEY="despesas.antesZerarMes";
