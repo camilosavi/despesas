@@ -991,6 +991,11 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
 .banner{padding:14px 16px;gap:8px;border-color:transparent!important;background:var(--surface)}
 .banner strong{font-size:1rem}.banner p{font-size:.86rem}
 .banner .btn{padding-block:10px;font-size:.92rem}
+/* linhas de conta (também no PC desde 23/11: Contas e cartões usa o mesmo bloco) */
+.acone{display:flex;align-items:center;gap:12px;padding:6px 0}
+.acone .t{flex:1;min-width:0}.acone .t b{display:block;font-weight:600}.acone .t span{font-size:.8rem;color:var(--muted)}
+.acone .fi{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--display);letter-spacing:-.02em;line-height:1;flex:none;font-size:calc(1.05rem * var(--k,1))}
+.acone .v{font-family:var(--display);font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media (max-width:979px){
   section{margin-top:26px}
   #pHome>section+section,#mBody>section+section,#pAno>section+section{border-top:1px solid var(--line);padding-top:20px}
@@ -1003,10 +1008,6 @@ h2 small{font-size:.82rem;font-weight:500;color:var(--muted);letter-spacing:0;te
   #pHome .due,#pHome .cardrow,#mBody .due,#mBody .item,#mBody .catrow{padding-left:0!important;padding-right:0!important}
   #mBody .card.list>div[style*="padding:14px"]{padding:6px 0 4px!important}
   /* saldo na conta: uma linha, como extrato de banco */
-  .acone{display:flex;align-items:center;gap:12px;padding:6px 0}
-  .acone .t{flex:1;min-width:0}.acone .t b{display:block;font-weight:600}.acone .t span{font-size:.8rem;color:var(--muted)}
-  .acone .fi{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--display);letter-spacing:-.02em;line-height:1;flex:none;font-size:calc(1.05rem * var(--k,1))}
-  .acone .v{font-family:var(--display);font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 }
 /* ---------- novo app (out/2026, desenho aprovado: Hoje / Mês / Planejar) ---------- */
 .hbar{margin-top:18px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--head-ink) 12%,transparent);display:grid;gap:9px}
