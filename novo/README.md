@@ -1,6 +1,7 @@
 # novo/ — base do app refeito (branch `alinhar-variaveis`)
 
-Não é publicado: o GitHub Pages só serve a `main`. O app atual (`src/app.html`) continua como está.
+`novo/app/` é a prévia do app novo, publicada junto da `main` em `/despesas/novo/app/`. O app atual (`src/app.html`, na raiz) continua como está.
+A prévia tem login próprio (`tostao.sb`, separado do app atual) e grava na mesma conta (`sync_rows`), no formato do app atual.
 
 ## Regra
 Cada número do app tem **uma** função em `base/calculo.mjs`. As telas só chamam; nenhuma tela soma por conta própria.
@@ -29,3 +30,8 @@ Na conta hoje · A pagar · Fatura · Livre · Entrou / Gastou / Sobra · **Fim 
 
 ## Ainda não tem
 Telas, leitores de PDF/holerite (entram copiados do app atual, sem reescrever), sincronização.
+
+
+## App novo (prévia, 23/11/2026)
+`novo/app/`: `index.html`, `app.css`, `js/` (`sb` login e linhas, `store` estado e gravação, `regras` fatura/salário, `telas/*`). Telas: Início, Mês, Contas, Cartões (lista e tela do cartão), Planejar, Orçamento, Pessoas, Caixinhas, Moedas, Você + painel Lançar. Ainda no app atual: leitores de PDF/extrato/holerite/print e Open Finance.
+Teste: Supabase simulado no Playwright (login, leitura, lançar, sem erro de console), 1440 e 440 px, claro e escuro.
