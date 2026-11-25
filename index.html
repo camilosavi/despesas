@@ -1178,6 +1178,10 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 .msrow b{font-family:var(--display);font-size:1.15rem;font-variant-numeric:tabular-nums;white-space:nowrap}
 .msrow b.mut{color:var(--muted)}
 .mseg{margin:var(--g-gap) 0 0}
+.mssum2{display:flex;flex-wrap:wrap;gap:4px 18px;margin:10px 4px 0;font-size:.82rem;color:var(--muted)}
+.mssum2 b{color:var(--ink);font-variant-numeric:tabular-nums;margin-left:3px}.mssum2 b.mut{color:var(--muted)}
+.mfx{margin-top:8px}.mfsep{flex:none;width:1px;background:var(--line);margin:4px 2px}
+#pMes .mlist{padding-top:4px!important}
 .mlist .mfrow{margin:0 0 var(--g-gap)}
 .mgrp{margin-bottom:var(--g-gap)}
 .mgrp>.card.list{background:none;border:0;box-shadow:none;border-radius:0;padding:0;margin:0}
@@ -3729,12 +3733,12 @@ const virtHTML=x=>`<button class="item virt" data-virt="${esc(x.id)}">${catIco("
 function mesFeed(F){
   const L=F.filter(x=>!benOf(x)), V=mesF==="all"||mesF==="rec"?salVirt(view):[];
   if(!L.length&&!V.length) return `<div class="empty"><strong>Nada neste filtro</strong>Toque em Todos para ver o mês inteiro.</div>`;
-  if(mesOrd()==="az") return `<div class="card list">${sortAZ(L).map(itemHTML).join("")}</div>`;
+  if(mesOrd()==="az") return `<div class="card list">${sortAZ(L).map(x=>itemHTML(x,1)).join("")}</div>`;
   const G={}, at=d=>G[d]=G[d]||{L:[],V:[]};
   sortRecent(L).forEach(x=>at(whenOf(x)).L.push(x));V.forEach(x=>at(x.date).V.push(x));
   return Object.keys(G).sort().reverse().map(d=>{const g=G[d],
     out=g.L.filter(x=>typeOf(x)==="desp").reduce((s,x)=>s+amt(x),0), inn=g.L.filter(x=>typeOf(x)==="rec").reduce((s,x)=>s+x.cents,0);
-    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.L.map(itemHTML).join("")}</div></div>`}).join("");
+    return `<div class="mgrp"><div class="mgh"><b>${mesDayLabel(d)}</b>${out||inn?`<span class="${out?"":"pos"}">${out?"− "+R(out):"+ "+R(inn)}</span>`:""}</div><div class="card list">${g.V.map(virtHTML).join("")}${g.L.map(x=>itemHTML(x,1)).join("")}</div></div>`}).join("");
 }
 function mesSummary(arr){
   const dA=arr.filter(x=>typeOf(x)==="desp"&&!benOf(x)), paid=dA.filter(isPaid).reduce((s,x)=>s+amt(x),0), open=dA.filter(x=>!isPaid(x)).reduce((s,x)=>s+amt(x),0), all=paid+open;
@@ -3743,8 +3747,7 @@ function mesSummary(arr){
     if(day>=3&&day<last){const vari=dA.filter(x=>!cardOf(x)&&!x.group&&!parcInfo(x)&&!["cartao","casa","assin","educ","interc","cidad","euro"].includes(x.cat)&&x.date<=now).reduce((s,x)=>s+amt(x),0);
       fim=(hasBal?endBal(view):sumT(arr,"rec")-sumT(arr,"desp"))-Math.round(vari/day*(last-day))}}
   else if(view>curYM()&&hasBal) fim=endBal(view);
-  return `<section class="mssum"><div class="msbar" role="img" aria-label="${all?Math.round(paid/all*100):0}% do mês já pago"><i style="width:${all?Math.round(paid/all*100):0}%"></i></div>
-    <div class="msrow"><div><small>Pago</small><b>${R(paid)}</b></div><div><small>A pagar</small><b class="${open?"":"mut"}">${R(open)}</b></div>${fim===null?"":`<div><small>${cur?"Fecha com":"Termina com"}</small><b class="${fim<0?"neg":""}">${fim<0?"−":""}${R(Math.abs(fim))}</b></div>`}</div></section>`;
+  return `<div class="mssum2"><span>Pago <b>${R(paid)}</b></span><span>A pagar <b class="${open?"":"mut"}">${R(open)}</b></span>${fim===null?"":`<span>${cur?"Fecha com":"Termina com"} <b class="${fim<0?"neg":""}">${fim<0?"−":""}${R(Math.abs(fim))}</b></span>`}</div>`;
 }
 const mesBens=arr=>bens().map(b=>{const L=arr.filter(x=>x.pay===b.name&&typeOf(x)==="desp").sort((a,c)=>c.date.localeCompare(a.date));if(!L.length)return "";
   return `<section><h2>Pago com ${esc(b.name)} <small>${R(L.reduce((s,x)=>s+x.cents,0))}${view===curYM()?` · saldo ${R(benBal(b))}`:""}</small></h2><div class="card list">${L.map(itemHTML).join("")}</div></section>`}).join("");
@@ -3762,12 +3765,16 @@ function mesPayBtn(){
   const c=mesF.slice(5), L=cardItems(c,view);if(!L.length)return "";
   const mn=MES[+view.slice(5)-1].toLowerCase(), paid=L.every(isPaid);
   return `<button class="btn ${paid?"soft":"primary"} paytop" id="mesPay">${paid?`Fatura de ${mn} paga ✓ · ver a próxima`:`Marcar fatura de ${mn} como paga`}</button>`}
+let mesFiltOpen=false;
 function mesFilterBar(){
-  const cs=credCards().filter(c=>cardTotal(c,view)||cardCfg(c).limit);
+  const cs=credCards().filter(c=>cardTotal(c,view)||cardCfg(c).limit), o=mesOrd();
   const chip=(k,t)=>`<button class="mfp ${mesF===k?"on":""}" data-mesf="${esc(k)}">${t}</button>`;
-  return `<div class="mfbar"><div class="mfrow">`+chip("all","Todos")+
-    cs.map(c=>`<button class="mfp mfc ${mesF==="card:"+c?"on":""}" data-mesf="card:${esc(c)}"><i style="background:${cardColor(c)}"></i>${esc(c)}</button>`).join("")+
-    chip("open","A pagar")+chip("paid","Pagos")+chip("rec","Receitas")+`</div>${mesPayBtn()}</div>`;
+  const extra=mesF==="paid"||mesF.startsWith("card:")||o==="az", open=mesFiltOpen||extra;
+  const ord=(k,t)=>`<button type="button" class="mfp ${o===k?"on":""}" data-mesord="${k}" aria-pressed="${o===k}">${t}</button>`;
+  return `<div class="mfbar"><div class="mfrow">`+chip("all","Todos")+chip("open","A pagar")+chip("rec","Receitas")+
+    `<button type="button" class="mfp mfmore ${open?"on":""}" data-mesfilt="1" aria-expanded="${open}">Filtrar ${open?"▴":"▾"}</button></div>`+
+    (open?`<div class="mfrow mfx">`+chip("paid","Pagos")+cs.map(c=>`<button class="mfp mfc ${mesF==="card:"+c?"on":""}" data-mesf="card:${esc(c)}"><i style="background:${cardColor(c)}"></i>${esc(c)}</button>`).join("")+`<span class="mfsep"></span>`+ord("rec","Recentes")+ord("az","A–Z")+`</div>`:"")+
+    `${mesPayBtn()}</div>`;
 }
 function renderMes(){
   mesShell();
@@ -3778,11 +3785,10 @@ function renderMes(){
     return;
   }
   const byC=byCat(arr,"desp"), tot=Object.values(byC).reduce((s,v)=>s+v,0), F=mesApply(arr), o=mesOrd(), n=F.filter(x=>!benOf(x)).length;
-  const ord=(k,t)=>`<button type="button" class="mfp ${o===k?"on":""}" data-mesord="${k}" aria-pressed="${o===k}">${t}</button>`;
-  const feed=`<section class="mlist"><h2>Lançamentos <small>${n}</small></h2><div class="mfrow mesord">${ord("rec","Recentes")}${ord("az","A–Z")}</div>${mesFeed(F)}</section>`;
+  const feed=`<section class="mlist">${mesFeed(F)}</section>`;
   const side=catsBlockHtml(arr,dA,tot,byC)+feeSection(view)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`;
   if(IS_WIDE.matches){
-    $("mBody").innerHTML=mesFilterBar()+`<div class="mes-split"><div class="mes-main">${feed}${mesBens(arr)}</div><aside class="mes-side">${mesSummary(arr)}${side}</aside></div>`;return}
+    $("mBody").innerHTML=mesFilterBar()+mesSummary(arr)+`<div class="mes-split"><div class="mes-main">${feed}${mesBens(arr)}</div><aside class="mes-side">${side}</aside></div>`;return}
   const tab=k=>`aria-pressed="${(mesSubTab==="cats")===(k==="cats")}" data-mestab="${k}"`;
   $("mBody").innerHTML=mesFilterBar()+mesSummary(arr)+`<div class="seg mseg" role="group" aria-label="Ver"><button type="button" ${tab("lanc")}>Lançamentos</button><button type="button" ${tab("cats")}>Categorias</button></div>`+
     (mesSubTab==="cats"?side:feed+mesBens(arr)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`);
@@ -4631,12 +4637,12 @@ function azBubbles(x){
   const N=P.map(e=>azList().find(q=>q.id===e.id)).filter(Boolean);if(N.length<2)return"";
   const hue=azHue;
   return `<span class="azb" title="${esc(N.map(q=>q.name).join(", "))}">${N.slice(0,3).map(q=>`<i style="--h:${hue(q.name)}">${esc((q.name.trim()[0]||"?").toUpperCase())}</i>`).join("")}${N.length>3?`<i class="mais">+${N.length-3}</i>`:""}</span>`}
-function itemHTML(x){
+function itemHTML(x,lean){
   const t=typeOf(x),c=catOf(x.cat,t),[,m,d]=x.date.split("-"),p=parcInfo(x);
   /* "Fatura X" com itens lançados no mês vale 0 (só o valor do banco para conferir): não mostra "a pagar" */
   const chk=t==="desp"&&x.cents&&!amt(x);
-  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",buyTxt(x),t==="desp"?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):"",(x.tags||[]).map(g=>"#"+g).join(" "),x.rcp?"📎":""].filter(Boolean).join(" · ");
-  return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d"><span class="dn">${esc(cleanDesc(x))}</span>${azBubbles(x)}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}"${chk?' style="color:var(--muted)"':""}>${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(chk?`<br><span class="m">conferir</span>`:isPaid(x)?`<br><span class="m pos">pago</span>`:`<br><span class="tag">a pagar</span>`):""}</span></button>`;
+  const meta=[c.n,x.fell?`caiu ${fmtDM(x.fell)}`:"",lean?"":buyTxt(x),t==="desp"&&!lean?x.pay:"",p?`${p.i}/${p.n}`:"",t==="desp"&&x.div>=2?`÷${x.div}, sua parte ${R(Math.round(x.cents/x.div))}`:"",x.conv?(x.convBy?convTxt(x.convBy):`convênio ${R(x.conv)}`):"",lean?"":(x.tags||[]).map(g=>"#"+g).join(" "),x.rcp?"📎":""].filter(Boolean).join(" · ");
+  return `<button class="item" data-id="${esc(x.id)}">${catIco(x.cat,t)}<span class="t"><div class="d"><span class="dn">${esc(cleanDesc(x))}</span>${azBubbles(x)}</div><div class="m"><b>${d} ${MES[+m-1].toLowerCase()}</b> · ${esc(meta)}</div></span><span class="a ${t==="rec"?"pos":""}"${chk?' style="color:var(--muted)"':""}>${t==="rec"?"+ ":""}${R(x.cents)}${t==="desp"?(chk?`<br><span class="m">conferir</span>`:isPaid(x)?(lean?"":`<br><span class="m pos">pago</span>`):`<br><span class="tag">a pagar</span>`):""}</span></button>`;
 }
 
 /* ---------- aba Cartões ---------- */
@@ -6284,6 +6290,7 @@ document.addEventListener("click",async e=>{
   if(t.id==="mesPay"){(async()=>{const c=mesF.slice(5), L=cardItems(c,view);
     try{if(!L.every(isPaid)){for(const x of L){if(!isPaid(x)) await store.items.update(x.id,paidPatch(true))}toast("Fatura marcada como paga",true)}
       view=shiftYM(view,1);render();slideIn($(tab),1)}catch(e){toast("Não deu para salvar. Tente de novo.")}})();return}
+  if(t.closest("[data-mesfilt]")){mesFiltOpen=!mesFiltOpen;renderMes();return}
   const mf=t.closest("[data-mesf]"); if(mf){const k=mf.dataset.mesf;mesF=(k===mesF||k==="all")?"all":k;renderMes();cardTheme(mesF.startsWith("card:")?mesF.slice(5):null);return}
   {const mo=t.closest("[data-mesord]");if(mo){try{localStorage.setItem("despesas.mesOrd",mo.dataset.mesord)}catch(e){}renderMes();return}}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
