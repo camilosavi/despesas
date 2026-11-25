@@ -1171,6 +1171,7 @@ body:has(#pHome:not([hidden])) #hFoot:empty{display:none}
 .mssum2 b{color:var(--ink);font-variant-numeric:tabular-nums;margin-left:3px}.mssum2 b.mut{color:var(--muted)}
 .mfx{margin-top:8px}.mfsep{flex:none;width:1px;background:var(--line);margin:4px 2px}
 #pMes .mlist{padding-top:4px!important}
+.mssum2+.reps{margin-top:14px!important}.reps .svbtns{max-width:420px}
 .mlist .mfrow{margin:0 0 var(--g-gap)}
 .mgrp{margin-bottom:var(--g-gap)}
 .mgrp>.card.list{background:none;border:0;box-shadow:none;border-radius:0;padding:0;margin:0}
@@ -3754,6 +3755,18 @@ function mesPayBtn(){
   const c=mesF.slice(5), L=cardItems(c,view);if(!L.length)return "";
   const mn=MES[+view.slice(5)-1].toLowerCase(), paid=L.every(isPaid);
   return `<button class="btn ${paid?"soft":"primary"} paytop" id="mesPay">${paid?`Fatura de ${mn} paga ✓ · ver a próxima`:`Marcar fatura de ${mn} como paga`}</button>`}
+/* Repetidos do mês (25/11/2026, pedido dele: lista com linhas iguais): sem cartão, mesmo tipo, nome, valor, dia e forma de pagamento.
+   "São dois" guarda o par em cfg.notDup (some do aviso); "Apagar um" usa o mesclar de sempre (fica o que tem mais informação). */
+function repeatedPairs(arr){
+  const nd=new Set(notDup()), G={}, P=[];
+  arr.filter(x=>!cardOf(x)&&!genFat(x)&&!benOf(x)&&x.cents).forEach(x=>{const k=[typeOf(x),fold(cleanDesc(x)),x.cents,whenOf(x),x.pay||""].join("|");(G[k]=G[k]||[]).push(x)});
+  Object.values(G).forEach(L=>{for(let i=1;i<L.length;i++)if(!nd.has(dupKey(L[0],L[i])))P.push([L[0],L[i]])});
+  return P;
+}
+function repeatedSection(arr){
+  const P=repeatedPairs(arr);if(!P.length)return "";
+  return `<section class="reps"><h2>Repetidos? <small>${P.length}</small></h2>`+P.map(([a,b])=>`<div class="duprow"><div><b>${esc(cleanDesc(a))}</b> · ${R(a.cents)}<span>${fmtDM(whenOf(a))} · aparece 2 vezes igual</span></div><div class="svbtns"><button class="btn soft" data-notdup="${esc(dupKey(a,b))}">São dois</button><button class="btn primary" data-merge="${esc(a.id)}|${esc(b.id)}">Apagar um</button></div></div>`).join("")+`</section>`;
+}
 let mesFiltOpen=false;
 function mesFilterBar(){
   const cs=credCards().filter(c=>cardTotal(c,view)||cardCfg(c).limit), o=mesOrd();
@@ -3777,9 +3790,9 @@ function renderMes(){
   const feed=`<section class="mlist">${mesFeed(F)}</section>`;
   const side=catsBlockHtml(arr,dA,tot,byC)+feeSection(view)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`;
   if(IS_WIDE.matches){
-    $("mBody").innerHTML=mesFilterBar()+mesSummary(arr)+`<div class="mes-split"><div class="mes-main">${feed}${mesBens(arr)}</div><aside class="mes-side">${side}</aside></div>`;return}
+    $("mBody").innerHTML=mesFilterBar()+mesSummary(arr)+repeatedSection(arr)+`<div class="mes-split"><div class="mes-main">${feed}${mesBens(arr)}</div><aside class="mes-side">${side}</aside></div>`;return}
   const tab=k=>`aria-pressed="${(mesSubTab==="cats")===(k==="cats")}" data-mestab="${k}"`;
-  $("mBody").innerHTML=mesFilterBar()+mesSummary(arr)+`<div class="seg mseg" role="group" aria-label="Ver"><button type="button" ${tab("lanc")}>Lançamentos</button><button type="button" ${tab("cats")}>Categorias</button></div>`+
+  $("mBody").innerHTML=mesFilterBar()+mesSummary(arr)+repeatedSection(arr)+`<div class="seg mseg" role="group" aria-label="Ver"><button type="button" ${tab("lanc")}>Lançamentos</button><button type="button" ${tab("cats")}>Categorias</button></div>`+
     (mesSubTab==="cats"?side:feed+mesBens(arr)+`<div class="toolbar" style="justify-content:center;margin-top:16px"><button class="tbtn" id="mesShare">Compartilhar resumo de ${esc(shortMonth(view))}</button></div>`);
 }
 /* ---------- despesa dividida com outras pessoas (out/2026, pedido dele: "serve pra despesas também", ex.: Airbnb em 5) ----------
