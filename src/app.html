@@ -695,6 +695,17 @@ h2 button{padding:8px 0 8px 12px;margin:-8px 0}
 .catg.open .catrow .tlcar{transform:rotate(90deg)}
 .catg .tlitems{border-top:1px solid var(--line)}
 .minicats i{display:block;height:100%}
+/* aba Categorias (27/11/2026) */
+.csum{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:6px 2px 14px}
+.cdn{position:relative;width:9.5em;flex:none;container-type:inline-size}.cdn .dn{width:100%;display:block}
+.cdc{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:0 22%}.cdc b{font-family:var(--display);font-size:clamp(.9rem,17cqi,1.5rem);line-height:1.1}.cdc small{font-size:clamp(.55rem,9cqi,.75rem);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cst{display:grid;gap:2px;min-width:0;flex:1 1 8em}.cst .cdl{white-space:normal}.catrow .cn{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mes-side .csum{gap:12px}.mes-side .cdn{width:8em}.cst small,.cst span{color:var(--muted);font-size:.8rem}.cst b{font-family:var(--display);font-size:1.6rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cord{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.cord .mfp{height:34px!important;padding:0 14px!important;font-size:.84rem}
+.catrow .ccnt{font-weight:600;font-size:.72rem;color:var(--muted);background:var(--chip);border-radius:999px;padding:1px 7px;margin-left:2px}
+.catrow .cbud{grid-column:2/4;font-size:.76rem;color:var(--muted);font-variant-numeric:tabular-nums}.catrow .cbud.neg{color:var(--neg);font-weight:600}
+.cidle{border-top:1px solid var(--line);padding-top:8px}.cidle>small{display:block;padding:4px 14px;color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:.04em}
+.catrow.static{cursor:default;border-top:0;opacity:.8}.catrow.static:hover{background:none}
+
 /* planilha em grade */
 .segc{display:inline-grid;grid-auto-flow:column;background:var(--chip);border-radius:10px;padding:3px;gap:2px}
 .segc button{border:0;background:none;border-radius:8px;padding:7px 12px;font-weight:600;font-size:.85rem;color:var(--muted)}
@@ -3696,13 +3707,29 @@ function totDelta(PV,tot){
   const d=Math.round((tot-a)/a*100); if(Math.abs(d)<1) return "";
   return `<span class="cdl ${d>0?"up":"dn"} cdtot">${d>0?"▲":"▼"} ${Math.abs(d)}% vs ${esc(monthLabel(PV.ym).split(" ")[0].toLowerCase())}${PV.cur?" até hoje":""}</span>`;
 }
+/* Aba Categorias (27/11/2026, pedido dele: "uma aba melhor de categorias"): rosca com o total e a variação, ordenar por maior valor /
+   maior alta / A–Z (despesas.catOrd), cada linha com % do mês, nº de lançamentos, orçamento (restam / acima) e comparação com o mês
+   anterior; categorias com limite e sem gasto aparecem no fim. */
+const catOrd=()=>{try{const v=localStorage.getItem("despesas.catOrd");return v==="var"||v==="az"?v:"val"}catch(e){return "val"}};
 function catsBlockHtml(arr, dA, tot, byC){
   if(!tot) return `<section><div class="empty"><strong>Sem gastos por categoria</strong>Nenhuma despesa lançada em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}.</div></section>`;
-  const ks=Object.keys(byC).filter(k=>byC[k]).sort((a,b)=>byC[b]-byC[a]), mx=byC[ks[0]], B=budgets(), PV=prevCatMap();
-  return `<section id="catAllSec"><h2>Por categoria <button id="goOrc">Orçamento</button></h2>${totDelta(PV,tot)?`<div class="cdrow">${totDelta(PV,tot)}</div>`:""}<div class="card list" style="padding:0"><div style="padding:14px 14px 4px"><div class="minicats" style="margin:0 0 6px">${ks.map(k=>`<i style="width:${byC[k]/tot*100}%;background:${catOf(k,"desp").c}"></i>`).join("")}</div><div class="catleg">${ks.slice(0,3).map(k=>`<span><i style="background:${catOf(k,"desp").c}"></i>${esc(catOf(k,"desp").n)} ${R(byC[k])}</span>`).join("")}</div></div><div class="catrows">${ks.map(k=>{
-    const c=catOf(k,"desp"),v=byC[k],cr=B[k]?budCarry(k,view):0,b=B[k]?B[k]+cr:0,open=catOpen.has(k),L=dA.filter(x=>x.cat===k&&amt(x)).sort((a,b2)=>b2.cents-a.cents);
-    return `<div class="catg ${open?"open":""}"><button class="catrow" data-catopen="${esc(k)}" aria-expanded="${open}">${catIco(k,"desp")}<span class="cn">${esc(c.n)} <i class="tlcar">›</i></span><span class="cv">${R(v)}</span><span class="cb"><i><i style="width:${(b?Math.min(v/b,1):v/mx)*100}%;background:${b&&v>b?"var(--neg)":c.c}"></i></i><em class="${b&&v>b?"neg":""}">${b?`de ${R(b)}${cr?` · +${R(cr)} de sobra`:""}`:`${Math.round(v/tot*100)}%`}</em>${catDelta(PV,k,v)}</span></button>`+
-      (open?`<div class="tlitems">${L.map(itemHTML).join("")}</div>`:"")+`</div>`}).join("")}</div></div></section>`;
+  const B=budgets(), PV=prevCatMap(), o=catOrd(), nm=k=>catOf(k,"desp").n;
+  const cnt={}; dA.forEach(x=>{if(amt(x))cnt[x.cat]=(cnt[x.cat]||0)+1});
+  const byVal=Object.keys(byC).filter(k=>byC[k]).sort((a,b)=>byC[b]-byC[a]), mx=byC[byVal[0]];
+  const diff=k=>byC[k]-(PV?PV.by[k]||0:0);
+  const ks=[...byVal].sort(o==="az"?(a,b)=>nm(a).localeCompare(nm(b),"pt"):o==="var"&&PV?(a,b)=>diff(b)-diff(a)||byC[b]-byC[a]:(a,b)=>byC[b]-byC[a]);
+  const top=byVal.slice(0,6).map(k=>({k,v:byC[k],c:catOf(k,"desp").c})), rest=tot-top.reduce((s,x)=>s+x.v,0);
+  if(rest>0) top.push({k:"_",v:rest,c:"var(--line)"});
+  const t0=catOf(byVal[0],"desp"), pct0=Math.round(byC[byVal[0]]/tot*100);
+  const chip=(k,t)=>`<button type="button" class="mfp ${o===k?"on":""}" data-catord="${k}" aria-pressed="${o===k}">${t}</button>`;
+  const sum=`<div class="csum"><div class="cdn">${donutHtml(top,tot)}<div class="cdc"><b>${pct0}%</b><small>${esc(t0.n)}</small></div></div><div class="cst"><small>Gastou em ${esc(monthLabel(view).split(" ")[0].toLowerCase())}</small><b>${R(tot)}</b>${totDelta(PV,tot)}<span>${byVal.length} categoria${byVal.length>1?"s":""}</span></div></div>`;
+  const rows=ks.map(k=>{
+    const c=catOf(k,"desp"),v=byC[k],cr=B[k]?budCarry(k,view):0,b=B[k]?B[k]+cr:0,open=catOpen.has(k),L=dA.filter(x=>x.cat===k&&amt(x)).sort((a,b2)=>b2.cents-a.cents),over=b&&v>b;
+    return `<div class="catg ${open?"open":""}"><button class="catrow" data-catopen="${esc(k)}" aria-expanded="${open}">${catIco(k,"desp")}<span class="cn">${esc(c.n)} <small class="ccnt">${cnt[k]||0}</small> <i class="tlcar">›</i></span><span class="cv">${R(v)}</span><span class="cb"><i><i style="width:${(b?Math.min(v/b,1):v/mx)*100}%;background:${over?"var(--neg)":c.c}"></i></i><em>${Math.round(v/tot*100)}%</em>${catDelta(PV,k,v)}</span>${b?`<span class="cbud ${over?"neg":""}">${over?`${R(v-b)} acima do limite de ${R(b)}`:`limite ${R(b)} · restam ${R(b-v)}`}${cr?` · +${R(cr)} de sobra`:""}</span>`:""}</button>`+
+      (open?`<div class="tlitems">${L.map(itemHTML).join("")}</div>`:"")+`</div>`}).join("");
+  const idle=Object.keys(B).filter(k=>B[k]>0&&!byC[k]&&catOf(k,"desp").k===k).sort((a,b)=>nm(a).localeCompare(nm(b),"pt"));
+  const idleHtml=idle.length?`<div class="cidle"><small>Com limite e sem gasto</small>${idle.map(k=>`<div class="catrow static">${catIco(k,"desp")}<span class="cn">${esc(nm(k))}</span><span class="cv">${R(0)}</span><span class="cbud">limite ${R(B[k]+budCarry(k,view))} · tudo livre</span></div>`).join("")}</div>`:"";
+  return `<section id="catAllSec"><h2>Categorias <button id="goOrc">Orçamento</button></h2>${sum}<div class="cord" role="group" aria-label="Ordenar">${chip("val","Maior valor")}${PV?chip("var","Maior alta"):""}${chip("az","A–Z")}</div><div class="card list" style="padding:0"><div class="catrows">${rows}</div>${idleHtml}</div></section>`;
 }
 
 function shiftDay(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
@@ -6295,6 +6322,7 @@ document.addEventListener("click",async e=>{
   if(t.closest("[data-mesfilt]")){mesFiltOpen=!mesFiltOpen;renderMes();return}
   const mf=t.closest("[data-mesf]"); if(mf){const k=mf.dataset.mesf;mesF=(k===mesF||k==="all")?"all":k;renderMes();cardTheme(mesF.startsWith("card:")?mesF.slice(5):null);return}
   {const mo=t.closest("[data-mesord]");if(mo){try{localStorage.setItem("despesas.mesOrd",mo.dataset.mesord)}catch(e){}renderMes();return}}
+  {const co2=t.closest("[data-catord]");if(co2){try{localStorage.setItem("despesas.catOrd",co2.dataset.catord)}catch(e){}renderMes();return}}
   const mt=t.closest("[data-mestab]"); if(mt){mesSubTab=mt.dataset.mestab;renderMes();return}
   const msw=t.closest("[data-msw]"); if(msw){const k=msw.dataset.msw;if(k==="mes")go("pMes");else{const keep=navSel==="rel";anoSubTab=k;lsSet("despesas.anoTab",k);go("pAno");if(keep){navSel="rel";render()}}return}
   const at=t.closest("[data-anotab]"); if(at){anoSubTab=at.dataset.anotab;lsSet("despesas.anoTab",anoSubTab);renderAno();return}
